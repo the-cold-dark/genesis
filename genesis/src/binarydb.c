@@ -531,8 +531,10 @@ Int db_get(Obj *object, Long objnum)
 
     buf = buffer_new(size);
     buf->len = size;
-    fread(buf->s, sizeof(uChar), size, database_file);
+    buf_pos = fread(buf->s, sizeof(uChar), size, database_file);
     UNLOCK_DB("db_get")
+    if (buf_pos != size)
+        panic("db_get: only read %d of %d bytes.", buf_pos, size);
 
     buf_pos = 0;
     unpack_object(buf, &buf_pos, object);
@@ -620,10 +622,12 @@ Int db_put(Obj *obj, Long objnum, Long *sizewritten)
 	return 0;
     }
 
-    fwrite(buf->s, sizeof(uChar), new_size, database_file);
+    old_size = fwrite(buf->s, sizeof(uChar), new_size, database_file);
     buffer_discard(buf);
     fflush(database_file);
     UNLOCK_DB("db_put")
+    if (old_size != new_size)
+        panic("db_put: only wrote %d of %d bytes.", old_size, new_size);
 
     if (sizewritten) *sizewritten = new_size;
 

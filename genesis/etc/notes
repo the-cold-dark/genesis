@@ -22,4 +22,7 @@ RELEASE INFORMATION:
       * Fixed crash bug in coldcc (Bruce, noticed by Kipp)
       * Fixed memory leak in signal handler (Bruce)
       * Fixed crash bug in signal handler when no current task (Bruce)
-      * Fixed a file descriptor leak in pending connections failing (Bruce)
+      * Fix for execute() (Bruce)
+      * Add check to be sure backup() was able to open the directory. (Bruce)
+      * Fix memory leak in unbind_port() (Bruce)
+      * Removed memset() on Win32 from emalloc() (Bruce)

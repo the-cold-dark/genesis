@@ -9,6 +9,7 @@ testdb=test.cdc
 expected=expected
 binary=binary
 output=output
+errorlog=error.log
 prog="$$prog"
 
 trap "rm -rf $testdb $expected $binary $output $prog; exit" 0 1 2
@@ -25,7 +26,7 @@ perl -e 'while (<>) {
              }
          }' < $testin 1> $expected 2> $testdb
 
-./coldcc -o -W -t $testdb 1> $output 2>/dev/null
+./coldcc -o -W -t $testdb 1> $output 2> $errorlog
 
 ## temporary hack until I fix the problems with output files in
 ## coldcc

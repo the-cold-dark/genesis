@@ -619,6 +619,3 @@ Int is_valid_id(char * str, Int len) {
      return 1;
 }
 
-void set_argv0(char * str) {
-    
-}

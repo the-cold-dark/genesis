@@ -950,7 +950,7 @@ COLDC_OP(buffer) {
     buf = buffer_new(len);
     for (i = 0; i < len; i++)
 	buf->s[i] = ((uLong) stack[start + i].u.val) % (1 << 8);
-    buf->len=len;
+    buf->len = len;
     stack_pos = start;
     push_buffer(buf);
     buffer_discard(buf);
@@ -2253,10 +2253,6 @@ COLDC_OP(less_or_equal)
  *	    in the second (where the first element is 1), or 0 if the first
  *	    value does not exist in the second. */
 #define uchar unsigned char
-#if 0
-#define BFIND(__buf, __char) \
-    ((unsigned char *) memchr(__buf->s, (unsigned char) __char, __buf->len))
-#endif
 
 COLDC_OP(in)
 {
@@ -2287,26 +2283,10 @@ COLDC_OP(in)
                 if (s)
                     pos = s - buf->s;
             } else if (d1->type == BUFFER) {
-                uchar * p,
-                      * ss = d1->u.buffer->s;
-                int     slen = d1->u.buffer->len,
-                        len = buf->len;
+                uchar * ss   = d1->u.buffer->s;
+                int     slen = d1->u.buffer->len;
 
-                s = buf->s;
-                p = (uchar *) memchr(s, *ss, len); 
-                if (slen == 1) {
-                    pos = p ? (p - s) : -1;
-                } else {
-                    slen--;
-                    while (p) {
-                        if (MEMCMP(p + 1, ss + 1, slen) == 0) {
-                            pos = (p - s);
-                            break;
-                        }
-                        len -= (p - s) + 1;
-                        p = (uchar *) memchr(p + 1, *ss, len);
-                    }
-                }
+                pos = buffer_index(buf, ss, slen, 1) - 1;
             } else
                 goto error;
 

@@ -24,11 +24,18 @@
 #include <string.h>
 #include <limits.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+
 #ifdef __UNIX__
 #include <sys/wait.h>
 #endif
-#include <sys/stat.h>
+
 #include <dirent.h>  /* func_files() */
+#ifdef __MSVC__
+#include <direct.h>
+#include <io.h>
+#endif
+
 #include <fcntl.h>
 #include "functions.h"
 #include "execute.h"
@@ -243,7 +250,11 @@ COLDC_FUNC(fchmod) {
             return;
     }
 
+#ifdef __MSVC__
+    failed = _chmod(path->s, mode);
+#else
     failed = chmod(path->s, mode);
+#endif
     string_discard(path);
 
     if (failed) {
@@ -299,7 +310,11 @@ COLDC_FUNC(fmkdir) {
     }
 
     /* default the mode to 0700, they can chmod it later */
+#ifdef __MSVC__
+    err = mkdir(path->s);
+#else
     err = mkdir(path->s, 0700);
+#endif
     string_discard(path);
     if (err != F_SUCCESS) {
         cthrow(file_id, strerror(GETERR()));

@@ -35,7 +35,7 @@ cData * stack;
 Int stack_pos, stack_size;
 Int *arg_starts, arg_pos, arg_size;
 Long task_id=1;
-Long next_task_id=1;
+Long next_task_id=2;
 Long call_environ=1;
 Long tick;
 

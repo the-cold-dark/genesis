@@ -50,6 +50,10 @@ pthread_mutex_t db_mutex;
 #include "util.h"
 #include "moddef.h"
 
+#ifdef __MSVC__
+#include <direct.h>
+#endif
+
 /* suggested by xmath as possibly faster
 #define NEEDED(n, b)            (((n) + ((b) - 1)) / (b))
 #define ROUND_UP(n, b)          (((n) + ((b) - 1)) % (b))
@@ -102,6 +106,19 @@ extern Long num_objects;
 
 #define DBFILE(__b, __f) (sprintf(__b, "%s/%s", c_dir_binary, __f))
 
+#ifdef __MSVC__
+#define open_db_directory() { \
+        if (stat(c_dir_binary, &statbuf) == F_FAILURE) { \
+            if (mkdir(c_dir_binary) == F_FAILURE) \
+                FAIL("Cannot create binary directory \"%s\".\n"); \
+        } else if (!S_ISDIR(statbuf.st_mode)) { \
+            if (unlink(c_dir_binary) == F_FAILURE) \
+                FAIL("Cannot delete file \"%s\".\n"); \
+            if (mkdir(c_dir_binary) == F_FAILURE) \
+                FAIL("Cannot create directory \"%s\".\n"); \
+        } \
+    }
+#else
 #define open_db_directory() { \
         if (stat(c_dir_binary, &statbuf) == F_FAILURE) { \
             if (mkdir(c_dir_binary, READ_WRITE_EXECUTE) == F_FAILURE) \
@@ -113,6 +130,7 @@ extern Long num_objects;
                 FAIL("Cannot create directory \"%s\".\n"); \
         } \
     }
+#endif
 
 #define init_bitmaps() { \
         if (stat(fdb_objects, &statbuf) < 0) \

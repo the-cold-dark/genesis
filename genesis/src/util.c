@@ -17,6 +17,10 @@
 #include "token.h"
 #include "macros.h"
 
+#ifdef __MSVC__
+#include <process.h>
+#endif
+
 #define FORMAT_BUF_INITIAL_LENGTH 48
 #define MAX_SCRATCH 2
 

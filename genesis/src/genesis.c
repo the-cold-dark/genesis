@@ -32,6 +32,11 @@ extern pthread_t cleaner;
 #include "net.h"
 #include "sig.h"
 
+#ifdef __MSVC__
+#include <direct.h>
+#include <process.h>
+#endif
+
 static void initialize(Int argc, char **argv);
 static void main_loop(void);
 
@@ -408,7 +413,12 @@ static void initialize(Int argc, char **argv) {
         basedir = ".";
 
     /* Switch into database directory. */
-    if (chdir(basedir) == F_FAILURE) {
+#ifdef __MSVC__
+    if (_chdir(basedir) == F_FAILURE)
+#else
+    if (chdir(basedir) == F_FAILURE)
+#endif
+    {
         usage(name);
         fprintf(stderr, "** Couldn't change to base directory \"%s\".\n",
                 basedir);
@@ -485,11 +495,19 @@ static void initialize(Int argc, char **argv) {
 
     /* print the PID */
     if ((fp = fopen(c_runfile, "wb")) != NULL) {
+#ifdef __MSVC__
+        fprintf(fp, "%ld\n", (long) _getpid());
+#else
         fprintf(fp, "%ld\n", (long) getpid());
+#endif
         fclose(fp);
         atexit(unlink_runningfile);
     } else {
+#ifdef __MSVC__
+        fprintf(errfile, "genesis pid: %ld\n", (long) _getpid());
+#else
         fprintf(errfile, "genesis pid: %ld\n", (long) getpid());
+#endif
     }
 
     /* Initialize database and network modules. */

@@ -11,6 +11,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <dirent.h>  /* directory funcs */
+#ifdef __MSVC__
+#include <direct.h>
+#endif
 #include "cache.h"
 #include "execute.h"
 #include "binarydb.h"
@@ -65,7 +68,11 @@ static Bool backup_file(char * file) {
     if (from_fd == F_FAILURE)
         x_THROW(source)
 
+#ifdef __MSVC__
+    to_fd = open(dest, (O_WRONLY|O_TRUNC|O_CREAT|O_BINARY), (_S_IREAD|_S_IWRITE));
+#else
     to_fd = open(dest, (O_WRONLY|O_TRUNC|O_CREAT|O_BINARY), (S_IRUSR|S_IWUSR));
+#endif
     if (to_fd == F_FAILURE)
         x_THROW(dest)
 
@@ -125,12 +132,20 @@ COLDC_FUNC(backup) {
     strcpy(buf, c_dir_binary);
     strcat(buf, ".bak");
     if (stat(buf, &statbuf) == F_FAILURE) {
+#ifdef __MSVC__
+        if (mkdir(buf) == F_FAILURE)
+#else
         if (mkdir(buf, READ_WRITE_EXECUTE) == F_FAILURE)
+#endif
             THROW((file_id, "Cannot create directory \"%s\": %s", buf, strerror(GETERR())))
     } else if (!S_ISDIR(statbuf.st_mode)) {
         if (unlink(buf) == F_FAILURE)
             THROW((file_id, "Cannot delete file \"%s\": %s", buf, strerror(GETERR())))
+#ifdef __MSVC__
+        if (mkdir(buf) == F_FAILURE)
+#else
         if (mkdir(buf, READ_WRITE_EXECUTE) == F_FAILURE)
+#endif
             THROW((file_id, "Cannot create directory \"%s\": %s", buf, strerror(GETERR())))
     }
 

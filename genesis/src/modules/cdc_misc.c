@@ -16,7 +16,7 @@
 #include "net.h"
 #include "dns.h"
 
-#ifdef __Win32__
+#if defined(__Win32__) && !defined(__MSVC__)
 #define FTIME _lstrftime
 #else
 #define FTIME strftime

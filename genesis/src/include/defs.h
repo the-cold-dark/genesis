@@ -392,6 +392,10 @@ typedef bool              Bool;
 
 #define SERVER_NAME "Genesis (the Cold driver)"
 
+#ifdef __MSVC__
+#define S_ISDIR(mode) (mode & _S_IFDIR)
+#endif
+
 /* incase it doesn't exist */
 #ifndef O_BINARY
 #define O_BINARY 0

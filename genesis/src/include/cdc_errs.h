@@ -8,7 +8,19 @@
 #ifdef __Win32__
 
 #include <errno.h>
+
+/* In VC, linked to winsock.h, is a header that defines FLOAT, this keeps it from
+   compaining and prevents it from interfering with genesis */
+#ifdef __MSVC__
+#undef FLOAT
+#endif
+
 #include <winsock.h>
+
+/* Undefine VC's silly definition */
+#ifdef __MSVC__
+#undef FLOAT
+#endif
 
 #define     ERR_INTR         WSAEINTR
 #define     ERR_NOMEM        ENOMEM

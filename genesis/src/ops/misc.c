@@ -9,12 +9,20 @@
 #ifdef __UNIX__
 #include <sys/time.h>    /* for mtime() */
 #endif
+#ifdef __MSVC__
+#include <windows.h>
+#endif
 
 #include "functions.h"
 #include "operators.h"
 #include "execute.h"
 #include "util.h"
 #include "opcodes.h"
+
+#ifndef HAVE_TM_GMTOFF
+static int last_gmtoffcheck = -1;
+static int gmt_offset = -1;
+#endif
 
 COLDC_FUNC(anticipate_assignment) {
     Int opcode, ind;
@@ -71,11 +79,14 @@ COLDC_FUNC(time) {
 
 COLDC_FUNC(localtime) {
     struct tm * tms;
-    cData * d;
-    cList * l;
-    time_t t;
-    cData *args;
-    Int     nargs;
+    cData     * d;
+    cList     * l;
+    time_t      t;
+    cData     * args;
+    Int         nargs;
+#ifndef HAVE_TM_GMTOFF
+    struct tm * gtms;
+#endif
 
     if (!func_init_0_or_1(&args, &nargs, INTEGER))
 	return;
@@ -125,30 +136,52 @@ COLDC_FUNC(localtime) {
 #ifdef HAVE_TM_GMTOFF
     d[11].u.val = tms->tm_gmtoff;
 #else
-    d[11].u.val = 0;
+    if (last_gmtoffcheck != tms->tm_yday) {
+        int hour = tms->tm_hour; /* they use the same internal structure */
+        gtms = gmtime(&t);
+        gmt_offset = ((hour - gtms->tm_hour) * 60 * 60);
+        last_gmtoffcheck = tms->tm_yday;
+    }
+    d[11].u.val = gmt_offset;
 #endif
 
     push_list(l);
     list_discard(l);
 }
 
-COLDC_FUNC(mtime) {
-#ifdef HAVE_GETTIMEOFDAY
-    struct timeval tp;
-#endif
+#ifdef __Win32__
+void func_mtime(void) {
+    LARGE_INTEGER freq, cnt;
 
     if (!func_init_0())
         return;
 
+    QueryPerformanceFrequency(&freq);
+    QueryPerformanceCounter(&cnt);
+    push_int((cNum) (((cnt.QuadPart * 1000000) / freq.QuadPart) % 1000000));
+}
+#else
 #ifdef HAVE_GETTIMEOFDAY
+void func_mtime(void) {
+    struct timeval tp;
+
+    if (!func_init_0())
+        return;
+
     /* usec is microseconds */
     gettimeofday(&tp, NULL);
 
     push_int((cNum) tp.tv_usec);
-#else
-    push_int(-1);
-#endif
 }
+#else
+void func_mtime(void) {
+    if (!func_init_0())
+        return;
+
+    push_int(-1);
+}
+#endif
+#endif
 
 COLDC_FUNC(ctime) {
     cData *args;

@@ -140,4 +140,5 @@ RELEASE INFORMATION:
       * Add free_pile() (Brad)
       * Cleanup memory at exit (Brad)
       * Optimize textdump decompilation some. (Bruce)
+      * Integrate changes from 1.1.10 and 1.1.11 (Brad, Bruce)
 

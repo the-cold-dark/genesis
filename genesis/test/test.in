@@ -1,3 +1,5 @@
+// vim:noet:sts=8:ts=8
+//
 // Syntax of this file:
 //
 // * Anything beginning with a single tab is stripped out before ColdCC gets
@@ -691,6 +693,7 @@ eval {
 		  "am" in "llama" ==> 3
 		  "bc" in "llama" ==> 0
 		  4 in 'foo ==> ~type
+		  `[10, 13] in `[10, 10] ==> 0
 		 Logic
 		  1 && 1 ==> 1
 		  1 && 0 ==> 0
@@ -782,6 +785,7 @@ eval {
     dblog("  \"am\" in \"llama\" ==> " + toliteral("am" in "llama"));
     dblog("  \"bc\" in \"llama\" ==> " + toliteral("bc" in "llama"));
     dblog("  4 in 'foo ==> " + toliteral((| 4 in 'foo |)));
+    dblog("  `[10, 13] in `[10, 10] ==> " + toliteral((| `[10, 13] in `[10, 10] |)));
     dblog(" Logic");
     dblog("  1 && 1 ==> " + toliteral(1 && 1));
     dblog("  1 && 0 ==> " + toliteral(1 && 0));
@@ -2474,9 +2478,17 @@ eval {
 	// Output
 
 		String test 7
+		  strsed("abcde", "(\\A\[[0-9;]+m|\\)", "", "g") --> ~regexp error caught
 
 eval {
     dblog("String test 7");
+    catch any {
+        dblog("  strsed(\"abcde\", \"(\\\\A\[[0-9;]+m|\\\\)\", \"\", \"g\") --> should have caught an error, got '" +
+              toliteral(strsed("abcde", "(\\A\[[0-9;]+m|\\)", "", "g")) +
+              "' instead.");
+    } with {
+        dblog("  strsed(\"abcde\", \"(\\\\A\[[0-9;]+m|\\\\)\", \"\", \"g\") --> " + toliteral(error()) + " error caught");
+    }
 };
 
 	// String test 8
@@ -2585,9 +2597,28 @@ eval {
 	// Output
 
 		String test 12
+		  1 - ["Aa0\^$|()[].*+?"]
+		  2 - ["a"]
+		  3 - ["FOO"]
+		  4 - 0
+		  5 - regexp error resulted
+		  6 - regexp error resulted
+
 
 eval {
     dblog("String test 12");
+    dblog("  1 - " + regexp("Aa0\\^$|()[].*+?", "Aa0\\\\\^\$\|\(\)\[\]\.\*\+\?"));
+    dblog("  2 - " + regexp("\\abdeeefffg", "^\\\\(a)[bc].e*f+g?$|_"));
+    dblog("  3 - " + regexp("FOO", "foo"));
+    dblog("  4 - " + regexp("FOO", "foo", 1));
+    catch ~regexp
+        dblog("  5 - " + regexp("", "("));
+    with
+        dblog("  5 - regexp error resulted");
+    catch ~regexp
+        dblog("  6 - " + regexp("", "["));
+    with
+        dblog("  6 - regexp error resulted");
 };
 
 	// String test 13

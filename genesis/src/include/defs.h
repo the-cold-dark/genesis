@@ -241,11 +241,13 @@ typedef bool              Bool;
   typedef int               Int;
   typedef unsigned int      uInt;
 # define MAX_INT  2147483647
+# define MIN_INT  (- MAX_INT -1)
 # define MAX_UINT 4294967295U
 #elif SIZEOF_LONG == 4
   typedef long              Int;
   typedef unsigned long     uInt; 
 # define MAX_INT  2147483647L
+# define MIN_INT  (- MAX_INT - 1)
 # define MAX_UINT 4294967295UL
 #else
 # error "Unable to specify size for Int type (32 bits)"
@@ -257,11 +259,13 @@ typedef bool              Bool;
      typedef long              Long;
      typedef unsigned long     uLong;
 #    define MAX_LONG  9223372036854775807L
+#    define MIN_LONG  (- MAX_LONG - 1)
 #    define MAX_ULONG 18446744073709551615UL
 #  elif SIZEOF_LLONG == 8
      typedef long long         Long;
      typedef unsigned long long uLong;
 #    define MAX_LONG  9223372036854775807LL
+#    define MIN_LONG  (- MAX_LONG - 1)
 #    define MAX_ULONG 18446744073709551615ULL
 #  else
 #    error "Unable to specify size for BIG Long type (64 bits)"
@@ -272,6 +276,7 @@ typedef bool              Bool;
   typedef uInt              uLong;
 
 # define MAX_LONG  MAX_INT
+# define MAX_LONG  (- MAX_INT - 1);
 # define MAX_ULONG MAX_UINT
 #endif
 

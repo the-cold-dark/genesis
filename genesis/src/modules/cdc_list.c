@@ -372,6 +372,34 @@ static Int validate_sorted_args(Int stack_start, Int arg_start) {
 }
 
 NATIVE_METHOD(sorted_index) {
+    Int out;
+    cList * list;
+    cData data, key;
+
+    DEF_args;
+    DEF_argc;
+
+    if (!validate_sorted_args(stack_start, arg_start))
+        return 0;
+
+    list = list_dup(LIST1);
+    data_dup(&data, &args[ARG2]);
+
+    if (argc == 3)
+        data_dup(&key, &args[ARG3]);
+
+    /* Do the work! */
+    out = list_binary_search(list, &data, &key);
+
+    /* Bring back to 1-based array index */
+    if (out != -1)
+        out++;
+
+    data_discard(&data);
+    if (argc == 3)
+        data_discard(&key);
+
+    CLEAN_RETURN_INTEGER(out);
 }
 
 NATIVE_METHOD(sorted_insert) {

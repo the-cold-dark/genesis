@@ -145,8 +145,12 @@ inline void cache_dirty_object(Obj *obj)
 
     obj->dirty++;
 
-    if ((cache_watch_object == obj->objnum) && !(obj->dirty % cache_watch_count))
+    if ((cache_watch_object == obj->objnum) &&
+        !(obj->dirty % cache_watch_count))
+    {
+        write_err("Object %s dirtied at:", ident_name(obj->objname));
 	log_current_task_stack(FALSE, write_err);
+    }
 
     if (obj->dirty == 1)
         cache_add_to_dirty_list(obj);

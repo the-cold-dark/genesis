@@ -136,8 +136,8 @@ typedef struct nh_s nh_t;
 
 struct nh_s {
     long    objnum;
-    Ident   name;
-    Ident   now;
+    Ident   native;     /* the native name */
+    Ident   method;     /* if it has been renamed, this is the method name */
     int     valid;
     nh_t  * next;
 };
@@ -243,7 +243,7 @@ INTERNAL nh_t * find_defined_native_method(objnum_t objnum, Ident name) {
     nh_t * nhp;
 
     for (nhp = nhs; nhp != (nh_t *) NULL; nhp = nhp->next) {
-        if (nhp->name == name) {
+        if (nhp->native == name) {
             if (nhp->objnum == objnum)
                 return nhp;
         }
@@ -257,18 +257,20 @@ INTERNAL void remember_native(method_t * method) {
 
     nh = find_defined_native_method(method->object->objnum, method->name);
     if (nh != (nh_t *) NULL) {
-        fformat(stdout, "Line %l: ERROR: %O.%s() overrides existing native definition.\n", line_count, nh->objnum, ident_name(nh->name));
+        fformat(stdout,
+              "Line %l: ERROR: %O.%s() overrides existing native definition.\n",
+               line_count, nh->objnum, ident_name(nh->native));
         shutdown();
-    } else {
-        nh = (nh_t *) malloc(sizeof(nh_t));
-
-        nh->objnum = method->object->objnum;
-        nh->valid = 0;
-        nh->next = nhs;
-        nhs = nh;
     }
-    nh->name = ident_dup(method->name);
-    nh->now = NOT_AN_IDENT;
+
+    nh = (nh_t *) malloc(sizeof(nh_t));
+
+    nh->objnum = method->object->objnum;
+    nh->valid = 0;
+    nh->next = nhs;
+    nhs = nh;
+    nh->native = ident_dup(method->name);
+    nh->method = NOT_AN_IDENT;
 }
 
 INTERNAL void frob_n_print_errstr(char * err, char * name, objnum_t objnum);
@@ -282,7 +284,7 @@ void verify_native_methods(void) {
     list_t   * errors;
     list_t   * code = list_new(0);
     native_t * native;
-    register int x;
+    register   int x;
     nh_t     * nh = (nh_t *) NULL;
 
     /* check the methods we know about */
@@ -303,12 +305,14 @@ void verify_native_methods(void) {
         lookup_retrieve_name(name, &objnum);
         ident_discard(name);
   
+        /* die? */
         if (objnum == INV_OBJNUM) {
             printf("WARNING: Unable to find object for native $%s.%s()\n",
                    native->bindobj, native->name);
             continue;
         }
 
+        /* pull the object or die if we cant */
         obj = cache_retrieve(objnum);
         if (obj == (object_t *) NULL) {
             printf("WARNING: Unable to retrieve object #%li ($%s)\n",
@@ -316,24 +320,34 @@ void verify_native_methods(void) {
             continue;
         }
 
+        /* is the name correct? */
         name = ident_get(native->name);
+        if (name == NOT_AN_IDENT) {
+            fformat(stdout,
+                   "WARNING: Invalid name \"%s\" for native method on \"%O\"\n",
+                   native->name, obj->objnum);
+            cache_discard(obj);
+            continue;
+        }
+
+        /* get a copy to reference the actual method name */
         mname = ident_dup(name);
 
         /* see if we have defined it already */
         nh = find_defined_native_method(objnum, name);
 
-        /* yup, change 'id' to be the right name */
+        /* If so, see if we need to change the method name appropriately */
         if (nh != (nh_t *) NULL) {
-            if (nh->now != NOT_AN_IDENT) {
+            if (nh->method != NOT_AN_IDENT) {
                 ident_discard(mname);
-                mname = ident_dup(nh->now);
+                mname = ident_dup(nh->method);
             }
         }
 
-        /* find it on the object */
+        /* now find it on the object, use 'mname' as the method name */
         method = object_find_method(objnum, mname);
 
-        /* it does not exist, compile a blank one */
+        /* it does not exist, compile an empty method */
         if (method == NULL) {
             compile_method:
 
@@ -350,20 +364,20 @@ void verify_native_methods(void) {
 
             method_discard(method);
 
-        /* it was prototyped, set the native structure pointer */
+        /* it was prototyped, set the native structure pointer and
+           mark the object as dirty */
         } else if (method->m_flags & MF_NATIVE) {
             method->native = x;
             obj->dirty = 1;
 
             if (nh != (nh_t *) NULL)
                 nh->valid = 1;
-
         } else {
             if (!force_natives) {
                 fformat(stdout, "WARNING: method definition %O.%s() overrides native method.\n", obj->objnum, ident_name(mname));
             } else {
                 object_del_method(obj, mname);
-                goto compile_method;
+                goto compile_method; /* jump up and compile the method */
             }
         }
 
@@ -379,11 +393,11 @@ void verify_native_methods(void) {
         nh = nhs;
         nhs = nh->next;
 
-        if (nh->now != NOT_AN_IDENT) {
-            name = nh->now;
-            ident_discard(nh->name);
+        if (nh->method != NOT_AN_IDENT) {
+            name = nh->method;
+            ident_discard(nh->native);
         } else {
-            name = nh->name;
+            name = nh->native;
         }
 
         if (nh->valid) {
@@ -818,8 +832,9 @@ INTERNAL void handle_varcmd(char * line, char * s, int new, int access) {
             s++;
             NEXT_WORD(s);
             data_from_literal(&d, s);
-            if (d.type == -1)
-                WARN(("data is unparsable, defaulting to '0'."));
+            if (d.type == -1) {
+                WARN(("rrkdata is unparsable, defaulting to '0'."));
+            }
         }
 
         if (d.type < 0) {
@@ -883,8 +898,8 @@ INTERNAL int get_method_name(char * s, idref_t * id) {
 
 INTERNAL void handle_bind_nativecmd(FILE * fp, char * s) {
     idref_t    nat;
-    idref_t    now;
-    Ident      inat, inow;
+    idref_t    meth;
+    Ident      inat, imeth;
     nh_t     * n = (nh_t *) NULL;
 
     s += get_method_name(s, &nat);
@@ -894,26 +909,29 @@ INTERNAL void handle_bind_nativecmd(FILE * fp, char * s) {
 
     NEXT_WORD(s);
 
-    s += get_method_name(s, &now);
+    s += get_method_name(s, &meth);
     
-    if (nat.str[0] == (char) NULL || now.str[0] == (char) NULL)
+    if (nat.str[0] == (char) NULL || meth.str[0] == (char) NULL)
         DIE("Invalid method name in bind_native directive.\n")
 
     inat = ident_get(nat.str);
-    inow = ident_get(now.str);
+    imeth = ident_get(meth.str);
 
-    n = find_defined_native_method(cur_obj->objnum, inow);
-    if (n != (nh_t *) NULL) {
-        if (n->now != NOT_AN_IDENT)
-            ident_discard(n->now);
-        ident_discard(n->name);
-        n->name = ident_dup(inat);
-        n->now = ident_dup(inow);
-    } else
+    n = find_defined_native_method(cur_obj->objnum, imeth);
+    if (n == (nh_t *) NULL)
         DIE("Attempt to bind_native to method which is not native.\n")
 
-    ident_discard(inow);
+    /* if they've already bound it, we have precedence */
+    if (n->method != NOT_AN_IDENT)
+        ident_discard(n->method);
+    ident_discard(n->native);
+
+    /* remember the new method we are bound to */
+    n->native = ident_dup(inat);
+    n->method = ident_dup(imeth);
+
     ident_discard(inat);
+    ident_discard(imeth);
 }
 
 INTERNAL void handle_methcmd(FILE * fp, char * s, int new, int access) {
@@ -1475,7 +1493,6 @@ void dump_object(long objnum, FILE *fp) {
     int        first,
                i;
     method_t * meth;
-    char     * s;
 
     obj = cache_retrieve(objnum);
 
@@ -1567,14 +1584,10 @@ void dump_object(long objnum, FILE *fp) {
         /* if it is native, and they have renamed it, put a rename
            directive down */
         if (meth->m_flags & MF_NATIVE) {
-        fputs(ident_name(meth->name), stdout); fflush(stdout);
-        fprintf(stdout, " %d ", meth->native); fflush(stdout);
-SEGV:   fputs(natives[meth->native].name, stdout); fflush(stdout);
-        fputc(10, stdout); fflush(stdout);
             if (strcmp(ident_name(meth->name), natives[meth->native].name))
-            fprintf(fp, "bind_native .%s() .%s();\n\n",
-                    natives[meth->native].name,
-                    ident_name(meth->name));
+                fprintf(fp, "bind_native .%s() .%s();\n\n",
+                        natives[meth->native].name,
+                        ident_name(meth->name));
         }
     }
 

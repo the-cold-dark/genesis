@@ -33,6 +33,7 @@ NATIVE_METHOD(substr) {
     int  start,
          len,
          string_len;
+    string_t * str;
 
     INIT_2_OR_3_ARGS(STRING, INTEGER, INTEGER)
 
@@ -50,7 +51,13 @@ NATIVE_METHOD(substr) {
               "The substring extends to %d, past the end of the string (%d).",
               start + len, string_len))
 
-    RETURN_STRING(string_substring(_STR(ARG1), start, len))
+    printf("STRING: %s\n", string_chars(_STR(ARG1)));
+    fflush(stdout);
+    str = string_substring(_STR(ARG1), start, len);
+    printf("STRING: %s\n", string_chars(str));
+    fflush(stdout);
+
+    RETURN_STRING(str);
 }
 
 NATIVE_METHOD(explode) {

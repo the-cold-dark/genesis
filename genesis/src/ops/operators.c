@@ -513,6 +513,7 @@ void op_message(void) {
     data_t *target;
     long message, objnum;
     Frob *frob;
+    int   rrg;
 
     ind = cur_frame->opcodes[cur_frame->pc++];
     message = object_get_ident(cur_frame->method->object, ind);
@@ -520,36 +521,36 @@ void op_message(void) {
     arg_start = arg_starts[--arg_pos];
     target = &stack[arg_start - 1];
 
-#if DISABLED
-    write_err("##message: %s[%d] #%d #%d.%I %d",
-	      ident_name(message),
-              ind,
-	      cur_frame->object->objnum, 
-	      cur_frame->method->object->objnum,
-	      (cur_frame->method->name != NOT_AN_IDENT)
-	       ? cur_frame->method->name
-	       : opcode_id,
-	      cur_frame->method->name);
+#if 0
+    write_err("##call %s [%d]", ident_name(message), arg_start);
+
+    rrg = arg_start;
+    while (rrg--)
+        write_err("## [%d] %D", rrg, &stack[rrg]);
+
+    fflush(stderr); fflush(stdout);
 #endif
 
-    if (target->type == OBJNUM) {
-	objnum = target->u.objnum;
-    } else if (target->type == FROB) {
-	/* Convert the frob to its rep and pass as first argument. */
-	frob = target->u.frob;
-	objnum = frob->cclass;
-	*target = frob->rep;
-	arg_start--;
-	TFREE(frob, 1);
-    } else {
-        /* JBB - changed to support messages to all object types */
-        if (!lookup_retrieve_name(data_type_id(target->type), &objnum)) {
-            cthrow(objnf_id,
-                   "No object for data type %I.",
-                   data_type_id(target->type));
-            return;
-	}
-        arg_start--;
+    switch (target->type) {
+        case OBJNUM:
+            objnum = target->u.objnum;
+            break;
+        case FROB:
+            /* Convert the frob to its rep and pass as first argument. */
+            frob = target->u.frob;
+            objnum = frob->cclass;
+            *target = frob->rep;
+            arg_start--;
+            TFREE(frob, 1);
+            break;
+        default:
+            if (!lookup_retrieve_name(data_type_id(target->type), &objnum)) {
+                cthrow(objnf_id, "No object for data type %I.",
+                       data_type_id(target->type));
+                return;
+            }
+            arg_start--;
+            break;
     }
 
     /* Attempt to send the message. */

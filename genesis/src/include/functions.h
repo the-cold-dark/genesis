@@ -135,7 +135,7 @@ COLDC_FUNC(uppercase);
 COLDC_FUNC(lowercase);
 COLDC_FUNC(strcmp);
 COLDC_FUNC(strfmt);
-COLDC_FUNC(log);
+COLDC_FUNC(dblog);
 COLDC_FUNC(backup);
 COLDC_FUNC(shutdown);
 COLDC_FUNC(set_heartbeat);
@@ -155,5 +155,16 @@ COLDC_FUNC(sender);
 COLDC_FUNC(caller);
 COLDC_FUNC(task_id);
 COLDC_FUNC(ticks_left);
+COLDC_FUNC(sin);
+COLDC_FUNC(exp);
+COLDC_FUNC(log);
+COLDC_FUNC(cos);
+COLDC_FUNC(tan);
+COLDC_FUNC(sqrt);
+COLDC_FUNC(asin);
+COLDC_FUNC(acos);
+COLDC_FUNC(atan);
+COLDC_FUNC(pow);
+COLDC_FUNC(atan2);
 
 #endif

@@ -116,6 +116,7 @@ void init_defs(void);
 #define B_FAILURE 0  /* boolean failure */
 #define TRUE 1
 #define FALSE 0
+#define ANY_TYPE 0
 
 #define DISABLED 0   /* I use this in place of #if 0, -Brandon */
 

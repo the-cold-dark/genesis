@@ -13,7 +13,7 @@
 #include "log.h"       /* op_log() */
 #include "execute.h"
 
-void func_log(void) {
+void func_dblog(void) {
     data_t * args;
 
     /* Accept a string. */

@@ -575,6 +575,7 @@ INTERNAL void execute(void) {
                     opcode_id),
                 line_number(cur_frame->method, cur_frame->pc),
                 op_table[cur_frame->opcodes[cur_frame->pc]].name);
+            printf("%d\n", opcode); fflush(stdout);
 #endif
 
             cur_frame->last_opcode = opcode;

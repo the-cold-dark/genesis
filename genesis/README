@@ -1,8 +1,61 @@
-**** Read the file USING for 0.4-3 release-specific notes!!! ****
 
-Documentation on using this software package can be found at:
+------------------------------------------------------------------------
+INSTALL/COMPILATION
 
-    http://www.cold.org/Genesis/
+To compile simply run 'configure' followed by 'make'.
+
+Installation is vague, as most people prefer to shift the binaries
+around, generally you should just copy 'coldcc' and 'genesis' to your
+world directory (wherever it may be).
+
+------------------------------------------------------------------------
+1.0 RELEASE INFORMATION
+
+This is an ALPHA release, be forewarned.
+
+If you are using a 0.4-0 database, you can upgrade easilly.  Dump your
+database to text (coldcc -d), edit it and search for the following
+functions, replacing them with their native counterparts.  Make sure
+you have the objects in your database for those counterparts, and that
+the methods they are using are not already defined:
+
+      hostname()      =>   $network.hostname()
+      ip()            =>   $network.ip()
+      status()        =>   $sys.status()
+      next_objnum()   =>   $sys.next_objnum()
+      version()       =>   $sys.version()
+      strftime()      =>   $time.format()
+      encode()        =>   $http.encode()
+      decode()        =>   $http.decode()
+
+The following function has also changed, in leiu of using the function name
+'log()' for the logarithmic float function.
+
+      log()           =>   dblog()
+
+You will also have to update any calls to strfmt(), two changes to the
+function have been made:
+
+      1 - Data arguments are no longer specified in a list, instead
+          they simply follow the format.
+      2 - Formatting has changed, read the documentation at:
+
+             http://www.cold.org/ColdC/Functions/strfmt.html
+
+Known problems:
+
+    * Using (data).method() with a native method will cause a segmentation
+      violation (dont do this).  I.e. [1,2,3].reverse(), where 'reverse'
+      is a native method.
+
+If you want to blow away any regular method definitions with their
+native counterpart (such as $list.length(), etc) then you compile the
+textdb using the '-f' flag to coldcc (force native methods to override
+existing methods).  I would suggest examining each native method first,
+they are listed in 'src/modules/moddef.h'
+
+------------------------------------------------------------------------
+FURTHER INFORMATION
 
 The following email lists are available:
 
@@ -23,6 +76,52 @@ subscribe coldcore
 
 All lists are at cold.org (i.e. coldstuff@cold.org).
 
-Further information on cold and the ColdX Project can be obtained from:
+Documentation:
 
-    http://www.cold.org/
+    for Genesis:     http://www.cold.org/Genesis/
+    for ColdC:       http://www.cold.org/ColdC/
+
+------------------------------------------------------------------------
+NOTES
+
+Verified to compile on:
+
+    * FreeBSD 2.1-R
+    * DEC OSF/1 2.0 (Note: it will have problems on a DEC alpha processor)
+    * DEC Ultrix 4.4
+    * Sun Solaris 2.5
+
+You will get the best results in FreeBSD, as it is the development platform
+so possible problems are immediately found.
+
+POST 1.0 TODO:
+    * overridable methods: change searching to take the first method
+      found.  Do the check for !overridable methods at the time the method
+      is set as !overridable, do not allow methods to be set as overridable
+      if they are overriden on descendants.  Do not allow methods to be
+      added if an ancestor defines it as !overridable.
+    * file ops should use the builtin file descriptor functions
+    * sanity checks are still not done, do them.
+    * get execute to use file i/o, so calling execute would be paramount
+      to using fopen() on a file (shag code from apache CGI)
+
+Possiblilities:
+
+    * servers bound to dead objects (what happens?)
+    * forking (requires a bit of rewriting in the actual interpreter)
+    * send_to() builtin, this would be equivalent to the simple loop:
+
+          for obj in (.contents())
+              obj.tell("you are all silly");
+
+      Except for that it would be much more efficient.  Equivallently
+      it would look like:
+
+          send_to(.contents(), 'tell, ["you are all silly"]);
+
+      This could be a native method.  Drawbacks: it is very abstract.
+
+    * 'retry' jump (ala continue, etc, for catch statements)
+    * "\n" in strings should be character '10', not '\' and 'n'.
+    * PERL-extensions to regexps (i.e. \s etc)
+

@@ -148,7 +148,7 @@ static Op_info op_info[] = {
     FDEF(F_DATA,         "data",         data)
 
     /* System functions */
-    { F_LOG,               "log",                 func_log },
+    { F_DBLOG,             "dblog",               func_dblog },
     { F_BACKUP,            "backup",              func_backup },
     { F_SHUTDOWN,          "shutdown",            func_shutdown },
     { F_SET_HEARTBEAT,     "set_heartbeat",       func_set_heartbeat },
@@ -225,9 +225,20 @@ static Op_info op_info[] = {
     { F_BIND_FUNCTION,    "bind_function",   func_bind_function },
     { F_UNBIND_FUNCTION,  "unbind_function", func_unbind_function },
     { F_RANDOM,           "random",          func_random },
-    { F_MIN,            "min",             func_min },
-    { F_MAX,            "max",             func_max },
-    { F_ABS,            "abs",             func_abs },
+    { F_MIN,            "min",               func_min },
+    { F_MAX,            "max",               func_max },
+    { F_ABS,            "abs",               func_abs },
+    { F_SIN,            "sin",               func_sin },
+    { F_EXP,            "exp",               func_exp },
+    { F_LOG,            "log",               func_log },
+    { F_COS,            "cos",               func_cos },
+    { F_TAN,            "tan",               func_tan },
+    { F_SQRT,           "sqrt",              func_sqrt },
+    { F_ASIN,           "asin",              func_asin },
+    { F_ACOS,           "acos",              func_acos },
+    { F_ATAN,           "atan",              func_atan },
+    { F_POW,            "pow",               func_pow },
+    { F_ATAN2,          "atan2",             func_atan2 },
 
     /* -------- from here on are native functions -------- */
     /* Operations on strings (stringop.c). */

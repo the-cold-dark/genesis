@@ -6,6 +6,10 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+0.4-4  [16-Apr-96] Brandon Gillespie
+      * last function change to get the math functions to sit correctly,
+        'log()' has been changed to 'dblog()', and the logarithmic float
+        function is 'log()'.
 0.4-3  [16-Apr-96] Brandon Gillespie
       * This release is 1.0 alpha
       * The following functions have been removed, because their native

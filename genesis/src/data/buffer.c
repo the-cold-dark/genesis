@@ -350,7 +350,7 @@ int buffer_index(cBuf * buf, uChar * ss, int slen, int origin) {
         } else {
             slen--;
             lastp = p - 1;
-            while (p) {
+            while (p && (p+slen < s+len)) {
                 if (MEMCMP(p + 1, ss + 1, slen) == 0)
                     return (p - s) + 1;
                 len -= (p - lastp);

@@ -391,6 +391,7 @@ Int object_change_parents(Obj *object, cList *parents)
     }
 
     /* Invalidate the method cache. */
+    /* NOTE:  is there a better way to invalidate this? */
     cur_stamp++;
 
     object->dirty = 1;

@@ -2405,9 +2405,13 @@ while [ "$loop" = "yes" ]; do
     read input
 
     if [ x$input = x ]; then
-        INSTALL=`echo ~/cold`
-    else
-        INSTALL=`echo $input`
+        input="~/cold"
+    fi
+
+    INSTALL=`eval echo $input`
+    if [ `echo $INSTALL | cut -c1` = "~" ]; then
+        echo "Standard ~ escape doesnt work in this shell, trying workaround.."
+        INSTALL=`eval echo $INSTALL | sed -e "s:~:$HOME:"`
     fi
 
     if [ ! -d "$INSTALL" ]; then

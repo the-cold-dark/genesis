@@ -307,45 +307,6 @@ cList * object_ancestors_breadth(Long objnum) {
     return list;
 }
 
-/* slight variation for descendants */
-cList * object_descendants(Long objnum) {
-    Hash   * h;
-    Obj    * obj;
-    Obj    * child;
-    int      pos;
-    cList  * list;
-    cData  * key,
-           * c;
-
-    START_SEARCH();
-
-    obj = cache_retrieve(objnum);
-    h = hash_new_with(obj->children);
-    for (pos=0; list_length(h->keys) > pos; pos++) {
-        c = list_elem(h->keys, pos);
-        child = cache_retrieve(c->u.objnum);
-
-        if (SEARCHED(child)) {
-            cache_discard(child);
-            continue;
-        }
-        HAVE_SEARCHED(child);
-
-        list = child->children;
-        for (key = list_first(list); key; key = list_next(list, key)) {
-            if (hash_find(h, key) == F_FAILURE)
-                h = hash_add(h, key);
-        }
-        cache_discard(child);
-    }
-
-    END_SEARCH();
-
-    list = list_dup(h->keys);
-    hash_discard(h);
-    return list;
-}
-
 Int object_has_ancestor(Long objnum, Long ancestor)
 {
     Int retv;

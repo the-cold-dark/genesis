@@ -661,19 +661,6 @@ COLDC_FUNC(ancestors) {
     list_discard(ancestors);
 }
 
-COLDC_FUNC(descendants) {
-    cList * descendants;
-
-    /* Accept no arguments. */
-    if (!func_init_0())
-        return;
-
-    /* Get an descendants list from the object. */
-    descendants = object_descendants(cur_frame->object->objnum);
-    push_list(descendants);
-    list_discard(descendants);
-}
-
 COLDC_FUNC(has_ancestor) {
     cData * args;
     Int result;

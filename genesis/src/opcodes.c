@@ -146,7 +146,6 @@ static Op_info op_info[] = {
     FDEF(F_PARENTS,      "parents",      parents)
     FDEF(F_CHILDREN,     "children",     children)
     FDEF(F_ANCESTORS,    "ancestors",    ancestors)
-    FDEF(F_DESCENDANTS,  "descendants",  descendants)
     FDEF(F_HAS_ANCESTOR, "has_ancestor", has_ancestor)
     FDEF(F_SIZE,         "size",         size)
     FDEF(F_CREATE,       "create",       create)

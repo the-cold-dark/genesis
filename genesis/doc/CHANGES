@@ -6,6 +6,14 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-34 [07-Jul-97] Brandon
+      * removed descendants()--its algorithm is inherently flawed and
+        may misorder objects if a parent loop exists and parents are
+        on different levels (Brandon)
+      * changed textdumping to use a variation on the original scheme
+        with searches, but instead using Hash (Brandon)
+      * adjusted configure a little more, to handle ~user escapes
+        on systems where ~user escapes does not work (Brandon)
 1.0-33 [03-Jul-97] Brandon, Brad
       * Negative objnums are allowed, and now represent invalid aspects
         of the respective number (so #-1525 would represent the objnum

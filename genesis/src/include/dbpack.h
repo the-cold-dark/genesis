@@ -17,11 +17,11 @@ Ident read_ident    (cBuf * buf, Long * buf_pos);
 Long  read_long     (cBuf * buf, Long * buf_pos);
 Float read_float    (cBuf * buf, Long * buf_pos);
 
-Int  size_object(Obj * obj);
-Int  size_data(cData *data);
-Int  size_ident(Ident id);
-Int  size_long(Long n);
-Int  size_float(Float f);
+Int  size_object(Obj * obj, int memory_size);
+Int  size_data(cData *data, int memory_size);
+Int  size_ident(Ident id, int memory_size);
+Int  size_long(Long n, int memory_size);
+Int  size_float(Float f, int memory_size);
 
 #endif
 

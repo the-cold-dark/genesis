@@ -144,21 +144,21 @@
 //
 //     71, 173, 281, 409, 541, 659, 809
 */
-#define NAME_CACHE_SIZE 173
+#define NAME_CACHE_SIZE 25601
 
 /*
 // ---------------------------------------------------------------------
 // size of method cache. use prime numbers and follow guidelines as 
 // with the name cache above.
 */
-#define METHOD_CACHE_SIZE 2551
+#define METHOD_CACHE_SIZE 1000003
 
 /*
 // ---------------------------------------------------------------------
 // size of ancestor cache. use prime numbers and follow guidelines as 
 // with the name cache above.
 */
-#define ANCESTOR_CACHE_SIZE 2551
+#define ANCESTOR_CACHE_SIZE 25601
 #ifdef BUILDING_COLDCC
 /*
 // ---------------------------------------------------------------------

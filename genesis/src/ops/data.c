@@ -14,10 +14,25 @@ COLDC_FUNC(size) {
     INIT_0_OR_1_ARGS(ANY_TYPE);
 
     if (argc) {
-        size = size_data(&args[0]);
+        size = size_data(&args[0], 0);
         pop(1);
     } else {
-        size = size_object(cur_frame->object);
+        size = size_object(cur_frame->object, 0);
+    }
+
+    push_int(size);
+}
+
+COLDC_FUNC(memory_size) {
+    Int size;
+
+    INIT_0_OR_1_ARGS(ANY_TYPE);
+
+    if (argc) {
+        size = size_data(&args[0], 1);
+        pop(1);
+    } else {
+        size = size_object(cur_frame->object, 1);
     }
 
     push_int(size);

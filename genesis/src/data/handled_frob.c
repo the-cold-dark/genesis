@@ -34,14 +34,14 @@ void unpack_handled (cBuf *buf, Long *buf_pos, cData *d)
     d->u.instance = (void*) h;
 }
 
-int size_handled (cData *d)
+int size_handled (cData *d, int memory_size)
 {
     HandledFrob *h = HANDLED_FROB(d);
     Int size = 0;
 
-    size += size_long(h->cclass);
-    size += size_data(&h->rep);
-    size += size_ident(h->handler);
+    size += size_long(h->cclass, memory_size);
+    size += size_data(&h->rep, memory_size);
+    size += size_ident(h->handler, memory_size);
     return size;
 }
 

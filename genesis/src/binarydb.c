@@ -50,6 +50,11 @@ pthread_mutex_t db_mutex;
 #include "util.h"
 #include "moddef.h"
 
+/* suggested by xmath as possibly faster
+#define NEEDED(n, b)            (((n) + ((b) - 1)) / (b))
+#define ROUND_UP(n, b)          (((n) + ((b) - 1)) % (b))
+*/
+
 #define NEEDED(n, b)		(((n) % (b)) ? (n) / (b) + 1 : (n) / (b))
 #define ROUND_UP(a, m)		(((a) - 1) + (m) - (((a) - 1) % (m)))
 
@@ -704,6 +709,7 @@ Int simble_del(cObjnum objnum)
 {
     off_t offset;
     Int size;
+    cBuf *buf;
 
     /* Get offset and size of key. */
     if (!lookup_retrieve_objnum(objnum, &offset, &size))
@@ -730,8 +736,11 @@ Int simble_del(cObjnum objnum)
 	return 0;
     }
 
-    fputs("delobj", database_file);
-    fwrite(pad_string->s, sizeof(uChar), BLOCK_SIZE-6, database_file);
+    buf = buffer_new(size);
+    buf->len = size;
+    memset(buf->s, 0, size);
+    fwrite(buf->s, sizeof(uChar), size, database_file);
+    buffer_discard(buf);
     fflush(database_file);
 
     UNLOCK_DB("simble_del")

@@ -60,7 +60,9 @@ struct cData {
         cDict    * dict;
         cBuf     * buffer;
 	void     * instance;
+#ifdef USE_PARENT_OBJS
 	Obj	 * object;
+#endif
     } u;
     Int type;
 };
@@ -88,25 +90,26 @@ struct cFrob {
 };
 
 
-typedef cBuf * (*ciWrData) (cBuf*, cData*);
-typedef void   (*ciRdData) (cBuf*, Long*, cData*);
-typedef int    (*ciSzData) (cData*);
-typedef int    (*ciCmpData)(cData*, cData*);
-typedef void   (*ciDupData)(cData*, cData*);
-typedef void   (*ciDisData)(cData*);
-typedef cStr * (*ciStrData)(cStr*, cData*, int);
+typedef cBuf * (*ciWrData)  (cBuf*, cData*);
+typedef void   (*ciRdData)  (cBuf*, Long*, cData*);
+typedef int    (*ciSzData)  (cData*, int);
+typedef int    (*ciHashData)(cData*);
+typedef int    (*ciCmpData) (cData*, cData*);
+typedef void   (*ciDupData) (cData*, cData*);
+typedef void   (*ciDisData) (cData*);
+typedef cStr * (*ciStrData) (cStr*, cData*, int);
 
 typedef struct cInstance {
-    char *name;
-    Ident id_name;
-    ciWrData pack;
-    ciRdData unpack;
-    ciSzData size;
-    ciCmpData compare;
-    ciSzData hash;
-    ciDupData dup;
-    ciDisData discard;
-    ciStrData addstr;
+    char      *name;
+    Ident      id_name;
+    ciWrData   pack;
+    ciRdData   unpack;
+    ciSzData   size;
+    ciCmpData  compare;
+    ciHashData hash;
+    ciDupData  dup;
+    ciDisData  discard;
+    ciStrData  addstr;
 } cInstance;
 
 /* io.h shouldn't necessarily be here, but it has to be here before other

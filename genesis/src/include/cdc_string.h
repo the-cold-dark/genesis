@@ -15,7 +15,7 @@ cStr * string_dup(cStr * str);
 
 cBuf * string_pack(cBuf *buf, cStr *str);
 cStr * string_unpack(cBuf *buf, Long *buf_pos);
-Int    string_packed_size(cStr *str);
+Int    string_packed_size(cStr *str, int memory_size);
 
 Int    string_cmp(cStr * str1, cStr * str2);
 cStr * string_fread(cStr *str, Int len, FILE *fp);

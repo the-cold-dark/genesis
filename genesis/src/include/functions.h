@@ -18,6 +18,7 @@ COLDC_FUNC(buf_to_str);
 COLDC_FUNC(buf_to_strings);
 COLDC_FUNC(str_to_buf);
 COLDC_FUNC(strings_to_buf);
+COLDC_FUNC(memory_size);
 COLDC_FUNC(size);
 COLDC_FUNC(type);
 COLDC_FUNC(frob_class);

@@ -222,6 +222,7 @@ static Op_info op_info[] = {
     FDEF(F_MATCH_REGEXP,          "match_regexp",          match_regexp),
     FDEF(F_MATCH_TEMPLATE,        "match_template",        match_template),
     FDEF(F_MAX,                   "max",                   max),
+    FDEF(F_MEMORY_SIZE,           "memory_size",           memory_size),
     FDEF(F_METHODOP,              "method",                method),
     FDEF(F_METHOD_ACCESS,         "method_access",         method_access),
     FDEF(F_METHOD_BYTECODE,       "method_bytecode",       method_bytecode),

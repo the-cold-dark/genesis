@@ -61,7 +61,7 @@ struct Obj {
     /* Information for the cache. */
     Int         refs;
     uInt        dirty;                 /* Flag: Object has been modified. */
-#ifdef CLEANER_THREAD
+#ifdef CLEAN_CACHE
     Int         ucounter;              /* counter: Object references */
 #endif
     uLong       search;                /* Last cache search to visit this */

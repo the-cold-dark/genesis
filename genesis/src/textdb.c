@@ -1721,8 +1721,9 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
                             ident_name(meth->name));
             }
         }
-        fputc('\n', fp);
+        //fputc('\n', fp);
     }
+        fputc('\n', fp);
 
     /* now dump it's children */
     if (obj->children) {

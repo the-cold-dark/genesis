@@ -91,11 +91,28 @@ cStr *string_unpack(cBuf *buf, Long *buf_pos) {
     return str;
 }
 
-Int string_packed_size(cStr *str) {
-    if (str)
-        return size_long(str->len) + str->len * sizeof(char);
+Int string_packed_size(cStr *str, int memory_size) {
+    int size = 0;
+
+    if (memory_size)
+    {
+        if (!str)
+            return 0;
+
+        size += sizeof(cStr);
+        /* size += hrm.. regexp is rare and a little complicated */
+    }
     else
-        return size_long(-1);
+    {
+        if (!str)
+            return size_long(-1, 0);
+
+        size += size_long(str->len, 0);
+    }
+
+    size += str->len * sizeof(char);
+
+    return size;
 }
 
 Int string_cmp(cStr *str1, cStr *str2) {

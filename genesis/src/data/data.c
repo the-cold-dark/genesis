@@ -95,8 +95,10 @@ Int data_cmp(cData *d1, cData *d2) {
 	    return 1;
 	return MEMCMP(d1->u.buffer->s, d2->u.buffer->s, d1->u.buffer->len);
 
+#ifdef USE_PARENT_OBJS
       case OBJECT:
 	return (d1->u.object->objnum == d2->u.object->objnum);
+#endif
 
       default: {
 	INSTANCE_RECORD(d1->type, r);
@@ -141,8 +143,10 @@ Int data_true(cData *d)
       case BUFFER:
 	return (d->u.buffer->len != 0);
 
+#ifdef USE_PARENT_OBJS
       case OBJECT:
 	return (d->u.object->objnum >= 0);
+#endif
 
       default:
 	return 1;
@@ -195,8 +199,10 @@ uLong data_hash(cData *d)
 	else
 	    return 300;
 
+#ifdef USE_PARENT_OBJS
       case OBJECT:
 	return d->u.object->objnum;
+#endif
 
     default: {
 	INSTANCE_RECORD(d->type, r);
@@ -254,9 +260,11 @@ void data_dup(cData *dest, cData *src)
 	dest->u.buffer = buffer_dup(src->u.buffer);
 	break;
 
+#ifdef USE_PARENT_OBJS
       case OBJECT:
 	dest->u.object = cache_grab(src->u.object);
 	break;
+#endif
 
       default: {
 	    INSTANCE_RECORD(src->type, r);
@@ -305,9 +313,11 @@ void data_discard(cData *data)
       case OBJNUM:
 	break;
 
+#ifdef USE_PARENT_OBJS
       case OBJECT:
 	cache_discard(data->u.object);
 	break;
+#endif
 
       default: {
 	INSTANCE_RECORD(data->type, r);
@@ -369,6 +379,7 @@ cStr *data_tostr(cData *data) {
       case BUFFER:
 	return string_from_chars("`[buffer]", 9);
 
+#ifdef USE_PARENT_OBSJ
       case OBJECT: {
           char       prefix[] = {'$', (char) NULL};
 
@@ -381,6 +392,7 @@ cStr *data_tostr(cData *data) {
 
           return string_add_chars(string_from_chars(prefix, 1), s, strlen(s));
       }
+#endif
 
       default:
 	return string_from_chars("<instance>",10);
@@ -506,6 +518,7 @@ cStr *data_add_literal_to_str(cStr *str, cData *data, int flags) {
 	}
 	return string_addc(str, ']');
 
+#ifdef USE_PARENT_OBJS
       case OBJECT: {
           char    pre = '$';
           cObjnum onum;
@@ -526,6 +539,7 @@ cStr *data_add_literal_to_str(cStr *str, cData *data, int flags) {
 	  str = string_addc(str, pre);
 	  return string_add_chars(str, s, strlen(s));
       }
+#endif
 
     default: {
 	INSTANCE_RECORD(data->type, r);
@@ -549,7 +563,9 @@ Long data_type_id(Int type)
       case FROB:	return frob_id;
       case DICT:	return dictionary_id;
       case BUFFER:	return buffer_id;
+#ifdef USE_PARENT_OBJS
       case OBJECT:	return object_id;
+#endif
     default:		{ INSTANCE_RECORD(type, r); return r->id_name; }
     }
 }

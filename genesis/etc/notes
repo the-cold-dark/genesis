@@ -124,4 +124,9 @@ RELEASE INFORMATION:
       * Port to Mac OS X. (Bruce)
       * Remove regsub references (not implementd/used). (Bruce)
       * Fixed README. (Bruce)
+      * Add memory_size() builtin to complement size() which deals with the
+        on disk size of objects and data. (Brad)
+      * Alter binardby's on-disk scribbling of deleted objects, no 0's the
+        entire object's region rather than just the first block and no longer
+        writes out 'delobj' as the first part of that block. (Brad)
 

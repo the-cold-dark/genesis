@@ -7,6 +7,16 @@ contributors to that version.
 -------------------------------------------------------------------------
 
 
+1.1.10 [9-Jan-2002]
+      * fix object size for objects without an objnum (Brad)
+      * fix parent list leak in binarydb decompilation (Brad)
+      * fix method_bytecode() bug with 'catch any' (Allen Noe)
+      * fix gmt offset calculation on some platforms (Brandon)
+      * port to Mac OS X (Bruce)
+      * remove regsub references (not implemented/used) (Bruce)
+      * add calling_method() (Psyclone)
+      * fixed README (Bruce)
+
 1.1.9  [1-Oct-100]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)
       * misc cleanup (Generic Bob)
@@ -14,7 +24,6 @@ contributors to that version.
       * fix for ctime() in Borland (Psyclone)
       * Fixed inconsistent behavior in stridx(), listidx(), and
         bufidx() when presented with an empty first argument. (Bruce)
-
 1.1.8  [20-Nov-99] Brandon, Allen Noe
       * Committed the bufidx() fix to the stable branch.  Due to
         inexperience with CVS the fix did not get moved to the STABLE

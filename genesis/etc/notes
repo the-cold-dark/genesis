@@ -4,18 +4,13 @@ a higher level of run-time stability for this release which you will
 not have with the DEV release (alpha developmental).
 
 Help can be found through the web site, or on the mailing list
-(genesis@cold.org).  A few pointer URLs:
+(coldstuff@cold.org).  A few pointer URLs:
 
-      http://www.cold.org/Software/Genesis/
-      http://www.cold.org/info/lists
+      http://web.cold.org/genesis/
+      http://web.cold.org/contact.html
 
 RELEASE INFORMATION:
-1.1.10 [9-Jan-2002]
-      * fix object size for objects without an objnum (Brad)
-      * fix parent list leak in binarydb decompilation (Brad)
-      * fix method_bytecode() bug with 'catch any' (Allen Noe)
-      * fix gmt offset calculation on some platforms (Brandon)
-      * port to Mac OS X (Bruce)
-      * remove regsub references (not implemented/used) (Bruce)
-      * add calling_method() (Psyclone)
-      * fixed README (Bruce)
+1.1.11 [??]
+      * fix BUFFER in BUFFER.  Use buffer_index which contained a fix
+        not propagated to the previously duplicated code in op_in
+        (Allen Noe)

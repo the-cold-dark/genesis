@@ -32,8 +32,6 @@ public method .destroy() {
     return destroy();
 };
 
-new object $buffer: $root;
-
 	// --------------------
 	// testobj1
 	//
@@ -57,13 +55,6 @@ eval {
     // comment 1
     // comment 2
 };
-
-new object $list: $root;
-
-public method .sorted_index(): native;
-public method .sorted_insert(): native;
-public method .sorted_delete(): native;
-public method .sorted_validate(): native;
 
 // run tests on $sys
 object $sys;
@@ -691,6 +682,7 @@ eval {
 		  "am" in "llama" ==> 3
 		  "bc" in "llama" ==> 0
 		  4 in 'foo ==> ~type
+		  `[10, 13] in `[10, 10] ==> 0
 		 Logic
 		  1 && 1 ==> 1
 		  1 && 0 ==> 0
@@ -782,6 +774,7 @@ eval {
     dblog("  \"am\" in \"llama\" ==> " + toliteral("am" in "llama"));
     dblog("  \"bc\" in \"llama\" ==> " + toliteral("bc" in "llama"));
     dblog("  4 in 'foo ==> " + toliteral((| 4 in 'foo |)));
+    dblog("  `[10, 13] in `[10, 10] ==> " + toliteral((| `[10, 13] in `[10, 10] |)));
     dblog(" Logic");
     dblog("  1 && 1 ==> " + toliteral(1 && 1));
     dblog("  1 && 0 ==> " + toliteral(1 && 0));
@@ -1539,53 +1532,30 @@ eval {
 		  `[1, 2, 3, 4, 5, 5], "a" -> ~type
 		  `[1, 2, 3, 4, 5, 5], 5, 7 -> ~range 1
 		  `[1, 2, 3, 4, 5, 5], 5, -7 -> ~range 2
-		  `[1, 2, 1, 2, 1, 2], `[1, 2], 3 -> 3
-		  `[1, 2, 1, 2, 1, 2], `[1, 2], 4 -> 5
-		  `[1, 2, 1, 2, 1, 2], `[1, 2], -1 -> 5
-		  `[1, 2, 1, 2, 1, 2], `[1, 2], -2 -> 5
-		  `[1, 2, 1, 2, 1, 2], `[1, 2], -3 -> 3
 		  `[0, 0, 97, 0, 0, 98, 92, 65, 99], `[92, 65], 6 -> 7
-
 
 
 eval {
     var a, b;
 
     a = `[1, 2, 3, 4, 5, 5];
-    b = `[1, 2, 1, 2, 1, 2];
 
     dblog("Buffer test 6");
     dblog("  " + toliteral(a) + ", 1 -> " + toliteral(bufidx(a, 1)));
     dblog("  " + toliteral(a) + ", 5 -> " + toliteral(bufidx(a, 5)));
     dblog("  " + toliteral(a) + ", 5, -1 -> " + toliteral(bufidx(a, 5, -1)));
     dblog("  " + toliteral(a) + ", 5, -3 -> " + toliteral(bufidx(a, 5, -3)));
-    dblog("  " + toliteral(a) + ", `[5, 6] -> " +
-                 toliteral(bufidx(a, `[5, 6])));
-    dblog("  " + toliteral(a) + ", `[2, 3] -> " +
-                 toliteral(bufidx(a, `[2, 3])));
-    dblog("  " + toliteral(a) + ", \"a\" -> " +
-                 toliteral((| bufidx(a, "a") |)));
-    dblog("  " + toliteral(a) + ", 5, 7 -> " +
-                 toliteral((| bufidx(a, 5, 7) |)) + " 1");
-    dblog("  " + toliteral(a) + ", 5, -7 -> " +
-                 toliteral((| bufidx(a, 5, -7) |)) + " 2");
-    dblog("  " + toliteral(b) + ", `[1, 2], 3 -> " +
-                 toliteral((| bufidx(b, `[1, 2], 3) |)));
-    dblog("  " + toliteral(b) + ", `[1, 2], 4 -> " +
-                 toliteral((| bufidx(b, `[1, 2], 4) |)));
-    dblog("  " + toliteral(b) + ", `[1, 2], -1 -> " +
-                 toliteral((| bufidx(b, `[1, 2], -1) |)));
-    dblog("  " + toliteral(b) + ", `[1, 2], -2 -> " +
-                 toliteral((| bufidx(b, `[1, 2], -2) |)));
-    dblog("  " + toliteral(b) + ", `[1, 2], -3 -> " +
-                 toliteral((| bufidx(b, `[1, 2], -3) |)));
+    dblog("  " + toliteral(a) + ", `[5, 6] -> " + toliteral(bufidx(a, `[5, 6])));
+    dblog("  " + toliteral(a) + ", `[2, 3] -> " + toliteral(bufidx(a, `[2, 3])));
+    dblog("  " + toliteral(a) + ", \"a\" -> " + toliteral((| bufidx(a, "a") |)));
+    dblog("  " + toliteral(a) + ", 5, 7 -> " + toliteral((| bufidx(a, 5, 7) |)) + " 1");
+    dblog("  " + toliteral(a) + ", 5, -7 -> " + toliteral((| bufidx(a, 5, -7) |)) + " 2");
 
     // this is based on an actual bug--easiest to just use the test case
     a = `[0, 0, 97, 0, 0, 98, 92, 65, 99];
     b = `[92, 65];
     dblog("  " + toliteral(a) + ", " + b + ", 6 -> " +
                  toliteral((| bufidx(a, b, 6) |)));
-
 };
 
 	// Buffer test 7
@@ -1681,34 +1651,6 @@ eval {
 eval {
     dblog("Buffer test 11");
     dblog("  " + toliteral(strings_to_buf(["a", "b", "alal"])));
-};
-
-	// Buffer test 12
-	//
-	// Testing bufsub()
-	// Output:
-		Buffer test 12
-		  `[1, 2, 3, 2, 4] -> `[1, 3, 3, 3, 4]
-		  `[1, 2, 3, 2, 4] -> `[4, 2, 3, 2, 4]
-		  `[1, 2, 3, 2, 4] -> `[4, 5, 2, 3, 2, 4]
-		  `[1, 2, 3, 2, 4] -> `[4, 5, 3, 2, 4]
-		  `[1, 2, 3, 2, 4] -> `[4, 3, 2, 4]
-		  `[1, 2, 3, 2, 4] -> `[1, 2, 3, 4]
-		  `[1, 2, 3, 2, 4] -> `[1, 2, 2, 2, 3, 2, 2, 2, 4]
-
-eval {
-    var a;
-
-    dblog("Buffer test 12");
-    a = `[1, 2, 3, 2, 4];
-    dblog("  " + toliteral(a) + " -> " + toliteral(bufsub(a, `[2], `[3])));
-    dblog("  " + toliteral(a) + " -> " + toliteral(bufsub(a, `[1], `[4])));
-    dblog("  " + toliteral(a) + " -> " + toliteral(bufsub(a, `[1], `[4, 5])));
-    dblog("  " + toliteral(a) + " -> " + toliteral(bufsub(a, `[1, 2], `[4, 5])));
-    dblog("  " + toliteral(a) + " -> " + toliteral(bufsub(a, `[1, 2], `[4])));
-    dblog("  " + toliteral(a) + " -> " + toliteral(bufsub(a, `[2, 4], `[4])));
-    dblog("  " + toliteral(a) + " -> " + toliteral(bufsub(a, `[2], `[2, 2, 2])));
-
 };
 
 	// Dictionary test 1
@@ -2185,121 +2127,6 @@ eval {
     dblog("  " + toliteral(union([1, 2, 3, 4, 5, 6, 7, 8, 9], [10, 11, 12, 13, 14, 15])));
 };
 
-	// List test 12
-	//
-	// testing native sorted_insert()
-	// Output:
-
-		List test 12
-		  [] -> [3]
-		  [3] -> [3, 4]
-		  [3, 4] -> [1, 3, 4]
-		  [1, 3, 4] -> [1, 2, 3, 4]
-		  [[3]] -> [[1], [3]]
-		  [[1], [3]] -> [[0], [1], [3]]
-		  [[0], [1], [3]] -> [[0], [1], [1], [3]]
-
-eval {
-    var list;
-
-    list = [];
-    dblog("List test 12");
-    dblog("  " + toliteral(list) + " -> " + toliteral(list.sorted_insert(3)));
-    list = list.sorted_insert(3);
-    dblog("  " + toliteral(list) + " -> " + toliteral(list.sorted_insert(4)));
-    list = list.sorted_insert(4);
-    dblog("  " + toliteral(list) + " -> " + toliteral(list.sorted_insert(1)));
-    list = list.sorted_insert(1);
-    dblog("  " + toliteral(list) + " -> " + toliteral(list.sorted_insert(2)));
-    list = list.sorted_insert(2);
-
-    list = [[3]];
-    dblog("  " + toliteral(list) + " -> " + toliteral(list.sorted_insert([1], 1)));
-    list = list.sorted_insert([1], 1);
-    dblog("  " + toliteral(list) + " -> " + toliteral(list.sorted_insert([0], 1)));
-    list = list.sorted_insert([0], 1);
-    dblog("  " + toliteral(list) + " -> " + toliteral(list.sorted_insert([1], 1)));
-    list = list.sorted_insert([1], 1);
-};
-
-	// List test 13
-	//
-	// testing native sorted_index()
-	// Output:
-
-		List test 13
-		  32 in [8, 19, 27, 32] -> 4
-		  8 in [8, 19, 27, 32] -> 1
-		  27 in [8, 19, 27, 32] -> 3
-		  19 in [8, 19, 27, 32] -> 2
-		  48 in [8, 19, 27, 32] -> -1
-		  32 in [[8, 1], [19, 2], [27, 3], [32, 4]] -> 4
-		  8 in [[8, 1], [19, 2], [27, 3], [32, 4]] -> 1
-		  27 in [[8, 1], [19, 2], [27, 3], [32, 4]] -> 3
-		  19 in [[8, 1], [19, 2], [27, 3], [32, 4]] -> 2
-		  48 in [[8, 1], [19, 2], [27, 3], [32, 4]] -> -1
-
-eval {
-    var list;
-
-    list = [8, 19, 27, 32];
-    dblog("List test 13");
-    dblog("  32 in " + toliteral(list) + " -> " + toliteral(list.sorted_index(32)));
-    dblog("  8 in " + toliteral(list) + " -> " + toliteral(list.sorted_index(8)));
-    dblog("  27 in " + toliteral(list) + " -> " + toliteral(list.sorted_index(27)));
-    dblog("  19 in " + toliteral(list) + " -> " + toliteral(list.sorted_index(19)));
-    dblog("  48 in " + toliteral(list) + " -> " + toliteral(list.sorted_index(48)));
-
-    list = [[8, 1], [19, 2], [27, 3], [32, 4]];
-    dblog("  32 in " + toliteral(list) + " -> " +
-          toliteral(list.sorted_index([32, 4], 2)));
-    dblog("  8 in " + toliteral(list) + " -> " +
-          toliteral(list.sorted_index([8, 1], 2)));
-    dblog("  27 in " + toliteral(list) + " -> " +
-          toliteral(list.sorted_index([27, 3], 2)));
-    dblog("  19 in " + toliteral(list) + " -> " +
-          toliteral(list.sorted_index([19, 2], 2)));
-    dblog("  48 in " + toliteral(list) + " -> " +
-          toliteral(list.sorted_index([48, 5], 2)));
-
-};
-
-	// List test 14
-	//
-	// testing native sorted_delete()
-	// Output:
-
-		List test 14
-		  [8, 19, 27, 32] - 19 -> [8, 27, 32]
-		  [8, 19, 27, 32] - 8 -> [19, 27, 32]
-		  [8, 19, 27, 32] - 27 -> [8, 19, 32]
-		  [8, 19, 27, 32] - 32 -> [8, 19, 27]
-		  [8, 19, 27, 32] - 48 -> ~range
-		  [[8, 1], [19, 2], [27, 3], [32, 4]] - 19 -> [[8, 1], [27, 3], [32, 4]]
-		  [[8, 1], [19, 2], [27, 3], [32, 4]] - 8 -> [[19, 2], [27, 3], [32, 4]]
-		  [[8, 1], [19, 2], [27, 3], [32, 4]] - 27 -> [[8, 1], [19, 2], [32, 4]]
-		  [[8, 1], [19, 2], [27, 3], [32, 4]] - 32 -> [[8, 1], [19, 2], [27, 3]]
-		  [[8, 1], [19, 2], [27, 3], [32, 4]] - 48 -> ~range
-
-eval {
-    var list;
-
-    list = [8, 19, 27, 32];
-    dblog("List test 14");
-    dblog("  " + toliteral(list) + " - 19 -> " + toliteral(list.sorted_delete(19)));
-    dblog("  " + toliteral(list) + " - 8 -> " + toliteral(list.sorted_delete(8)));
-    dblog("  " + toliteral(list) + " - 27 -> " + toliteral(list.sorted_delete(27)));
-    dblog("  " + toliteral(list) + " - 32 -> " + toliteral(list.sorted_delete(32)));
-    dblog("  " + toliteral(list) + " - 48 -> " + toliteral((|list.sorted_delete(48)|)));
-
-    list = [[8, 1], [19, 2], [27, 3], [32, 4]];
-    dblog("  " + toliteral(list) + " - 19 -> " + toliteral(list.sorted_delete([19, 2], 2)));
-    dblog("  " + toliteral(list) + " - 8 -> " + toliteral(list.sorted_delete([8, 1], 2)));
-    dblog("  " + toliteral(list) + " - 27 -> " + toliteral(list.sorted_delete([27, 3], 2)));
-    dblog("  " + toliteral(list) + " - 32 -> " + toliteral(list.sorted_delete([32, 4], 2)));
-    dblog("  " + toliteral(list) + " - 48 -> " + toliteral((|list.sorted_delete([48, 5], 2)|)));
-};
-
 	// String test 1
 	//
 	// testing strlen()
@@ -2474,9 +2301,12 @@ eval {
 	// Output
 
 		String test 7
+		  strsed("abcde", "(\\A\[[0-9;]+m|\\)", "", "g") --> DISABLED, CRASH BUG
 
 eval {
     dblog("String test 7");
+    dblog("  strsed(\"abcde\", \"(\\\\A\[[0-9;]+m|\\\\)\", \"\", \"g\") --> DISABLED, CRASH BUG");
+	//" + toliteral(strsed("abcde", "(\\A\[[0-9;]+m|\\)", "", "g")));
 };
 
 	// String test 8
@@ -2493,7 +2323,6 @@ eval {
 		  "whew!!"
 		  "whew!@"
 		  "!@whew"
-		  ~range
 
 eval {
     var a;
@@ -2509,7 +2338,6 @@ eval {
     dblog("  " + toliteral(pad(a, 6, "!")));
     dblog("  " + toliteral(pad(a, 6, "!@#")));
     dblog("  " + toliteral(pad(a, -6, "!@#")));
-    dblog("  " + toliteral((|pad(a, 1, "")|)));
 };
 
 	// String test 9
@@ -2700,85 +2528,9 @@ eval {
 	// Output
 
 		String matching test 5
-		  match_regexp("^no.|()[]*+?escape$", "\^no\.\|\(\)\[\]\*\+\?escape\$")
-		  => [[1, 19], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
-		  match_regexp("test", "^test")
-		  => [[1, 4], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
-		  match_regexp("no test", "^test")
-		  => 0
-		  match_regexp("test", "test$")
-		  => [[1, 4], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
-		  match_regexp("test not", "test$")
-		  => 0
-		  match_regexp("this", "this|that")
-		  => [[1, 4], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
-		  match_regexp("that", "this|that")
-		  => [[1, 4], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
-		  match_regexp("hiiiim", "hi*m")
-		  => [[1, 6], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
-		  match_regexp("hiiiim", "ho*m")
-		  => 0
-		  match_regexp("hm", "ho*m")
-		  => [[1, 2], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
-		  match_regexp("hiiiim", "hi+m")
-		  => [[1, 6], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
-		  match_regexp("hiiiim", "ho+m")
-		  => 0
-		  match_regexp("him", "hi?m")
-		  => [[1, 3], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
-		  match_regexp("hm", "hi?m")
-		  => [[1, 2], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
-		  match_regexp("hiim", "hi?m")
-		  => 0
-		  match_regexp("that", "t(ha)t")
-		  => [[1, 4], [2, 2], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
-		  match_regexp("0123456789abcdefghi", "0(1(2(3(4(5(6(7(8(9)a)b)c)d)e)f)g)h)i")
-		  => [[1, 19], [2, 17], [3, 15], [4, 13], [5, 11], [6, 9], [7, 7], [8, 5], [9, 3], [10, 1]]
-		  match_regexp("0123456789abcdefghi", "(0(1(2(3(4(5(6(7(8(9)a)b)c)d)e)f)g)h)i)")
-		  => [~regexp, "too many ()", 0]
-		  match_regexp("abcdefghijklmnopqrstuvwxyz0123456789", "[a-z0-9]+")
-		  => [[1, 36], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
-		  match_regexp(".", "[^a-z]")
-		  => [[1, 1], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
-		  match_regexp("a", "[^a-z]")
-		  => 0
-
-
-public method .rx_test() {
-    arg str, rx;
-    var result;
-
-    dblog("  match_regexp(" + toliteral(str) + ", " + toliteral(rx) + ")");
-    catch any {
-        dblog("  => " + toliteral(match_regexp(str, rx)));
-    } with {
-        dblog("  => " + traceback()[1]);
-    }
-};
 
 eval {
     dblog("String matching test 5");
-    .rx_test("^no.|()[]*+?escape$", "\^no\.\|\(\)\[\]\*\+\?escape\$");
-    .rx_test("test", "^test");
-    .rx_test("no test", "^test");
-    .rx_test("test", "test$");
-    .rx_test("test not", "test$");
-    .rx_test("this", "this|that");
-    .rx_test("that", "this|that");
-    .rx_test("hiiiim", "hi*m");
-    .rx_test("hiiiim", "ho*m");
-    .rx_test("hm", "ho*m");
-    .rx_test("hiiiim", "hi+m");
-    .rx_test("hiiiim", "ho+m");
-    .rx_test("him", "hi?m");
-    .rx_test("hm", "hi?m");
-    .rx_test("hiim", "hi?m");
-    .rx_test("that", "t(ha)t");
-    .rx_test("0123456789abcdefghi", "0(1(2(3(4(5(6(7(8(9)a)b)c)d)e)f)g)h)i");
-    .rx_test("0123456789abcdefghi", "(0(1(2(3(4(5(6(7(8(9)a)b)c)d)e)f)g)h)i)");
-    .rx_test("abcdefghijklmnopqrstuvwxyz0123456789", "[a-z0-9]+");
-    .rx_test(".", "[^a-z]");
-    .rx_test("a", "[^a-z]");
 };
 
 	// Numeric test 1
@@ -2900,86 +2652,6 @@ eval {
     } with {
         dblog("ERROR: " + traceback()[1][2]);
     }
-};
-
-	// task_id()
-	// Output
-
-		Task/Stack test 1
-		  task_id() -> 1
-
-eval {
-    dblog("Task/Stack test 1");
-    dblog("  task_id() -> " + toliteral(task_id()));
-};
-
-	// stack()
-	// Output
-
-		Task/Stack test 2
-		  [[$sys, $sys, 'coldcc_eval, 2, 11]]
-		  [[$sys, $sys, 'coldcc_eval, 3, 23]]
-		  [[$sys, $sys, 'coldcc_eval, -1, 36]]
-		  [[$sys, $sys, 'coldcc_eval, 5, 49]]
-
-eval {
-    dblog("Task/Stack test 2");
-    dblog("  " + toliteral(stack()));
-    dblog("  " + toliteral(stack(task_id())));
-    dblog("  " + toliteral(stack(task_id(), 0)));
-    dblog("  " + toliteral(stack(task_id(), 1)));
-};
-
-	// method()
-	// Output
-
-		Task/Stack test 3
-		  'coldcc_eval
-
-eval {
-    dblog("Task/Stack test 3");
-    dblog("  " + toliteral(method()));
-};
-
-public method .calling_method_test() {
-    dblog("  calling method: " + toliteral(calling_method()));
-};
-
-	// calling_method()
-	// Output
-
-		Task/Stack test 4
-		  calling method: 0
-		  calling method: 'coldcc_eval
-
-eval {
-    dblog("Task/Stack test 4");
-    dblog("  calling method: " + toliteral(calling_method()));
-    .calling_method_test();
-};
-
-	// valid()
-	// Output
-		valid() tests
-		  valid($root) = 1
-		  valid(#-1) = 0
-		  valid(#12822) = 0
-		  valid(<$root, []>) = 1
-		  valid(<#-18, []>) = 0
-		  valid(<$root, [], 'ehh>) = 1
-		  valid(<#-29, [], 'ehh>) = 0
-
-eval {
-    dblog("valid() tests");
-    dblog("  valid($root) = " + toliteral(valid($root)));
-    dblog("  valid(#-1) = " + toliteral(valid(#-1)));
-    dblog("  valid(#12822) = " + toliteral(valid(#12822)));
-    dblog("  valid(<$root, []>) = " + toliteral(valid(<$root, []>)));
-    dblog("  valid(<#-18, []>) = " + toliteral(valid(<#-18, []>)));
-    dblog("  valid(<$root, [], 'ehh>) = " + 
-                   toliteral(valid(<$root, [], 'ehh>)));
-    dblog("  valid(<#-29, [], 'ehh>) = " +
-                   toliteral(valid(<#-29, [], 'ehh>)));
 };
 
 // -------------------------------------

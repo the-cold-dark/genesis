@@ -386,7 +386,7 @@ NATIVE_METHOD(sorted_index) {
     if (!validate_sorted_args(stack_start, arg_start))
         return 0;
 
-    list = list_dup(LIST1);
+    list = LIST1;
     data_dup(&data, &args[ARG2]);
 
     if (argc == 3)
@@ -407,8 +407,7 @@ NATIVE_METHOD(sorted_index) {
 }
 
 NATIVE_METHOD(sorted_insert) {
-    cList * out,
-          * list;
+    cList * list;
     cData   data,
             key;
 
@@ -425,18 +424,19 @@ NATIVE_METHOD(sorted_insert) {
         data_dup(&key, &args[ARG3]);
 
     /* Do the work! */
-    out = list_add_sorted(list, &data, &key);
+    CLEAN_STACK();
+    anticipate_assignment();
+    list = list_add_sorted(list, &data, &key);
 
     data_discard(&data);
     if (argc == 3)
         data_discard(&key);
 
-    CLEAN_RETURN_LIST(out);
+    RETURN_LIST(list);
 }
 
 NATIVE_METHOD(sorted_delete) {
-    cList * out,
-          * list;
+    cList * list;
     cData   data,
             key;
 
@@ -452,17 +452,19 @@ NATIVE_METHOD(sorted_delete) {
     if (argc == 3)
         data_dup(&key, &args[ARG3]);
 
-    out = list_delete_sorted_element(list, &data, &key);
+    CLEAN_STACK();
+    anticipate_assignment();
+    list = list_delete_sorted_element(list, &data, &key);
 
     data_discard(&data);
     if (argc == 3)
         data_discard(&key);
 
-    if (out == NULL) {
+    if (list == NULL) {
         THROW((range_id, "Value must be within the list"))
     }
 
-    CLEAN_RETURN_LIST(out);
+    RETURN_LIST(list);
 }
 
 NATIVE_METHOD(sorted_validate) {

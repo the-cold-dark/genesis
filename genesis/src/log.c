@@ -11,6 +11,7 @@
 #include "cache.h"
 #include "util.h"
 #include "sig.h"
+#include "execute.h"
 
 void panic(char * s, ...) {
     va_list vargs;
@@ -28,9 +29,10 @@ void panic(char * s, ...) {
         fprintf(errfile, "[%s] doing binary dump...", timestamp(NULL));
 	cache_sync();
         fputs("Done\n", errfile);
+	log_all_task_stacks(FALSE, write_err);
     }
 
-    fprintf(errfile, "[%s] Creating Core Image...", timestamp(NULL));
+    fprintf(errfile, "[%s] Creating Core Image...\n", timestamp(NULL));
     dump_core_and_exit();
 }
 

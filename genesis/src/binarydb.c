@@ -614,6 +614,7 @@ Int simble_put(Obj *obj, cObjnum objnum, Long *sizewritten)
     off_t old_offset, new_offset;
     Int old_size, new_size, tmp1, tmp2;
 
+    old_offset = -1;
     if (lookup_retrieve_objnum(objnum, &old_offset, &old_size)) {
         buf = buffer_new(old_size);
         buf = pack_object(buf, obj);

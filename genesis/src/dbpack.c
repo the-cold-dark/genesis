@@ -116,8 +116,7 @@ cBuf * write_ident(cBuf *buf, Long id)
         buf = write_long(buf, NOT_AN_IDENT);
         return buf;
     }
-    s = ident_name(id);
-    len = strlen(s);
+    s = ident_name_size(id, &len);
     buf = write_long(buf, len);
     buf = buffer_append_uchars_single_ref(buf, (uChar *)s, len);
 
@@ -153,7 +152,8 @@ Long read_ident(cBuf *buf, Long *buf_pos)
 
 Long size_ident(Long id)
 {
-    Int len = strlen(ident_name(id));
+    Int len;
+    ident_name_size(id, &len);
 
     return size_long(len) + (len * sizeof(Char));
 }

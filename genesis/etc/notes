@@ -21,6 +21,10 @@ RELEASE INFORMATION:
       * added a test for the above pad() bug, as well as
         some other missing tests. (Bruce)
       * added bufsub() and $buffer.bufsub() (Bruce)
+      * Change task_stack() to let it obtain the stack for any
+        given frame and to generate either line numbers or 
+        opcode index values. (Bruce)
+      * Add log_task_stack() callable from C. (Bruce)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

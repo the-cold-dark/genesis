@@ -497,7 +497,7 @@ static Stmt *decompile_stmt(Int *pos_ptr)
 
       case COMMENT:
 	/* COMMENT opcode follows no expressions. */
-	comment = string_chars(the_object->strings[the_opcodes[pos + 1]].str);
+	comment = string_chars(the_object->strings->tab[the_opcodes[pos + 1]].str);
 	(*pos_ptr) = pos + 2;
 	return comment_stmt(comment);
 
@@ -846,7 +846,7 @@ static Expr_list *decompile_expressions_bounded(Int *pos_ptr, Int expr_end)
             break;
 
 	  case STRING:
-	    s = string_chars(the_object->strings[the_opcodes[pos + 1]].str);
+	    s = string_chars(the_object->strings->tab[the_opcodes[pos + 1]].str);
 	    stack = expr_list(string_expr(s), stack);
 	    pos += 2;
 	    break;

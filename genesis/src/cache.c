@@ -679,7 +679,7 @@ Obj *cache_next(void) {
     Long objnum;
 
     objnum = lookup_next_objnum();
-    if (objnum == INV_OBJNUM)
+    if (objnum == INV_OBJNUM || objnum == NOT_AN_IDENT)
 	return NULL;
     return cache_retrieve(objnum);
 }

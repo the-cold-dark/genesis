@@ -46,6 +46,7 @@ static inline void ancestor_cache_invalidate()
     list_entry.u.list = entry;
 
     ancestor_cache_history = list_add(ancestor_cache_history, &list_entry);
+    list_discard(entry);
 
     if (list_length(ancestor_cache_history) >= cache_history_size) {
         cList * sublist, * oldlist;
@@ -1196,6 +1197,7 @@ static void method_cache_invalidate_all() {
     list_entry.u.list = entry;
 
     method_cache_history = list_add(method_cache_history, &list_entry);
+    list_discard(entry);
 
     if (list_length(method_cache_history) >= cache_history_size) {
         cList * sublist, * oldlist;

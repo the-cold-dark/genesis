@@ -315,6 +315,7 @@ COLDC_FUNC(cache_stats) {
         list_entry.type = LIST;
         list_entry.u.list = entry;
 	list = list_add(list, &list_entry);
+        list_discard(entry);
     } else if (SYM1 == method_cache_id) {
         list = list_dup(method_cache_history);
         entry = list_new(4);
@@ -330,6 +331,7 @@ COLDC_FUNC(cache_stats) {
 	list_entry.type = LIST;
 	list_entry.u.list = entry;
         list = list_add(list, &list_entry);
+        list_discard(entry);
     } else if (SYM1 == name_cache_id) {
         list = list_new(2);
         val = list_empty_spaces(list, 2);

@@ -25,8 +25,12 @@ cDict *dict_new(cList *keys, cList *values)
 
     /* Calculate initial size of chain and hash table. */
     cnew->hashtab_size = HASHTAB_STARTING_SIZE;
-    while (cnew->hashtab_size < keys->len)
-	cnew->hashtab_size = cnew->hashtab_size * 2 + MALLOC_DELTA;
+    while (cnew->hashtab_size < keys->len) {
+        if (cnew->hashtab_size > 4096)
+	    cnew->hashtab_size += 4096;
+        else
+            cnew->hashtab_size = cnew->hashtab_size * 2 + MALLOC_DELTA;
+    }
 
     /* Initialize chain entries and hash table. */
     cnew->links = EMALLOC(Int, cnew->hashtab_size);

@@ -22,7 +22,7 @@
 //
 */
 
-void op_comment(void) {
+COLDC_OP(comment) {
     /* Do nothing, just increment the program counter past the comment. */
     cur_frame->pc++;
     /* actually, increment the number of ticks left too, since comments
@@ -32,11 +32,11 @@ void op_comment(void) {
     tick--;
 }
 
-void op_pop(void) {
+COLDC_OP(pop) {
     pop(1);
 }
 
-void op_set_local(void) {
+COLDC_OP(set_local) {
     cData *var;
 
     /* Copy data in top of stack to variable. */
@@ -45,7 +45,7 @@ void op_set_local(void) {
     data_dup(var, &stack[stack_pos - 1]);
 }
 
-void op_set_obj_var(void) {
+COLDC_OP(set_obj_var) {
     Long ind, id, result;
     cData *val;
 
@@ -58,7 +58,7 @@ void op_set_obj_var(void) {
 	cthrow(varnf_id, "Object variable %I not found.", id);
 }
 
-void op_if(void) {
+COLDC_OP(if) {
     /* Jump if the condition is false. */
     if (!data_true(&stack[stack_pos - 1]))
 	cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
@@ -67,7 +67,7 @@ void op_if(void) {
     pop(1);
 }
 
-void op_map(void) {
+COLDC_OP(map) {
     cData *returned;
     cData *counter;
     cData *domain;
@@ -191,7 +191,7 @@ void op_map(void) {
     cur_frame->pc += 2;
 }
 
-void op_map_range(void) {
+COLDC_OP(map_range) {
     cData *returned;
     cData *counter;
     cData *top;
@@ -307,11 +307,11 @@ void op_map_range(void) {
     cur_frame->pc += 2;
 }
 
-void op_else(void) {
+COLDC_OP(else) {
     cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
 }
 
-void op_for_range(void) {
+COLDC_OP(for_range) {
     Int var;
     cData *range;
 
@@ -339,7 +339,7 @@ void op_for_range(void) {
     }
 }
 
-void op_for_list(void) {
+COLDC_OP(for_list) {
     cData *counter;
     cData *domain;
     Int var, len;
@@ -379,7 +379,7 @@ void op_for_list(void) {
     cur_frame->pc += 2;
 }
 
-void op_while(void) {
+COLDC_OP(while) {
     if (!data_true(&stack[stack_pos - 1])) {
 	/* The condition expression is false.  Jump to the end of the loop. */
 	cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
@@ -390,13 +390,13 @@ void op_while(void) {
     pop(1);
 }
 
-void op_switch(void) {
+COLDC_OP(switch) {
     /* This opcode doesn't actually do anything; it just provides a place-
      * holder for a break statement. */
     cur_frame->pc++;
 }
 
-void op_case_value(void) {
+COLDC_OP(case_value) {
     /* There are two expression values on the stack: the controlling expression
      * for the switch statement, and the value for this case.  If they are
      * equal, pop them off the stack and jump to the body of this case.
@@ -410,7 +410,7 @@ void op_case_value(void) {
     }
 }
 
-void op_case_range(void) {
+COLDC_OP(case_range) {
     cData *switch_expr, *range;
     Int is_match;
 
@@ -447,7 +447,7 @@ void op_case_range(void) {
     }
 }
 
-void op_last_case_value(void) {
+COLDC_OP(last_case_value) {
     /* There are two expression values on the stack: the controlling expression
      * for the switch statement, and the value for this case.  If they are
      * equal, pop them off the stack and go on.  Otherwise, just pop the value
@@ -461,7 +461,7 @@ void op_last_case_value(void) {
     }
 }
 
-void op_last_case_range(void) {
+COLDC_OP(last_case_range) {
     cData *switch_expr, *range;
     Int is_match;
 
@@ -498,22 +498,22 @@ void op_last_case_range(void) {
     }
 }
 
-void op_end_case(void) {
+COLDC_OP(end_case) {
     /* Jump to end of switch statement. */
     cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
 }
 
-void op_default(void) {
+COLDC_OP(default) {
     /* Pop the controlling switch expression. */
     pop(1);
 }
 
-void op_end(void) {
+COLDC_OP(end) {
     /* Jump to the beginning of the loop or condition expression. */
     cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
 }
 
-void op_break(void) {
+COLDC_OP(break) {
     Int n, op;
 
     /* Get loop instruction from argument. */
@@ -529,7 +529,7 @@ void op_break(void) {
     cur_frame->pc = cur_frame->opcodes[n + 1];
 }
 
-void op_continue(void) {
+COLDC_OP(continue) {
     /* Jump back to the beginning of the loop.  If it's a WHILE loop, jump back
      * to the beginning of the condition expression. */
     cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
@@ -537,7 +537,7 @@ void op_continue(void) {
 	cur_frame->pc = cur_frame->opcodes[cur_frame->pc + 2];
 }
 
-void op_return(void) {
+COLDC_OP(return) {
     Long objnum;
 
     objnum = cur_frame->object->objnum;
@@ -546,7 +546,7 @@ void op_return(void) {
 	push_objnum(objnum);
 }
 
-void op_return_expr(void) {
+COLDC_OP(return_expr) {
     cData *val;
 
     /* Return, and push frame onto caller stack.  Transfers reference count to
@@ -562,7 +562,7 @@ void op_return_expr(void) {
     }
 }
 
-void op_catch(void) {
+COLDC_OP(catch) {
     Error_action_specifier *spec;
 
     /* Make a new error action specifier and push it onto the stack. */
@@ -576,32 +576,32 @@ void op_catch(void) {
     cur_frame->specifiers = spec;
 }
 
-void op_catch_end(void) {
+COLDC_OP(catch_end) {
     /* Pop the error action specifier for the catch statement, and jump past
      * the handler. */
     pop_error_action_specifier();
     cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
 }
 
-void op_handler_end(void) {
+COLDC_OP(handler_end) {
     pop_handler_info();
 }
 
-void op_zero(void) {
+COLDC_OP(zero) {
     /* Push a zero. */
     push_int(0);
 }
 
-void op_one(void) {
+COLDC_OP(one) {
     /* Push a one. */
     push_int(1);
 }
 
-void op_integer(void) {
+COLDC_OP(integer) {
     push_int(cur_frame->opcodes[cur_frame->pc++]);
 }
 
-void op_float(void) {
+COLDC_OP(float) {
 #ifdef USE_BIG_FLOATS
     cFloat fl;
     Int flong[2];
@@ -615,7 +615,7 @@ void op_float(void) {
 #endif    
 }
 
-void op_string(void) {
+COLDC_OP(string) {
     cStr *str;
     Int ind = cur_frame->opcodes[cur_frame->pc++];
 
@@ -623,14 +623,14 @@ void op_string(void) {
     push_string(str);
 }
 
-void op_objnum(void) {
+COLDC_OP(objnum) {
     Int id;
 
     id = cur_frame->opcodes[cur_frame->pc++];
     push_objnum(id);
 }
 
-void op_symbol(void) {
+COLDC_OP(symbol) {
     Int ind, id;
 
     ind = cur_frame->opcodes[cur_frame->pc++];
@@ -638,7 +638,7 @@ void op_symbol(void) {
     push_symbol(id);
 }
 
-void op_error(void) {
+COLDC_OP(error) {
     Int ind, id;
 
     ind = cur_frame->opcodes[cur_frame->pc++];
@@ -646,7 +646,7 @@ void op_error(void) {
     push_error(id);
 }
 
-void op_objname(void) {
+COLDC_OP(objname) {
     Int ind, id;
     Long objnum;
 
@@ -658,7 +658,7 @@ void op_objname(void) {
 	cthrow(namenf_id, "Can't find object name %I.", id);
 }
 
-void op_get_local(void) {
+COLDC_OP(get_local) {
     Int var;
 
     /* Push value of local variable on stack. */
@@ -668,7 +668,7 @@ void op_get_local(void) {
     stack_pos++;
 }
 
-void op_get_obj_var(void) {
+COLDC_OP(get_obj_var) {
     Long ind, id, result;
     cData val;
 
@@ -686,7 +686,7 @@ void op_get_obj_var(void) {
     }
 }
 
-void op_start_args(void) {
+COLDC_OP(start_args) {
     /* Resize argument stack if necessary. */
     if (arg_pos == arg_size) {
 	arg_size = arg_size * 2 + ARG_STACK_MALLOC_DELTA;
@@ -731,7 +731,7 @@ static void handle_method_error(cObjnum objnum, Ident message) {
     }
 }
 
-void op_pass(void) {
+COLDC_OP(pass) {
     Int arg_start;
 
     arg_start = arg_starts[--arg_pos];
@@ -741,7 +741,7 @@ void op_pass(void) {
         handle_method_error(cur_frame->object->objnum, cur_frame->method->name);
 }
 
-void op_message(void) {
+COLDC_OP(message) {
     Int arg_start, ind;
     Bool is_frob=FROB_NO;
     cData *target;
@@ -812,7 +812,7 @@ void op_message(void) {
     ident_discard(message);
 }
 
-void op_expr_message(void) {
+COLDC_OP(expr_message) {
     Int arg_start;
     Bool is_frob=FROB_NO;
     cData *target, *message_data;
@@ -889,7 +889,7 @@ void op_expr_message(void) {
     ident_discard(message);
 }
 
-void op_list(void) {
+COLDC_OP(list) {
     Int start, len;
     cList *list;
     cData *d;
@@ -908,7 +908,7 @@ void op_list(void) {
     list_discard(list);
 }
 
-void op_dict(void) {
+COLDC_OP(dict) {
     Int start, len;
     cList *list;
     cData *d;
@@ -934,7 +934,7 @@ void op_dict(void) {
     }
 }
 
-void op_buffer(void) {
+COLDC_OP(buffer) {
     Int start, len, i;
     cBuf *buf;
 
@@ -956,7 +956,7 @@ void op_buffer(void) {
     buffer_discard(buf);
 }
 
-void op_frob(void) {
+COLDC_OP(frob) {
     cData *cclass, *rep;
 
     cclass = &stack[stack_pos - 2];
@@ -975,7 +975,7 @@ void op_frob(void) {
     }
 }
 
-void op_handled_frob(void) {
+COLDC_OP(handled_frob) {
     cData *cclass, *rep, *handler;
 
     cclass = &stack[stack_pos - 3];
@@ -1017,7 +1017,7 @@ void op_handled_frob(void) {
         }\
     }
 
-void op_index(void) {
+COLDC_OP(index) {
     cData *d, *ind, element;
     Int i;
     cStr *str;
@@ -1065,7 +1065,7 @@ void op_index(void) {
     }
 }
 
-void op_and(void) {
+COLDC_OP(and) {
     /* Short-circuit if left side is false; otherwise discard. */
     if (!data_true(&stack[stack_pos - 1])) {
 	cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
@@ -1075,7 +1075,7 @@ void op_and(void) {
     }
 }
 
-void op_or(void) {
+COLDC_OP(or) {
     /* Short-circuit if left side is true; otherwise discard. */
     if (data_true(&stack[stack_pos - 1])) {
 	cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
@@ -1085,7 +1085,7 @@ void op_or(void) {
     }
 }
 
-void op_splice(void) {
+COLDC_OP(splice) {
     Int i;
     cList *list;
     cData *d;
@@ -1105,7 +1105,7 @@ void op_splice(void) {
     list_discard(list);
 }
 
-void op_critical(void) {
+COLDC_OP(critical) {
     Error_action_specifier *spec;
 
     /* Make an error action specifier for the critical expression, and push it
@@ -1119,11 +1119,11 @@ void op_critical(void) {
     cur_frame->specifiers = spec;
 }
 
-void op_critical_end(void) {
+COLDC_OP(critical_end) {
     pop_error_action_specifier();
 }
 
-void op_propagate(void) {
+COLDC_OP(propagate) {
     Error_action_specifier *spec;
 
     /* Make an error action specifier for the critical expression, and push it
@@ -1136,7 +1136,7 @@ void op_propagate(void) {
     cur_frame->specifiers = spec;
 }
 
-void op_propagate_end(void) {
+COLDC_OP(propagate_end) {
     pop_error_action_specifier();
 }
 
@@ -1153,7 +1153,7 @@ void op_propagate_end(void) {
    by pushing and popping the data stack or by throwing exceptions. */
 
 /* Effects: Pops the top value on the stack and pushes its logical inverse. */
-void op_not(void) {
+COLDC_OP(not) {
     cData *d = &stack[stack_pos - 1];
     Int val = !data_true(d);
 
@@ -1165,7 +1165,7 @@ void op_not(void) {
 
 /* Effects: If the top value on the stack is an integer, pops it and pushes its
  *	    its arithmetic inverse. */
-void op_negate(void) {
+COLDC_OP(negate) {
     cData *d = &stack[stack_pos - 1];
 
     /* Replace d with -d. */
@@ -1181,7 +1181,7 @@ void op_negate(void) {
 /* Effects: If the top two values on the stack are integers, pops them and
  *	    pushes their product. */
 
-void op_multiply(void) {
+COLDC_OP(multiply) {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
 
@@ -1266,7 +1266,7 @@ void op_multiply(void) {
     pop(1);
 }
 
-void op_doeq_multiply(void) {
+COLDC_OP(doeq_multiply) {
     cData *arg = &stack[stack_pos - 2];
     cData *var = &stack[stack_pos - 1];
 
@@ -1317,7 +1317,7 @@ void op_doeq_multiply(void) {
 /* Effects: If the top two values on the stack are integers and the second is
  *	    not zero, pops them, divides the first by the second, and pushes
  *	    the quotient. */
-void op_divide(void) {
+COLDC_OP(divide) {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
 
@@ -1384,7 +1384,7 @@ STACK[-2] = 1
 stack[-1] = 0
 */
 
-void op_doeq_divide(void) {
+COLDC_OP(doeq_divide) {
     cData * arg = &stack[stack_pos - 2];
     cData * var = &stack[stack_pos - 1];
 
@@ -1444,7 +1444,7 @@ void op_doeq_divide(void) {
 /* Effects: If the top two values on the stack are integers and the second is
  *	    not zero, pops them, divides the first by the second, and pushes
  *	    the remainder. */
-void op_modulo(void) {
+COLDC_OP(modulo) {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
 
@@ -1463,7 +1463,7 @@ void op_modulo(void) {
 /* Effects: If the top two values on the stack are integers, pops them and
  *	    pushes their sum.  If the top two values are strings, pops them,
  *	    concatenates the second onto the first, and pushes the result. */
-void op_add(void) {
+COLDC_OP(add) {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
 
@@ -1591,7 +1591,7 @@ void op_add(void) {
     pop(1);
 }
 
-void op_doeq_add(void) {
+COLDC_OP(doeq_add) {
     cData * arg = &stack[stack_pos - 2];
     cData * var = &stack[stack_pos - 1]; /* d2 */
 
@@ -1738,7 +1738,7 @@ void op_doeq_add(void) {
 }
 
 /* Effects: Adds two lists.  (This is used for [@foo, ...];) */
-void op_splice_add(void) {
+COLDC_OP(splice_add) {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
 
@@ -1756,7 +1756,7 @@ void op_splice_add(void) {
 /* Effects: If the top two values on the stack are integers, pops them and
  *	    pushes their difference. */
 
-void op_subtract(void) {
+COLDC_OP(subtract) {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
 
@@ -1801,7 +1801,7 @@ void op_subtract(void) {
     pop(1);
 }
 
-void op_doeq_subtract(void) {
+COLDC_OP(doeq_subtract) {
     cData *arg = &stack[stack_pos - 2];
     cData *var = &stack[stack_pos - 1];
 
@@ -1848,7 +1848,7 @@ void op_doeq_subtract(void) {
 
 /* Effects: If the top value on the stack is an integer or float,
  *          it is incremented by one. */
-void op_increment(void) {
+COLDC_OP(increment) {
     cData * v, * sd = &stack[stack_pos - 1];
 
     if (sd->type != FLOAT && sd->type != INTEGER) {
@@ -1890,7 +1890,7 @@ void op_increment(void) {
     }
 }
 
-void op_p_increment(void) {
+COLDC_OP(p_increment) {
     cData *d1 = &stack[stack_pos - 1];
 
     switch (d1->type) {
@@ -1908,7 +1908,7 @@ void op_p_increment(void) {
 
 /* Effects: If the top value on the stack is an integer or float,
  *          it is decrimented by one. */
-void op_decrement(void) {
+COLDC_OP(decrement) {
     cData * v, * sd = &stack[stack_pos - 1];
 
     if (sd->type != FLOAT && sd->type != INTEGER) {
@@ -1950,7 +1950,7 @@ void op_decrement(void) {
     }
 }
 
-void op_p_decrement(void) {
+COLDC_OP(p_decrement) {
     cData *d1 = &stack[stack_pos - 1];
 
     switch (d1->type) {
@@ -2074,7 +2074,7 @@ static void scatter_loop (void)
     }
 }
 
-void op_scatter_start (void)
+COLDC_OP(scatter_start)
 {
     if (stack[stack_pos-1].type != LIST) {
 	cthrow (type_id, "Attempting to scatter non-list (%D)",
@@ -2091,7 +2091,7 @@ void op_scatter_start (void)
     scatter_loop();
 }
 
-void op_optional_assign(void)
+COLDC_OP(optional_assign)
 {
     if (!data_true(&stack[stack_pos-1])) {
         cur_frame->pc++;
@@ -2101,7 +2101,7 @@ void op_optional_assign(void)
     }
 }
 
-void op_optional_end(void)
+COLDC_OP(optional_end)
 {
     pop(1);
     scatter_loop();
@@ -2109,7 +2109,7 @@ void op_optional_end(void)
 
 /* Effects: Pops the top two values on the stack and pushes 1 if they are
  *	    equal, 0 if not. */
-void op_equal(void)
+COLDC_OP(equal)
 {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
@@ -2121,7 +2121,7 @@ void op_equal(void)
 
 /* Effects: Pops the top two values on the stack and returns 1 if they are
  *	    unequal, 0 if they are equal. */   
-void op_not_equal(void)
+COLDC_OP(not_equal)
 {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
@@ -2136,7 +2136,7 @@ void op_not_equal(void)
 
 /* Effects: If the top two values on the stack are comparable, pops them and
  *	    pushes 1 if the first is greater than the second, 0 if not. */
-void op_greater(void)
+COLDC_OP(greater)
 {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
@@ -2165,7 +2165,7 @@ void op_greater(void)
 /* Effects: If the top two values on the stack are comparable, pops them and
  *	    pushes 1 if the first is greater than or equal to the second, 0 if
  *	    not. */
-void op_greater_or_equal(void)
+COLDC_OP(greater_or_equal)
 {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
@@ -2193,7 +2193,7 @@ void op_greater_or_equal(void)
 
 /* Effects: If the top two values on the stack are comparable, pops them and
  *	    pushes 1 if the first is less than the second, 0 if not. */
-void op_less(void)
+COLDC_OP(less)
 {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
@@ -2222,7 +2222,7 @@ void op_less(void)
 /* Effects: If the top two values on the stack are comparable, pops them and
  *	    pushes 1 if the first is greater than or equal to the second, 0 if
  *	    not. */
-void op_less_or_equal(void)
+COLDC_OP(less_or_equal)
 {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
@@ -2258,7 +2258,7 @@ void op_less_or_equal(void)
     ((unsigned char *) memchr(__buf->s, (unsigned char) __char, __buf->len))
 #endif
 
-void op_in(void)
+COLDC_OP(in)
 {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
@@ -2335,7 +2335,7 @@ void op_in(void)
 //	    pops them, bitwise ands them, and pushes
 //	    the result.
 */
-void op_bwand(void) {
+COLDC_OP(bwand) {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
 
@@ -2359,7 +2359,7 @@ void op_bwand(void) {
 //          pops them, bitwise ors them, and pushes
 //          the result.
 */
-void op_bwor(void) {
+COLDC_OP(bwor) {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
 
@@ -2382,7 +2382,7 @@ void op_bwor(void) {
 //          pops them, shifts the left operand to the right
 //          right-operand times, and pushes the result.
 */
-void op_bwshr(void) {
+COLDC_OP(bwshr) {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
 
@@ -2405,7 +2405,7 @@ void op_bwshr(void) {
 //          pops them, shifts the left operand to the left
 //          right-operand times, and pushes  the result.
 */
-void op_bwshl(void) {
+COLDC_OP(bwshl) {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
 

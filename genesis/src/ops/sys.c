@@ -15,7 +15,7 @@
 #include "execute.h"
 #include "binarydb.h"
 
-void func_dblog(void) {
+COLDC_FUNC(dblog) {
     cData * args;
 
     /* Accept a string. */
@@ -96,7 +96,7 @@ static Bool backup_file(char * file) {
     return rval;
 }
 
-void func_sync(void) {
+COLDC_FUNC(sync) {
     /* Accept no arguments. */
     if (!func_init_0())
         return;
@@ -108,7 +108,7 @@ void func_sync(void) {
     push_int(1);
 }
 
-void func_backup(void) {
+COLDC_FUNC(backup) {
     char            buf[BUF];
     struct stat     statbuf;
     struct dirent * dent;
@@ -190,7 +190,7 @@ void func_backup(void) {
 //
 */
 
-void func_shutdown(void) {
+COLDC_FUNC(shutdown) {
 
     /* Accept no arguments. */
     if (!func_init_0())

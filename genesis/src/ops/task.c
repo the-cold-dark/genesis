@@ -47,7 +47,7 @@ COLDC_FUNC(cancel) {
 
 /* ----------------------------------------------------------------- */
 /* suspend a task                                                    */
-void func_suspend(void) {
+COLDC_FUNC(suspend) {
 
     if (!func_init_0())
         return;
@@ -63,7 +63,7 @@ void func_suspend(void) {
 }
 
 /* ----------------------------------------------------------------- */
-void func_resume(void) {
+COLDC_FUNC(resume) {
     cData *args;
     Int nargs;
     Long tid;
@@ -86,7 +86,7 @@ void func_resume(void) {
 }
 
 /* ----------------------------------------------------------------- */
-void func_pause(void) {
+COLDC_FUNC(pause) {
     if (!func_init_0())
         return;
 
@@ -101,7 +101,7 @@ void func_pause(void) {
 }
 
 /* ----------------------------------------------------------------- */
-void func_atomic(void) {
+COLDC_FUNC(atomic) {
     cData * args;
 
     if (!func_init_1(&args, INTEGER))
@@ -115,7 +115,7 @@ void func_atomic(void) {
 }
 
 /* ----------------------------------------------------------------- */
-void func_refresh(void) {
+COLDC_FUNC(refresh) {
 
     if (!func_init_0())
         return;
@@ -132,7 +132,7 @@ void func_refresh(void) {
 }
 
 /* ----------------------------------------------------------------- */
-void func_tasks(void) {
+COLDC_FUNC(tasks) {
     cList * list;
 
     if (!func_init_0())
@@ -145,14 +145,14 @@ void func_tasks(void) {
 }
 
 /* ----------------------------------------------------------------- */
-void func_tick(void) {
+COLDC_FUNC(tick) {
     if (!func_init_0())
         return;
     push_int(tick);
 }
 
 /* ----------------------------------------------------------------- */
-void func_stack(void) {
+COLDC_FUNC(stack) {
     VMState * vm = NULL;
     Frame   * frame = NULL;
     cData   * args;
@@ -186,7 +186,7 @@ void func_stack(void) {
     }
 }
 
-void func_calling_method() {
+COLDC_FUNC(calling_method) {
     /* Accept no arguments, and push the name of the calling method */
     if (!func_init_0())
         return;
@@ -197,28 +197,28 @@ void func_calling_method() {
         push_int(0);
 }
 
-void func_method(void) {
+COLDC_FUNC(method) {
     if (!func_init_0())
         return;
 
     push_symbol(cur_frame->method->name);
 }
 
-void func_this(void) {
+COLDC_FUNC(this) {
     /* Accept no arguments, and push the objnum of the current object. */
     if (!func_init_0())
         return;
     push_objnum(cur_frame->object->objnum);
 }
 
-void func_definer(void) {
+COLDC_FUNC(definer) {
     /* Accept no arguments, and push the objnum of the method definer. */
     if (!func_init_0())
         return;
     push_objnum(cur_frame->method->object->objnum);
 }
 
-void func_sender(void) {
+COLDC_FUNC(sender) {
     /* Accept no arguments, and push the objnum of the sending object. */
     if (!func_init_0())
         return;
@@ -228,7 +228,7 @@ void func_sender(void) {
         push_objnum(cur_frame->sender);
 }
 
-void func_caller(void) {
+COLDC_FUNC(caller) {
     /* Accept no arguments, and push the objnum of the calling method's
      * definer. */
     if (!func_init_0())
@@ -239,14 +239,14 @@ void func_caller(void) {
         push_objnum(cur_frame->caller);
 }
 
-void func_task_id(void) {
+COLDC_FUNC(task_id) {
     /* Accept no arguments, and push the task ID. */
     if (!func_init_0())
         return;
     push_int(task_id);
 }
 
-void func_ticks_left(void) {
+COLDC_FUNC(ticks_left) {
     if (!func_init_0())
       return;
 

@@ -215,6 +215,7 @@
 // -----------------------------------------------------------------------
 */
 #define COLDC_FUNC(_name_) void CAT(func_, _name_) (void)
+#define COLDC_OP(_name_) void CAT(op_, _name_) (void)
 #define NATIVE_METHOD(_name_) \
         Int CAT(native_, _name_) (Int stack_start, Int arg_start)
 #define ANY_TYPE 0

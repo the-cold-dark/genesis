@@ -18,7 +18,7 @@
 //
 */
 
-void func_reassign_connection(void) {
+COLDC_FUNC(reassign_connection) {
     cData       * args;
     Conn * c;
     Obj     * obj;
@@ -51,7 +51,7 @@ void func_reassign_connection(void) {
 /*
 // -----------------------------------------------------------------
 */
-void func_bind_port(void) {
+COLDC_FUNC(bind_port) {
     cData * args;
     Int     argc;
     Int     port;
@@ -92,7 +92,7 @@ void func_bind_port(void) {
 /*
 // -----------------------------------------------------------------
 */
-void func_unbind_port(void) {
+COLDC_FUNC(unbind_port) {
     cData * args;
 
     /* Accept a port number. */
@@ -110,7 +110,7 @@ void func_unbind_port(void) {
 /*
 // -----------------------------------------------------------------
 */
-void func_open_connection(void) {
+COLDC_FUNC(open_connection) {
     cData *args;
     char *address;
     Int port, argc;
@@ -137,7 +137,7 @@ void func_open_connection(void) {
 /*
 // -----------------------------------------------------------------
 */
-void func_close_connection(void) {
+COLDC_FUNC(close_connection) {
     /* Accept no arguments. */
     if (!func_init_0())
         return;
@@ -150,7 +150,7 @@ void func_close_connection(void) {
 // -----------------------------------------------------------------
 // Echo a buffer to the connection
 */
-void func_cwrite(void) {
+COLDC_FUNC(cwrite) {
     cData *args;
     int rval;
 
@@ -169,7 +169,7 @@ void func_cwrite(void) {
 // -----------------------------------------------------------------
 // write a file to the connection
 */
-void func_cwritef(void) {
+COLDC_FUNC(cwritef) {
     size_t        block, r;
     cData      * args;
     FILE        * fp;
@@ -233,7 +233,7 @@ void func_cwritef(void) {
 // -----------------------------------------------------------------
 // return random info on the connection
 */
-void func_connection(void) {
+COLDC_FUNC(connection) {
     cList       * info;
     cData       * list;
     Conn * c;

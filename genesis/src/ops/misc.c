@@ -15,7 +15,7 @@
 #include "util.h"
 #include "opcodes.h"
 
-void func_anticipate_assignment(void) {
+COLDC_FUNC(anticipate_assignment) {
     Int opcode, ind;
     Long id;
     cData *dp, d;
@@ -60,7 +60,7 @@ void func_anticipate_assignment(void) {
     return;
 }
 
-void func_time(void) {
+COLDC_FUNC(time) {
     /* Take no arguments. */
     if (!func_init_0())
 	return;
@@ -68,7 +68,7 @@ void func_time(void) {
     push_int(time(NULL));
 }
 
-void func_localtime(void) {
+COLDC_FUNC(localtime) {
     struct tm * tms;
     cData * d;
     cList * l;
@@ -131,7 +131,7 @@ void func_localtime(void) {
     list_discard(l);
 }
 
-void func_mtime(void) {
+COLDC_FUNC(mtime) {
 #ifdef HAVE_GETTIMEOFDAY
     struct timeval tp;
 #endif
@@ -149,7 +149,7 @@ void func_mtime(void) {
 #endif
 }
 
-void func_ctime(void) {
+COLDC_FUNC(ctime) {
     cData *args;
     Int num_args;
     time_t tval;
@@ -178,7 +178,7 @@ void func_ctime(void) {
     string_discard(str);
 }
 
-void func_bind_function(void) {
+COLDC_FUNC(bind_function) {
     cData * args;
     Int      opcode;
 
@@ -199,7 +199,7 @@ void func_bind_function(void) {
     push_int(1);
 }
 
-void func_unbind_function(void) {
+COLDC_FUNC(unbind_function) {
     cData *args;
     Int   opcode;
 
@@ -221,7 +221,7 @@ void func_unbind_function(void) {
 }
 
 #ifdef DRIVER_DEBUG
-void func_debug_callers(void) {
+COLDC_FUNC(debug_callers) {
     cData *args;
 
     if (!func_init_1(&args, INTEGER))
@@ -235,7 +235,7 @@ void func_debug_callers(void) {
         start_debug();
 }
 
-void func_call_trace(void) {
+COLDC_FUNC(call_trace) {
     if (!func_init_0())
       return;
 

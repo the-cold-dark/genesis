@@ -6,7 +6,7 @@
 #include "operators.h"
 #include "execute.h"
 
-void func_dict_values(void) {
+COLDC_FUNC(dict_values) {
     cData * args;
     cList * values;
 
@@ -19,7 +19,7 @@ void func_dict_values(void) {
     list_discard(values);
 }
 
-void func_dict_keys(void) {
+COLDC_FUNC(dict_keys) {
     cData * args;
     cList * keys;
 
@@ -32,7 +32,7 @@ void func_dict_keys(void) {
     list_discard(keys);
 }
 
-void func_dict_add(void) {
+COLDC_FUNC(dict_add) {
     cData * args;
 
     if (!func_init_3(&args, DICT, 0, 0))
@@ -43,7 +43,7 @@ void func_dict_add(void) {
     pop(2);
 }
 
-void func_dict_del(void) {
+COLDC_FUNC(dict_del) {
     cData * args;
 
     if (!func_init_2(&args, DICT, 0))
@@ -58,7 +58,7 @@ void func_dict_del(void) {
     }
 }
 
-void func_dict_contains(void) {
+COLDC_FUNC(dict_contains) {
     cData * args;
     Int      val;
 
@@ -70,7 +70,7 @@ void func_dict_contains(void) {
     push_int(val);
 }
 
-void func_dict_union(void) {
+COLDC_FUNC(dict_union) {
     cData * args;
     cDict * dict1, * dict2, *d;
 

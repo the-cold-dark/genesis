@@ -36,30 +36,22 @@
 #define PILE_BLOCK_SIZE 254
 #define MAX_PILE_BLOCKS 8
 
-typedef Long Align;
-typedef union tlist Tlist;
-typedef struct block Block;
-typedef struct oversized Oversized;
+typedef struct tlist Tlist;
 
-union tlist {
+struct tlist {
     Tlist *next;
-    Align a;
+};
+
+typedef struct blink_s blink_t;
+
+struct blink_s {
+    void    * data;
+    size_t    sz;
+    blink_t * next;
 };
 
 struct pile {
-    Block *blocks;
-    Oversized *over;
-};
-
-struct block {
-    Align data[PILE_BLOCK_SIZE];
-    Int pos;
-    Block *next;
-};
-
-struct oversized {
-    void *data;
-    Oversized *next;
+    blink_t *blocks;
 };
 
 static Tlist *trays[NUM_TRAYS];
@@ -214,92 +206,6 @@ void tfree_chars(char *s) {
     tfree(s, strlen(s) + 1);
 }
 
-#if DISABLED
-Pile * new_pile(void) {
-    Pile *cnew;
-
-    cnew = TMALLOC(Pile, 1);
-
-    /* Start with one block and no oversized blocks. */
-    cnew->blocks = EMALLOC(Block, 1);
-    cnew->blocks->pos = 0;
-    cnew->blocks->next = NULL;
-    cnew->over = NULL;
-    return cnew;
-}
-
-void * pmalloc(Pile *pile, size_t size) {
-    Block *b;
-    Int aligns = (size - 1) / sizeof(Align) + 1;
-
-    /* If the size is larger than a block, then make an oversized block and
-     * link it in. */
-    if (aligns > PILE_BLOCK_SIZE) {
-	Oversized *o;
-
-	o = TMALLOC(Oversized, 1);
-	o->data = emalloc(size);
-	o->next = pile->over;
-	pile->over = o;
-	return o->data;
-    }
-
-    /* Look for a block with enough space. */
-    for (b = pile->blocks; b; b = b->next) {
-	if (b->pos + aligns <= PILE_BLOCK_SIZE) {
-	    b->pos += aligns;
-	    return (void *) (&b->data[b->pos - aligns]);
-	}
-    }
-
-    /* There weren't any.  Make a new block. */
-    b = EMALLOC(Block, 1);
-    b->pos = aligns;
-    b->next = pile->blocks;
-    pile->blocks = b;
-    return (void *)(&b->data[0]);
-}
-
-/* Free all the memory allocated from a pile. */
-void pfree(Pile *pile) {
-    Oversized *o, *nexto;
-    Block *b, *nextb;
-    Int count;
-
-    /* Free all the oversized blocks. */
-    for (o = pile->over; o; o = nexto) {
-	nexto = o->next;
-	efree(o->data);
-	TFREE(o, 1);
-    }
-    pile->over = NULL;
-
-    /* Reset positions of blocks up to MAX_PILE_BLOCKS - 1. */
-    b = pile->blocks;
-    count = 0;
-    while (b && count < MAX_PILE_BLOCKS - 1) {
-	b->pos = 0;
-	b = b->next;
-	count++;
-    }
-
-    /* If we didn't run out of blocks, then we're at the last block.  Reset its
-     * position and set its ->next pointer to null.  Then free the rest of the
-     * blocks. */
-    if (b) {
-	b->pos = 0;
-	nextb = b->next;
-	b->next = NULL;
-	while (nextb) {
-	    b = nextb->next;
-	    efree(nextb);
-	    nextb = b;
-	}
-    }
-}
-#endif
-
-/* new routines courtesy of Dancer */
 Pile *new_pile(void) {
     Pile *tmp;
     /* static Int pile_counter=0; */
@@ -310,38 +216,26 @@ Pile *new_pile(void) {
     return tmp;
 }
 
-typedef struct blink_s blink_t;
-
-struct blink_s {
-    void    * data;
-    size_t    sz;
-    blink_t * next;
-};
+void free_pile(Pile *tmp) {
+    pfree(tmp);
+    efree(tmp);
+}
 
 void * pmalloc(Pile *p, size_t s) {
-    /* void    * newblock; */
     blink_t * blink;
 
-    if(p->blocks == NULL) {
-        blink = emalloc(sizeof(blink_t));
-        blink->data = tmalloc(s);
-        blink->sz = s;
-        blink->next = NULL;
-        p->blocks = (Block *) blink;
-        return (blink->data);
-    }
-    blink = emalloc(sizeof(blink_t));
+    blink = (blink_t*)emalloc(sizeof(blink_t));
     blink->data = tmalloc(s);
     blink->sz = s;
     blink->next = (blink_t *) p->blocks;
-    p->blocks = (Block *) blink;
+    p->blocks = blink;
     return blink->data;
 }
 
 void pfree(Pile *p) {
       blink_t *roam,*ahead;
 
-      roam = (blink_t *) p->blocks;
+      roam = p->blocks;
       while (roam) {
           ahead = roam->next;
           tfree(roam->data, roam->sz);
@@ -350,4 +244,3 @@ void pfree(Pile *p) {
       }
       p->blocks = NULL;
 }
-

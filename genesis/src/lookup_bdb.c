@@ -145,6 +145,9 @@ void lookup_open(char *name, Int cnew) {
 
     for (i = 0; i < NAME_CACHE_SIZE; i++)
 	name_cache[i].name = NOT_AN_IDENT;
+
+    free(objnum_name);
+    free(name_name);
 }
 
 void lookup_close(void) {

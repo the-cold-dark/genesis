@@ -135,4 +135,7 @@ RELEASE INFORMATION:
       * Remove unused variable root in textdb.c compile_cdc_file() (Brad)
       * Change string_tab_free() to release itself also (Brad)
       * Fix string_tab_free() to use efree rather than free directly (Brad)
+      * Fix memory leak in lookup_bdb.c lookup_open() (Brad)
+      * Cleanup memory.c to separate old vs new pile code (Brad)
+      * Add free_pile() (Brad)
 

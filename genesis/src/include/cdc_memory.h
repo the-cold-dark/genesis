@@ -20,6 +20,7 @@ char * tstrdup(char *s);
 char * tstrndup(char *s, Int len);
 void   tfree_chars(char *s);
 Pile * new_pile(void);
+void   free_pile(Pile *tmp);
 void * pmalloc(Pile *pile, size_t size);
 void  pfree(Pile *pile);
 void efree(void * block);

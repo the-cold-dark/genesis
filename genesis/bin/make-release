@@ -1,0 +1,116 @@
+#!/bin/sh
+
+if [ -d rtmp ]; then
+    echo "rtmp exists"
+    exit
+fi
+
+branch=$1
+if [ "$branch" = "" ]; then
+    echo "Syntax: $0 BRANCH_x_x"
+    exit
+elif [ "$branch" = "trunk" ]; then
+    branch=""
+else
+    branch="-r $branch"
+fi
+
+echo "Making temporary working directory (rtmp)..."
+
+mkdir rtmp || exit
+cd rtmp || exit
+
+echo "Checking out $branch source..."
+eval "cvs co $branch genesis" || exit
+
+version=`cat genesis/etc/version`
+lmajor=`echo $version | cut -d. -f1`
+lminor=`echo $version | cut -d. -f2`
+lpatch=`echo $version | cut -d. -f3`
+lrelease=`echo $lpatch | cut -d- -f2`
+lpatch=`echo $lpatch | cut -d- -f1`
+
+lpatch=`expr $lpatch + 1`
+echo "Previous Release: $version"
+
+while [ 1 ]; do
+    echo -n "New Release [$lmajor.${lminor}.$lpatch-$lrelease] "
+    read next
+
+    if [ -z "$next" ]; then
+        next="$lmajor.${lminor}.$lpatch-$lrelease"
+        break
+    else
+        echo -n "Use '$next' as the next release? [yes] "
+        read yesno
+        if [ -z "$yesno" -o "$yesno" = "y" -o "$yesno" = "yes" ]; then
+            break
+        fi
+    fi
+done
+
+nrel="Genesis-$next"
+
+cd genesis
+echo $next > etc/version
+
+num=`echo $next | sed -e 's/-[A-Z][A-Z]*$//'`
+
+date=`perl -e '($mday,$mon,$yr)=(localtime())[3..5];
+               @months = ("Jan","Feb","Mar","Apr","May","Jun",
+                          "Jul","Aug","Sep","Oct","Nov","Dec");
+               print "$mday-$months[$mon]-$yr\n";'`
+
+str=`printf "%-7s[%s]" $num $date`
+chngs=doc/CHANGES
+notes=etc/notes
+
+## update the changes file
+mv $chngs $chngs.bak
+perl -e "while (<STDIN>) { s/\x0c/\x0c\n$str/; print; }" < $chngs.bak > $chngs
+vi doc/CHANGES
+
+## update the release notes
+mv $notes $notes.bak
+perl -e "while (<STDIN>) { (/^RELEASE/) && exit; print; }" <$notes.bak> $notes
+echo "RELEASE INFORMATION:" >> $notes
+perl -e "\$incr=0;
+         while (<STDIN>) {
+             if (\$incr) {
+                 if (/^(\x0b|\x0c)/) {
+                     exit;
+                 } else {
+                     print;
+                 }
+             } elsif (/\x0c/) {
+                 \$incr = 1;
+             } 
+         }" < $chngs >> $notes
+
+## make it commitable
+echo -n "Really commit? [no] "
+read answer
+
+if [ "$answer" = "y" -o "$answer" = "yes" ]; then
+    cd src/modules
+    ./modbuild -m0 cdc web ext_math
+    cd ../..
+
+    ## cvs-fu
+    tag="GENESIS_${lmajor}_${lminor}_${lpatch}"
+    cvs commit -m ""
+    cvs tag $tag
+
+    cd ..
+    mv genesis genesis-work
+    cvs export -r $tag genesis
+else
+    echo "Ok, just faking it..."
+    cd ..
+fi
+
+mv genesis $nrel
+
+tar -cf "${nrel}.tar" $nrel
+gzip -9 "${nrel}.tar"
+

@@ -159,7 +159,10 @@ cStr * html_escape(cStr * in) {
     len = string_length(in);
 
     /* incase they don't need it */
-    if (!memchr(s, '<', len) && !memchr(s, '>', len) && !memchr(s, '&', len))
+    if (!memchr(s, '<', len) &&
+        !memchr(s, '>', len) &&
+        !memchr(s, '&', len) &&
+	!memchr(s, '\"', len))
         return string_dup(in);
 
     /* doh, they do.. */

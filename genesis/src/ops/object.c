@@ -984,7 +984,8 @@ COLDC_FUNC(method_bytecode) {
     if (!func_init_1(&args, SYMBOL))
         return;
 
-    method = object_find_method(cur_frame->object->objnum, args[0].u.symbol, FROB_ANY);
+    method = object_find_method_local(cur_frame->object, args[0].u.symbol,
+                                      FROB_ANY);
 
     /* keep these for later reference, if its already around */
     if (!method)
@@ -1009,7 +1010,7 @@ COLDC_FUNC(method_bytecode) {
         }
 
         if (info->arg2) {
-            list = add_op_arg(list, info->arg1, ops[x], method);
+            list = add_op_arg(list, info->arg2, ops[x], method);
             x++;
         }
     }

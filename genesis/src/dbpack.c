@@ -492,12 +492,21 @@ INTERNAL cBuf * pack_strings(cBuf *buf, Obj *obj)
 {
     Int i;
 
-    buf = write_long(buf, obj->strings_size);
-    buf = write_long(buf, obj->num_strings);
-    for (i = 0; i < obj->num_strings; i++) {
-	buf = string_pack(buf, obj->strings[i].str);
-	if (obj->strings[i].str)
-	    buf = write_long(buf, obj->strings[i].refs);
+    if (obj->strings->tab_num > 0) {
+        buf = write_long(buf, obj->strings->tab_size);
+        buf = write_long(buf, obj->strings->tab_num);
+        buf = write_long(buf, obj->strings->blanks);
+        for (i = 0; i < obj->strings->tab_size; i++) {
+            buf = write_long(buf, obj->strings->hashtab[i]);
+            buf = write_long(buf, obj->strings->tab[i].next);
+            buf = write_long(buf, obj->strings->tab[i].hash);
+            buf = write_long(buf, obj->strings->tab[i].refs);
+        }
+        for (i = 0; i < obj->strings->tab_size; i++) {
+	    buf = string_pack(buf, obj->strings->tab[i].str);
+        }
+    } else {
+        buf = write_long(buf, -1);
     }
     return buf;
 }
@@ -505,14 +514,24 @@ INTERNAL cBuf * pack_strings(cBuf *buf, Obj *obj)
 INTERNAL void unpack_strings(cBuf *buf, Long *buf_pos, Obj *obj)
 {
     Int i;
+    Long size, last_blank = -1;
 
-    obj->strings_size = read_long(buf, buf_pos);
-    obj->num_strings = read_long(buf, buf_pos);
-    obj->strings = EMALLOC(String_entry, obj->strings_size);
-    for (i = 0; i < obj->num_strings; i++) {
-	obj->strings[i].str = string_unpack(buf, buf_pos);
-	if (obj->strings[i].str)
-	    obj->strings[i].refs = read_long(buf, buf_pos);
+    size = read_long(buf, buf_pos);
+    if (size != -1) {
+        obj->strings = string_tab_new_with_size(size);
+        obj->strings->tab_num = read_long(buf, buf_pos);
+        obj->strings->blanks = read_long(buf, buf_pos);
+        for (i = 0; i < size; i++) {
+	    obj->strings->hashtab[i] = read_long(buf, buf_pos);
+	    obj->strings->tab[i].next = read_long(buf, buf_pos);
+	    obj->strings->tab[i].hash = read_long(buf, buf_pos);
+	    obj->strings->tab[i].refs = read_long(buf, buf_pos);
+        }
+        for (i = 0; i < obj->strings->tab_size; i++) {
+	    obj->strings->tab[i].str = string_unpack(buf, buf_pos);
+        }
+    } else {
+	obj->strings = string_tab_new();
     }
 }
 
@@ -520,12 +539,21 @@ INTERNAL Int size_strings(Obj *obj)
 {
     Int size = 0, i;
 
-    size += size_long(obj->strings_size);
-    size += size_long(obj->num_strings);
-    for (i = 0; i < obj->num_strings; i++) {
-	size += string_packed_size(obj->strings[i].str);
-	if (obj->strings[i].str)
-	    size += size_long(obj->strings[i].refs);
+    if (obj->strings->tab_num > 0) {
+        size += size_long(obj->strings->tab_size);
+        size += size_long(obj->strings->tab_num);
+        size += size_long(obj->strings->blanks);
+        for (i = 0; i < obj->strings->tab_size; i++) {
+	    size += size_long(obj->strings->hashtab[i]);
+	    size += size_long(obj->strings->tab[i].next);
+	    size += size_long(obj->strings->tab[i].hash);
+	    size += size_long(obj->strings->tab[i].refs);
+        }
+        for (i = 0; i < obj->strings->tab_size; i++) {
+	    size += string_packed_size(obj->strings->tab[i].str);
+        }
+    } else {
+	size += size_long(-1);
     }
 
     return size;

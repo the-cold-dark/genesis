@@ -640,6 +640,10 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
 	    //      be 1 and so the discard won't actually get rid of the object and the
 	    //      object_new is going to cause problems because it assumes that the
 	    //      objnum doesn't exist.
+	    //
+	    //      The code that makes this unsafe isn't checked in, so at the moment its
+	    //      still safe
+	    //
             if ((target = cache_retrieve(objnum))) {
                 WARN(("new: destroying existing object %s.", obj_str));
 		cache_dirty_object(target);

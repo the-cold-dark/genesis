@@ -875,8 +875,8 @@ INTERNAL void handle_evalcmd(FILE * fp, char * s, Int new, Int access) {
     Long       name;
     Method * method;
 
-    /* set the name as <eval> */
-    name   = ident_get("<eval>");
+    /* set the name as 'coldcc_eval */
+    name   = ident_get("coldcc_eval");
 
     /* grab the code */
     method = get_method(fp, cur_obj, ident_name(name));
@@ -886,7 +886,7 @@ INTERNAL void handle_evalcmd(FILE * fp, char * s, Int new, Int access) {
         DIE("Method definition failed");
 
     /* run it */
-    method->name = NOT_AN_IDENT;
+    method->name = name;
     method->object = cur_obj;
     task_method(cur_obj, method);
 

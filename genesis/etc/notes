@@ -10,7 +10,7 @@ Help can be found through the web site, or on the mailing list
       http://www.cold.org/info/lists
 
 RELEASE INFORMATION:
-1.1p5   [????????] Bruce, Brad, Colin
+1.1p5   [????????] Bruce, Brad, Colin, Brandon
       * Brought random() into agreement with docs and enforced it by
         throwing ~range when arg is negative or zero. (Bruce)
       * Network I/O made non-blocking for incoming connections (Bruce,
@@ -28,3 +28,5 @@ RELEASE INFORMATION:
       * Fixed memory leak in unbind_port() (Bruce)
       * Fixed abs() to throw an error when the arg isn't an integer or
         float (Bruce)
+      * Fixed files() to check for NULL after opendir() and fixed a
+        memory leak (Brandon)

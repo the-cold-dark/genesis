@@ -17,6 +17,10 @@
 #include "token.h"
 #include "macros.h"
 
+#ifdef __MSVC__
+#include <process.h>
+#endif
+
 #define FORMAT_BUF_INITIAL_LENGTH 48
 #define MAX_SCRATCH 2
 
@@ -26,7 +30,7 @@ int uppercase[NUM_CHARS];
 static Int  reserve_fds[MAX_SCRATCH];
 static Int  fds_used;
 
-static void claim_fd(Int i);
+INTERNAL void claim_fd(Int i);
 
 void init_util(void) {
     int i;
@@ -132,11 +136,7 @@ char *long_to_ascii(Long num, Number_buf nbuf) {
 
 char * float_to_ascii(Float num, Number_buf nbuf) {
     int i;
-#ifdef USE_BIG_FLOATS
-    sprintf (nbuf, "%.15g", num);
-#else        
     sprintf (nbuf, "%g", num);
-#endif
     for (i=0; nbuf[i]; i++)
       if (nbuf[i]=='.' || nbuf[i]=='e')
            return nbuf;
@@ -217,7 +217,7 @@ cStr * vformat(char * fmt, va_list arg) {
 
     buf = string_new(0);
 
-    for (;;) {
+    forever {
 
 	/* Find % or end of string. */
 	p = strchr(fmt, '%');
@@ -236,10 +236,7 @@ cStr * vformat(char * fmt, va_list arg) {
 
 	  case 's':
 	    s = va_arg(arg, char *);
-	    if (s)
-	        buf = string_add_chars(buf, s, strlen(s));
-	    else
-	        buf = string_add_chars(buf, "*null*", 6);
+	    buf = string_add_chars(buf, s, strlen(s));
 	    break;
 
 	  case 'S':
@@ -323,13 +320,12 @@ char * timestamp (char * str) {
 
     time(&t);
     tms = localtime(&t);
-    sprintf(s, "%2d %3s %2d %2d:%02d:%02d",
+    sprintf(s, "%d %3s %2d %d:%.2d",
             tms->tm_mday,
             months[tms->tm_mon],
             tms->tm_year + 1900,
             tms->tm_hour,
-            tms->tm_min,
-	    tms->tm_sec);
+            tms->tm_min);
 
     return s;
 }
@@ -443,7 +439,6 @@ char * english_type(Int type) {
       case FROB:	return "a frob";
       case DICT:	return "a dictionary";
       case BUFFER:	return "a buffer";
-      case OBJECT:	return "an object";
     default:		{INSTANCE_RECORD(type, r); return r->name; }
     }
 }
@@ -504,7 +499,7 @@ void init_scratch_file(void) {
 	claim_fd(i);
 }
 
-static void claim_fd(Int i) {
+INTERNAL void claim_fd(Int i) {
 #ifdef __Win32__
     reserve_fds[i] = open("null_file", O_WRONLY | O_CREAT, S_IREAD | S_IWRITE);
 #else
@@ -619,3 +614,6 @@ Int is_valid_id(char * str, Int len) {
      return 1;
 }
 
+void set_argv0(char * str) {
+    
+}

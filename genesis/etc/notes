@@ -14,3 +14,6 @@ RELEASE INFORMATION:
       * fix BUFFER in BUFFER.  Use buffer_index which contained a fix
         not propagated to the previously duplicated code in op_in
         (Allen Noe)
+      * Apply (with changes (Brad)) a bunch of MSVC patches (Robert Bradley)
+      * Fix some missed regerror -> gen_regerror's (pvx at wmute.net)
+      * Fix method access setting error handling (pvx at wmute.net)

@@ -9,6 +9,9 @@
 #ifdef __UNIX__
 #include <sys/time.h>    /* for mtime() */
 #endif
+#ifdef __MSVC__
+#include <windows.h>
+#endif
 
 #include "operators.h"
 #include "execute.h"
@@ -146,23 +149,39 @@ void func_localtime(void) {
     list_discard(l);
 }
 
+#ifdef __Win32__
 void func_mtime(void) {
-#ifdef HAVE_GETTIMEOFDAY
-    struct timeval tp;
-#endif
+    LARGE_INTEGER freq, cnt;
 
     if (!func_init_0())
         return;
 
+    QueryPerformanceFrequency(&freq);
+    QueryPerformanceCounter(&cnt);
+    push_int((cNum) (((cnt.QuadPart * 1000000) / freq.QuadPart) % 1000000));
+}
+#else
 #ifdef HAVE_GETTIMEOFDAY
+void func_mtime(void) {
+    struct timeval tp;
+
+    if (!func_init_0())
+        return;
+
     /* usec is microseconds */
     gettimeofday(&tp, NULL);
 
     push_int((cNum) tp.tv_usec);
-#else
-    push_int(-1);
-#endif
 }
+#else
+void func_mtime(void) {
+    if (!func_init_0())
+        return;
+
+    push_int(-1);
+}
+#endif
+#endif
 
 void func_ctime(void) {
     cData *args;

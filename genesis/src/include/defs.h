@@ -8,22 +8,6 @@
 #define DISABLED 0
 #define ENABLED  1
 
-#include "config.h"
-
-/*
-// ---------------------------------------------------------------------
-// If running in BUILDING_COLDCC mode, turn off some options that slow
-// down the build
-*/
-#ifdef BUILDING_COLDCC
-#undef USE_CLEANER_THREAD
-#undef USE_DIRTY_LIST
-#undef USE_CACHE_HISTORY
-#else
-#define USE_DIRTY_LIST
-#define USE_CACHE_HISTORY
-#endif
-
 /*
 // ---------------------------------------------------------------------
 // This will reduce how much your database bloats, however it will
@@ -43,7 +27,6 @@
 // precision, but is not necessarily recommended unless you know your
 // system can handle 64bit + words.  You do not need to specify both
 // (You can specify just USE_BIG_FLOATS, and not numbers).
-// This will increase the size of cData from 8 bytes to 12.
 */
 #if DISABLED
 #  define USE_BIG_FLOATS
@@ -142,27 +125,6 @@
 
 /*
 // ---------------------------------------------------------------------
-// size of method cache. use prime numbers and follow guidelines as 
-// with the name cache above.
-*/
-#define METHOD_CACHE_SIZE 2551
-
-/*
-// ---------------------------------------------------------------------
-// size of ancestor cache. use prime numbers and follow guidelines as 
-// with the name cache above.
-*/
-#define ANCESTOR_CACHE_SIZE 2551
-#ifdef BUILDING_COLDCC
-/*
-// ---------------------------------------------------------------------
-// size of defines var cache. only used in coldcc. use prime numbers and
-// follow guidelines as with the name cache above.
-*/
-#define DEFINES_VAR_CACHE_SIZE 2551
-#endif
-/*
-// ---------------------------------------------------------------------
 // Default indent for decompiled code.
 */
 #define DEFAULT_INDENT    4
@@ -180,6 +142,7 @@
 */
 
 /* core behaviour defines, set by configure */
+#include "config.h"
 
 #ifndef CAT
 #  ifdef __WATCOMC__
@@ -384,7 +347,15 @@ typedef bool              Bool;
 
 #define ANY_TYPE 0
 
+/* personal preference stuff */
+#define forever for (;;)
+#define INTERNAL static
+
 #define SERVER_NAME "Genesis (the Cold driver)"
+
+#ifdef __MSVC__
+#define S_ISDIR(mode) (mode & _S_IFDIR)
+#endif
 
 /* incase it doesn't exist */
 #ifndef O_BINARY
@@ -413,10 +384,6 @@ typedef bool              Bool;
 #ifdef sys_linux
 #undef NULL
 #define NULL 0
-#endif
-
-#ifdef USE_CLEANER_THREAD
-#include <pthread.h>
 #endif
 
 #include <setjmp.h>
@@ -472,10 +439,6 @@ Int  heartbeat_freq;
 
 Int cache_width;
 Int cache_depth;
-#ifdef USE_CLEANER_THREAD
-Int  cleaner_wait;
-cDict * cleaner_ignore_dict;
-#endif
 
 void init_defs(void);
 
@@ -485,20 +448,6 @@ Int  limit_fork;
 Int  limit_calldepth;
 Int  limit_recursion;
 Int  limit_objswap;
-
-/* driver config parameters accessable through config() */
-Int  cache_log_flag;
-Int  cache_watch_count;
-cObjnum cache_watch_object;
-Int  log_malloc_size;
-Int  log_method_cache;
-
-#ifdef USE_CACHE_HISTORY
-/* cache stats stuff */
-extern cList * ancestor_cache_history;
-extern cList * method_cache_history;
-Int cache_history_size;
-#endif
 
 #else
 extern jmp_buf main_jmp;
@@ -525,12 +474,6 @@ extern Int  heartbeat_freq;
 
 extern Int cache_width;
 extern Int cache_depth;
-#ifdef USE_CLEANER_THREAD
-extern pthread_mutex_t cleaner_lock;
-extern pthread_cond_t cleaner_condition;
-extern cDict * cleaner_ignore_dict;
-extern Int  cleaner_wait;
-#endif
 
 extern void init_defs(void); 
 
@@ -541,22 +484,6 @@ extern Int  limit_calldepth;
 extern Int  limit_recursion;
 extern Int  limit_objswap;
 
-/* driver config parameters accessable through config() */
-extern Int  cache_log_flag;
-extern Int  cache_watch_count;
-extern cObjnum cache_watch_object;
-extern Int  log_malloc_size;
-extern Int  log_method_cache;
-
-#ifdef USE_CACHE_HISTORY
-/* cache stats stuff */
-extern cList * ancestor_cache_history;
-extern cList * method_cache_history;
-extern Int cache_history_size;
-#endif
-
-extern Int name_cache_hits;
-extern Int name_cache_misses;
 #endif
 
 #endif

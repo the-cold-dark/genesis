@@ -380,7 +380,7 @@ cList * match_regexp(cStr * reg, char * s, Bool sensitive, Bool *error) {
     Int      i;
 
     if ((rx = string_regexp(reg)) == NULL) {
-        cthrow(regexp_id, "%s", regerror(NULL));
+        cthrow(regexp_id, "%s", gen_regerror(NULL));
         *error = YES;
         return NULL;
     }
@@ -427,7 +427,7 @@ cList * regexp_matches(cStr * reg, char * s, Bool sensitive, Bool * error) {
              size;
 
     if ((rx = string_regexp(reg)) == (regexp *) NULL) {
-        cthrow(regexp_id, "%s", regerror(NULL));
+        cthrow(regexp_id, "%s", gen_regerror(NULL));
         *error = YES;
         return NULL;
     }
@@ -579,7 +579,7 @@ cStr * strsed(cStr * reg,  /* the regexp string */
 
     /* Compile the regexp, note: it is free'd by string_discard() */
     if ((rx = string_regexp(reg)) == (regexp *) NULL)
-        THROW((regexp_id, "%s", regerror(NULL)))
+        THROW((regexp_id, "%s", gen_regerror(NULL)))
 
     /* initial regexp execution */
     if (!gen_regexec(rx, s, sensitive))
@@ -1029,7 +1029,7 @@ cList * strsplit(cStr * str, cStr * reg, Int flags) {
 
     /* Compile the regexp, note: it is free'd by string_discard() */
     if ((rx = string_regexp(reg)) == (regexp *) NULL)
-        x_THROW((regexp_id, "%s", regerror(NULL)))
+        x_THROW((regexp_id, "%s", gen_regerror(NULL)))
 
     /* look at the regexp and see if its a simple one,
        which we can currently handle */

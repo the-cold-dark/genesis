@@ -25,8 +25,10 @@ void uninit_sig(void) {
     signal(SIGILL,  SIG_DFL);
     signal(SIGINT,  SIG_DFL);
     signal(SIGTERM, SIG_DFL);
+#ifndef __MSVC__
     signal(SIGUSR1, SIG_DFL);
     signal(SIGUSR2, SIG_DFL);
+#endif
 #ifdef __UNIX__
     signal(SIGQUIT, SIG_DFL);
     signal(SIGHUP,  SIG_DFL);
@@ -37,12 +39,14 @@ void uninit_sig(void) {
 
 void init_sig(void) {
     caught_fpe = 0;
+    signal(SIGFPE,  catch_SIGFPE);
     signal(SIGILL,  catch_signal);
     signal(SIGINT,  catch_signal);
     signal(SIGTERM, catch_signal);
+#ifndef __MSVC__
     signal(SIGUSR1, catch_signal);
     signal(SIGUSR2, catch_signal);
-    signal(SIGFPE,  catch_SIGFPE);
+#endif
 #ifdef __UNIX__
     signal(SIGQUIT, catch_signal);
     signal(SIGHUP,  catch_signal);
@@ -82,8 +86,10 @@ char *sig_name(int sig) {
         case SIGHUP:  return "HUP";
 #endif
         case SIGTERM: return "TERM";
+#ifndef __MSVC__
         case SIGUSR1: return "USR1";
         case SIGUSR2: return "USR2";
+#endif
         default:      return "Unknown";
     }
     return NULL;
@@ -114,6 +120,7 @@ void catch_signal(int sig) {
             handle_connection_output();
             flush_files();
 #endif
+#ifndef __MSVC__
         case SIGUSR2:
             /* let the db do what it wants from here */
             break;
@@ -140,6 +147,7 @@ void catch_signal(int sig) {
             longjmp(main_jmp, 1);
             break;
         }
+#endif
         case SIGILL:
             /* lets panic and hopefully shutdown without frobbing the db */
             panic(sig_name(sig));

@@ -68,7 +68,7 @@ INTERNAL Bool backup_file(char * file) {
     if (from_fd == F_FAILURE)
         x_THROW(source)
 
-#ifdef __MSCV__
+#ifdef __MSVC__
     to_fd = open(dest, (O_WRONLY|O_TRUNC|O_CREAT|O_BINARY), (_S_IREAD|_S_IWRITE));
 #else
     to_fd = open(dest, (O_WRONLY|O_TRUNC|O_CREAT|O_BINARY), (S_IRUSR|S_IWUSR));

@@ -57,10 +57,12 @@ void init_defs(void) {
     log_malloc_size = 0;
     log_method_cache = 0;
 
+#ifdef USE_CACHE_HISTORY
     ancestor_cache_history = list_new(0);
     method_cache_history = list_new(0);
 
     cache_history_size = 50;
+#endif
 }
 
 #undef INIT_VAR

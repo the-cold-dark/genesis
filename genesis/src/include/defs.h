@@ -276,7 +276,7 @@ typedef bool              Bool;
   typedef uInt              uLong;
 
 # define MAX_LONG  MAX_INT
-# define MAX_LONG  (- MAX_INT - 1);
+# define MIN_LONG  (- MAX_INT - 1);
 # define MAX_ULONG MAX_UINT
 #endif
 

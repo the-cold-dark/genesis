@@ -26,14 +26,14 @@ StringTab * string_tab_new(void);
 StringTab * string_tab_new_with_size(Long size);
 void        string_tab_fixup_hashtab(StringTab *tab, Long num);
 void        string_tab_free(StringTab *tab);
-Int         string_tab_get(StringTab *tab, char *s);
-Int         string_tab_get_string(StringTab *tab, cStr * str);
-void        string_tab_discard(StringTab *tab, Int id);
-Int         string_tab_dup(StringTab *tab, Int id);
-char      * string_tab_name(StringTab *tab, Int id);
-cStr      * string_tab_name_str(StringTab *tab, Int id);
-char      * string_tab_name_size(StringTab *tab, Int id, Int *sz);
-uLong       string_tab_hash(StringTab *tab, Int id);
+Ident       string_tab_get(StringTab *tab, char *s);
+Ident       string_tab_get_string(StringTab *tab, cStr * str);
+void        string_tab_discard(StringTab *tab, Ident id);
+Ident       string_tab_dup(StringTab *tab, Ident id);
+char      * string_tab_name(StringTab *tab, Ident id);
+cStr      * string_tab_name_str(StringTab *tab, Ident id);
+char      * string_tab_name_size(StringTab *tab, Ident id, Int *sz);
+uLong       string_tab_hash(StringTab *tab, Ident id);
 
 #endif
 

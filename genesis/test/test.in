@@ -32,6 +32,8 @@ public method .destroy() {
     return destroy();
 };
 
+new object $buffer: $root;
+
 	// --------------------
 	// testobj1
 	//
@@ -1530,30 +1532,53 @@ eval {
 		  `[1, 2, 3, 4, 5, 5], "a" -> ~type
 		  `[1, 2, 3, 4, 5, 5], 5, 7 -> ~range 1
 		  `[1, 2, 3, 4, 5, 5], 5, -7 -> ~range 2
+		  `[1, 2, 1, 2, 1, 2], `[1, 2], 3 -> 3
+		  `[1, 2, 1, 2, 1, 2], `[1, 2], 4 -> 5
+		  `[1, 2, 1, 2, 1, 2], `[1, 2], -1 -> 5
+		  `[1, 2, 1, 2, 1, 2], `[1, 2], -2 -> 5
+		  `[1, 2, 1, 2, 1, 2], `[1, 2], -3 -> 3
 		  `[0, 0, 97, 0, 0, 98, 92, 65, 99], `[92, 65], 6 -> 7
+
 
 
 eval {
     var a, b;
 
     a = `[1, 2, 3, 4, 5, 5];
+    b = `[1, 2, 1, 2, 1, 2];
 
     dblog("Buffer test 6");
     dblog("  " + toliteral(a) + ", 1 -> " + toliteral(bufidx(a, 1)));
     dblog("  " + toliteral(a) + ", 5 -> " + toliteral(bufidx(a, 5)));
     dblog("  " + toliteral(a) + ", 5, -1 -> " + toliteral(bufidx(a, 5, -1)));
     dblog("  " + toliteral(a) + ", 5, -3 -> " + toliteral(bufidx(a, 5, -3)));
-    dblog("  " + toliteral(a) + ", `[5, 6] -> " + toliteral(bufidx(a, `[5, 6])));
-    dblog("  " + toliteral(a) + ", `[2, 3] -> " + toliteral(bufidx(a, `[2, 3])));
-    dblog("  " + toliteral(a) + ", \"a\" -> " + toliteral((| bufidx(a, "a") |)));
-    dblog("  " + toliteral(a) + ", 5, 7 -> " + toliteral((| bufidx(a, 5, 7) |)) + " 1");
-    dblog("  " + toliteral(a) + ", 5, -7 -> " + toliteral((| bufidx(a, 5, -7) |)) + " 2");
+    dblog("  " + toliteral(a) + ", `[5, 6] -> " +
+                 toliteral(bufidx(a, `[5, 6])));
+    dblog("  " + toliteral(a) + ", `[2, 3] -> " +
+                 toliteral(bufidx(a, `[2, 3])));
+    dblog("  " + toliteral(a) + ", \"a\" -> " +
+                 toliteral((| bufidx(a, "a") |)));
+    dblog("  " + toliteral(a) + ", 5, 7 -> " +
+                 toliteral((| bufidx(a, 5, 7) |)) + " 1");
+    dblog("  " + toliteral(a) + ", 5, -7 -> " +
+                 toliteral((| bufidx(a, 5, -7) |)) + " 2");
+    dblog("  " + toliteral(b) + ", `[1, 2], 3 -> " +
+                 toliteral((| bufidx(b, `[1, 2], 3) |)));
+    dblog("  " + toliteral(b) + ", `[1, 2], 4 -> " +
+                 toliteral((| bufidx(b, `[1, 2], 4) |)));
+    dblog("  " + toliteral(b) + ", `[1, 2], -1 -> " +
+                 toliteral((| bufidx(b, `[1, 2], -1) |)));
+    dblog("  " + toliteral(b) + ", `[1, 2], -2 -> " +
+                 toliteral((| bufidx(b, `[1, 2], -2) |)));
+    dblog("  " + toliteral(b) + ", `[1, 2], -3 -> " +
+                 toliteral((| bufidx(b, `[1, 2], -3) |)));
 
     // this is based on an actual bug--easiest to just use the test case
     a = `[0, 0, 97, 0, 0, 98, 92, 65, 99];
     b = `[92, 65];
     dblog("  " + toliteral(a) + ", " + b + ", 6 -> " +
                  toliteral((| bufidx(a, b, 6) |)));
+
 };
 
 	// Buffer test 7
@@ -1649,6 +1674,34 @@ eval {
 eval {
     dblog("Buffer test 11");
     dblog("  " + toliteral(strings_to_buf(["a", "b", "alal"])));
+};
+
+	// Buffer test 12
+	//
+	// Testing bufsub()
+	// Output:
+		Buffer test 12
+		  `[1, 2, 3, 2, 4] -> `[1, 3, 3, 3, 4]
+		  `[1, 2, 3, 2, 4] -> `[4, 2, 3, 2, 4]
+		  `[1, 2, 3, 2, 4] -> `[4, 5, 2, 3, 2, 4]
+		  `[1, 2, 3, 2, 4] -> `[4, 5, 3, 2, 4]
+		  `[1, 2, 3, 2, 4] -> `[4, 3, 2, 4]
+		  `[1, 2, 3, 2, 4] -> `[1, 2, 3, 4]
+		  `[1, 2, 3, 2, 4] -> `[1, 2, 2, 2, 3, 2, 2, 2, 4]
+
+eval {
+    var a;
+
+    dblog("Buffer test 12");
+    a = `[1, 2, 3, 2, 4];
+    dblog("  " + toliteral(a) + " -> " + toliteral(bufsub(a, `[2], `[3])));
+    dblog("  " + toliteral(a) + " -> " + toliteral(bufsub(a, `[1], `[4])));
+    dblog("  " + toliteral(a) + " -> " + toliteral(bufsub(a, `[1], `[4, 5])));
+    dblog("  " + toliteral(a) + " -> " + toliteral(bufsub(a, `[1, 2], `[4, 5])));
+    dblog("  " + toliteral(a) + " -> " + toliteral(bufsub(a, `[1, 2], `[4])));
+    dblog("  " + toliteral(a) + " -> " + toliteral(bufsub(a, `[2, 4], `[4])));
+    dblog("  " + toliteral(a) + " -> " + toliteral(bufsub(a, `[2], `[2, 2, 2])));
+
 };
 
 	// Dictionary test 1
@@ -2318,6 +2371,7 @@ eval {
 		  "whew!!"
 		  "whew!@"
 		  "!@whew"
+		  ~range
 
 eval {
     var a;
@@ -2333,6 +2387,7 @@ eval {
     dblog("  " + toliteral(pad(a, 6, "!")));
     dblog("  " + toliteral(pad(a, 6, "!@#")));
     dblog("  " + toliteral(pad(a, -6, "!@#")));
+    dblog("  " + toliteral((|pad(a, 1, "")|)));
 };
 
 	// String test 9
@@ -2523,9 +2578,85 @@ eval {
 	// Output
 
 		String matching test 5
+		  match_regexp("^no.|()[]*+?escape$", "\^no\.\|\(\)\[\]\*\+\?escape\$")
+		  => [[1, 19], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+		  match_regexp("test", "^test")
+		  => [[1, 4], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+		  match_regexp("no test", "^test")
+		  => 0
+		  match_regexp("test", "test$")
+		  => [[1, 4], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+		  match_regexp("test not", "test$")
+		  => 0
+		  match_regexp("this", "this|that")
+		  => [[1, 4], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+		  match_regexp("that", "this|that")
+		  => [[1, 4], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+		  match_regexp("hiiiim", "hi*m")
+		  => [[1, 6], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+		  match_regexp("hiiiim", "ho*m")
+		  => 0
+		  match_regexp("hm", "ho*m")
+		  => [[1, 2], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+		  match_regexp("hiiiim", "hi+m")
+		  => [[1, 6], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+		  match_regexp("hiiiim", "ho+m")
+		  => 0
+		  match_regexp("him", "hi?m")
+		  => [[1, 3], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+		  match_regexp("hm", "hi?m")
+		  => [[1, 2], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+		  match_regexp("hiim", "hi?m")
+		  => 0
+		  match_regexp("that", "t(ha)t")
+		  => [[1, 4], [2, 2], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+		  match_regexp("0123456789abcdefghi", "0(1(2(3(4(5(6(7(8(9)a)b)c)d)e)f)g)h)i")
+		  => [[1, 19], [2, 17], [3, 15], [4, 13], [5, 11], [6, 9], [7, 7], [8, 5], [9, 3], [10, 1]]
+		  match_regexp("0123456789abcdefghi", "(0(1(2(3(4(5(6(7(8(9)a)b)c)d)e)f)g)h)i)")
+		  => [~regexp, "too many ()", 0]
+		  match_regexp("abcdefghijklmnopqrstuvwxyz0123456789", "[a-z0-9]+")
+		  => [[1, 36], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+		  match_regexp(".", "[^a-z]")
+		  => [[1, 1], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+		  match_regexp("a", "[^a-z]")
+		  => 0
+
+
+public method .rx_test() {
+    arg str, rx;
+    var result;
+
+    dblog("  match_regexp(" + toliteral(str) + ", " + toliteral(rx) + ")");
+    catch any {
+        dblog("  => " + toliteral(match_regexp(str, rx)));
+    } with {
+        dblog("  => " + traceback()[1]);
+    }
+};
 
 eval {
     dblog("String matching test 5");
+    .rx_test("^no.|()[]*+?escape$", "\^no\.\|\(\)\[\]\*\+\?escape\$");
+    .rx_test("test", "^test");
+    .rx_test("no test", "^test");
+    .rx_test("test", "test$");
+    .rx_test("test not", "test$");
+    .rx_test("this", "this|that");
+    .rx_test("that", "this|that");
+    .rx_test("hiiiim", "hi*m");
+    .rx_test("hiiiim", "ho*m");
+    .rx_test("hm", "ho*m");
+    .rx_test("hiiiim", "hi+m");
+    .rx_test("hiiiim", "ho+m");
+    .rx_test("him", "hi?m");
+    .rx_test("hm", "hi?m");
+    .rx_test("hiim", "hi?m");
+    .rx_test("that", "t(ha)t");
+    .rx_test("0123456789abcdefghi", "0(1(2(3(4(5(6(7(8(9)a)b)c)d)e)f)g)h)i");
+    .rx_test("0123456789abcdefghi", "(0(1(2(3(4(5(6(7(8(9)a)b)c)d)e)f)g)h)i)");
+    .rx_test("abcdefghijklmnopqrstuvwxyz0123456789", "[a-z0-9]+");
+    .rx_test(".", "[^a-z]");
+    .rx_test("a", "[^a-z]");
 };
 
 	// Numeric test 1

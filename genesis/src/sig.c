@@ -20,7 +20,7 @@ void catch_SIGCHLD(int sig);
 void catch_SIGPIPE(int sig);
 #endif
 
-void uninit_sig(void) {
+static void uninit_sig(void) {
     signal(SIGFPE,  SIG_DFL);
     signal(SIGILL,  SIG_DFL);
     signal(SIGINT,  SIG_DFL);
@@ -76,7 +76,7 @@ void catch_SIGFPE(int sig) {
     signal(SIGFPE,  catch_SIGFPE);
 }
 
-char *sig_name(int sig) {
+static char *sig_name(int sig) {
     switch(sig) {
         case SIGILL:  return "ILL";
         case SIGSEGV: return "SEGV";

@@ -69,7 +69,7 @@ RELEASE INFORMATION:
         invalidations. (Bruce)
       * If new and old parents lists are equal, change_parents()
         should do no work. (Including cache invalidations) (Bruce)
-      * Add cache_stats() and related data gathering code.
+      * Add cache_stats() and related data gathering code. (Bruce)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

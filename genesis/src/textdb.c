@@ -32,7 +32,7 @@
 
 typedef struct idref_s {
     Long objnum;            /* objnum if its an objnum */
-    char str[BUF];         /* string name */
+    char *str;              /* string name */
     Int  len;
     Int  err;
 } idref_t;
@@ -90,8 +90,8 @@ extern Bool print_warn;
     } while (0)
 
 #define MATCH(__s, __t, __l) (!strnccmp(__s, __t, __l) && isspace(__s[__l]))
-#define NEXT_SPACE(__s) {for (; *__s && !isspace(*__s) && *__s != (char) NULL; __s++);}
-#define NEXT_WORD(__s)  {for (; isspace(*__s) && *__s != (char) NULL; __s++);}
+#define NEXT_SPACE(__s) do {for (; *__s && !isspace(*__s); __s++);} while (0)
+#define NEXT_WORD(__s)  do {for (; *__s &&  isspace(*__s); __s++);} while (0)
 
 
 /*
@@ -143,15 +143,13 @@ static holder_t * holders = NULL;
 
 nh_t * nhs = NULL;
 
-static Int add_objname(char * str, Long objnum, Int skip_lookup) {
-    Ident   id = ident_get(str);
+static Int add_objname(Ident id, Long objnum, Int skip_lookup) {
     Obj   * obj = NULL;
     Long    num = INV_OBJNUM;
 
     if (!skip_lookup && lookup_retrieve_name(id, &num) && num != objnum) {
         WARN(("Attempt to rebind existing objname $%s (#%li)",
-               str, (long) num));
-        ident_discard(id);
+               ident_name(id), (long) num));
         return 0;
     }
 
@@ -160,7 +158,7 @@ static Int add_objname(char * str, Long objnum, Int skip_lookup) {
        the name on the object after it is defined */
     obj = cache_retrieve(objnum);
     if (!obj) {
-        holder_t * holder = (holder_t *) malloc(sizeof(holder_t));
+        holder_t * holder = (holder_t *) tmalloc(sizeof(holder_t));
 
         lookup_store_name(id, objnum);
 
@@ -176,8 +174,6 @@ static Int add_objname(char * str, Long objnum, Int skip_lookup) {
         cache_discard(obj);
     }
 
-    ident_discard(id);
-
     return 1;
 }
 
@@ -188,13 +184,13 @@ cObjnum get_object_name(Ident id) {
 
     if (!lookup_retrieve_name(id, &num)) {
         num = db_top++;
-        add_objname(ident_name(id), num, TRUE);
+        add_objname(id, num, TRUE);
     }
 
     return num;
 }
 
-
+#ifndef ONLY_PARSE_TEXTDB
 static void cleanup_holders(void) {
     holder_t * holder = holders,
              * old = NULL;
@@ -238,11 +234,10 @@ static void cleanup_holders(void) {
         string_discard(holder->str);
         old = holder;
         holder = holder->next;
-        free(old);
+        tfree(old, sizeof(holder_t));
     }
 }
 
-#ifndef ONLY_PARSE_TEXTDB
 /* only call with a method which declars a MF_NATIVE flag */
 /* holders are redundant, but it lets us keep track of methods defined
    native, but which are not */
@@ -481,6 +476,7 @@ static void verify_native_methods(void) {
 /*
 // ------------------------------------------------------------------------
 // its small enough lets just do copies, rather than dealing with pointers
+// bah!  its expensive enough, we're doing pointers damnit.
 */
 #define NOOBJ 0
 #define ISOBJ 1
@@ -490,7 +486,7 @@ static Int get_idref(char * sp, idref_t * id, Int isobj) {
     char * end;
 
     id->objnum = INV_OBJNUM;
-    id->str[0] = 0;
+    id->str    = 0;
     id->len    = 0;
 
     if (!sp[0]) {
@@ -518,14 +514,12 @@ static Int get_idref(char * sp, idref_t * id, Int isobj) {
     if (sp[0] == '$') {
         if (!isobj)
             DIEf("Invalid symbol '%s.", sp);
-        strncpy(id->str, &sp[1], x-1);
-        id->str[x-1] = 0;
+        id->str = &sp[1];
         id->len = x-1;
     }
     else
     {
-        strncpy(id->str, sp, x);
-        id->str[x] = 0;
+        id->str = sp;
         id->len = x;
     }
 
@@ -541,10 +535,10 @@ static Long parse_to_objnum(idref_t *ref) {
          objnum = 0;
     Int  result;
 
-    if (ref->str[0] != (char) NULL) {
-        if (!strncmp(ref->str, "root", 4) && ref->len == 4)
+    if (ref->str != (char) NULL) {
+        if (ref->len == 4 && !strncmp(ref->str, "root", 4))
             return 1;
-        else if (!strncmp(ref->str, "sys", 3) && ref->len == 3)
+        else if (ref->len == 3 && !strncmp(ref->str, "sys", 3))
             return 0;
 
         id = ident_get_length(ref->str, ref->len);
@@ -696,6 +690,7 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
                 target = NULL;
             }
             target = object_new(objnum, parents);
+            objnum = target->objnum;
         }
     } else {
         target = cache_retrieve(objnum);
@@ -708,6 +703,7 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
             if (!target) {
                 DIEf("ABORT, unable to create object #%li", (long) objnum);
             }
+            objnum = target->objnum;
         }
 
     }
@@ -718,8 +714,11 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
 
     /* if we should, add the name.  If it already has one, we just replace it.*/
     if (objnum != ROOT_OBJNUM && objnum != SYSTEM_OBJNUM) {
-        if (obj.str[0] != (char) NULL)
-            add_objname(obj.str, target->objnum, objnum == INV_OBJNUM);
+        if (obj.str != (char) NULL) {
+            Ident id = ident_get_length(obj.str, obj.len);
+            add_objname(id, target->objnum, objnum == INV_OBJNUM);
+            ident_discard(id);
+        }
     }
 
     /* free up this list */
@@ -743,16 +742,12 @@ static void handle_parcmd(char * s, Int new) {
     Int        num;
     cList    * parents;
 #endif
-
-    char     * p = NULL;
-    Int        len;
     idref_t    id;
 
     /* parse the reference */
-    len = get_idref(s, &id, ISOBJ);
-    p = s + len;
-    NEXT_SPACE(p);
-    if (*p != ';' || !len)
+    s += get_idref(s, &id, ISOBJ);
+    NEXT_SPACE(s);
+    if (*s != ';' || !id.len)
         DIEf("Invalid object definition \"%s\".", s);
 
 #ifndef ONLY_PARSE_TEXTDB
@@ -796,9 +791,9 @@ static void handle_parcmd(char * s, Int new) {
 // ------------------------------------------------------------------------
 */
 static void handle_namecmd(char * line, char * s, Int new) {
-    char       name[BUF];
     char     * p;
 #ifndef ONLY_PARSE_TEXTDB
+    char       name[BUF];
     Long       num, other;
     Ident      id;
 #endif
@@ -812,10 +807,10 @@ static void handle_namecmd(char * line, char * s, Int new) {
     /* skip past the name */
     for (; *p && !isspace(*p) && *p != (char) NULL && *p != ';'; p++);
 
+#ifndef ONLY_PARSE_TEXTDB
     /* copy the name */
     COPY(name, s, p);
 
-#ifndef ONLY_PARSE_TEXTDB
     /* see if it exists */
     id = ident_get(name);
     if (lookup_retrieve_name(id, &other)) {
@@ -823,7 +818,6 @@ static void handle_namecmd(char * line, char * s, Int new) {
         WARN(("objname $%s is already bound to objnum #%li",name,(long) other));
         return;
     }
-    ident_discard(id);
 
     /* lets see if there is a objnum association, or if we should pick one */
     for (; isspace(*p) && *p != (char) NULL; p++);
@@ -847,7 +841,8 @@ static void handle_namecmd(char * line, char * s, Int new) {
         num = db_top++;
     }
 
-    add_objname(name, num, TRUE);
+    add_objname(id, num, TRUE);
+    ident_discard(id);
 #endif
 }
 
@@ -864,7 +859,6 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
     Bool       result;
     char     * var_name;
 #endif
-    Int        slen;
     cData      d;
     char     * p = s;
     idref_t    name;
@@ -905,24 +899,17 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
             DIE("var: attempt to define object variable without defining object.");
         definer = cur_obj->objnum;
 #else
-        NEXT_WORD(s)
+        NEXT_WORD(s);
 #endif
-    }
-
-    /* strip trailing spaces and semi colons */
-    slen = strlen(s) - 1;
-    while (slen >= 0 && (s[slen] == ';' || isspace(s[slen]))) {
-        s[slen] = (char) NULL;
-        --slen;
     }
 
     s += get_idref(s, &name, NOOBJ);
 
-    if (name.str[0] == (char) NULL)
+    if (name.str == (char) NULL)
         DIEf("Invalid variable name \"%s\"", p);
 
 #ifndef ONLY_PARSE_TEXTDB
-    var = ident_get(name.str);
+    var = ident_get_length(name.str, name.len);
 #endif
 
     if (new == N_OLD) {
@@ -1051,8 +1038,8 @@ static Int get_method_name(char * s, idref_t * id) {
     }
 
     count += x;
-    strncpy(id->str, s, x);
-    id->str[x] = (char) NULL;
+    id->str = s;
+    id->len = x;
 
     return count;
 }
@@ -1075,11 +1062,11 @@ static void handle_bind_nativecmd(FILE * fp, char * s) {
     s += get_method_name(s, &meth);
    
 #ifndef ONLY_PARSE_TEXTDB
-    if (nat.str[0] == (char) NULL || meth.str[0] == (char) NULL)
+    if (nat.str == (char) NULL || meth.str == (char) NULL)
         DIE("Invalid method name in bind_native directive.\n");
 
-    inat = ident_get(nat.str);
-    imeth = ident_get(meth.str);
+    inat = ident_get_length(nat.str, nat.len);
+    imeth = ident_get_length(meth.str, meth.len);
 
     n = find_defined_native_method(cur_obj->objnum, imeth);
     if (n == (nh_t *) NULL)
@@ -1100,15 +1087,15 @@ static void handle_bind_nativecmd(FILE * fp, char * s) {
 }
 
 static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
-    char     * p = NULL;
+    char    * p = NULL;
 #ifndef ONLY_PARSE_TEXTDB
     cObjnum   definer;
-    Ident      name;
+    Ident     name;
 #endif
-    idref_t    id = {INV_OBJNUM, "", 0};
-    Method * method;
-    Obj * obj;
-    Int        flags = MF_NONE;
+    idref_t   id = {INV_OBJNUM, NULL, 0, 0};
+    Method  * method;
+    Obj     * obj;
+    Int       flags = MF_NONE;
 
     NEXT_WORD(s);
 
@@ -1133,11 +1120,11 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
 
     s += get_method_name(s, &id);
 
-    if (id.str[0] == (char) NULL)
+    if (id.str == (char) NULL)
         DIE("No method name.");
 
 #ifndef ONLY_PARSE_TEXTDB
-    name = ident_get(id.str);
+    name = ident_get_length(id.str, id.len);
 #endif
 
     /* see if any flags are set */
@@ -1146,7 +1133,9 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
 
         while (*p != (char) NULL && running) {
             NEXT_WORD(p);   
-            if (!strnccmp(p, "nooverride", 10)) {
+            if (*p == '{' || *p == ';') {
+                break;
+            } else if (!strnccmp(p, "nooverride", 10)) {
                 p += 10;
                 flags |= MF_NOOVER;
             } else if (!strnccmp(p, "synchronized", 12)) {
@@ -1161,8 +1150,6 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
             } else if (!strnccmp(p, "forked", 6)) {
                 p += 6;
                 flags |= MF_FORK;
-            } else if (*p == '{' || *p == ';') {
-                break;
             } else {
                 char ebuf[BUF];
 
@@ -1242,7 +1229,7 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
 // ------------------------------------------------------------------------
 */
 static void frob_n_print_errstr(char * err, char * name, cObjnum objnum) {
-    Int        line = 0;
+    Int    line = 0;
     cStr * str;
 
     if (strncmp("Line ", err, 5) == 0) {
@@ -1316,18 +1303,13 @@ static Method * get_method(FILE * fp, Obj * obj, char * name) {
 /*
 // ------------------------------------------------------------------------
 */
-#define next_token(__s) { \
-        NEXT_SPACE(__s); \
-        NEXT_WORD(__s); \
-    }
-
 void compile_cdc_file(FILE * fp) {
     Int        new = 0,
-               access = A_NONE;
+               access = A_NONE,
+               handled;
     cStr     * line,
              * str = NULL;
-    char     * p,
-             * s;
+    char     * s;
     Obj      * obj;
     off_t      filesize = 0;
     struct stat statbuf;
@@ -1352,13 +1334,13 @@ void compile_cdc_file(FILE * fp) {
         line->s[line->len] = (char) NULL;
 
         /* Strip unprintables from the line. */
-        for (p = s = line->s; *p; p++) {
-            while (*p && !isprint(*p))
-                p++;
-            *s++ = *p;
-        }
-        *s = (char) NULL;
-        line->len = s - line->s;
+        //for (p = s = line->s; *p; p++) {
+        //    while (*p && !isprint(*p))
+        //        p++;
+        //    *s++ = *p;
+        //}
+        //*s = (char) NULL;
+        //line->len = s - line->s;
 
         if (!line->len) {
             string_discard(line);
@@ -1390,77 +1372,158 @@ void compile_cdc_file(FILE * fp) {
         NEXT_WORD(s);
 
         /* old, new or who cares? */
-        if (MATCH(s, "new", 3)) {
-            new = N_NEW;
-            next_token(s);
-        } else if (MATCH(s, "old", 3)) {
-            new = N_OLD;
-            next_token(s);
-        } else
-            new = N_UNDEF;
-
-        /* access? */
-        if (MATCH(s, "public", 6)) {
-            access = A_PUBLIC;
-            next_token(s);
-        } else if (MATCH(s, "protected", 9)) {
-            access = A_PROTECTED;
-            next_token(s);
-        } else if (MATCH(s, "private", 7)) {
-            access = A_PRIVATE;
-            next_token(s);
-        } else if (MATCH(s, "frob", 4)) {
-            access = A_FROB;
-            next_token(s);
-        } else if (MATCH(s, "root", 4)) {
-            access = A_ROOT;
-            next_token(s);
-        } else if (MATCH(s, "driver", 6)) {
-            access = A_DRIVER;
-            next_token(s);
-        } else {
-            access = A_NONE;
+        new = N_UNDEF;
+        switch (*s)
+        {
+            case 'n':
+            case 'N':
+                if (MATCH(s, "new", 3)) {
+                    new = N_NEW;
+                    s += 3;
+                    NEXT_WORD(s);
+                }
+                break;
+            case 'o':
+            case 'O':
+                if (MATCH(s, "old", 3)) {
+                    new = N_OLD;
+                    s += 3;
+                    NEXT_WORD(s);
+                }
+                break;
         }
 
-        if (MATCH(s, "object", 6) || MATCH(s, "as", 2)) {
-            if (*s == 'a')
-                s += 2;
-            else
-                s += 6;
-            NEXT_WORD(s);
-            obj = handle_objcmd(str->s, s, new);
-            if (obj != NULL) {
-                if (cur_obj != NULL)
-                    cache_discard(cur_obj);
-                if (print_objs)
-                    blank_and_print_obj("Compiling ", (100.0 * ftello(fp)) / filesize, obj);
-                cur_obj = obj;
-            }
-        } else if (MATCH(s, "parent", 6)) {
-            s += 6;
-            NEXT_WORD(s);
-            handle_parcmd(s, new);
-        } else if (MATCH(s, "var", 3)) {
-            s += 3;
-            NEXT_WORD(s);
-            handle_varcmd(str->s, s, new, access);
-        } else if (MATCH(s, "method", 6)) {
-            s += 6;
-            NEXT_WORD(s);
-            handle_methcmd(fp, s, new, access);
-        } else if (MATCH(s, "eval", 4)) {
-            s += 4;
-            NEXT_WORD(s);
-            handle_evalcmd(fp, s, new, access);
-        } else if (MATCH(s, "bind_native", 11)) {
-            s += 11;
-            NEXT_WORD(s);
-            handle_bind_nativecmd(fp, s);
-        } else if (MATCH(s, "name", 4)) {
-            s += 4;
-            NEXT_WORD(s);
-            handle_namecmd(str->s, s, new);
-        } else if (strnccmp(s, "//", 2)) {
+        /* access? */
+        access = A_NONE;
+        switch (*s)
+        {
+            case 'd':
+            case 'D':
+                if (MATCH(s, "driver", 6)) {
+                    access = A_DRIVER;
+                    s += 6;
+                    NEXT_WORD(s);
+                } 
+                break;
+            case 'f':
+            case 'F':
+                if (MATCH(s, "frob", 4)) {
+                    access = A_FROB;
+                    s += 4;
+                    NEXT_WORD(s);
+                } 
+                break;
+            case 'p':
+            case 'P':
+                if (MATCH(s, "public", 6)) {
+                    access = A_PUBLIC;
+                    s += 6;
+                    NEXT_WORD(s);
+                } else if (MATCH(s, "protected", 9)) {
+                    access = A_PROTECTED;
+                    s += 9;
+                    NEXT_WORD(s);
+                } else if (MATCH(s, "private", 7)) {
+                    access = A_PRIVATE;
+                    s += 7;
+                    NEXT_WORD(s);
+                }
+                break;
+            case 'r':
+            case 'R':
+                if (MATCH(s, "root", 4)) {
+                    access = A_ROOT;
+                    s += 4;
+                    NEXT_WORD(s);
+                }
+                break;
+        }
+
+        handled = 0;
+        switch (*s)
+        {
+            case 'a':
+            case 'A':
+            case 'o':
+            case 'O':
+                if (MATCH(s, "object", 6) || MATCH(s, "as", 2)) {
+                    if (*s == 'a')
+                        s += 2;
+                    else
+                        s += 6;
+                    NEXT_WORD(s);
+                    obj = handle_objcmd(str->s, s, new);
+                    if (obj != NULL) {
+                        if (cur_obj != NULL)
+                            cache_discard(cur_obj);
+                        if (print_objs)
+                            blank_and_print_obj("Compiling ", (100.0 * ftello(fp)) / filesize, obj);
+                        cur_obj = obj;
+                    }
+                    handled = 1;
+                }
+                break;
+            case 'p':
+            case 'P':
+                if (MATCH(s, "parent", 6)) {
+                    s += 6;
+                    NEXT_WORD(s);
+                    handle_parcmd(s, new);
+                }
+                handled = 1;
+                break;
+            case 'v':
+            case 'V':
+                if (MATCH(s, "var", 3)) {
+                    s += 3;
+                    NEXT_WORD(s);
+                    handle_varcmd(str->s, s, new, access);
+                }
+                handled = 1;
+                break;
+            case 'm':
+            case 'M':
+                if (MATCH(s, "method", 6)) {
+                    s += 6;
+                    NEXT_WORD(s);
+                    handle_methcmd(fp, s, new, access);
+                }
+                handled = 1;
+                break;
+            case 'e':
+            case 'E':
+                if (MATCH(s, "eval", 4)) {
+                    s += 4;
+                    NEXT_WORD(s);
+                    handle_evalcmd(fp, s, new, access);
+                }
+                handled = 1;
+                break;
+            case 'b':
+            case 'B':
+                if (MATCH(s, "bind_native", 11)) {
+                    s += 11;
+                    NEXT_WORD(s);
+                    handle_bind_nativecmd(fp, s);
+                }
+                handled = 1;
+                break;
+            case 'n':
+            case 'N':
+                if (MATCH(s, "name", 4)) {
+                    s += 4;
+                    NEXT_WORD(s);
+                    handle_namecmd(str->s, s, new);
+                } 
+                handled = 1;
+                break;
+            default:
+                if (*(s+1) == '/') {
+                    handled = 1;
+                }
+        }
+
+        if (!handled) {
             WARN(("parse error, unknown directive."));
             ERRf("\"%s\"\n", s);
             shutdown_coldcc();
@@ -1564,19 +1627,85 @@ Int text_dump(Bool objnames) {
     write_err("Done decompiling.");
     return 1;
 }
-#define is_system(__n) (__n == ROOT_OBJNUM || __n == SYSTEM_OBJNUM)
 
+static inline void dump_object_variables (Obj *obj, FILE *fp, Bool objnames) {
+    Int    i;
+    Var  * var;
+    cStr * str;
+
+    for (i = 0; i < obj->vars.size; i++) {
+        var = &obj->vars.tab[i];
+        if (var->name == -1)
+            continue;
+        if (!cache_check(var->cclass))
+            continue;
+        str = data_to_literal(&var->val,
+                          ((objnames ? DF_WITH_OBJNAMES : 0) | DF_INV_OBJNUMS));
+        fputs("var ", fp);
+        print_dbref(NULL, var->cclass, fp, objnames);
+        fputc(' ', fp);
+        fputs(ident_name(var->name), fp);
+        fputs(" = ", fp);
+        fputs(string_chars(str), fp);
+        fputs(";\n", fp);
+        string_discard(str);
+    }
+
+    fputc('\n', fp);
+}
+
+static inline void dump_object_methods(Obj *obj, FILE *fp) {
+    Int      i;
+    Method * meth;
+    cList  * code;
+    cData  * d;
+
+    if (obj->methods) {
+        for (i = 0; i < obj->methods->size; i++) {
+            meth = obj->methods->tab[i].m;
+            if (!meth)
+                continue;
+
+            /* define it */
+            fputs(method_definition(meth), fp);
+
+            /* list it */
+            code = decompile(meth, obj, 4, FMT_FULL_PARENS);
+            if (list_length(code) == 0) {
+                fputs(";\n\n", fp);
+            } else {
+                fputs(" {\n", fp);
+                for (d = list_first(code); d; d = list_next(code, d)) {
+                    fputs("    ", fp);
+                    fputs(string_chars(d->u.str), fp);
+                    putc('\n', fp);
+                }
+                /* end it */
+                fputs("};\n\n", fp);
+            }
+
+            list_discard(code);
+    
+            /* if it is native, and they have renamed it, put a rename
+               directive down */
+            if (meth->m_flags & MF_NATIVE && meth->native != -1) {
+                if (strcmp(ident_name(meth->name), natives[meth->native].name))
+                    fprintf(fp, "bind_native .%s() .%s();\n\n",
+                            natives[meth->native].name,
+                            ident_name(meth->name));
+            }
+        }
+        fputc('\n', fp);
+    }
+}
+
+#define is_system(__n) (__n == ROOT_OBJNUM || __n == SYSTEM_OBJNUM)
 void dump_object(Long objnum, FILE *fp, Bool objnames) {
     Obj    * obj;
-    cList  * objs,
-           * code;
+    cList  * objs;
     cData  * d,
              dobj;
-    cStr   * str;
-    Var    * var;
-    Int      first,
-             i;
-    Method * meth;
+    Int      first;
     static Long objects_decompiled = 0;
 
     dobj.type = OBJNUM;
@@ -1594,14 +1723,6 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
                "WARNING: textdump with invalid ancestors\n");
         return;
     }
-
-#if 0
-    /* have we looked at this object yet? */
-    if (obj->search == cur_search) {
-        cache_discard(obj);
-        return;
-    }
-#endif
 
     /* grab the parents list */
     objs = list_dup(obj->parents);
@@ -1621,19 +1742,6 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
 
     /* ok, get this object now */
     obj = cache_retrieve(objnum);
-
-#if 0
-    /* did we get written out since the last check? */
-    if (obj->search == cur_search) {
-        list_discard(objs);
-        cache_discard(obj);
-        return;
-    }
-
-    /* ok, lets do it then, mark it dirty and update cur_search */
-    obj->dirty = 1;
-    obj->search = cur_search;
-#endif
 
     /* let them know? */
     if (print_objs)
@@ -1671,66 +1779,8 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
     }
     fputc('\n', fp);
 
-    /* define variables */
-    for (i = 0; i < obj->vars.size; i++) {
-        var = &obj->vars.tab[i];
-        if (var->name == -1)
-            continue;
-        if (!cache_check(var->cclass))
-            continue;
-        str = data_to_literal(&var->val,
-                          ((objnames ? DF_WITH_OBJNAMES : 0) | DF_INV_OBJNUMS));
-        fputs("var ", fp);
-        print_dbref(NULL, var->cclass, fp, objnames);
-        fputc(' ', fp);
-        fputs(ident_name(var->name), fp);
-        fputs(" = ", fp);
-        fputs(string_chars(str), fp);
-        fputs(";\n", fp);
-        string_discard(str);
-    }
-
-    fputc('\n', fp);
-
-    /* define methods */
-    if (obj->methods) {
-        for (i = 0; i < obj->methods->size; i++) {
-            meth = obj->methods->tab[i].m;
-            if (!meth)
-                continue;
-    
-            /* define it */
-            fputs(method_definition(meth), fp);
-    
-            /* list it */
-            code = decompile(meth, obj, 4, FMT_FULL_PARENS);
-            if (list_length(code) == 0) {
-                fputs(";\n\n", fp);
-            } else {
-                fputs(" {\n", fp);
-                for (d = list_first(code); d; d = list_next(code, d)) {
-                    fputs("    ", fp);
-                    fputs(string_chars(d->u.str), fp);
-                    putc('\n', fp);
-                }
-                /* end it */
-                fputs("};\n\n", fp);
-            }
-    
-            list_discard(code);
-    
-            /* if it is native, and they have renamed it, put a rename
-               directive down */
-            if (meth->m_flags & MF_NATIVE && meth->native != -1) {
-                if (strcmp(ident_name(meth->name), natives[meth->native].name))
-                    fprintf(fp, "bind_native .%s() .%s();\n\n",
-                            natives[meth->native].name,
-                            ident_name(meth->name));
-            }
-        }
-        //fputc('\n', fp);
-    }
-        fputc('\n', fp);
+    dump_object_variables(obj, fp, objnames);
+    dump_object_methods(obj, fp);
 
     /* now dump it's children */
     if (obj->children) {
@@ -1780,11 +1830,6 @@ static char * method_definition(Method * m) {
 
     /* method name */
     s = ident_name(m->name);
-
-#if 0
-    /* this should else and use string_add_unparsed, but, ohwell */
-    if (is_valid_ident(s))
-#endif
 
     strcat(buf, "method .");
     strcat(buf, s);

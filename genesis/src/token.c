@@ -163,7 +163,7 @@ Bool is_reserved_word(char *s) {
 Int yylex(void)
 {
     cData *d = (cData *)0;
-    cStr *line;
+    cStr *line, *float_buf;
     char *s = NULL, *word;
     Int len = 0, i, j, start, type;
 
@@ -229,19 +229,25 @@ Int yylex(void)
 
     /* Check if it's a number. */
     if (isdigit(*s)) {
+        float_buf = string_new(32);
+
 	/* Convert the string to a number. */
 	yylval.num = 0;
 	while (len && isdigit(*s)) {
+            float_buf = string_addc(float_buf, *s);
 	    yylval.num = yylval.num * 10 + (*s - '0');
 	    s++, cur_pos++, len--;
 	}
 
-        if (len && *s!='.' && *s!='e')
+        if (len && *s!='.' && *s!='e') {
+            string_discard(float_buf);
 	    return INTEGER;
+        }
 
 	{
 	    Float f=yylval.num;
 
+            f = atof(string_chars(float_buf));
 	    if (*s=='.') {
 	        Float muly=1;
 
@@ -268,11 +274,11 @@ Int yylex(void)
 		    evalue=evalue * 10 + (*s - '0');
 		    s++, cur_pos++, len--;
 		}
-		if (esign) evalue=-evalue;
-		if (evalue>0)
+		if (esign) evalue =- evalue;
+		if (evalue > 0)
 		     while (evalue--) f*=10;
                 else
-		     while (evalue++) f*=10;
+		     while (evalue++) f/=10;
 	    }
 	    yylval.fnum=f;
 	    return FLOAT;

@@ -58,7 +58,7 @@ Expr * expr_message_expr(Expr * to, Expr * message, Expr_list * args);
 Expr * list_expr(Expr_list * args);
 Expr * dict_expr(Expr_list * args);
 Expr * buffer_expr(Expr_list * args);
-Expr * frob_expr(Expr * cclass, Expr * rep);
+Expr * frob_expr(Expr * cclass, Expr * rep, Expr *hander);
 Expr * index_expr(Expr * list, Expr * offset);
 Expr * unary_expr(Int opcode, Expr * expr);
 Expr * binary_expr(Int opcode, Expr * left, Expr * right);

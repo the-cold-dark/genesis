@@ -21,8 +21,12 @@ cStr  * data_to_literal(cData * data, Bool objnames);
 cStr  * data_add_list_literal_to_str(cStr * str, cList * list, Bool objnames);
 cStr  * data_add_literal_to_str(cStr * str, cData * data, Bool objnames);
 Long    data_type_id(Int type);
+void    init_instances(void);
+
 
 char  * data_from_literal(cData *d, char *s);
+
+cInstance *find_instance (Int id);
 
 #endif
 

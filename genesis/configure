@@ -1810,6 +1810,7 @@ fi
 #   echo "$ac_t""no" 1>&6
 # fi
 
+
 # Checks for library functions.
 echo $ac_n "  Checking for vprintf()""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_func_vprintf'+set}'`\" = set"; then
@@ -2183,6 +2184,53 @@ else
 !! are NaN or Inf.  This can lead to corrupted data!
 !!
 END
+fi
+
+########## look for rint()
+echo $ac_n "  Checking for rint()... $ac_c" 1>&6
+if eval "test \"`echo '$''{'ac_cv_func_rint'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 1873 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with rint(); below.  */
+#include <assert.h>
+#include <math.h>
+
+int main() { return 0; }
+int t() {
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_rint) || defined (__stub___rint)
+choke me
+#else
+rint(0.0);
+#endif
+
+return 0; }
+EOF
+if eval $ac_link; then
+  rm -rf conftest*
+  eval "ac_cv_func_rint=yes"
+else
+  rm -rf conftest*
+  eval "ac_cv_func_rint=no"
+fi
+rm -f conftest*
+
+fi
+
+if eval "test \"`echo '$ac_cv_func_'rint`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
+    ac_tr_func=HAVE_RINT
+  cat >> confdefs.h <<EOF
+#define $ac_tr_func 1
+EOF
+else
+  echo "$ac_t""no" 1>&6
 fi
 
 ######################################################################

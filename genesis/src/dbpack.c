@@ -9,6 +9,7 @@
 #include <string.h>
 #include <limits.h>
 #include "cdc_db.h"
+#include "macros.h"
 
 #define COMPRESS ENABLED
 #define ORDER_BYTES DISABLED
@@ -152,7 +153,7 @@ Int size_long(Long n)
 }
 
 
-INTERNAL void write_ident(Long id, FILE *fp)
+void write_ident(Long id, FILE *fp)
 {
     Char *s;
     Int len;
@@ -167,7 +168,7 @@ INTERNAL void write_ident(Long id, FILE *fp)
     fwrite(s, sizeof(Char), len, fp);
 }
 
-INTERNAL Long read_ident(FILE *fp)
+Long read_ident(FILE *fp)
 {
     Int len;
     Char *s;
@@ -194,16 +195,12 @@ INTERNAL Long read_ident(FILE *fp)
     return id;
 }
 
-INTERNAL Long size_ident(Long id)
+Long size_ident(Long id)
 {
     Int len = strlen(ident_name(id));
 
     return size_long(len) + (len * sizeof(Char));
 }
-
-/* forward references for recursion */
-INTERNAL void pack_data(cData *data, FILE *fp);
-INTERNAL void unpack_data(cData *data, FILE *fp);
 
 INTERNAL void pack_list(cList *list, FILE *fp) {
     cData *d;
@@ -611,7 +608,7 @@ INTERNAL Int size_idents(Obj *obj)
     return size;
 }
 
-INTERNAL void pack_data(cData *data, FILE *fp)
+void pack_data(cData *data, FILE *fp)
 {
     write_long(data->type, fp);
     switch (data->type) {
@@ -661,10 +658,14 @@ INTERNAL void pack_data(cData *data, FILE *fp)
 	      write_long(data->u.buffer->s[i], fp);
 	  break;
       }
+      default: {
+	  INSTANCE_RECORD(data->type, r);
+	  r->pack(data, fp);
+      }
     }
 }
 
-INTERNAL void unpack_data(cData *data, FILE *fp)
+void unpack_data(cData *data, FILE *fp)
 {
     data->type = read_long(fp);
     switch (data->type) {
@@ -717,6 +718,10 @@ INTERNAL void unpack_data(cData *data, FILE *fp)
 	  for (i = 0; i < len; i++)
 	      data->u.buffer->s[i] = read_long(fp);
 	  break;
+      }
+      default: {
+	  INSTANCE_RECORD(data->type, r);
+	  r->unpack(data, fp);
       }
     }
 }
@@ -772,8 +777,11 @@ Int size_data(cData *data) {
 	      size += size_long(data->u.buffer->s[i]);
 	  break;
       }
+      default: {
+	  INSTANCE_RECORD(data->type, r);
+	  size += r->size(data);
+      }
     }
-
     return size;
 }
 

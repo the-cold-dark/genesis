@@ -56,7 +56,7 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %type	<stmt_list>	compound stmts stmtlist
 %type	<case_entry>	case_ent
 %type	<case_list>	caselist cases
-%type	<expr>		expr sexpr rexpr
+%type	<expr>		expr sexpr rexpr handler
 %type	<expr_list>	args arglist cvals
 %type	<s>		for map find filter hash
 %type	<id_list>	vars idlist errors errlist
@@ -146,8 +146,8 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %token F_TASKS F_TASK_INFO F_CANCEL F_PAUSE F_REFRESH F_STACK F_STATUS
 %token F_BIND_FUNCTION F_UNBIND_FUNCTION F_ATOMIC
 %token F_METHOD_INFO F_ENCODE F_DECODE F_SIN F_EXP F_LOG F_COS
-%token F_TAN F_SQRT F_ASIN F_ACOS F_ATAN F_POW F_ATAN2 F_CONFIG
-%token F_FLUSH
+%token F_TAN F_SQRT F_ASIN F_ACOS F_ATAN F_POW F_ATAN2 F_CONFIG F_ROUND
+%token F_FLUSH OP_HANDLED_FROB F_VALUE F_HANDLER
 
 /* Reserved for future use. */
 /*%token FORK*/
@@ -253,6 +253,10 @@ case_ent: CASE cvals ':' stmtlist	{ $$ = case_entry($2, $4); }
 	| DEFAULT ':' stmtlist		{ $$ = case_entry(NULL, $3); }
 	;
 
+handler : '>'                           { $$ = NULL; }
+        | ',' expr '>'                  { $$ = $2; }
+        ;
+
 expr	: INTEGER			{ $$ = integer_expr($1); }
 	| FLOAT				{ $$ = float_expr($1); }
 	| STRING			{ $$ = string_expr($1); }
@@ -272,7 +276,7 @@ expr	: INTEGER			{ $$ = integer_expr($1); }
 	| '[' args ']'			{ $$ = list_expr($2); }
 	| START_DICT args ']'		{ $$ = dict_expr($2); }
 	| START_BUFFER args ']'		{ $$ = buffer_expr($2); }
-	| '<' expr ',' expr '>'         { $$ = frob_expr($2, $4); }
+	| '<' expr ',' expr handler     { $$ = frob_expr($2, $4, $5); }
 	| expr '[' expr ']'		{ $$ = index_expr($1, $3); }
 	| INCREMENT IDENT               { $$ = indecr_expr(P_INCREMENT, $2); }
 	| DECREMENT IDENT        	{ $$ = indecr_expr(P_DECREMENT, $2); }

@@ -38,6 +38,9 @@
 /* Define if you inet_aton() */
 #undef HAVE_INET_ATON
 
+/* Define if you have rint() */
+#undef HAVE_RINT
+
 /* Define as __inline if that's what the C compiler calls it.  */
 #undef inline
 

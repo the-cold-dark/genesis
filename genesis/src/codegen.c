@@ -435,7 +435,7 @@ Expr *buffer_expr(Expr_list *args)
     return cnew;
 }
 
-Expr *frob_expr(Expr *cclass, Expr *rep)
+Expr *frob_expr(Expr *cclass, Expr *rep, Expr *handler)
 {
     Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
 
@@ -443,6 +443,7 @@ Expr *frob_expr(Expr *cclass, Expr *rep)
     cnew->lineno = cur_lineno();
     cnew->u.frob.cclass = cclass;
     cnew->u.frob.rep = rep;
+    cnew->u.frob.handler = handler;
     return cnew;
 }
 
@@ -1382,10 +1383,16 @@ static void compile_expr(Expr *expr)
 
       case FROB:
 
-	compile_expr(expr->u.frob.cclass);
-	compile_expr(expr->u.frob.rep);
-	code(FROB);
-
+        if (!expr->u.frob.handler) {
+	    compile_expr(expr->u.frob.cclass);
+	    compile_expr(expr->u.frob.rep);
+	    code(FROB);
+	} else {
+	    compile_expr(expr->u.frob.cclass);
+	    compile_expr(expr->u.frob.rep);
+	    compile_expr(expr->u.frob.handler);
+	    code(OP_HANDLED_FROB);
+	}
 	break;
 
       case INDEX:

@@ -20,6 +20,8 @@ COLDC_FUNC(strings_to_buf);
 COLDC_FUNC(size);
 COLDC_FUNC(type);
 COLDC_FUNC(class);
+COLDC_FUNC(value);
+COLDC_FUNC(handler);
 COLDC_FUNC(toint);
 COLDC_FUNC(tofloat);
 COLDC_FUNC(tostr);
@@ -173,6 +175,7 @@ COLDC_FUNC(acos);
 COLDC_FUNC(atan);
 COLDC_FUNC(pow);
 COLDC_FUNC(atan2);
+COLDC_FUNC(round);
 COLDC_FUNC(config);
 
 #endif

@@ -128,6 +128,7 @@ struct expr {
 	struct {
 	    Expr *cclass;
 	    Expr *rep;
+	    Expr *handler;
 	} frob;
 
 	struct {

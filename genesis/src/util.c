@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include "util.h"
 #include "token.h"
+#include "macros.h"
 
 #define FORMAT_BUF_INITIAL_LENGTH 48
 #define MAX_SCRATCH 2
@@ -168,6 +169,9 @@ char *strcchr(char *s, Int c) {
 char *strcstr(char *s, char *search) {
     char *p;
     Int search_len = strlen(search);
+
+    if (!search_len)
+        return NULL;
 
     for (p = strcchr(s, *search); p; p = strcchr(p + 1, *search)) {
 	if (strnccmp(p, search, search_len) == 0)
@@ -409,7 +413,7 @@ char * english_type(Int type) {
       case FROB:	return "a frob";
       case DICT:	return "a dictionary";
       case BUFFER:	return "a buffer";
-      default:		return "a mistake";
+    default:		{INSTANCE_RECORD(type, r); return r->name; }
     }
 }
 

@@ -47,6 +47,8 @@ cData debug;
 VMState *suspended = NULL, *preempted = NULL, *vmstore = NULL;
 VMStack *stack_store = NULL, *holder_cache = NULL; 
 
+#define    call_error(_err_) { call_environ = _err_; return CALL_ERROR; }
+
 /*
 // ---------------------------------------------------------------
 //
@@ -916,10 +918,18 @@ void dump_execute_profile(void) {
 /*
 // ---------------------------------------------------------------
 */
+#ifdef USE_BIG_NUMBERS
+#define MAX_NUM 2147483647
+#else
+#define MAX_NUM 2147483647
+#endif
+
 INTERNAL void execute(void) {
     Int opcode;
 
     while (cur_frame) {
+        if (tick == MAX_NUM)
+            tick = -1;
         tick++;
         if ((--(cur_frame->ticks)) == 0) {
             out_of_ticks_error();

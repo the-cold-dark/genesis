@@ -984,8 +984,15 @@ static Expr_list *decompile_expressions_bounded(Int *pos_ptr, Int expr_end)
 	  }
 
 	  case FROB:
-	    stack->next->expr = frob_expr(stack->next->expr, stack->expr);
+	    stack->next->expr = frob_expr(stack->next->expr, stack->expr, NULL);
 	    stack = stack->next;
+	    pos++;
+	    break;
+
+	  case OP_HANDLED_FROB:
+	    stack->next->next->expr = frob_expr(stack->next->next->expr,
+						stack->next->expr, stack->expr);
+	    stack = stack->next->next;
 	    pos++;
 	    break;
 
@@ -1661,6 +1668,10 @@ static cStr *unparse_expr(cStr *str, Expr *expr, Int paren) {
 	str = unparse_expr(str, expr->u.frob.cclass, PAREN_ASSIGN);
 	str = string_add_chars(str, ", ", 2);
 	str = unparse_expr(str, expr->u.frob.rep, PAREN_ASSIGN);
+	if (expr->u.frob.handler) {
+	    str = string_add_chars(str, ", ", 2);
+	    str = unparse_expr(str, expr->u.frob.handler, PAREN_ASSIGN);
+	}
 	return string_add_chars(str, ">)", 2);
 
       case INDEX:

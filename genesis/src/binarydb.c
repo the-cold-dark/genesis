@@ -167,13 +167,13 @@ void verify_clean(void) {
     }
 
     if (isdirty) {
-        fprintf(stderr, "** Binary database \"%s\" is incompatable, systems:\n\
+        fprintf(stderr, "** Binary database \"%s\" is incompatible, systems:\n\
 ** it:   <%s> %d.%d-%d (module key %li)\n\
 ** this: <%s> %d.%d-%d (module key %li)\n",
         c_dir_binary, system, atoi(v_major), atoi(v_minor), atoi(v_patch),
         atol(magicmod), SYSTEM_TYPE, VERSION_MAJOR, VERSION_MINOR,
         VERSION_PATCH, (long) MAGIC_MODNUMBER);
-        FAIL("Unable to load database \"%s\": incompatable.\n");
+        FAIL("Unable to load database \"%s\": incompatible.\n");
     }
 }
 
@@ -193,12 +193,15 @@ void init_binary_db(void) {
         FAIL("Cannot find binary directory \"%s\".\n")
     else if (!S_ISDIR(statbuf.st_mode))
         FAIL("Binary db \"%s\" is not a directory.\n")
+
+#ifndef __Win32__
     else if (!good_perms(&statbuf))
         FAIL("Cannot write to binary directory \"%s\".\n")
 
     /* whine a little bit */
     if (statbuf.st_mode & S_IWOTH)
         WARN("Binary directory \"%s\" is writable by ANYBODY\n")
+#endif
 
     /* check the clean file */
     verify_clean();
@@ -554,6 +557,11 @@ void db_flush(void)
     db_is_clean();
 }
 
+#define write_clean_file(_fp_) \
+    fprintf(_fp_, "%s\n%d\n%d\n%d\n%li\n%li\n", SYSTEM_TYPE, \
+                VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH,\
+                (long) MAGIC_MODNUMBER, (long) cur_search)\
+
 void finish_backup(void) {
     FILE * fp;
     char buf[BUF];
@@ -563,10 +571,7 @@ void finish_backup(void) {
     fp = open_scratch_file(buf, "wb");
     if (!fp)
         panic("Cannot create file 'clean'.");
-    fprintf(fp, "%d\n%d\n%d\n%li\n%li\n",
-                VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH,
-                (long) MAGIC_MODNUMBER, (long) cur_search);
-    fputs(SYSTEM_TYPE, fp);
+    write_clean_file(fp);
     close_scratch_file(fp);
 }
 
@@ -580,11 +585,7 @@ static void db_is_clean(void) {
     fp = open_scratch_file(c_clean_file, "wb");
     if (!fp)
 	panic("Cannot create file 'clean'.");
-    fputs(SYSTEM_TYPE, fp);
-    fputc('\n', fp);
-    fprintf(fp, "%d\n%d\n%d\n%li\n%li\n",
-                VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH,
-                (long) MAGIC_MODNUMBER, (long) cur_search);
+    write_clean_file(fp);
     close_scratch_file(fp);
     db_clean = 1;
 }

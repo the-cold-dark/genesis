@@ -186,6 +186,8 @@ NATIVE_METHOD(match_begin) {
         case 3:    INIT_ARG3(STRING)
                    sep     = string_chars(STR3);
                    sep_len = string_length(STR3);
+                   if (!sep_len)
+                       THROW((range_id, "Zero length separator."))
         case 2:    INIT_ARG2(STRING)
                    INIT_ARG1(STRING)
                    break;

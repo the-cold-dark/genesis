@@ -50,6 +50,7 @@ void op_list(void);
 void op_dict(void);
 void op_buffer(void);
 void op_frob(void);
+void op_handled_frob(void);
 void op_index(void);
 void op_and(void);
 void op_or(void);

@@ -368,7 +368,19 @@ typedef bool              Bool;
 
 #ifndef _grammar_y_
 #include "parse.h"
+
+extern cInstance class_registry[];
+
+typedef enum instance_id {
+    FIRST_INSTANCE = LAST_TOKEN + 1,
+    HANDLED_FROB_TYPE = FIRST_INSTANCE,
+    LAST_INSTANCE
+} InstanceID;
+
+void register_instance (InstanceID instance, Ident id);
+
 #endif
+
 
 /*
 // --------------------------------------------------------------------

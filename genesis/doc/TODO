@@ -19,14 +19,6 @@ Bugs:
 -----------------------
 Cleanup:
 
-* overridable methods: change searching to take the first method
-  found.  Do the check for !overridable methods at the time the method
-  is set as !overridable, do not allow methods to be set as overridable
-  if they are overriden on descendants.  Do not allow methods to be
-  added if an ancestor defines it as !overridable.
-
-* sanity checks are still not done, do them?
-
 * Implement a more efficient malloc for our specific uses, perhaps
   build on top of phkmalloc.
 

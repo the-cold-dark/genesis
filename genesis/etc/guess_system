@@ -1,0 +1,9 @@
+#!/BIN/SH
+
+CPU=`(uname -m) 2>/dev/null` || MACHINE="unknown"
+RELEASE=`(uname -r) 2>/dev/null` || RELEASE="unknown"
+SYSTEM=`(uname -s) 2>/dev/null`  || SYSTEM="unknown"
+VERSION=`(uname -v) 2>/dev/null` || VERSION="unknown"
+
+
+echo $CPU $RELEASE $SYSTEM $VERSION

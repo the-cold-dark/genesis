@@ -59,6 +59,7 @@ struct cData {
         cFrob    * frob;
         cDict    * dict;
         cBuf     * buffer;
+	void     * instance;
     } u;
 };
 
@@ -83,6 +84,27 @@ struct cFrob {
     Long cclass;
     cData rep;
 };
+
+
+typedef void (*ciDbData)(cData*, FILE*);
+typedef int (*ciSzData)(cData*);
+typedef int (*ciCmpData)(cData*, cData*);
+typedef void (*ciDupData)(cData*, cData*);
+typedef void (*ciDisData)(cData*);
+typedef cStr *(*ciStrData)(cStr*, cData*, Bool);
+
+typedef struct cInstance {
+    char *name;
+    Ident id_name;
+    ciDbData pack;
+    ciDbData unpack;
+    ciSzData size;
+    ciCmpData compare;
+    ciSzData hash;
+    ciDupData dup;
+    ciDisData discard;
+    ciStrData addstr;
+} cInstance;
 
 /* io.h shouldn't necessarily be here, but it has to be here before other
    data types, but after the above data definitions */

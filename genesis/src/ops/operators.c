@@ -13,6 +13,8 @@
 #include "lookup.h"
 #include "util.h"
 
+#include "handled_frob.h"
+
 /*
 // -----------------------------------------------------------------
 //
@@ -600,7 +602,7 @@ void op_integer(void) {
 }
 
 void op_float(void) {
-    push_float(*((float*)(&cur_frame->opcodes[cur_frame->pc++])));
+    push_float(*((cFloat*)(&cur_frame->opcodes[cur_frame->pc++])));
 }
 
 void op_string(void) {
@@ -759,13 +761,35 @@ void op_message(void) {
             TFREE(frob, 1);
             break;
         default:
-            if (!lookup_retrieve_name(data_type_id(target->type), &objnum)) {
-                cthrow(objnf_id, "No object for data type %I.",
-                       data_type_id(target->type));
-                return;
-            }
-            arg_start--;
-            break;
+	    if (target->type == (int)HANDLED_FROB_TYPE) {
+	        HandledFrob *h = HANDLED_FROB(target);
+		Ident m = ident_dup(message);
+		int i;
+
+		check_stack(1);
+		target = &stack[arg_start - 1];
+		message = h->handler;
+		objnum = h->cclass;
+		for (i=stack_pos; i>arg_start; i--)
+		    stack[i] = stack[i-1];
+		stack_pos++;
+		*target = h->rep;
+		arg_start -= 1;
+		ident_discard(h->handler);
+		TFREE(h, 1);
+		target[1].type = SYMBOL;
+		target[1].u.symbol = m;
+	    }
+	    else {
+		if (!lookup_retrieve_name(data_type_id(target->type),
+					  &objnum)) {
+		    cthrow(objnf_id, "No object for data type %I.",
+			   data_type_id(target->type));
+		    return;
+		}
+		arg_start--;
+		break;
+	    }
     }
 
     /* Attempt to send the message. */
@@ -815,17 +839,34 @@ void op_expr_message(void) {
             target->u.val = 0;
             break;
         default:
-            if (!lookup_retrieve_name(data_type_id(target->type), &objnum)) {
-                cthrow(objnf_id,
-                       "No object for data type %I",
-                       data_type_id(target->type));
-                ident_discard(message);
-                return;
-            }
-            arg_start--;
-            data_discard(message_data);
-            data_dup(&stack[arg_start], target);
-            break;
+	    if (target->type == (int) HANDLED_FROB_TYPE) {
+	        HandledFrob *h = HANDLED_FROB(target);
+		Ident m = message;
+
+		message = h->handler;
+		objnum = h->cclass;
+		data_discard(message_data);
+		*target = h->rep;
+		TFREE(h, 1);
+		ident_discard(h->handler);
+		message_data->type = SYMBOL;
+		message_data->u.symbol = m;
+		arg_start -= 2;
+	    }
+	    else {
+		if (!lookup_retrieve_name(data_type_id(target->type), 
+					  &objnum)) {
+		    cthrow(objnf_id,
+			   "No object for data type %I",
+			   data_type_id(target->type));
+		    ident_discard(message);
+		    return;
+		}
+		arg_start--;
+		data_discard(message_data);
+		data_dup(&stack[arg_start], target);
+		break;
+	    }
     }
 
     /* Attempt to send the message. */
@@ -920,6 +961,30 @@ void op_frob(void) {
       cclass->u.frob->cclass = objnum;
       data_dup(&cclass->u.frob->rep, rep);
       pop(1);
+    }
+}
+
+void op_handled_frob(void) {
+    cData *cclass, *rep, *handler;
+
+    cclass = &stack[stack_pos - 3];
+    rep = &stack[stack_pos - 2];
+    handler = &stack[stack_pos - 1];
+    if (cclass->type != OBJNUM) {
+	cthrow(type_id, "Class (%D) is not a objnum.", cclass);
+    } else if (handler->type != SYMBOL) {
+	cthrow(type_id, "Handler (%D) is not a symbol.", handler);
+    } else if (rep->type != LIST && rep->type != DICT) {
+	cthrow(type_id, "Rep (%D) is not a list or dictionary.", rep);
+    } else {
+      cObjnum objnum = cclass->u.objnum;
+      HandledFrob *h;
+      cclass->type = HANDLED_FROB_TYPE;
+      cclass->u.instance = (void*)(h = TMALLOC(HandledFrob, 1));
+      h->cclass = objnum;
+      data_dup(&h->rep, rep);
+      h->handler = ident_dup(handler->u.symbol);
+      pop(2);
     }
 }
 
@@ -1133,7 +1198,7 @@ void op_multiply(void) {
             switch (d2->type) {
                 case INTEGER:
                     d2->type = FLOAT;
-                    d2->u.fval = (float) d2->u.val;
+                    d2->u.fval = (cFloat) d2->u.val;
                 case FLOAT:
                     break;
                 default:
@@ -1151,7 +1216,7 @@ void op_multiply(void) {
                     break;
                 case FLOAT:
                     d1->type = FLOAT;
-                    d1->u.fval = (float) d1->u.val;
+                    d1->u.fval = (cFloat) d1->u.val;
                     goto float_label;
                 default:
                     goto error;
@@ -1170,15 +1235,15 @@ void op_multiply(void) {
 }
 
 void op_doeq_multiply(void) {
-    cData *d1 = &stack[stack_pos - 2];
-    cData *d2 = &stack[stack_pos - 1];
+    cData *arg = &stack[stack_pos - 2];
+    cData *var = &stack[stack_pos - 1];
 
-    switch (d1->type) {
+    switch (var->type) {
         case FLOAT:
-            switch (d2->type) {
+            switch (arg->type) {
                 case INTEGER:
-                    d2->type = FLOAT;
-                    d2->u.fval = (float) d2->u.val;
+                    arg->type = FLOAT;
+                    arg->u.fval = (cFloat) arg->u.val;
                 case FLOAT:
                     break;
                 default:
@@ -1186,28 +1251,30 @@ void op_doeq_multiply(void) {
             }
     
           float_label:
-            d1->u.fval = d2->u.fval * d1->u.fval;
+            /* put it in arg's place so we only pop once */
+            arg->u.fval = var->u.fval * arg->u.fval;
             break;
 
         case INTEGER:
 
-            switch (d2->type) {
+            switch (arg->type) {
                 case INTEGER:
                     break;
                 case FLOAT:
-                    d1->type = FLOAT;
-                    d1->u.fval = (float) d1->u.val;
+                    var->type = FLOAT;
+                    var->u.fval = (cFloat) var->u.val;
                     goto float_label;
                 default:
                     goto error;
             }
 
-            d1->u.val = d2->u.val * d1->u.val;
+            /* put it in arg's place so we only pop once */
+            arg->u.val = var->u.val * arg->u.val;
             break;
 
         default:
         error:
-            cthrow(type_id, "%D and %D are not integers or floats.", d1, d2);
+            cthrow(type_id, "%D and %D are not integers or floats.", var, arg);
             return;
     }
 
@@ -1227,7 +1294,7 @@ void op_divide(void) {
             switch (d2->type) {
                 case INTEGER:
                     d2->type = FLOAT;
-                    d2->u.fval = (float) d2->u.val;
+                    d2->u.fval = (cFloat) d2->u.val;
                 case FLOAT:
                     break;
                 default:
@@ -1249,7 +1316,7 @@ void op_divide(void) {
                     break;
                 case FLOAT:
                     d1->type = FLOAT;
-                    d1->u.fval = (float) d1->u.val;
+                    d1->u.fval = (cFloat) d1->u.val;
                     goto float_label;
                 default:
                     goto error;
@@ -1271,16 +1338,30 @@ void op_divide(void) {
     pop(1);
 }
 
-void op_doeq_divide(void) {
-    cData *d1 = &stack[stack_pos - 2];
-    cData *d2 = &stack[stack_pos - 1];
+/*
+GET OP SET
 
-    switch (d1->type) {
+1    2      1   1   2
+
+x /= y  eq  x = x / y
+
+x = 0;
+x /= 1;
+
+STACK[-2] = 1
+stack[-1] = 0
+*/
+
+void op_doeq_divide(void) {
+    cData * arg = &stack[stack_pos - 2];
+    cData * var = &stack[stack_pos - 1];
+
+    switch (var->type) {
         case FLOAT:
-            switch (d2->type) {
+            switch (arg->type) {
                 case INTEGER:
-                    d2->type = FLOAT;
-                    d2->u.fval = (float) d2->u.val;
+                    arg->type = FLOAT;
+                    arg->u.fval = (cFloat) arg->u.val;
                 case FLOAT:
                     break;
                 default:
@@ -1288,36 +1369,40 @@ void op_doeq_divide(void) {
             }
     
           float_label:
-            if (d2->u.fval == 0.0) {
-                cthrow(div_id, "Attempt to divide %D by zero.", d1);
+            if (arg->u.fval == 0.0) {
+                cthrow(div_id, "Attempt to divide %D by zero.", var);
                 return;
             }
-            d1->u.fval = d2->u.fval / d1->u.fval;
+
+            /* put it in arg's place so we only have to pop once */
+            arg->u.fval = var->u.fval / arg->u.fval;
             break;
 
         case INTEGER:
 
-            switch (d2->type) {
+
+            switch (arg->type) {
                 case INTEGER:
                     break;
                 case FLOAT:
-                    d1->type = FLOAT;
-                    d1->u.fval = (float) d1->u.val;
+                    var->type = FLOAT;
+                    var->u.fval = (cFloat) var->u.val;
                     goto float_label;
                 default:
                     goto error;
             }
 
-            if (d2->u.val == 0) {
-                cthrow(div_id, "Attempt to divide %D by zero.", d1);
+            if (arg->u.val == 0) {
+                cthrow(div_id, "Attempt to divide %D by zero.", var);
                 return;
             }
-            d1->u.val = d2->u.val / d1->u.val;
+            /* put it in arg's place so we only have to pop once */
+            arg->u.val = var->u.val / arg->u.val;
             break;
 
         default:
         error:
-            cthrow(type_id, "%D and %D are not integers or floats.", d1, d2);
+            cthrow(type_id, "%D and %D are not integers or floats.", var, arg);
             return;
     }
 
@@ -1356,7 +1441,7 @@ void op_add(void) {
         switch (d2->type) {
             case FLOAT:
                 d1->type = FLOAT;
-                d1->u.fval = (float) d1->u.val;
+                d1->u.fval = (cFloat) d1->u.val;
                 goto float_label;
             case STRING:
                 d1->u.str = data_tostr(d1);
@@ -1376,7 +1461,7 @@ void op_add(void) {
         switch (d2->type) {
             case INTEGER:
                 d2->type = FLOAT;
-                d2->u.fval = (float) d2->u.val;
+                d2->u.fval = (cFloat) d2->u.val;
             case FLOAT:
                 goto float_label;
             case STRING:
@@ -1475,23 +1560,23 @@ void op_add(void) {
 }
 
 void op_doeq_add(void) {
-    cData *d1 = &stack[stack_pos - 2];
-    cData *d2 = &stack[stack_pos - 1];
+    cData * arg = &stack[stack_pos - 2];
+    cData * var = &stack[stack_pos - 1]; /* d2 */
 
-    switch (d1->type) {
+    switch (var->type) {
       case INTEGER:
 
-        switch (d2->type) {
+        switch (arg->type) {
             case FLOAT:
-                d1->type = FLOAT;
-                d1->u.fval = (float) d1->u.val;
+                var->type = FLOAT;
+                var->u.fval = (cFloat) var->u.val;
                 goto float_label;
             case STRING:
-                d1->u.str = data_tostr(d1);
-                d1->type = STRING;
+                var->u.str = data_tostr(var);
+                var->type = STRING;
                 goto string;
             case INTEGER:
-                d1->u.val = d2->u.val + d1->u.val;
+                arg->u.val = var->u.val + arg->u.val;
                 pop(1);
                 return;
             default:
@@ -1502,51 +1587,55 @@ void op_doeq_add(void) {
 
       case FLOAT:
 
-        switch (d2->type) {
+        switch (arg->type) {
             case INTEGER:
-                d2->type = FLOAT;
-                d2->u.fval = (float) d2->u.val;
+                arg->type = FLOAT;
+                arg->u.fval = (cFloat) arg->u.val;
             case FLOAT:
                 goto float_label;
             case STRING:
-                d1->u.str = data_tostr(d1);
-                d1->type = STRING;
+                var->u.str = data_tostr(var);
+                var->type = STRING;
                 goto string;
             default:
                 goto error;
         }
 
       float_label:
-        d1->u.fval = d2->u.fval + d1->u.fval;
+        arg->u.fval = var->u.fval + arg->u.fval;
         pop(1);
         return;
 
       case STRING: {
         cStr * str;
+        char * s;
 
-        switch (d2->type) {
+        switch (arg->type) {
             case STRING:
                 break;
             case SYMBOL:
-                str = data_tostr(d2);
-                data_discard(d2);
-                d2->type = STRING;
-                d2->u.str = str;
+                s = ident_name(arg->u.symbol);
+                str = string_from_chars(s, strlen(s));
+                ident_discard(arg->u.symbol);
+                arg->type = STRING;
+                arg->u.str = str;
                 break;
             default:
-                str = data_to_literal(d2, TRUE);
-                data_discard(d2);
-                d2->type = STRING;
-                d2->u.str = str;
+                str = data_to_literal(arg, TRUE);
+                data_discard(arg);
+                arg->type = STRING;
+                arg->u.str = str;
         }
 
-      string:                                                  /* string: */
+      string:
 
-        /* straighten things out by swapping strings */
+        /* straighten and swap so things are discarded correctly */
 	anticipate_assignment();
-        str = d2->u.str;
-        d2->u.str = d1->u.str;
-	d1->u.str = string_add(str, d2->u.str);
+        str = var->u.str;
+        var->u.str = arg->u.str;
+
+        /* ok, add, set and pop 'var' */
+        arg->u.str = string_add(str, arg->u.str);
         pop(1);
         return;
 
@@ -1554,20 +1643,20 @@ void op_doeq_add(void) {
 
       case LIST:
 
-        switch (d2->type) {
+        switch (arg->type) {
             case LIST: {
-                cList * list = d2->u.list;
+                cList * list = var->u.list;
 	        anticipate_assignment();
-                d2->u.list = d1->u.list;
-        	d1->u.list = list_append(list, d2->u.list);
+                var->u.list = arg->u.list;
+        	arg->u.list = list_append(list, arg->u.list);
                 pop(1);
                 return;
             }
             case STRING: {
-                cStr * str = data_to_literal(d1, TRUE);
-                data_discard(d1);
-                d1->type = STRING;
-                d1->u.str = str;
+                cStr * str = data_to_literal(var, TRUE);
+                data_discard(var);
+                var->type = STRING;
+                var->u.str = str;
                 goto string;
             }
             default:
@@ -1577,31 +1666,33 @@ void op_doeq_add(void) {
 
       case BUFFER:
 
-        if (d2->type == BUFFER) {
-            cBuf * buf = d2->u.buffer;
+        if (arg->type == BUFFER) {
+            cBuf * buf = var->u.buffer;
 
 	    anticipate_assignment();
-            d2->u.buffer = d1->u.buffer;
-            d1->u.buffer = buffer_append(buf, d2->u.buffer);
+            var->u.buffer = arg->u.buffer;
+            arg->u.buffer = buffer_append(buf, arg->u.buffer);
             pop(1);
             return;
         }
 
       default:
 
-        if (d2->type == STRING) {
+        if (arg->type == STRING) {
             cStr * str;
+            char * s;
 
-            if (d1->type == SYMBOL) {
-                str = data_tostr(d1);
-                data_discard(d1);
-                d1->type = STRING;
-                d1->u.str = str;
+            if (var->type == SYMBOL) {
+                s = ident_name(arg->u.symbol);
+                str = string_from_chars(s, strlen(s));
+                ident_discard(arg->u.symbol);
+                arg->type = STRING;
+                arg->u.str = str;
             } else {
-                str = data_to_literal(d1, TRUE);
-                data_discard(d1);
-                d1->type = STRING;
-                d1->u.str = str;
+                str = data_to_literal(var, TRUE);
+                data_discard(var);
+                var->type = STRING;
+                var->u.str = str;
             }
 
             goto string;
@@ -1609,7 +1700,7 @@ void op_doeq_add(void) {
 
       error:
 
-	cthrow(type_id, "Cannot add %D and %D.", d1, d2);
+	cthrow(type_id, "Cannot add %D and %D.", var, arg);
 	return;
     }
 }
@@ -1642,7 +1733,7 @@ void op_subtract(void) {
             switch (d2->type) {
                 case INTEGER:
                     d2->type = FLOAT;
-                    d2->u.fval = (float) d2->u.val;
+                    d2->u.fval = (cFloat) d2->u.val;
                 case FLOAT:
                     break;
                 default:
@@ -1660,7 +1751,7 @@ void op_subtract(void) {
                     break;
                 case FLOAT:
                     d1->type = FLOAT;
-                    d1->u.fval = (float) d1->u.val;
+                    d1->u.fval = (cFloat) d1->u.val;
                     goto float_label;
                 default:
                     goto error;
@@ -1679,15 +1770,15 @@ void op_subtract(void) {
 }
 
 void op_doeq_subtract(void) {
-    cData *d1 = &stack[stack_pos - 2];
-    cData *d2 = &stack[stack_pos - 1];
+    cData *arg = &stack[stack_pos - 2];
+    cData *var = &stack[stack_pos - 1];
 
-    switch (d1->type) {
+    switch (arg->type) {
         case FLOAT:
-            switch (d2->type) {
+            switch (var->type) {
                 case INTEGER:
-                    d2->type = FLOAT;
-                    d2->u.fval = (float) d2->u.val;
+                    var->type = FLOAT;
+                    var->u.fval = (cFloat) var->u.val;
                 case FLOAT:
                     break;
                 default:
@@ -1695,28 +1786,28 @@ void op_doeq_subtract(void) {
             }
     
           float_label:
-            d1->u.fval = d2->u.fval - d1->u.fval;
+            arg->u.fval = var->u.fval - arg->u.fval;
             break;
 
         case INTEGER:
 
-            switch (d2->type) {
+            switch (var->type) {
                 case INTEGER:
                     break;
                 case FLOAT:
-                    d1->type = FLOAT;
-                    d1->u.fval = (float) d1->u.val;
+                    arg->type = FLOAT;
+                    arg->u.fval = (cFloat) arg->u.val;
                     goto float_label;
                 default:
                     goto error;
             }
 
-            d1->u.val = d2->u.val - d1->u.val;
+            arg->u.val = var->u.val - arg->u.val;
             break;
 
         default:
         error:
-            cthrow(type_id, "%D and %D are not integers or floats.", d1, d2);
+            cthrow(type_id, "%D and %D are not integers or floats.", arg, var);
             return;
     }
 
@@ -2021,10 +2112,10 @@ void op_greater(void)
 
     if (d1->type == FLOAT && d2->type == INTEGER) {
         d2->type = FLOAT;
-        d2->u.fval = (float) d2->u.val;
+        d2->u.fval = (cFloat) d2->u.val;
     } else if (d2->type == FLOAT && d1->type == INTEGER) {
         d1->type = FLOAT;
-        d1->u.fval = (float) d1->u.val;
+        d1->u.fval = (cFloat) d1->u.val;
     }
 
     if (d1->type != d2->type) {
@@ -2050,10 +2141,10 @@ void op_greater_or_equal(void)
 
     if (d1->type == FLOAT && d2->type == INTEGER) {
         d2->type = FLOAT;
-        d2->u.fval = (float) d2->u.val;
+        d2->u.fval = (cFloat) d2->u.val;
     } else if (d1->type == INTEGER && d2->type == FLOAT) {
         d1->type = FLOAT;
-        d1->u.fval = (float) d1->u.val;
+        d1->u.fval = (cFloat) d1->u.val;
     }
 
     if (d1->type != d2->type) {
@@ -2078,10 +2169,10 @@ void op_less(void)
 
     if (d1->type == FLOAT && d2->type == INTEGER) {
         d2->type = FLOAT;
-        d2->u.fval = (float) d2->u.val;
+        d2->u.fval = (cFloat) d2->u.val;
     } else if (d1->type == INTEGER && d2->type == FLOAT) {
         d1->type = FLOAT;
-        d1->u.fval = (float) d1->u.val;
+        d1->u.fval = (cFloat) d1->u.val;
     }
 
     if (d1->type != d2->type) {
@@ -2107,10 +2198,10 @@ void op_less_or_equal(void)
 
     if (d1->type == FLOAT && d2->type == INTEGER) {
         d2->type = FLOAT;
-        d2->u.fval = (float) d2->u.val;
+        d2->u.fval = (cFloat) d2->u.val;
     } else if (d1->type == INTEGER && d2->type == FLOAT) {
         d1->type = FLOAT;
-        d1->u.fval = (float) d1->u.val;
+        d1->u.fval = (cFloat) d1->u.val;
     }
 
     if (d1->type != d2->type) {

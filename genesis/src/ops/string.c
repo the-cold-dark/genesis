@@ -204,6 +204,8 @@ COLDC_FUNC(match_begin) {
     if (num_args > 2) {
       sep = string_chars(args[2].u.str);
       sep_len = string_length(args[2].u.str);
+      if (!sep_len)
+          THROW((range_id, "Zero length separator."))
     } else {
       sep = " ";
       sep_len = 1;

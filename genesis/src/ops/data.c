@@ -6,6 +6,7 @@
 
 #include "cdc_pcode.h"
 #include "cdc_db.h"
+#include "handled_frob.h"
 
 COLDC_FUNC(size) {
     Int size;
@@ -34,12 +35,64 @@ COLDC_FUNC(type) {
 
 COLDC_FUNC(class) {
     Long cclass;
+    Int type;
 
-    INIT_1_ARG(FROB);
+    INIT_1_ARG(ANY_TYPE);
 
-    cclass = args[0].u.frob->cclass;
+    type = args[0].type;
+    if (type == FROB)
+	cclass = args[0].u.frob->cclass;
+    else if (type == HANDLED_FROB_TYPE)
+	cclass = HANDLED_FROB(&args[0])->cclass;
+    else {
+	cthrow(type_id,
+	       "The argument (%D) is not a frob.",
+	       &args[0]);
+	return;
+    }
     pop(1);
     push_objnum(cclass);
+}
+
+COLDC_FUNC(value) {
+    Int type;
+    cData d;
+
+    INIT_1_ARG(ANY_TYPE);
+
+    type = args[0].type;
+    if (type == FROB)
+	data_dup(&d, &args[0].u.frob->rep);
+    else if (type == HANDLED_FROB_TYPE)
+	data_dup(&d, &HANDLED_FROB(&args[0])->rep);
+    else {
+	cthrow(type_id,
+	       "The argument (%D) is not a frob.",
+	       &args[0]);
+	return;
+    }
+    data_discard(&args[0]);
+    args[0]=d;
+}
+
+COLDC_FUNC(handler) {
+    Int type;
+    Ident handler;
+
+    INIT_1_ARG(ANY_TYPE);
+
+    type = args[0].type;
+    if (type == (int)HANDLED_FROB_TYPE)
+	handler = ident_dup(HANDLED_FROB(&args[0])->handler);
+    else {
+	cthrow(type_id,
+	       "The argument (%D) is not a frob with method handler.",
+	       &args[0]);
+	return;
+    }
+    pop(1);
+    push_symbol(handler);
+    ident_discard(handler);
 }
 
 COLDC_FUNC(toint) {
@@ -163,12 +216,11 @@ COLDC_FUNC(tosym) {
 COLDC_FUNC(toerr) {
     Ident error;
 
-    INIT_1_ARG(STRING);
+    INIT_1_ARG(SYMBOL);
 
-    error = ident_get(string_chars(STR1));
-
-    pop(1);
-    push_error(error);
+    error = SYM1;
+    args[0].type = T_ERROR;
+    args[0].u.error = error;
 }
 
 COLDC_FUNC(valid) {

@@ -9,6 +9,21 @@
 #include "cache.h"
 #include "token.h"
 #include "lookup.h"
+#include "macros.h"
+
+INSTANCE_PROTOTYPES(handled);
+
+cInstance class_registry[] = {
+     INSTANCE_INIT(handled, "a frob")
+};
+
+void register_instance (InstanceID instance, Ident id) {
+    class_registry[instance - FIRST_INSTANCE].id_name = id;
+}
+
+void init_instances(void) {
+    register_instance (HANDLED_FROB_TYPE, frob_id);
+}
 
 /* ack, hacky */
 extern cObjnum get_object_name(Ident id);
@@ -70,8 +85,10 @@ Int data_cmp(cData *d1, cData *d2) {
 	    return 1;
 	return MEMCMP(d1->u.buffer->s, d2->u.buffer->s, d1->u.buffer->len);
 
-      default:
-	return 1;
+      default: {
+	INSTANCE_RECORD(d1->type, r);
+	return r->compare(d1, d2);
+	}
     }
 }
 
@@ -112,7 +129,7 @@ Int data_true(cData *d)
 	return (d->u.buffer->len != 0);
 
       default:
-	return 0;
+	return 1;
     }
 }
 
@@ -162,9 +179,10 @@ uLong data_hash(cData *d)
 	else
 	    return 300;
 
-      default:
-	panic("data_hash() called with invalid type");
-	return -1;
+    default: {
+	INSTANCE_RECORD(d->type, r);
+	return r->hash(d);
+	}
     }
 }
 
@@ -216,6 +234,11 @@ void data_dup(cData *dest, cData *src)
       case BUFFER:
 	dest->u.buffer = buffer_dup(src->u.buffer);
 	break;
+
+      default: {
+	    INSTANCE_RECORD(src->type, r);
+	    r->dup(dest, src);
+	}
     }
 }
 
@@ -253,6 +276,16 @@ void data_discard(cData *data)
 
       case BUFFER:
 	buffer_discard(data->u.buffer);
+
+      case INTEGER:
+      case FLOAT:
+      case OBJNUM:
+	break;
+
+      default: {
+	INSTANCE_RECORD(data->type, r);
+	r->discard(data);
+	}
     }
 }
 
@@ -310,8 +343,7 @@ cStr *data_tostr(cData *data) {
 	return string_from_chars("`[buffer]", 9);
 
       default:
-	panic("Unrecognized data type.");
-	return NULL;
+	return string_from_chars("<instance>",10);
     }
 }
 
@@ -430,8 +462,10 @@ cStr *data_add_literal_to_str(cStr *str, cData *data, Bool objnames) {
 	}
 	return string_addc(str, ']');
 
-      default:
-	return str;
+    default: {
+	INSTANCE_RECORD(data->type, r);
+	return r->addstr(str, data, objnames);
+	}
     }
 }
 
@@ -450,7 +484,7 @@ Long data_type_id(Int type)
       case FROB:	return frob_id;
       case DICT:	return dictionary_id;
       case BUFFER:	return buffer_id;
-      default:		panic("Unrecognized data type."); return 0;
+    default:		{ INSTANCE_RECORD(type, r); return r->id_name; }
     }
 }
 
@@ -482,6 +516,10 @@ char * data_from_literal(cData *d, char *s) {
     } else if (*s == '"') {
 	d->type = STRING;
 	d->u.str = string_parse(&s);
+#if FROMLIT_DEBUG
+        if (*s)
+            printf("*s == '%c' *(s+1) == '%c'\n", *s, *(s+1));
+#endif
 	return s;
     } else if (*s == '#' && (isdigit(s[1]) ||
                ((s[1] == '-' || s[1] == '+') && isdigit(s[2])))) {
@@ -526,6 +564,10 @@ char * data_from_literal(cData *d, char *s) {
 	}
 	d->type = LIST;
 	d->u.list = list;
+#if FROMLIT_DEBUG
+        if (*s)
+            printf("*s == '%c' *(s+1) == '%c'\n", *s, *(s+1));
+#endif
 	return (*s) ? s + 1 : s;
     } else if (*s == '#' && s[1] == '[') {
 	cData assocs;
@@ -545,6 +587,10 @@ char * data_from_literal(cData *d, char *s) {
 	data_discard(&assocs);
 	if (!d->u.dict)
 	    d->type = -1;
+#if FROMLIT_DEBUG
+        if (*s)
+            printf("*s == '%c' *(s+1) == '%c'\n", *s, *(s+1));
+#endif
 	return s;
     } else if (*s == '`' && s[1] == '[') {
 	cData *p, byte_data;
@@ -590,7 +636,7 @@ char * data_from_literal(cData *d, char *s) {
 	d->u.symbol = parse_ident(&s);
 	return s;
     } else if (*s == '<') {
-	cData cclass;
+	cData cclass, crep;
 
 	s = data_from_literal(&cclass, s + 1);
 	if (cclass.type == OBJNUM) {
@@ -600,14 +646,39 @@ char * data_from_literal(cData *d, char *s) {
 		s++;
 	    while (isspace(*s))
 		s++;
-	    d->type = FROB;
+	    s = data_from_literal(&crep, s);
+	    if (crep.type == -1) {
+		d->type = -1;
+		return (*s) ? s + 1 : s;
+	    }
+	    while (isspace(*s))
+		s++;
+	    if (*s == ',') {
+#include "handled_frob.h"
+		cData chandler;
+
+		s++;
+		while (isspace(*s))
+		    s++;
+		s = data_from_literal(&chandler, s + 1);
+		if (chandler.type != IDENT) {
+		    data_discard(&crep);
+		    d->type = -1;
+		    if (chandler.type != -1)
+			data_discard(&chandler);
+		    return (*s) ? s + 1 : s;
+		}
+		d->type = (Int) HANDLED_FROB_TYPE;
+		d->u.instance = (void*)TMALLOC(HandledFrob, 1);
+		HANDLED_FROB(d)->cclass = cclass.u.objnum;
+		HANDLED_FROB(d)->rep = crep;
+		HANDLED_FROB(d)->handler = chandler.u.symbol;
+		return (*s) ? s + 1 : s;
+	    }
+ 	    d->type = FROB;
 	    d->u.frob = TMALLOC(cFrob, 1);
 	    d->u.frob->cclass = cclass.u.objnum;
-	    s = data_from_literal(&d->u.frob->rep, s);
-	    if (d->u.frob->rep.type == -1) {
-		TFREE(d->u.frob, 1);
-		d->type = -1;
-	    }
+	    d->u.frob->rep = crep;
 	} else if (cclass.type != -1) {
 	    data_discard(&cclass);
 	}
@@ -616,3 +687,4 @@ char * data_from_literal(cData *d, char *s) {
 	return (*s) ? s + 1 : s;
     }
 }
+

@@ -304,6 +304,9 @@ INTERNAL void initialize(Int argc, char **argv) {
     }
 
     init_sig();
+#ifdef DRIVER_DEBUG
+    init_debug();
+#endif
     init_codegen();
     init_ident();
     init_op_table();
@@ -311,6 +314,7 @@ INTERNAL void initialize(Int argc, char **argv) {
     init_scratch_file();
     init_token();
     init_modules(argc, argv);
+    init_instances();
     init_cache();
 }
 

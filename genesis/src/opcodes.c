@@ -65,6 +65,7 @@ static Op_info op_info[] = {
     { DICT,             "DICT",            op_dict },
     { BUFFER,           "BUFFER",          op_buffer },
     { FROB,             "FROB",            op_frob },
+    { OP_HANDLED_FROB,  "FROB",            op_handled_frob },
     { INDEX,            "INDEX",           op_index },
     { AND,              "AND",             op_and, JUMP },
     { OR,               "OR",              op_or, JUMP },
@@ -186,6 +187,8 @@ static Op_info op_info[] = {
     { F_VALID,            "valid",                func_valid },
     { F_TYPE,             "type",                 func_type },
     { F_CLASS,            "class",                func_class },
+    { F_VALUE,            "frob_value",           func_value },
+    { F_HANDLER,          "frob_handler",         func_handler },
     { F_TOINT,            "toint",                func_toint },
     { F_TOFLOAT,          "tofloat",              func_tofloat },
     { F_TOSTR,            "tostr",                func_tostr },
@@ -198,7 +201,7 @@ static Op_info op_info[] = {
     /* Exception functions */
     { F_ERROR_FUNC,       "error",                func_error },
     { F_TRACEBACK,        "traceback",            func_traceback },
-    { F_THROW,          "throw",                func_throw },
+    { F_THROW,            "throw",                func_throw },
     { F_RETHROW,          "rethrow",              func_rethrow },
 
     /* Network control functions */
@@ -253,6 +256,7 @@ static Op_info op_info[] = {
     { F_ATAN,           "atan",              func_atan },
     { F_POW,            "pow",               func_pow },
     { F_ATAN2,          "atan2",             func_atan2 },
+    { F_ROUND,          "round",             func_round },
 
     /* Operations on strings (stringop.c). */
     { F_STRFMT,           "strfmt",          func_strfmt },

@@ -328,3 +328,39 @@
 #define DICT2          args[1].u.dict
 #define DICT3          args[2].u.dict
 
+/*
+// -----------------------------------------------------------------------
+// class macros
+// -----------------------------------------------------------------------
+*/
+
+#define INSTANCE_PROTOTYPES(_class_) \
+    void CAT(pack_,_class_) (cData*, FILE*); \
+    void CAT(unpack_,_class_) (cData*, FILE*); \
+    int CAT(size_,_class_) (cData*); \
+    int CAT(compare_,_class_) (cData*, cData*); \
+    int CAT(hash_,_class_) (cData*); \
+    void CAT(dup_,_class_) (cData*, cData*); \
+    void CAT(discard_,_class_) (cData*); \
+    cStr* CAT(string_,_class_) (cStr*, cData*, Bool)
+
+#define INSTANCE_INIT(_class_,_name_) \
+    { \
+       _name_,		      \
+       0,                     \
+       CAT(pack_,_class_),      \
+       CAT(unpack_,_class_),    \
+       CAT(size_,_class_),      \
+       CAT(compare_,_class_),   \
+       CAT(hash_,_class_),      \
+       CAT(dup_,_class_),	      \
+       CAT(discard_,_class_),   \
+       CAT(string_,_class_)     \
+    }
+
+#define INSTANCE_RECORD(_d_, _var_) \
+     cInstance *_var_; \
+     if ((_d_) < FIRST_INSTANCE || (_d_) >= LAST_INSTANCE) { \
+         panic("Invalid data type"); \
+     } \
+     _var_ = class_registry + (_d_) - FIRST_INSTANCE

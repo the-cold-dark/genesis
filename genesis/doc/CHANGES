@@ -6,6 +6,22 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-25 [10-Mar-97] Brandon, Miro, Brad/Ted
+      * new mechanism for type handling: the basic methods are called via
+        function pointers, so you don't have to hunt for switches through
+        the driver for every type you want to add (Miro)
+      * added frobs with method call handler (Miro)
+      * added frob_value() and frob_method() (Miro)
+      * fixed a bug with match_begin and a blank seperator (Miro)
+      * toerr() was accepting a string, changed it to accept a symbol.
+        This is a nearly never used function, so I hope it won't impact
+        much, but this change was necessary (Brandon).
+      * fixed /= ordering args wrong (Brandon)
+      * added round() for floats (rounds to the nearest whole, rather
+        than simply truncating) (Brandon)
+      * fixed a bug with parsing large floats from literals (Brad/Ted)
+      * fixed ;1e-9 bug (Miro)
+      * fixed spelling error (Miro)
 1.0-24 [10-Feb-97] Brandon, Jon Lambert
       * The third argument to list_method() now is a bitfield with
         the following flags: 1=Full Parens, 2=Full Braces; which

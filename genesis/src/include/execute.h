@@ -116,8 +116,6 @@ struct handler_info {
 #define    CALL_FORK     2
 #define    CALL_ERROR    3
 
-#define    call_error(_err_) { call_environ = _err_; return CALL_ERROR; }
-
 #define    CALL_ERR_NONE     0
 #define    CALL_ERR_NUMARGS  1
 #define    CALL_ERR_MAXDEPTH 2

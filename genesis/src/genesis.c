@@ -370,6 +370,7 @@ INTERNAL void initialize(Int argc, char **argv) {
     init_token();
     init_modules(argc, argv);
     init_net();
+    init_instances();
 
     /* Figure out our hostname */
     if (!string_length(str_hostname))

@@ -6,6 +6,13 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-3  [22-Apr-96] Brandon Gillespie
+      * Fixed a bug in decompiling -- ++ += -= etc, they assumed the
+        variable was always a local variable, this bombed when using
+        an object variable.
+      * Textdb compiling blasted method code if it was a native method,
+        this was an oversight on my behalf.
+      * tweaked malloc.c a touch
 1.0-2  [21-Apr-96] Brandon Gillespie
       * the change to backup() assumed files were always the same, which
         they are not (it depends upon the dbm implementation you are using),

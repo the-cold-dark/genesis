@@ -9,8 +9,8 @@
 
 VERSION=`cat etc/version`
 VMAJOR=`echo $VERSION | sed 's:\..*::g'`
-VMINOR=`echo $VERSION | sed 's:[0-9][0-9]*\.::g;s:-[0-9][0-9]*::g'`
-VPATCH=`echo $VERSION | sed 's:.*-::g'`
+VMINOR=`echo $VERSION | sed 's:[0-9][0-9]*\.::g;s:p[0-9][0-9]*::g'`
+VPATCH=`echo $VERSION | sed 's:.*p::g'`
 
 # Defaults:
 ac_help=

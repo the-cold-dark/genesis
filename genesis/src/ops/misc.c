@@ -18,8 +18,10 @@
 #include "util.h"
 #include "opcodes.h"
 
-#if defined(sys_ultrix4_4)
+#ifdef HAVE_GETTIMEOFDAY
+#if defined(sys_ultrix) || defined(sys_solaris)
 int gettimeofday (struct timeval *tp, struct timezone *tzp);
+#endif
 #endif
 
 void func_time(void) {

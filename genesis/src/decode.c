@@ -807,9 +807,12 @@ static Expr_list *decompile_expressions_bounded(int *pos_ptr, int expr_end)
           case P_DECREMENT:
           case INCREMENT:
           case DECREMENT:
-            s = varname(the_opcodes[pos + 2]);
+            if (the_opcodes[pos + 1] == SET_OBJ_VAR)
+	        s = ident_name(object_get_ident(the_object,the_opcodes[pos+2]));
+            else
+                s = varname(the_opcodes[pos+2]);
             stack->expr = indecr_expr(the_opcodes[pos], s);
-            pos += 3;
+            pos+=3;
 	    break;
 
           case MULT_EQ:
@@ -818,7 +821,10 @@ static Expr_list *decompile_expressions_bounded(int *pos_ptr, int expr_end)
           case MINUS_EQ:
             /* ignore the current expr, it is just a GET_VAR */
             stack = stack->next;
-            s = varname(the_opcodes[pos + 2]);
+            if (the_opcodes[pos + 1] == SET_OBJ_VAR)
+	        s = ident_name(object_get_ident(the_object,the_opcodes[pos+2]));
+            else
+                s = varname(the_opcodes[pos+2]);
             stack->expr = doeq_expr(the_opcodes[pos], s, stack->expr);
             pos += 3;
             break;

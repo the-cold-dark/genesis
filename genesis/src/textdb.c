@@ -349,8 +349,6 @@ void verify_native_methods(void) {
 
         /* it does not exist, compile an empty method */
         if (method == NULL) {
-            compile_method:
-
             method = compile(obj, code, &errors);
             method->native = x;
             method->m_flags |= MF_NATIVE;
@@ -366,19 +364,18 @@ void verify_native_methods(void) {
 
         /* it was prototyped, set the native structure pointer and
            mark the object as dirty */
-        } else if (method->m_flags & MF_NATIVE) {
-            method->native = x;
-            obj->dirty = 1;
-
-            if (nh != (nh_t *) NULL)
-                nh->valid = 1;
         } else {
-            if (use_natives != FORCE_NATIVES) {
+            if (!(method->m_flags & MF_NATIVE) &&
+                 use_natives != FORCE_NATIVES)
+            {
                 fformat(stdout, "WARNING: method definition %O.%s() overrides native method.\n", obj->objnum, ident_name(mname));
             } else {
-                object_del_method(obj, mname);
-                fformat(stdout, "WARNING: overriding %O.%s() with a native method.\n", obj->objnum, ident_name(mname));
-                goto compile_method; /* jump up and compile the method */
+                method->native = x;
+                method->m_flags |= MF_NATIVE;
+                obj->dirty = 1;
+
+                if (nh != (nh_t *) NULL)
+                    nh->valid = 1;
             }
         }
 

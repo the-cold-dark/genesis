@@ -283,7 +283,10 @@ cList * statbuf_to_list(struct stat * sbuf) {
     for (x=1; x < 5; x++)
         d[x].type = INTEGER;
 
-    sprintf(buf, "%lo", sbuf->st_mode);
+    if (sizeof(sbuf->st_mode) == sizeof(long))
+        sprintf(buf, "%lo", sbuf->st_mode);
+    else
+        sprintf(buf, "%o", sbuf->st_mode);
     d[0].type = STRING;
     d[0].u.str = string_from_chars(buf, strlen(buf));
     d[1].u.val = (Int) sbuf->st_size;

@@ -342,6 +342,10 @@ static Int validate_sorted_args(Int stack_start, Int arg_start) {
         } else if (args[ARG2].type == DICT) {
             THROW((methoderr_id, "Inserting dict data requires a key value"))
         }
+    } else if (argc == 3) {
+        if ((args[ARG2].type != LIST) && (args[ARG2].type != DICT)) {
+            THROW((type_id, "Second arg must be a list or dict."))
+        }
     } else if ((argc != 2) && (argc != 3)) {
         THROW_NUM_ERROR(argc, "two or three")
     }

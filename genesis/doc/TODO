@@ -4,7 +4,6 @@ New to do items:
  * Add test cases for more error handling stuff
  * Add test cases for explode_quoted()
  * Add $string.explode_quoted() to match explode_quoted().
- * Fix memory leak in error handling.
  * add help nodes for changed api's
  * add displaying the stuff available from config() on @status
    as an example for other cores
@@ -13,7 +12,6 @@ New to do items:
 Merge candidates from the 1.2 branch:
  * Added performance metrics gathering code to the object, method
    and name caches.  Need a UI (Bruce)
- * valid() works on frobs, testing their class (Bruce)
  * error_data() needs to be completed.
  * some cleanup in the task code (Bruce)
  * Strings allocate in units of 512 bytes. (Brad)

@@ -26,6 +26,8 @@ RELEASE INFORMATION:
         opcode index values. (Bruce)
       * Add log_task_stack() callable from C. (Bruce)
       * Re-enable AC_INLINE check in configure (Bruce)
+      * cleanup cache.c to have a dirty list and reduce overhead of
+        cache holder array (Brad)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

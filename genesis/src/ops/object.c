@@ -15,7 +15,7 @@
 */
 
 #include "defs.h"
-#include "functions.h"
+
 #include "cdc_pcode.h"
 #include "cdc_db.h"
 
@@ -274,7 +274,7 @@ COLDC_FUNC(rename_method) {
         list = list_add(list, &d); \
     }
 
-static cList * list_method_flags(Int flags) {
+INTERNAL cList * list_method_flags(Int flags) {
     cList * list;
     cData d;
 
@@ -505,25 +505,6 @@ COLDC_FUNC(methods) {
     list_discard(methods);
 }
 
-COLDC_FUNC(has_method) {
-    cData  * args;
-    Method * method;
-    Int      result;
-
-    if (!func_init_1(&args, SYMBOL))
-        return;
-
-    result = 1;
-
-    method = object_find_method(cur_frame->object->objnum, SYM1, FROB_ANY);
-    if (!method) {
-        result = 0;
-    }
-
-    pop(1);
-    push_int(result);
-}
-
 COLDC_FUNC(find_method) {
     cData   * args;
     Method * m, * m2;
@@ -630,7 +611,7 @@ COLDC_FUNC(del_method) {
     if (!func_init_1(&args, SYMBOL))
         return;
 
-    status = object_del_method(cur_frame->object, args[0].u.symbol, FALSE);
+    status = object_del_method(cur_frame->object, args[0].u.symbol);
     if (status == 0) {
         cthrow(methodnf_id, "No method named %I was found.", args[0].u.symbol);
     } else if (status == -1) {
@@ -785,17 +766,6 @@ COLDC_FUNC(destroy) {
     // Set the object dead, so it will go away when nothing is
     // holding onto it.  cache_discard() will notice the dead
     // flag, and call object_destroy().
-    //
-    // We don't need to dirty the object here because:
-    //   1) the object is ref'ed, so the cleaner thread will skip it
-    //   2) if the object isn't ref'ed then
-    //      a) it'll get written because it goes past the dead check
-    //         This is extra work, arguably, but imho, the chance of
-    //         writing out a soon to be dead object due to this tiny
-    //         race is better than trying to dirty the dirty object
-    //         needlessly and stalling due to the cleaner holding the
-    //         lock on this object's bucket
-    //      b) it won't get written because the dead flag gets set
     */
     obj->dead = 1;
     push_int(1);
@@ -936,7 +906,7 @@ COLDC_FUNC(objnum) {
     push_int(cur_frame->object->objnum);
 }
 
-static cList * add_op_arg(cList * out, Int type, Long op, Method * method) {
+INTERNAL cList * add_op_arg(cList * out, Int type, Long op, Method * method) {
     Obj * obj = method->object;
     cData d;
 
@@ -945,9 +915,18 @@ static cList * add_op_arg(cList * out, Int type, Long op, Method * method) {
             d.type = INTEGER;
             d.u.val = op;
             break;
+        case FLOAT:
+            d.type = FLOAT;
+            d.u.fval = *((Float*)(&op));
+            break;
         case T_ERROR:
-            d.type = T_ERROR;
-            d.u.error = object_get_ident(obj, op);
+            if (op == -1) {
+                d.type = INTEGER;
+                d.u.val = -1;
+            } else {
+                d.type = T_ERROR;
+                d.u.error = object_get_ident(obj, op);
+            }
             break;
         case IDENT:
             d.type = SYMBOL;
@@ -983,14 +962,10 @@ static cList * add_op_arg(cList * out, Int type, Long op, Method * method) {
             d.type = STRING;
             d.u.str = object_get_string(obj, op);
             break;
-        case JUMP:
-            d.type = INTEGER;
-            d.u.val = op;
-            break;
+        /* case JUMP: */ /* ignore JUMP */
         default:
             return out;
 #if DISABLED   /* none of these are used as args in op_table */
-        case FLOAT:
         case LIST:
         case FROB:
         case DICT:
@@ -1017,8 +992,7 @@ COLDC_FUNC(method_bytecode) {
     if (!func_init_1(&args, SYMBOL))
         return;
 
-    method = object_find_method_local(cur_frame->object, args[0].u.symbol,
-                                      FROB_ANY);
+    method = object_find_method(cur_frame->object->objnum, args[0].u.symbol, FROB_ANY);
 
     /* keep these for later reference, if its already around */
     if (!method)
@@ -1043,7 +1017,7 @@ COLDC_FUNC(method_bytecode) {
         }
 
         if (info->arg2) {
-            list = add_op_arg(list, info->arg2, ops[x], method);
+            list = add_op_arg(list, info->arg1, ops[x], method);
             x++;
         }
     }

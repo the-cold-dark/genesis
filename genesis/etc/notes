@@ -13,6 +13,7 @@ RELEASE INFORMATION:
 1.1.10 [xxx]
       * fix object size for objects without an objnum (Brad)
       * fix parent list leak in binarydb decompilation (Brad)
+      * fix method_bytecode() bug with 'catch any' (Allen Noe)
 
 1.1.9  [1-Oct-100]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

@@ -439,7 +439,7 @@ cStr *data_add_literal_to_str(cStr *str, cData *data, int flags) {
 	return string_add_chars(str, s, strlen(s));
 
       case FLOAT:
-        s=float_to_ascii(data->u.fval,nbuf);
+        s = float_to_ascii(data->u.fval,nbuf);
         return string_add_chars(str, s, strlen(s));
 
       case STRING:
@@ -648,28 +648,67 @@ char * data_from_literal(cData *d, char *s) {
 #endif
 	return (*s) ? s + 1 : s;
     } else if (*s == '#' && s[1] == '[') {
-	cData assocs;
-
-	/* Get associations. */
-	s = data_from_literal(&assocs, s + 1);
-	if (assocs.type != LIST) {
 #ifndef ONLY_PARSE_TEXTDB
-	    if (assocs.type != -1)
-		data_discard(&assocs);
-#endif
-	    d->type = -1;
-	    return s;
-	}
+        cList *keys, *values;
 
-	/* Make a dict from the associations. */
-	d->type = DICT;
-#ifndef ONLY_PARSE_TEXTDB
-	d->u.dict = dict_from_slices(assocs.u.list);
-	data_discard(&assocs);
-	if (!d->u.dict)
-	    d->type = -1;
+        keys = list_new(10);
+        values = list_new(10);
 #endif
-	return s;
+
+        s += 2; /* move past the #[ */
+        while (isspace(*s)) /* eat white space */
+            ++s;
+        while (*s == '[') {
+	    while (isspace(*s))
+		++s;
+            if (*s == ']')
+                goto dict_done;
+            s = data_from_literal(d, s+1);
+#ifndef ONLY_PARSE_TEXTDB
+            keys = list_add(keys, d);
+            data_discard(d);
+#endif
+	    while (isspace(*s))
+		++s;
+	    if (*s != ',')
+                goto dict_error;
+            s = data_from_literal(d, s+1);
+#ifndef ONLY_PARSE_TEXTDB
+            values = list_add(values, d);
+            data_discard(d);
+#endif
+	    while (isspace(*s))
+		++s;
+            if (*s != ']')
+                goto dict_error;
+            ++s;
+	    while (isspace(*s))
+		++s;
+            if (*s == ']') {
+                goto dict_done;
+            }
+            if (*s != ',')
+                goto dict_error;
+            ++s;
+	    while (isspace(*s))
+		++s;
+        }
+dict_done:
+        ++s;
+        d->type = DICT;
+#ifndef ONLY_PARSE_TEXTDB
+        d->u.dict = dict_new(keys, values);
+        list_discard(keys);
+        list_discard(values);
+#endif
+        return s;
+dict_error:
+        d->type = -1;
+#ifndef ONLY_PARSE_TEXTDB
+        list_discard(keys);
+        list_discard(values);
+#endif
+        return s;
     } else if (*s == '#') {
         s++;
 	d->type = OBJNUM;

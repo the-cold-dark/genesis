@@ -12,6 +12,7 @@
 
 
 void init_cache(Bool spawn_cleaner);
+inline void cache_dirty_object(Obj *obj);
 Obj *cache_get_holder(Long objnum);
 Obj *cache_retrieve(Long objnum);
 Obj *cache_grab(Obj *object);

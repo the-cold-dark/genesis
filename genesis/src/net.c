@@ -372,6 +372,14 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
 				 (struct sockaddr *) &sockin, &addr_size);
 	    if (serv->client_socket == SOCKET_ERROR)
 		continue;
+#ifdef __Win32__
+            result = 1;
+            ioctlsocket(fd, FIONBIO, &result);
+#else
+            flags = fcntl(serv->client_socket, F_GETFL);
+	    flags |= O_NONBLOCK;
+	    fcntl(serv->client_socket, F_SETFL, flags);
+#endif
 
 	    /* Get address and local port of client. */
 	    strcpy(serv->client_addr, inet_ntoa(sockin.sin_addr));

@@ -402,6 +402,8 @@ INTERNAL void sync_name_cache(void)
 {
     Int i;
 
+    write_err ("Syncing lookup name cache...");
+
     for (i = 0; i < NAME_CACHE_SIZE; i++) {
 	if (name_cache[i].name != NOT_AN_IDENT && name_cache[i].dirty) {
 	    store_name(name_cache[i].name, name_cache[i].objnum);

@@ -64,6 +64,11 @@ RELEASE INFORMATION:
       * Error handling optimization to shift expense from throw()
         to traceback(). (Bruce)
       * Add background cleaner thread to write dirty objects to disk (Brad)
+      * Further method cache cleanups, including a config()
+        option to control logging of information about
+        invalidations. (Bruce)
+      * If new and old parents lists are equal, change_parents()
+        should do no work. (Including cache invalidations) (Bruce)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

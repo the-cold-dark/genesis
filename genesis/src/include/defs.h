@@ -464,6 +464,7 @@ Int  cache_log_flag;
 Int  cache_watch_count;
 cObjnum cache_watch_object;
 Int  log_malloc_size;
+Int  log_method_cache;
 
 #else
 extern jmp_buf main_jmp;
@@ -508,6 +509,7 @@ extern Int  cache_log_flag;
 extern Int  cache_watch_count;
 extern cObjnum cache_watch_object;
 extern Int  log_malloc_size;
+extern Int  log_method_cache;
 #endif
 
 #endif

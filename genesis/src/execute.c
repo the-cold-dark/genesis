@@ -598,8 +598,12 @@ void log_task_stack(Long taskid, cList * stack, void (logroutine)(char*,...))
 	opcode = list_elem(frame->u.list, 4);
 
         sender_obj = cache_retrieve(sender->u.objnum);
-        sender_name = ident_name(sender_obj->objname);
-        cache_discard(sender_obj);
+	if (sender_obj) {
+            sender_name = ident_name(sender_obj->objname);
+            cache_discard(sender_obj);
+        } else {
+            sender_name = "*driver*";
+        }
 
         caller_obj = cache_retrieve(caller->u.objnum);
 	caller_name = ident_name(caller_obj->objname);

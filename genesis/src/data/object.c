@@ -150,23 +150,12 @@ void object_destroy(Obj *object) {
     cList *children;
     cData *d, cthis;
     Obj *kid;
-    Long   has_methods = 0, i = 0;
-
-    do {
-        if (object->methods.tab[i].m) {
-            has_methods = 1;
-	}
-        i++;
-    } while (!has_methods && (i < object->methods.size));
 
     /*
-     * Invalidate the method cache if object is not a method-less leaf object,
-     * otherwise, invalidate just the entries for the dead object.
+     * Invalidate the method cache if object is not a leaf object,
      */
-    if ((list_length(object->children) != 0) || (has_methods)) {
+    if (list_length(object->children) != 0) {
         method_cache_invalidate_all();
-    } else {
-        method_cache_invalidate(object->objnum);
     }
 
     /* Invalidate the ancestor cache if the object has any children */
@@ -438,6 +427,10 @@ Int object_change_parents(Obj *object, cList *parents)
 {
     cObjnum parent;
     cData *d;
+
+    /* If the new and old parent lists are equal, then do no work */
+    if (list_cmp(object->parents, parents) != 0)
+        return -1;
 
     /* Make sure that all parents are valid objects, and that they don't create
      * any cycles.  If something is wrong, return the index of the parent that
@@ -1114,9 +1107,17 @@ static void method_cache_invalidate(cObjnum objnum) {
             method_cache[i].stamp = 1;
         }
     }
+    if (log_method_cache == 2) {
+        write_err("Method cache partially invalidated for obj #%l", objnum);
+        log_current_task_stack(FALSE, write_err);
+    }
 }
 
 static void method_cache_invalidate_all() {
+    if (log_method_cache) {
+        write_err("Method cache entirely invalidated:");
+        log_current_task_stack(FALSE, write_err);
+    }
     cur_stamp++;
 }
 

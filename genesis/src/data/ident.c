@@ -46,9 +46,7 @@ Ident left_id, right_id, both_id;
 
 /* config options */
 Ident cachelog_id, cachewatch_id, cachewatchcount_id;
-
-/* malloc logging */
-Ident log_malloc_size_id;
+Ident log_malloc_size_id, log_method_cache_id;
 
 void init_ident(void)
 {
@@ -148,6 +146,7 @@ void init_ident(void)
     cachewatchcount_id = ident_get("cachewatchcount");
 
     log_malloc_size_id = ident_get("log_malloc_size");
+    log_method_cache_id = ident_get("log_method_cache");
 
     left_id = ident_get("left");
     right_id = ident_get("right");

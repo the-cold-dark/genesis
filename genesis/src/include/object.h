@@ -289,8 +289,8 @@ Long num_objects;
 
 /* Validity count for method cache (incrementing this count invalidates all
  * cache entries. */
-static Int cur_stamp = 2;
-static Int cur_anc_stamp = 2;
+static Long cur_stamp = 2;
+static Long cur_anc_stamp = 2;
 
 #else /* _object_ */
 

@@ -55,6 +55,7 @@ void init_defs(void) {
     str_system = string_from_chars(SYSTEM_TYPE, strlen(SYSTEM_TYPE));
 
     log_malloc_size = 0;
+    log_method_cache = 0;
 }
 
 #undef INIT_VAR

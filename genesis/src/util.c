@@ -236,7 +236,10 @@ cStr * vformat(char * fmt, va_list arg) {
 
 	  case 's':
 	    s = va_arg(arg, char *);
-	    buf = string_add_chars(buf, s, strlen(s));
+	    if (s)
+	        buf = string_add_chars(buf, s, strlen(s));
+	    else
+	        buf = string_add_chars(buf, "*null*", 6);
 	    break;
 
 	  case 'S':

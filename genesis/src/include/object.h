@@ -9,64 +9,75 @@
 #include "file.h"
 #include "string_tab.h"
 
-struct Obj {
-    cList * parents;
-#ifdef USE_PARENT_OBJS
-    cList * parent_objs;
-#endif
-    cList * children;
+struct _ObjVars {
+    Var * tab;
+    Int * hashtab;
+    Int   blanks;
+    Int   size;
+};
+typedef struct _ObjVars ObjVars;
 
-    /* Variables are stored in a table, with index threads starting at the
-     * hash table entries.  There is also an index thread for blanks.  This
-     * way we can write the hash table to disk easily. */
-    struct {
-	Var * tab;
-	Int * hashtab;
-	Int   blanks;
-	Int   size;
-    } vars;
-
-    /* Methods are also stored in a table.  Since methods are fairly big, we
-     * store a table of pointers to methods so that we don't waste lots of
-     * space. */
-    struct {
-	struct mptr {
-	    Method * m;
-	    Int next;
-	}   * tab;
-	Int * hashtab;
-	Int   blanks;
-	Int   size;
-    } methods;
+struct _ObjMethods {
+    struct mptr {
+        Method * m;
+        Int next;
+    }   * tab;
+    Int * hashtab;
+    Int   blanks;
+    Int   size;
 
     /* Table for string references in methods. */
     StringTab *strings;
 
     /* Table for identifier references in methods. */
-    Ident_entry	*idents;
+    Ident_entry *idents;
     Int num_idents;
     Int idents_size;
+};
+typedef struct _ObjMethods ObjMethods;
+
+struct Obj {
+    /* object identifiers */
+    cObjnum     objnum;
+    Ident       objname;
+
+    /* object connectivity data */
+    cList      *parents;
+    cList      *children;
+#ifdef USE_PARENT_OBJS
+    cList      *parent_objs;
+#endif
+
+    /* Variables are stored in a table, with index threads starting at the
+     * hash table entries.  There is also an index thread for blanks.  This
+     * way we can write the hash table to disk easily. */
+    ObjVars     vars;
+
+    /* Methods are also stored in a table.  Since methods are fairly big, we
+     * store a table of pointers to methods so that we don't waste lots of
+     * space. */
+    ObjMethods *methods;
 
     /* Information for the cache. */
-    cObjnum objnum;
-    Int   refs;
-    uInt  dirty;                 /* Flag: Object has been modified. */
-    char  dead;	                 /* Flag: Object has been destroyed. */
-    Int   ucounter;              /* counter: Object references */
-
-    uLong search;                /* Last cache search to visit this */
-
-    Ident objname;               /* object name */
+    Int         refs;
+    uInt        dirty;                 /* Flag: Object has been modified. */
+#ifdef CLEANER_THREAD
+    Int         ucounter;              /* counter: Object references */
+#endif
+    uLong       search;                /* Last cache search to visit this */
+    char        dead;                  /* Flag: Object has been destroyed. */
 
     /* Pointers to next and previous objects in cache chain. */
-    Obj * next_obj;
-    Obj * prev_obj;
-    Obj * next_dirty;
-    Obj * prev_dirty;
+    Obj        *next_obj;
+    Obj        *prev_obj;
+#ifdef USE_DIRTY_LIST
+    Obj        *next_dirty;
+    Obj        *prev_dirty;
+#endif
 
     /* i/o pointers for faster lookup, only valid in the cache */
-    Conn * conn;
-    filec_t      * file;
+    Conn       *conn;
+    filec_t    *file;
 };
 
 /* The object string and identifier tables simplify storage of strings and
@@ -159,6 +170,7 @@ struct Method {
 /* function prototypes */
 
 extern Obj    *object_new(cObjnum objnum, cList *parents);
+extern void    object_alloc_methods(Obj *object);
 extern void    object_free(Obj *object);
 extern void    object_destroy(Obj *object);
 extern void    object_construct_ancprec(Obj *object);

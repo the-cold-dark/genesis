@@ -110,7 +110,7 @@
 // logarithmic, just changing it from 10 to 20 will not double the
 // persistance, it will just increase it a notch
 */
-#define OBJECT_PERSISTANCE 10
+#define OBJECT_PERSISTENCE 10
 
 /*
 // ---------------------------------------------------------------------

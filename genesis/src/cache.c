@@ -235,7 +235,9 @@ void init_cache(Bool spawn_cleaner)
 	for (j = 0; j < cache_depth; j++) {
 	    obj = EMALLOC(Obj, 1);
 	    obj->objnum = INV_OBJNUM;
+#ifdef CLEAN_CACHE
             obj->ucounter=0;
+#endif
             obj->dead=0;
 
 	    cache_add_to_list_head(&inactive[i], obj);
@@ -298,7 +300,9 @@ Obj * cache_get_holder(Long objnum) {
     obj->dirty = 0;
     obj->dead = 0;
     obj->refs = 1;
-    obj->ucounter = OBJECT_PERSISTANCE;
+#ifdef CLEAN_CACHE
+    obj->ucounter = OBJECT_PERSISTENCE;
+#endif
 
     /* we may actually have a connection or file, and when
        it is used these will get set correctly */
@@ -338,7 +342,9 @@ Obj *cache_retrieve(Long objnum) {
     for (obj = active[ind].first; obj; obj = obj->next_obj) {
 	if (obj->objnum == objnum) {
 	    obj->refs++;
-            obj->ucounter+=OBJECT_PERSISTANCE;
+#ifdef CLEAN_CACHE
+            obj->ucounter += OBJECT_PERSISTENCE;
+#endif
 	    return obj;
 	}
     }
@@ -355,7 +361,9 @@ Obj *cache_retrieve(Long objnum) {
 	    cache_add_to_list_head(&active[ind], obj);
 
 	    obj->refs = 1;
-            obj->ucounter+=OBJECT_PERSISTANCE;
+#ifdef CLEAN_CACHE
+            obj->ucounter += OBJECT_PERSISTENCE;
+#endif
 #if DEBUG_CACHE
             _acounter++;
 #endif
@@ -392,7 +400,9 @@ Obj *cache_retrieve(Long objnum) {
 
 Obj *cache_grab(Obj *obj) {
     obj->refs++;
-    obj->ucounter+=OBJECT_PERSISTANCE;
+#ifdef CLEAN_CACHE
+    obj->ucounter += OBJECT_PERSISTENCE;
+#endif
     return obj;
 }
 

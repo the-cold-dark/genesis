@@ -167,9 +167,13 @@ static cBuf * pack_list(cBuf *buf, cList *list)
 {
     cData *d;
 
-    buf = write_long(buf, list_length(list));
-    for (d = list_first(list); d; d = list_next(list, d))
-	buf = pack_data(buf, d);
+    if (!list) {
+        buf = write_long(buf, -1);
+    } else {
+        buf = write_long(buf, list_length(list));
+        for (d = list_first(list); d; d = list_next(list, d))
+            buf = pack_data(buf, d);
+    }
 
     return buf;
 }
@@ -181,10 +185,14 @@ static cList *unpack_list(cBuf *buf, Long *buf_pos)
     cData *d;
 
     len = read_long(buf, buf_pos);
-    list = list_new(len);
-    d = list_empty_spaces(list, len);
-    for (i = 0; i < len; i++)
-	unpack_data(buf, buf_pos, d++);
+    if (len == -1) {
+        list = NULL;
+    } else {
+        list = list_new(len);
+        d = list_empty_spaces(list, len);
+        for (i = 0; i < len; i++)
+            unpack_data(buf, buf_pos, d++);
+    }
     return list;
 }
 
@@ -193,9 +201,13 @@ static Int size_list(cList *list)
     cData *d;
     Int size = 0;
 
-    size += size_long(list_length(list));
-    for (d = list_first(list); d; d = list_next(list, d))
-	size += size_data(d);
+    if (!list) {
+        size += size_long(-1);
+    } else {
+        size += size_long(list_length(list));
+        for (d = list_first(list); d; d = list_next(list, d))
+            size += size_data(d);
+    }
     return size;
 }
 
@@ -320,6 +332,178 @@ static Int size_vars(Obj *obj)
 	    size += size_long(NOT_AN_IDENT);
 	}
 	size += size_long(obj->vars.tab[i].next);
+    }
+
+    return size;
+}
+
+static cBuf * pack_strings(cBuf *buf, Obj *obj)
+{
+    Int i;
+
+    if (obj->methods->strings->tab_num > 0) {
+#if 1
+        buf = write_long(buf, obj->methods->strings->tab_size);
+        buf = write_long(buf, obj->methods->strings->tab_num);
+        buf = write_long(buf, obj->methods->strings->blanks);
+        for (i = 0; i < obj->methods->strings->tab_size; i++) {
+            buf = write_long(buf, obj->methods->strings->hashtab[i]);
+            buf = write_long(buf, obj->methods->strings->tab[i].next);
+            buf = write_long(buf, obj->methods->strings->tab[i].hash);
+            buf = write_long(buf, obj->methods->strings->tab[i].refs);
+        }
+        for (i = 0; i < obj->methods->strings->tab_size; i++) {
+	    buf = string_pack(buf, obj->methods->strings->tab[i].str);
+        }
+#else
+        // caused 3 crashes on TEC, disabling code until problem can be determined
+        buf = write_long(buf, obj->methods->strings->tab_size);
+        for (i = 0; i < obj->methods->strings->tab_size; i++) {
+            buf = string_pack(buf, obj->methods->strings->tab[i].str);
+            if (obj->methods->strings->tab[i].str)
+            {
+                buf = write_long(buf, obj->methods->strings->tab[i].hash);
+                buf = write_long(buf, obj->methods->strings->tab[i].refs);
+            }
+        }
+#endif
+    } else {
+        buf = write_long(buf, -1);
+    }
+    return buf;
+}
+
+static void unpack_strings(cBuf *buf, Long *buf_pos, Obj *obj)
+{
+    Int i;
+    Long size;
+
+    size = read_long(buf, buf_pos);
+    if (size != -1) {
+#if 1
+        obj->methods->strings = string_tab_new_with_size(size);
+        obj->methods->strings->tab_num = read_long(buf, buf_pos);
+        obj->methods->strings->blanks = read_long(buf, buf_pos);
+        for (i = 0; i < size; i++) {
+	    obj->methods->strings->hashtab[i] = read_long(buf, buf_pos);
+	    obj->methods->strings->tab[i].next = read_long(buf, buf_pos);
+	    obj->methods->strings->tab[i].hash = read_long(buf, buf_pos);
+	    obj->methods->strings->tab[i].refs = read_long(buf, buf_pos);
+        }
+        for (i = 0; i < obj->methods->strings->tab_size; i++) {
+	    obj->methods->strings->tab[i].str = string_unpack(buf, buf_pos);
+        }
+#else
+        Long last_blank = -1;
+
+        // caused 3 crashes on TEC, disabling code until problem can be determined
+        obj->methods->strings = string_tab_new_with_size(size);
+        obj->methods->strings->tab_size = size;
+        obj->methods->strings->blanks = 0;
+        for (i = 0; i < size; i++) {
+            obj->methods->strings->tab[i].str = string_unpack(buf, buf_pos);
+            if (obj->methods->strings->tab[i].str) {
+                obj->methods->strings->tab_num++;
+	        obj->methods->strings->tab[i].hash = read_long(buf, buf_pos);
+                obj->methods->strings->tab[i].refs = read_long(buf, buf_pos);
+                if (obj->methods->strings->blanks == i) {
+                    obj->methods->strings->blanks = i+1;
+                    last_blank = i+1;
+                }
+            } else {
+                if (last_blank != -1)
+                    obj->methods->strings->tab[last_blank].next = i;
+                last_blank = i;
+            }
+        }
+        string_tab_fixup_hashtab(obj->methods->strings, obj->methods->strings->tab_size);
+#endif
+    } else {
+	obj->methods->strings = string_tab_new();
+    }
+}
+
+static Int size_strings(Obj *obj)
+{
+    Int size = 0, i;
+
+    if (obj->methods->strings->tab_num > 0) {
+#if 1
+        size += size_long(obj->methods->strings->tab_size);
+        size += size_long(obj->methods->strings->tab_num);
+        size += size_long(obj->methods->strings->blanks);
+        for (i = 0; i < obj->methods->strings->tab_size; i++) {
+	    size += size_long(obj->methods->strings->hashtab[i]);
+	    size += size_long(obj->methods->strings->tab[i].next);
+	    size += size_long(obj->methods->strings->tab[i].hash);
+	    size += size_long(obj->methods->strings->tab[i].refs);
+        }
+        for (i = 0; i < obj->methods->strings->tab_size; i++) {
+	    size += string_packed_size(obj->methods->strings->tab[i].str);
+        }
+#else
+        // caused 3 crashes on TEC, disabling code until problem can be determined
+        size += size_long(obj->methods->strings->tab_size);
+        for (i = 0; i < obj->methods->strings->tab_size; i++) {
+            size += string_packed_size(obj->methods->strings->tab[i].str);
+            if (obj->methods->strings->tab[i].str)
+            {
+                size += size_long(obj->methods->strings->tab[i].hash);
+                size += size_long(obj->methods->strings->tab[i].refs);
+            }
+        }
+#endif
+    } else {
+	size += size_long(-1);
+    }
+
+    return size;
+}
+
+static cBuf * pack_idents(cBuf *buf, Obj *obj)
+{
+    Int i;
+
+    buf = write_long(buf, obj->methods->idents_size);
+    buf = write_long(buf, obj->methods->num_idents);
+    for (i = 0; i < obj->methods->num_idents; i++) {
+	if (obj->methods->idents[i].id != NOT_AN_IDENT) {
+	    buf = write_ident(buf, obj->methods->idents[i].id);
+	    buf = write_long(buf, obj->methods->idents[i].refs);
+	} else {
+	    buf = write_long(buf, NOT_AN_IDENT);
+	}
+    }
+    return buf;
+}
+
+static void unpack_idents(cBuf *buf, Long *buf_pos, Obj *obj)
+{
+    Int i;
+
+    obj->methods->idents_size = read_long(buf, buf_pos);
+    obj->methods->num_idents = read_long(buf, buf_pos);
+    obj->methods->idents = EMALLOC(Ident_entry, obj->methods->idents_size);
+    for (i = 0; i < obj->methods->num_idents; i++) {
+	obj->methods->idents[i].id = read_ident(buf, buf_pos);
+	if (obj->methods->idents[i].id != NOT_AN_IDENT)
+	    obj->methods->idents[i].refs = read_long(buf, buf_pos);
+    }
+}
+
+static Int size_idents(Obj *obj)
+{
+    Int size = 0, i;
+
+    size += size_long(obj->methods->idents_size);
+    size += size_long(obj->methods->num_idents);
+    for (i = 0; i < obj->methods->num_idents; i++) {
+	if (obj->methods->idents[i].id != NOT_AN_IDENT) {
+	    size += size_ident(obj->methods->idents[i].id);
+	    size += size_long(obj->methods->idents[i].refs);
+	} else {
+	    size += size_long(NOT_AN_IDENT);
+	}
     }
 
     return size;
@@ -458,19 +642,23 @@ static cBuf * pack_methods(cBuf *buf, Obj *obj)
         return buf;
     }
 
-    buf = write_long(buf, obj->methods.size);
-    buf = write_long(buf, obj->methods.blanks);
+    buf = write_long(buf, obj->methods->size);
+    buf = write_long(buf, obj->methods->blanks);
 
-    for (i = 0; i < obj->methods.size; i++) {
-	buf = write_long(buf, obj->methods.hashtab[i]);
-	if (obj->methods.tab[i].m) {
-	    buf = pack_method(buf, obj->methods.tab[i].m);
+    for (i = 0; i < obj->methods->size; i++) {
+	buf = write_long(buf, obj->methods->hashtab[i]);
+	if (obj->methods->tab[i].m) {
+	    buf = pack_method(buf, obj->methods->tab[i].m);
 	} else {
 	    /* Method begins with name identifier; write NOT_AN_IDENT. */
 	    buf = write_long(buf, NOT_AN_IDENT);
 	}
-	buf = write_long(buf, obj->methods.tab[i].next);
+	buf = write_long(buf, obj->methods->tab[i].next);
     }
+
+    buf = pack_strings(buf, obj);
+    buf = pack_idents(buf, obj);
+
     return buf;
 }
 
@@ -481,32 +669,30 @@ static void unpack_methods(cBuf *buf, Long *buf_pos, Obj *obj)
     Int i, size;
 
     size = read_long(buf, buf_pos);
+
     if (size == -1) {
-        obj->methods.tab = EMALLOC(struct mptr, METHOD_STARTING_SIZE);
-        obj->methods.hashtab = EMALLOC(Int, METHOD_STARTING_SIZE);
-        obj->methods.blanks = 0;
-        obj->methods.size = METHOD_STARTING_SIZE;
-        for (i = 0; i < METHOD_STARTING_SIZE; i++) {
-            obj->methods.hashtab[i] = -1;
-            obj->methods.tab[i].m = NULL;
-            obj->methods.tab[i].next = i + 1;
-        }
-        obj->methods.tab[METHOD_STARTING_SIZE - 1].next = -1;
+        obj->methods = NULL;
         return;
     }
-    obj->methods.size = size;
-    obj->methods.blanks = read_long(buf, buf_pos);
 
-    obj->methods.hashtab = EMALLOC(Int, obj->methods.size);
-    obj->methods.tab = EMALLOC(struct mptr, obj->methods.size);
+    obj->methods = EMALLOC(ObjMethods, 1);
 
-    for (i = 0; i < obj->methods.size; i++) {
-	obj->methods.hashtab[i] = read_long(buf, buf_pos);
-	obj->methods.tab[i].m = unpack_method(buf, buf_pos);
-	if (obj->methods.tab[i].m)
-	    obj->methods.tab[i].m->object = obj;
-	obj->methods.tab[i].next = read_long(buf, buf_pos);
+    obj->methods->size = size;
+    obj->methods->blanks = read_long(buf, buf_pos);
+
+    obj->methods->hashtab = EMALLOC(Int, obj->methods->size);
+    obj->methods->tab = EMALLOC(struct mptr, obj->methods->size);
+
+    for (i = 0; i < obj->methods->size; i++) {
+	obj->methods->hashtab[i] = read_long(buf, buf_pos);
+	obj->methods->tab[i].m = unpack_method(buf, buf_pos);
+	if (obj->methods->tab[i].m)
+	    obj->methods->tab[i].m->object = obj;
+	obj->methods->tab[i].next = read_long(buf, buf_pos);
     }
+
+    unpack_strings(buf, buf_pos, obj);
+    unpack_idents(buf, buf_pos, obj);
 }
 
 static Int size_methods(Obj *obj)
@@ -517,187 +703,20 @@ static Int size_methods(Obj *obj)
         return size_long(-1);
     }
 
-    size += size_long(obj->methods.size);
-    size += size_long(obj->methods.blanks);
+    size += size_long(obj->methods->size);
+    size += size_long(obj->methods->blanks);
 
-    for (i = 0; i < obj->methods.size; i++) {
-	size += size_long(obj->methods.hashtab[i]);
-	if (obj->methods.tab[i].m)
-	    size += size_method(obj->methods.tab[i].m);
+    for (i = 0; i < obj->methods->size; i++) {
+	size += size_long(obj->methods->hashtab[i]);
+	if (obj->methods->tab[i].m)
+	    size += size_method(obj->methods->tab[i].m);
 	else
 	    size += size_long(NOT_AN_IDENT);
-	size += size_long(obj->methods.tab[i].next);
+	size += size_long(obj->methods->tab[i].next);
     }
-
-    return size;
-}
-
-static cBuf * pack_strings(cBuf *buf, Obj *obj)
-{
-    Int i;
-
-    if (obj->strings->tab_num > 0) {
-#if 1
-        buf = write_long(buf, obj->strings->tab_size);
-        buf = write_long(buf, obj->strings->tab_num);
-        buf = write_long(buf, obj->strings->blanks);
-        for (i = 0; i < obj->strings->tab_size; i++) {
-            buf = write_long(buf, obj->strings->hashtab[i]);
-            buf = write_long(buf, obj->strings->tab[i].next);
-            buf = write_long(buf, obj->strings->tab[i].hash);
-            buf = write_long(buf, obj->strings->tab[i].refs);
-        }
-        for (i = 0; i < obj->strings->tab_size; i++) {
-	    buf = string_pack(buf, obj->strings->tab[i].str);
-        }
-#else
-        // caused 3 crashes on TEC, disabling code until problem can be determined
-        buf = write_long(buf, obj->strings->tab_size);
-        for (i = 0; i < obj->strings->tab_size; i++) {
-            buf = string_pack(buf, obj->strings->tab[i].str);
-            if (obj->strings->tab[i].str)
-            {
-                buf = write_long(buf, obj->strings->tab[i].hash);
-                buf = write_long(buf, obj->strings->tab[i].refs);
-            }
-        }
-#endif
-    } else {
-        buf = write_long(buf, -1);
-    }
-    return buf;
-}
-
-static void unpack_strings(cBuf *buf, Long *buf_pos, Obj *obj)
-{
-    Int i;
-    Long size, last_blank = -1;
-
-    size = read_long(buf, buf_pos);
-    if (size != -1) {
-#if 1
-        obj->strings = string_tab_new_with_size(size);
-        obj->strings->tab_num = read_long(buf, buf_pos);
-        obj->strings->blanks = read_long(buf, buf_pos);
-        for (i = 0; i < size; i++) {
-	    obj->strings->hashtab[i] = read_long(buf, buf_pos);
-	    obj->strings->tab[i].next = read_long(buf, buf_pos);
-	    obj->strings->tab[i].hash = read_long(buf, buf_pos);
-	    obj->strings->tab[i].refs = read_long(buf, buf_pos);
-        }
-        for (i = 0; i < obj->strings->tab_size; i++) {
-	    obj->strings->tab[i].str = string_unpack(buf, buf_pos);
-        }
-#else
-        // caused 3 crashes on TEC, disabling code until problem can be determined
-        obj->strings = string_tab_new_with_size(size);
-        obj->strings->tab_size = size;
-        obj->strings->blanks = 0;
-        for (i = 0; i < size; i++) {
-            obj->strings->tab[i].str = string_unpack(buf, buf_pos);
-            if (obj->strings->tab[i].str) {
-                obj->strings->tab_num++;
-	        obj->strings->tab[i].hash = read_long(buf, buf_pos);
-                obj->strings->tab[i].refs = read_long(buf, buf_pos);
-                if (obj->strings->blanks == i) {
-                    obj->strings->blanks = i+1;
-                    last_blank = i+1;
-                }
-            } else {
-                if (last_blank != -1)
-                    obj->strings->tab[last_blank].next = i;
-                last_blank = i;
-            }
-        }
-        string_tab_fixup_hashtab(obj->strings, obj->strings->tab_size);
-#endif
-    } else {
-	obj->strings = string_tab_new();
-    }
-}
-
-static Int size_strings(Obj *obj)
-{
-    Int size = 0, i;
-
-    if (obj->strings->tab_num > 0) {
-#if 1
-        size += size_long(obj->strings->tab_size);
-        size += size_long(obj->strings->tab_num);
-        size += size_long(obj->strings->blanks);
-        for (i = 0; i < obj->strings->tab_size; i++) {
-	    size += size_long(obj->strings->hashtab[i]);
-	    size += size_long(obj->strings->tab[i].next);
-	    size += size_long(obj->strings->tab[i].hash);
-	    size += size_long(obj->strings->tab[i].refs);
-        }
-        for (i = 0; i < obj->strings->tab_size; i++) {
-	    size += string_packed_size(obj->strings->tab[i].str);
-        }
-#else
-        // caused 3 crashes on TEC, disabling code until problem can be determined
-        size += size_long(obj->strings->tab_size);
-        for (i = 0; i < obj->strings->tab_size; i++) {
-            size += string_packed_size(obj->strings->tab[i].str);
-            if (obj->strings->tab[i].str)
-            {
-                size += size_long(obj->strings->tab[i].hash);
-                size += size_long(obj->strings->tab[i].refs);
-            }
-        }
-#endif
-    } else {
-	size += size_long(-1);
-    }
-
-    return size;
-}
-
-static cBuf * pack_idents(cBuf *buf, Obj *obj)
-{
-    Int i;
-
-    buf = write_long(buf, obj->idents_size);
-    buf = write_long(buf, obj->num_idents);
-    for (i = 0; i < obj->num_idents; i++) {
-	if (obj->idents[i].id != NOT_AN_IDENT) {
-	    buf = write_ident(buf, obj->idents[i].id);
-	    buf = write_long(buf, obj->idents[i].refs);
-	} else {
-	    buf = write_long(buf, NOT_AN_IDENT);
-	}
-    }
-    return buf;
-}
-
-static void unpack_idents(cBuf *buf, Long *buf_pos, Obj *obj)
-{
-    Int i;
-
-    obj->idents_size = read_long(buf, buf_pos);
-    obj->num_idents = read_long(buf, buf_pos);
-    obj->idents = EMALLOC(Ident_entry, obj->idents_size);
-    for (i = 0; i < obj->num_idents; i++) {
-	obj->idents[i].id = read_ident(buf, buf_pos);
-	if (obj->idents[i].id != NOT_AN_IDENT)
-	    obj->idents[i].refs = read_long(buf, buf_pos);
-    }
-}
-
-static Int size_idents(Obj *obj)
-{
-    Int size = 0, i;
-
-    size += size_long(obj->idents_size);
-    size += size_long(obj->num_idents);
-    for (i = 0; i < obj->num_idents; i++) {
-	if (obj->idents[i].id != NOT_AN_IDENT) {
-	    size += size_ident(obj->idents[i].id);
-	    size += size_long(obj->idents[i].refs);
-	} else {
-	    size += size_long(NOT_AN_IDENT);
-	}
-    }
+    
+    size += size_strings(obj);
+    size += size_idents(obj);
 
     return size;
 }
@@ -882,8 +901,6 @@ cBuf * pack_object(cBuf *buf, Obj *obj)
     buf = pack_list(buf, obj->children);
     buf = pack_vars(buf, obj);
     buf = pack_methods(buf, obj);
-    buf = pack_strings(buf, obj);
-    buf = pack_idents(buf, obj);
     buf = write_ident(buf, obj->objname);
     return buf;
 }
@@ -894,8 +911,6 @@ void unpack_object(cBuf *buf, Long *buf_pos, Obj *obj)
     obj->children = unpack_list(buf, buf_pos);
     unpack_vars(buf, buf_pos, obj);
     unpack_methods(buf, buf_pos, obj);
-    unpack_strings(buf, buf_pos, obj);
-    unpack_idents(buf, buf_pos, obj);
     obj->objname = read_ident(buf, buf_pos);
 }
 
@@ -907,8 +922,6 @@ Int size_object(Obj *obj)
     size += size_list(obj->children);
     size += size_vars(obj);
     size += size_methods(obj);
-    size += size_strings(obj);
-    size += size_idents(obj);
     size += size_ident(obj->objname);
 
     return size;

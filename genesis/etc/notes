@@ -95,6 +95,7 @@ RELEASE INFORMATION:
         DISABLED: Bruce indicated performance issues (Brad)
       * don't save all of obj->string_tab's data, some can easily be
         rebuilt during unpack (Brad)
+        DISABLED: TEC crashed with string tab corruption a few times
       * don't save an empty obj->method table (Bruce)
       * for dicts over 64 keys don't save all the infrastructure, just
         save the key and value lists and rebuild at unpack time (Bruce, Brad)
@@ -110,6 +111,14 @@ RELEASE INFORMATION:
         of idref_t->len to avoid strlen() calls (Brad)
       * Change data_from_literal to prealloc lists for 10 elements (Brad)
       * Rewrote string_parse to only do one pass over the string (Brad)
+      * fix object size calculation in the case of an object with no name
+        (Brad)
+      * Fix leak of parents list in binarydb decompilation
+      * Greatly reduce memory overhead of leaf objects by allowing methods
+        structure to be NULL, move idents and strings data into methods
+        structure to increase savings. (Brad)
+      * added start of sorted_* list builtins, still buggy. (Bruce)
+        NOTE: may crash, loose data, fail to sort properly.  Don't use.
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

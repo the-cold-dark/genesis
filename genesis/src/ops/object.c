@@ -490,13 +490,17 @@ COLDC_FUNC(methods) {
 
     /* Construct the list of method names. */
     obj = cur_frame->object;
-    methods = list_new(obj->methods.size);
-    for (i = 0; i < obj->methods.size; i++) {
-        if (obj->methods.tab[i].m) {
-            d.type = SYMBOL;
-            d.u.symbol = obj->methods.tab[i].m->name;
-            methods = list_add(methods, &d);
+    if (obj->methods) {
+        methods = list_new(obj->methods->size);
+        for (i = 0; i < obj->methods->size; i++) {
+            if (obj->methods->tab[i].m) {
+                d.type = SYMBOL;
+                d.u.symbol = obj->methods->tab[i].m->name;
+                methods = list_add(methods, &d);
+            }
         }
+    } else {
+        methods = list_new(0);
     }
 
     /* Push the list onto the stack. */
@@ -655,8 +659,14 @@ COLDC_FUNC(children) {
     if (!func_init_0())
         return;
 
-    /* Push the children list onto the stack. */
-    push_list(cur_frame->object->children);
+    if (cur_frame->object->children) {
+        /* Push the children list onto the stack. */
+        push_list(cur_frame->object->children);
+    } else {
+        cList *list = list_new(0);
+        push_list(list);
+        list_discard(list);
+    }
 }
 
 COLDC_FUNC(ancestors) {
@@ -946,8 +956,13 @@ static cList * add_op_arg(cList * out, Int type, Long op, Method * method) {
             d.u.val = op;
             break;
         case T_ERROR:
-            d.type = T_ERROR;
-            d.u.error = object_get_ident(obj, op);
+            if (op == -1) {
+                d.type = INTEGER;
+                d.u.val = -1;
+            } else {
+                d.type = T_ERROR;
+                d.u.error = object_get_ident(obj, op);
+            }
             break;
         case IDENT:
             d.type = SYMBOL;

@@ -1610,8 +1610,10 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
             dump_object(d->u.objnum, fp, objnames);
     }
 
-    if (hash_find(dump_hash, &dobj) != F_FAILURE)
+    if (hash_find(dump_hash, &dobj) != F_FAILURE) {
+        list_discard(objs);
         return;
+    }
     dump_hash = hash_add(dump_hash, &dobj);
 
     /* ok, get this object now */
@@ -1620,6 +1622,7 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
 #if 0
     /* did we get written out since the last check? */
     if (obj->search == cur_search) {
+        list_discard(objs);
         cache_discard(obj);
         return;
     }
@@ -1683,52 +1686,57 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
     fputc('\n', fp);
 
     /* define methods */
-    for (i = 0; i < obj->methods.size; i++) {
-        meth = obj->methods.tab[i].m;
-        if (!meth)
-            continue;
-
-        /* define it */
-        fputs(method_definition(meth), fp);
-
-        /* list it */
-        code = decompile(meth, obj, 4, FMT_FULL_PARENS);
-        if (list_length(code) == 0) {
-            fputs(";\n\n", fp);
-        } else {
-            fputs(" {\n", fp);
-            for (d = list_first(code); d; d = list_next(code, d)) {
-                fputs("    ", fp);
-                fputs(string_chars(d->u.str), fp);
-                putc('\n', fp);
+    if (obj->methods) {
+        for (i = 0; i < obj->methods->size; i++) {
+            meth = obj->methods->tab[i].m;
+            if (!meth)
+                continue;
+    
+            /* define it */
+            fputs(method_definition(meth), fp);
+    
+            /* list it */
+            code = decompile(meth, obj, 4, FMT_FULL_PARENS);
+            if (list_length(code) == 0) {
+                fputs(";\n\n", fp);
+            } else {
+                fputs(" {\n", fp);
+                for (d = list_first(code); d; d = list_next(code, d)) {
+                    fputs("    ", fp);
+                    fputs(string_chars(d->u.str), fp);
+                    putc('\n', fp);
+                }
+                /* end it */
+                fputs("};\n\n", fp);
             }
-            /* end it */
-            fputs("};\n\n", fp);
+    
+            list_discard(code);
+    
+            /* if it is native, and they have renamed it, put a rename
+               directive down */
+            if (meth->m_flags & MF_NATIVE && meth->native != -1) {
+                if (strcmp(ident_name(meth->name), natives[meth->native].name))
+                    fprintf(fp, "bind_native .%s() .%s();\n\n",
+                            natives[meth->native].name,
+                            ident_name(meth->name));
+            }
         }
-
-        list_discard(code);
-
-        /* if it is native, and they have renamed it, put a rename
-           directive down */
-        if (meth->m_flags & MF_NATIVE && meth->native != -1) {
-            if (strcmp(ident_name(meth->name), natives[meth->native].name))
-                fprintf(fp, "bind_native .%s() .%s();\n\n",
-                        natives[meth->native].name,
-                        ident_name(meth->name));
-        }
+        fputc('\n', fp);
     }
-
-    fputc('\n', fp);
 
     /* now dump it's children */
-    objs = list_dup(obj->children);
-    cache_discard(obj);
+    if (obj->children) {
+        objs = list_dup(obj->children);
+        cache_discard(obj);
 
-    if (objs->len) {
-        for (d = list_first(objs); d; d = list_next(objs, d))
-            dump_object(d->u.objnum, fp, objnames);
+        if (objs->len) {
+            for (d = list_first(objs); d; d = list_next(objs, d))
+                dump_object(d->u.objnum, fp, objnames);
+        }
+        list_discard(objs);
+    } else {
+        cache_discard(obj);
     }
-    list_discard(objs);
 }
 
 #define ADD_FLAG(__bit, __str1, __str2) { \

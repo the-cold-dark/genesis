@@ -136,7 +136,11 @@ COLDC_FUNC(files) {
         return;
     }
 
-    dp = opendir(path->s);
+    if ((dp = opendir(path->s)) == NULL) {
+        cthrow(directory_id, "opendir(%s): %s", path->s, strerror(errno));
+        string_discard(path);
+        return;
+    }
     out = list_new(0);
     d.type = STRING;
  
@@ -160,6 +164,7 @@ COLDC_FUNC(files) {
     pop(1);
     push_list(out);
     list_discard(out);
+    string_discard(path);
 }
 
 /*

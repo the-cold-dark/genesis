@@ -10,7 +10,7 @@ Help can be found through the web site, or on the mailing list
       http://web.cold.org/contact.html
 
 RELEASE INFORMATION:
-1.1.11 [??]
+1.1.11 [6/28/2002]
       * fix BUFFER in BUFFER.  Use buffer_index which contained a fix
         not propagated to the previously duplicated code in op_in
         (Allen Noe)

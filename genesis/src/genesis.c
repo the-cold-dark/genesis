@@ -119,7 +119,10 @@ int main(int argc, char **argv) {
    dump_execute_profile();
 #endif
 
-    /* Sync the cache, flush output buffers, and exit normally. */
+    /* Flush defunct sockets, sync the cache,
+     * flush output buffers, and exit normally.
+     */
+    flush_defunct();
     cache_sync();
     db_close();
     flush_output();

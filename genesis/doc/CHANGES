@@ -17,7 +17,7 @@ contributors to that version.
       * add calling_method() (Psyclone)
       * fixed README (Bruce)
 
-1.1.9  [1-Oct-100]
+1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)
       * misc cleanup (Generic Bob)
       * removed dnsserv (Brandon)

@@ -2264,6 +2264,42 @@ eval {
 
 };
 
+	// List test 14
+	//
+	// testing native sorted_delete()
+	// Output:
+
+		List test 14
+		  [8, 19, 27, 32] - 19 -> [8, 27, 32]
+		  [8, 19, 27, 32] - 8 -> [19, 27, 32]
+		  [8, 19, 27, 32] - 27 -> [8, 19, 32]
+		  [8, 19, 27, 32] - 32 -> [8, 19, 27]
+		  [8, 19, 27, 32] - 48 -> ~range
+		  [[8, 1], [19, 2], [27, 3], [32, 4]] - 19 -> [[8, 1], [27, 3], [32, 4]]
+		  [[8, 1], [19, 2], [27, 3], [32, 4]] - 8 -> [[19, 2], [27, 3], [32, 4]]
+		  [[8, 1], [19, 2], [27, 3], [32, 4]] - 27 -> [[8, 1], [19, 2], [32, 4]]
+		  [[8, 1], [19, 2], [27, 3], [32, 4]] - 32 -> [[8, 1], [19, 2], [27, 3]]
+		  [[8, 1], [19, 2], [27, 3], [32, 4]] - 48 -> ~range
+
+eval {
+    var list;
+
+    list = [8, 19, 27, 32];
+    dblog("List test 14");
+    dblog("  " + toliteral(list) + " - 19 -> " + toliteral(list.sorted_delete(19)));
+    dblog("  " + toliteral(list) + " - 8 -> " + toliteral(list.sorted_delete(8)));
+    dblog("  " + toliteral(list) + " - 27 -> " + toliteral(list.sorted_delete(27)));
+    dblog("  " + toliteral(list) + " - 32 -> " + toliteral(list.sorted_delete(32)));
+    dblog("  " + toliteral(list) + " - 48 -> " + toliteral((|list.sorted_delete(48)|)));
+
+    list = [[8, 1], [19, 2], [27, 3], [32, 4]];
+    dblog("  " + toliteral(list) + " - 19 -> " + toliteral(list.sorted_delete([19, 2], 2)));
+    dblog("  " + toliteral(list) + " - 8 -> " + toliteral(list.sorted_delete([8, 1], 2)));
+    dblog("  " + toliteral(list) + " - 27 -> " + toliteral(list.sorted_delete([27, 3], 2)));
+    dblog("  " + toliteral(list) + " - 32 -> " + toliteral(list.sorted_delete([32, 4], 2)));
+    dblog("  " + toliteral(list) + " - 48 -> " + toliteral((|list.sorted_delete([48, 5], 2)|)));
+};
+
 	// String test 1
 	//
 	// testing strlen()

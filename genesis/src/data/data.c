@@ -402,6 +402,8 @@ cStr *data_add_literal_to_str(cStr *str, cData *data, Bool objnames) {
               obj = cache_retrieve(data->u.objnum);
 
               if (!obj || obj->objname == -1) {
+                  if (!obj)
+                      data->u.objnum = -data->u.objnum;
                   s = long_to_ascii(data->u.objnum, nbuf);
                   pre = '#';
               } else {

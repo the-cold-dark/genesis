@@ -19,7 +19,7 @@ void init_defs(void) {
     struct tm * tms;
     time_t t;
 #endif
-    c_interactive = NO;
+    coldcc = NO;
     running = YES;
     atomic = NO;
     heartbeat_freq = 5;

@@ -6,7 +6,20 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
-1.0-32 [26-Jun-97] Miro
+1.0-33 [03-Jul-97] Brandon, Brad
+      * Negative objnums are allowed, and now represent invalid aspects
+        of the respective number (so #-1525 would represent the objnum
+        for an invalid object #1525.  This is used when textdumping) (Brandon)
+      * fixed bug/default which caused all warnings to never appear
+        when using coldcc (the -W option was always on) (Brandon)
+      * pause() while atomic will now act like resume() (Brandon)
+      * coldcc will always run atomically (Brandon)
+      * changed how UCASE/LCASE work for better cacheing (Brandon)
+      * Fixed a problem in configure (Brandon)
+      * niggled here and there from purify warnings (Brandon/Brad)
+1.0-32 [01-Jul-97] Miro, Brandon, others
+      * Crufted up configure to include install information.  Crufted
+        up base makefile, install actually installs now (Brandon)
       * Cleaned up some ANSI incompatabilities (Brandon)
       * Added 'dnsserv' which is a seperate server running on port 1153,
         A cold server can connect to this and have it do DNS lookups.

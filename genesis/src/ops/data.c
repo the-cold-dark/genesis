@@ -228,7 +228,10 @@ COLDC_FUNC(valid) {
 
     INIT_1_ARG(ANY_TYPE);
 
-    is_valid = (args[0].type == OBJNUM && cache_check(args[0].u.objnum));
+    if (args[0].type == OBJNUM)
+        is_valid = VALID_OBJECT(OBJNUM1);
+    else
+        is_valid = NO;
 
     pop(1);
     push_int(is_valid);

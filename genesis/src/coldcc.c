@@ -29,7 +29,7 @@ Int    c_opt = OPT_COMP;
 Bool   print_objs = YES;
 Bool   print_names = NO;
 Bool   print_invalid = YES;
-Bool   print_warn = NO;
+Bool   print_warn = YES;
 
 #define NEW_DB       1
 #define EXISTING_DB  0
@@ -262,7 +262,7 @@ INTERNAL void initialize(Int argc, char **argv) {
                     cache_width = atoi(p);
                     while (*p && isdigit(*p))
                         p++;
-                    if (LCASE(*p) == 'x') {
+                    if ((char) LCASE(*p) == 'x') {
                         p++;
                         cache_depth = atoi(p);
                     } else {
@@ -319,6 +319,10 @@ INTERNAL void initialize(Int argc, char **argv) {
     init_modules(argc, argv);
     init_instances();
     init_cache();
+
+    /* force coldcc to be atomic, specify that we are not running online */
+    atomic = YES;
+    coldcc = YES;
 }
 
 /*

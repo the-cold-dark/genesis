@@ -435,7 +435,9 @@ void verify_native_methods(void) {
 
 INTERNAL Int get_idref(char * sp, idref_t * id, Int isobj) {
     char         str[BUF], * p;
+    char         * end;
     register Int x;
+    Bool         negative = NO;
 
     id->objnum = INV_OBJNUM;
     strcpy(id->str, "");
@@ -445,34 +447,37 @@ INTERNAL Int get_idref(char * sp, idref_t * id, Int isobj) {
         return 0;
     }
 
-    id->err    = 0;
+    id->err = 0;
 
     p = sp;
 
+    /* special case objnums, drop out of need be */
+    if (isobj && *p == '#') {
+        p++;
+        if (isdigit(*p) || (*p == '-' && isdigit(*(p+1)))) {
+            id->objnum = strtol(p, &end, 10);
+            return end - p;
+        } else {
+            DIEf("Invalid objnum \"%s\".", sp)
+        }
+    }
+
     /* get just the symbol */
     for (x = 0;
-         *p != (char) NULL && (isalnum(*p) || *p == '_' || *p == '#' || *p == '$');
+         *p != (char) NULL && (isalnum(*p) || (*p == '_' || *p == '$'));
          x++, p++);
 
     strncpy(str, sp, x);
     p = str;
     str[x] = (char) NULL;
 
-    if (*p == '#') {
+    if (*p == '$') {
+        if (!isobj)
+            DIEf("Invalid symbol '%s.", str)
         p++;
-        if (isobj && isdigit(*p))
-            id->objnum = (Long) atol(p);
-        else
-            DIEf("Invalid object reference \"%s\".", str)
-    } else {
-        if (*p == '$') {
-            if (!isobj)
-                DIEf("Invalid symbol '%s.", str)
-            p++;
-        }
-
-        strcpy(id->str, p);
     }
+
+    strcpy(id->str, p);
 
     return x;
 }
@@ -486,7 +491,6 @@ INTERNAL Long parse_to_objnum(idref_t ref) {
     Int  result;
 
     if (ref.str[0] != (char) NULL) {
-
         if (!strncmp(ref.str, "root", 4) && strlen(ref.str) == 4)
             return 1;
         else if (!strncmp(ref.str, "sys", 3) && strlen(ref.str) == 3)
@@ -533,7 +537,7 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
 
     /* define initial parents */
     if (*s == ':') {
-        idref_t parent;
+        idref_t  parent;
         char     par_str[BUF];
         Int      len,
                  more = TRUE;
@@ -543,7 +547,7 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
         NEXT_WORD(s);
 
         /* get each parent, look them up */
-        while ((more && *s != (char) NULL)) {
+        while ((more && *s != (char) NULL) && running) {
             p = strchr(s, ',');
             if (p == NULL) {
                 /* we may be at the end of the line.. */
@@ -560,12 +564,16 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
             }
             get_idref(par_str, &parent, ISOBJ);
             objnum = parse_to_objnum(parent);
-            if (objnum != INV_OBJNUM && cache_check(objnum)) {
+            if (VALID_OBJECT(objnum)) {
                 d.type = OBJNUM;
                 d.u.objnum = objnum;
                 parents = list_add(parents, &d);
             } else {
-                WARN(("Ignoring undefined parent \"%s\".", par_str));
+                if (objnum >= 0) {
+                    WARN(("Ignoring undefined parent \"%s\".", par_str));
+                } else {
+                    WARN(("Ignoring invalid parent \"%s\".", par_str));
+                }
                 WARN(("For object \"%s\".", obj_str));
             }
 
@@ -579,25 +587,23 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
 
     objnum = parse_to_objnum(obj);
 
+    if (objnum < 0) {
+        DIEf("object: Invalid Objnum #%ld\n", objnum);
+    }
+
     if (new == N_OLD) {
-        if (objnum == INV_OBJNUM) {
-            WARN(("old: Object \"%s\" does not exist.", obj_str));
-            list_discard(parents);
-            return NULL;
+        target = cache_retrieve(objnum);
+        if (!target) {
+            WARN(("old: Unable to find object \"%s\".", obj_str));
+        } else if (objnum == ROOT_OBJNUM) {
+            WARN(("old: attempt to destroy $root ignored."));
+        } else if (objnum == SYSTEM_OBJNUM) {
+            WARN(("old: attempt to destroy $sys ignored."));
         } else {
-            target = cache_retrieve(objnum);
-            if (!target) {
-                WARN(("old: Unable to find object \"%s\".", obj_str));
-            } else if (objnum == ROOT_OBJNUM) {
-                WARN(("old: attempt to destroy $root ignored."));
-            } else if (objnum == SYSTEM_OBJNUM) {
-                WARN(("old: attempt to destroy $sys ignored."));
-            } else {
-                ERRf("old: destroying object %s.", obj_str);
-                target->dead = 1;
-                cache_discard(target);
-                target = NULL;
-            }
+            ERRf("old: destroying object %s.", obj_str);
+            target->dead = 1;
+            cache_discard(target);
+            target = NULL;
         }
     } else if (new == N_NEW) {
         if (!parents->len && objnum != ROOT_OBJNUM)
@@ -609,14 +615,12 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
             /* $root and $sys should ALWAYS exist */
             target = cache_retrieve(objnum);
         } else {
-            if (objnum != INV_OBJNUM) {
-                target = cache_retrieve(objnum);
-                if (target) {
-                    WARN(("new: destroying existing object %s.", obj_str));
-                    target->dead = 1;
-                    cache_discard(target);
-                    target = NULL;
-                }
+            target = cache_retrieve(objnum);
+            if (target) {
+                WARN(("new: destroying existing object %s.", obj_str));
+                target->dead = 1;
+                cache_discard(target);
+                target = NULL;
             }
             target = object_new(objnum, parents);
         }
@@ -1101,7 +1105,7 @@ INTERNAL Method * get_method(FILE * fp, Obj * obj, char * name) {
 
     /* used in printing method errs */
     method_start = line_count;
-    for (line = fgetstring(fp); line; line = fgetstring(fp)) {
+    for (line = fgetstring(fp); line && running; line = fgetstring(fp)) {
         line_count++;
 
         /* hack for determining the end of a method */
@@ -1233,8 +1237,11 @@ void compile_cdc_file(FILE * fp) {
             access = A_NONE;
         }
 
-        if (MATCH(s, "object", 6)) {
-            s += 6;
+        if (MATCH(s, "object", 6) || MATCH(s, "as", 2)) {
+            if (*s == 'a')
+                s += 2;
+            else
+                s += 6;
             NEXT_WORD(s);
             obj = handle_objcmd(str->s, s, new);
             if (obj != NULL) {
@@ -1281,7 +1288,7 @@ void compile_cdc_file(FILE * fp) {
     cache_discard(root);
     verify_native_methods();
 
-    fputs("\rCleaning up name holders...", stdout);
+    fputs("\nCleaning up name holders...", stdout);
     fflush(stdout);
     cleanup_holders();
     fputs("done.\n", stdout);

@@ -371,7 +371,7 @@ NATIVE_METHOD(capitalize) {
 
     str = string_prep(str, str->start, str->len);
     s = string_chars(str);
-    *s = UCASE(*s);
+    *s = (char) UCASE(*s);
 
     RETURN_STRING(str);
 }

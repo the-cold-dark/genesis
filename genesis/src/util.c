@@ -20,19 +20,20 @@
 #define FORMAT_BUF_INITIAL_LENGTH 48
 #define MAX_SCRATCH 2
 
-       char lowercase[128];
-       char uppercase[128];
+int lowercase[NUM_CHARS];
+int uppercase[NUM_CHARS];
+
 static Int  reserve_fds[MAX_SCRATCH];
 static Int  fds_used;
 
 INTERNAL void claim_fd(Int i);
 
 void init_util(void) {
-    Int i;
+    int i;
 
-    for (i = 0; i < 128; i++) {
-	lowercase[i] = (isupper(i) ? tolower(i) : i);
-	uppercase[i] = (islower(i) ? toupper(i) : i);
+    for (i = 0; i < NUM_CHARS; i++) {
+	lowercase[i] = (int) (isupper(i) ? tolower(i) : i);
+	uppercase[i] = (int) (islower(i) ? toupper(i) : i);
     }
     srand(time(NULL) + getpid());
 }

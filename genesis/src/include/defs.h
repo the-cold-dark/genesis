@@ -417,7 +417,7 @@ cStr * str_tzname;
 cStr * str_hostname;
 cStr * str_release;
 
-Int  c_interactive;
+Bool coldcc;
 Bool running;
 Bool atomic;
 Int  heartbeat_freq;
@@ -451,7 +451,7 @@ extern cStr * str_tzname;
 extern cStr * str_hostname;
 extern cStr * str_release;
 
-extern Int  c_interactive;
+extern Bool coldcc;
 extern Bool running;
 extern Bool atomic;
 extern Int  heartbeat_freq;

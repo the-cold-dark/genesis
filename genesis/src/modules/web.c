@@ -63,8 +63,8 @@ void uninit_web(void) {
 INTERNAL char tochar(char h, char l) {
      char p;
 
-     h = UCASE(h);
-     l = UCASE(l);
+     h = (char) UCASE(h);
+     l = (char) UCASE(l);
      h -= '0';
      if (h > 9)
           h -= 7;

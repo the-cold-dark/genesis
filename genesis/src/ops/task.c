@@ -90,14 +90,14 @@ void func_pause(void) {
     if (!func_init_0())
         return;
 
-    if (atomic) {
-        cthrow(atomic_id, "Attempt to pause while executing atomically.");
-        return;
-    }
-
     push_int(1);
 
-    task_pause();
+    if (atomic) {
+        if (cur_frame->ticks <= REFRESH_METHOD_THRESHOLD)
+            cur_frame->ticks = PAUSED_METHOD_TICKS;
+    } else {
+        task_pause();
+    }
 }
 
 /* ----------------------------------------------------------------- */
@@ -107,10 +107,11 @@ void func_atomic(void) {
     if (!func_init_1(&args, INTEGER))
         return;
 
-    atomic = (Bool) (args[0].u.val ? YES : NO);
+    if (!coldcc)
+        atomic = (Bool) (args[0].u.val ? YES : NO);
 
     pop(1);
-    push_int(1);
+    push_int(atomic ? 1 : 0);
 }
 
 /* ----------------------------------------------------------------- */

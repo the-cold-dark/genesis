@@ -109,7 +109,7 @@ Obj * cache_get_holder(Long objnum) {
     obj->dirty = 0;
     obj->dead = 0;
     obj->refs = 1;
-    obj->ucounter+=OBJECT_PERSISTANCE;
+    obj->ucounter = OBJECT_PERSISTANCE;
 
     /* we may actually have a connection or file, and when
        it is used these will get set correctly */

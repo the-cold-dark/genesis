@@ -85,7 +85,7 @@ $(DNSSERV): $(DNSSERV_O)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(DNSSERV_O) $(LIBS) -o $@
 
 clean:
-	rm -f include/parse.h grammar.c *~ *.BAK *.bak y.output
+	rm -f include/parse.h grammar.c *~ *.BAK *.bak y.output *.core
 	rm -f $(EXES)
 	cd $(SRCDIR); rm -f $(EXES)
 	@cd $(MODULES); make $@
@@ -97,7 +97,7 @@ malloc.o:
 	$(CC) $(MCFLAGS) -c malloc.c
 
 scrub:
-	rm -f *.o include/parse.h grammar.c *~ *.BAK *.bak y.output
+	rm -f *.o include/parse.h grammar.c *~ *.BAK *.bak y.output *.core
 	rm -f $(EXES)
 	cd $(SRCDIR); rm -f $(EXES)
 	rm -rf binary binary.bak
@@ -111,7 +111,7 @@ makefile:
 	@cd ..; etc/config.status
 
 install: all
-	@$(SRCDIR)/install $(USER) $(MODE) $(INSTALL) $(prefix)
+	@$(SRCDIR)/INSTALL.sh $(USER) $(MODE) $(INSTALL) $(prefix)
 
 depend: $(GRAMMAR_O) include/parse.h
 	@echo modules..

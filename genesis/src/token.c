@@ -166,6 +166,7 @@ Int yylex(void)
     cStr *line, *float_buf;
     char *s = NULL, *word;
     Int len = 0, i, j, start, type;
+    Bool negative;
 
     /* Find the beginning of the next token. */
     while (cur_line < list_length(code)) {
@@ -318,15 +319,26 @@ Int yylex(void)
     }
 
     /* Check if it's a objnum. */
-    if (len >= 2 && *s == '#' && isdigit(s[1])) {
-	/* Convert the string to a number. */
-	s++, cur_pos++, len--;
-	yylval.num = 0;
-	while (len && isdigit(*s)) {
-	    yylval.num = yylval.num * 10 + (*s - '0');
-	    s++, cur_pos++, len--;
-	}
-	return OBJNUM;
+    if (*s == '#') {
+        s++; len--; cur_pos++;
+        if (len && *s == '-') {
+            negative = YES;
+            s++; len--; cur_pos++;
+        } else {
+            negative = NO;
+        }
+        if (len && isdigit(*s)) {
+	    yylval.num = 0;
+	    while (len && isdigit(*s)) {
+	        yylval.num = yylval.num * 10 + (*s - '0');
+	        s++, cur_pos++, len--;
+	    }
+            if (negative)
+                yylval.num = -yylval.num;
+        } else {
+            yylval.num = INV_OBJNUM;
+        }
+        return OBJNUM;
     }
 
     if (len >= 2 && *s == '+' && s[1] == '+') {

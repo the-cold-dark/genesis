@@ -2405,9 +2405,9 @@ while [ "$loop" = "yes" ]; do
     read input
 
     if [ x$input = x ]; then
-        INSTALL=~/cold
+        INSTALL=`echo ~/cold`
     else
-        INSTALL=$input
+        INSTALL=`echo $input`
     fi
 
     if [ ! -d "$INSTALL" ]; then

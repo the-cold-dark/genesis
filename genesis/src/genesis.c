@@ -293,7 +293,7 @@ INTERNAL void initialize(Int argc, char **argv) {
                 cache_width = atoi(p);
                 while (*p && isdigit(*p))
                     p++;
-                if (LCASE(*p) == 'x') {
+                if ((char) LCASE(*p) == 'x') {
                     p++;
                     cache_depth = atoi(p);
                 } else {

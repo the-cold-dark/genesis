@@ -10,14 +10,15 @@ typedef char Number_buf[NUMBER_BUF_SIZE];
 
 #include <stdarg.h>
 
-#define LCASE(c) lowercase[(Int) c]
-#define UCASE(c) uppercase[(Int) c]
+#define NUM_CHARS 256
+#define LCASE(c) lowercase[(int) c]
+#define UCASE(c) uppercase[(int) c]
+
+extern int lowercase[NUM_CHARS];
+extern int uppercase[NUM_CHARS];
 
 /* many system implementations of isprint() are EXTREMELY slow */
 #define ISPRINT(_c_) ((Int) _c_ > 31 && (Int) _c_ < 127)
-
-extern char lowercase[128];
-extern char uppercase[128];
 
 uLong hash_nullchar(char *s);
 uLong hash_string(cStr * str);

@@ -166,7 +166,7 @@ cStr * string_uppercase(cStr *str) {
     s = string_chars(str);
     end = s + str->len;
     for (; s < end; s++)
-        *s = UCASE(*s);
+        *s = (char) UCASE(*s);
     return str;
 }
 
@@ -177,7 +177,7 @@ cStr * string_lowercase(cStr *str) {
     s = string_chars(str);
     end = s + str->len;
     for (; s < end; s++)
-        *s = LCASE(*s);
+        *s = (char) LCASE(*s);
     return str;
 }
 

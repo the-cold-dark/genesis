@@ -246,6 +246,19 @@ COLDC_FUNC(set_heartbeat) {
 	    return; \
 	}
 
+#define _CONFIG_CLEANERWAIT(id, var) \
+        if (SYM1 == id) { \
+            if (argc == 2) { \
+                if (args[ARG2].type != INTEGER) \
+                    THROW((type_id, "Expeced an integer")) \
+                var = INT2; \
+                pthread_cond_signal(&cleaner_condition); \
+            } \
+            pop(argc); \
+            push_int(var); \
+            return; \
+        }
+
 #define _CONFIG_OBJNUM(id, var) \
 	if (SYM1 == id) { \
 	    if (argc == 2) { \
@@ -280,21 +293,21 @@ COLDC_FUNC(config) {
     if (!func_init_1_or_2(&args, &argc, SYMBOL, ANY_TYPE))
         return;
 
-    _CONFIG_INT(datasize_id,           limit_datasize)
-    _CONFIG_INT(forkdepth_id,          limit_fork)
-    _CONFIG_INT(calldepth_id,          limit_calldepth)
-    _CONFIG_INT(recursion_id,          limit_recursion)
-    _CONFIG_INT(objswap_id,            limit_objswap)
-    _CONFIG_INT(cachelog_id,           cache_log_flag)
-    _CONFIG_INT(cachewatchcount_id,    cache_watch_count)
-    _CONFIG_OBJNUM(cachewatch_id,      cache_watch_object)
+    _CONFIG_INT(datasize_id,                   limit_datasize)
+    _CONFIG_INT(forkdepth_id,                  limit_fork)
+    _CONFIG_INT(calldepth_id,                  limit_calldepth)
+    _CONFIG_INT(recursion_id,                  limit_recursion)
+    _CONFIG_INT(objswap_id,                    limit_objswap)
+    _CONFIG_INT(cachelog_id,                   cache_log_flag)
+    _CONFIG_INT(cachewatchcount_id,            cache_watch_count)
+    _CONFIG_OBJNUM(cachewatch_id,              cache_watch_object)
 #ifdef USE_CLEANER_THREAD
-    _CONFIG_INT(cleanerwait_id,        cleaner_wait)
-    _CONFIG_DICT(cleanerignore_id,     cleaner_ignore_dict)
+    _CONFIG_CLEANERWAIT(cleanerwait_id,        cleaner_wait)
+    _CONFIG_DICT(cleanerignore_id,             cleaner_ignore_dict)
 #endif
-    _CONFIG_INT(log_malloc_size_id,    log_malloc_size)
-    _CONFIG_INT(log_method_cache_id,   log_method_cache)
-    _CONFIG_INT(cache_history_size_id, cache_history_size)
+    _CONFIG_INT(log_malloc_size_id,            log_malloc_size)
+    _CONFIG_INT(log_method_cache_id,           log_method_cache)
+    _CONFIG_INT(cache_history_size_id,         cache_history_size)
     THROW((type_id, "Invalid configuration name."))
 }
 

@@ -129,6 +129,7 @@ int main(int argc, char **argv) {
      */
     flush_defunct();
 #ifdef USE_CLEANER_THREAD
+    pthread_cond_signal(&cleaner_condition);
     pthread_join(cleaner, NULL);
 #endif
     cache_sync();

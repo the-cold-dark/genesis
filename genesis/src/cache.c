@@ -15,9 +15,13 @@
 #include "cdc_db.h"
 #include "util.h"
 #include "execute.h"
+#include <time.h>
+#include <sys/time.h>
+#include <unistd.h>
 
 #ifdef USE_CLEANER_THREAD
 pthread_mutex_t cleaner_lock;
+pthread_cond_t cleaner_condition;
 pthread_t cleaner;
 void *cache_cleaner_worker(void *dummy);
 
@@ -199,6 +203,7 @@ void init_cache(Bool spawn_cleaner)
 
 #ifdef USE_CLEANER_THREAD
     pthread_mutex_init(&cleaner_lock, NULL);
+    pthread_cond_init(&cleaner_condition, NULL);
     if (spawn_cleaner) {
         if (pthread_create(&cleaner, NULL, cache_cleaner_worker, NULL))
 	    write_err("init_cache: unable to create cleaner thread");
@@ -535,16 +540,29 @@ void *cache_cleaner_worker(void *dummy)
           * tobj2;
     Long    obj_size;
     cData   cthis;
+    int status;
+    struct timeval now;
+    struct timespec time_to_wait;
+
+    /* Grab this so that it is locked when the cond_timedwait runs */
+    pthread_mutex_lock(&cleaner_lock);
 
     while (running) {
-	sleep(cleaner_wait);
-
+        gettimeofday(&now, NULL);
+        time_to_wait.tv_sec = now.tv_sec + cleaner_wait;
+        time_to_wait.tv_nsec = now.tv_usec * 1000;
+	
 #ifdef DEBUG_CLEANER_LOCK
-        write_err("cache_cleaner_worker: locking cleaner");
+        write_err("cache_cleaner_worker: begin cond_timedwait");
 #endif
-        pthread_mutex_lock(&cleaner_lock);
+        status = pthread_cond_timedwait(&cleaner_condition,
+                                        &cleaner_lock,
+                                        &time_to_wait);
 #ifdef DEBUG_CLEANER_LOCK
-        write_err("cache_cleaner_worker: locked cleaner");
+        if (status == 0) {
+            write_err("cache_cleaner_worker: condition was signaled");
+	}
+        write_err("cache_cleaner_worker: end cond_timedwait");
 #endif
 
 	start_bucket = cache_bucket;
@@ -555,7 +573,8 @@ void *cache_cleaner_worker(void *dummy)
 	    tobj = dirty[cache_bucket].first;
 	    while (tobj) {
 		cthis.u.objnum = tobj->objnum;
-	        if (tobj->refs == 0 && !dict_contains(cleaner_ignore_dict, &cthis)) {
+	        if (tobj->refs == 0 &&
+                    !dict_contains(cleaner_ignore_dict, &cthis)) {
 	            if (tobj->dead) {
 		        if (cache_log_flag & CACHE_LOG_DEAD_WRITE)
 		            write_err("cache_cleaner_worker: skipping dead object");
@@ -584,12 +603,9 @@ void *cache_cleaner_worker(void *dummy)
 	    if (++cache_bucket == cache_width)
 	        cache_bucket = 0;
 	} while (!wrote_something && cache_bucket != start_bucket);
-
-        pthread_mutex_unlock(&cleaner_lock);
-#ifdef DEBUG_CLEANER_LOCK
-        write_err("cache_cleaner_worker: unlocked cleaner");
-#endif
     }
+
+    pthread_mutex_unlock(&cleaner_lock);
 
     return NULL;
 }

@@ -9,10 +9,16 @@
 #define CACHE_LOG_OVERFLOW	0x0002
 #define CACHE_LOG_CLEAN		0x0004
 #define CACHE_LOG_DEAD_WRITE	0x0008
-
+#define CACHE_LOG_READ		0x0010
 
 void init_cache(Bool spawn_cleaner);
+
+#ifdef USE_DIRTY_LIST
 inline void cache_dirty_object(Obj *obj);
+#else
+#define cache_dirty_object(obj) obj->dirty=1
+#endif
+
 Obj *cache_get_holder(Long objnum);
 Obj *cache_retrieve(Long objnum);
 Obj *cache_grab(Obj *object);

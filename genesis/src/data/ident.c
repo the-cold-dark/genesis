@@ -6,23 +6,9 @@
 
 #include <string.h>
 #include "util.h"
+#include "string_tab.h"
 
-/* We use MALLOC_DELTA to keep the table sizes at least 32 bytes below a power
- * of two, assuming an Int is four bytes. */
-/* HACKNOTE: BAD */
-#define MALLOC_DELTA 8
-#define INIT_TAB_SIZE (512 - MALLOC_DELTA)
-
-typedef struct xident_entry {
-    char *s;
-    Int refs;
-    uLong hash;
-    Long next;
-} xIdent_entry;
-
-static xIdent_entry *tab;
-static Long *hashtab;
-static Long tab_size, blanks;
+StringTab *idents;
 
 Ident perm_id, type_id, div_id, integer_id, float_id, string_id, objnum_id,
       list_id, symbol_id, error_id, frob_id, methodnf_id, methoderr_id,
@@ -53,21 +39,7 @@ Ident ancestor_cache_id, method_cache_id, name_cache_id, object_cache_id;
 
 void init_ident(void)
 {
-    Long i;
-
-    tab_size = INIT_TAB_SIZE;
-
-    tab = EMALLOC(xIdent_entry, tab_size);
-    hashtab = EMALLOC(Long, tab_size);
-
-    for (i = 0; i < tab_size; i++) {
-	tab[i].s = NULL;
-	tab[i].next = i + 1;
-	hashtab[i] = -1;
-    }
-    tab[tab_size - 1].next = -1;
-
-    blanks = 0;
+    idents = string_tab_new();
 
     perm_id = ident_get("perm");
     type_id = ident_get("type");
@@ -169,109 +141,3 @@ void init_ident(void)
     partial_id = ident_get("partial");
 }
 
-INTERNAL Ident ident_from_hash(uLong hval, char * s, int len) {
-    Long ind, new_size, i;
-
-    /* Look for an existing identifier. */
-    ind = hashtab[hval % tab_size];
-    while (ind != -1) {
-	if (tab[ind].hash == hval && strncmp(tab[ind].s, s, len) == 0) {
-	    tab[ind].refs++;
-	    return ind;
-	}
-	ind = tab[ind].next;
-    }
-
-    /* Check if we have to resize the table. */
-    if (blanks == -1) {
-
-	/* Allocate new space for table. */
-	new_size = tab_size * 2 + MALLOC_DELTA;
-	tab = EREALLOC(tab, xIdent_entry, new_size);
-	hashtab = EREALLOC(hashtab, Long, new_size);
-
-	/* Make new string of blanks. */
-	for (i = tab_size; i < new_size - 1; i++)
-	    tab[i].next = i + 1;
-	tab[i].next = -1;
-	blanks = tab_size;
-
-	/* Reset hash table. */
-	for (i = 0; i < new_size; i++)
-	    hashtab[i] = -1;
-
-	/* Install old symbols in hash table. */
-	for (i = 0; i < tab_size; i++) {
-	    ind = tab[i].hash % new_size;
-	    tab[i].next = hashtab[ind];
-	    hashtab[ind] = i;
-	}
-
-	tab_size = new_size;
-    }
-
-    /* Install symbol at first blank. */
-    ind = blanks;
-    blanks = tab[ind].next;
-    tab[ind].s = tstrndup(s, len);
-    tab[ind].hash = hval;
-    tab[ind].refs = 1;
-    tab[ind].next = hashtab[hval % tab_size];
-    hashtab[hval % tab_size] = ind;
-
-    return ind;
-}
-
-Ident ident_get(char *s) {
-    uLong hval = hash_nullchar(s);
-
-    return ident_from_hash(hval, s, strlen(s));
-}
-
-Ident ident_get_string(cStr * str) {
-    uLong hval;
-
-    hval = hash_string(str);
-
-    return ident_from_hash(hval, string_chars(str), string_length(str));
-}
-
-void ident_discard(Ident id) {
-    Long ind, *p;
-
-    tab[id].refs--;
-
-    if (!tab[id].refs) {
-	/* Get the hash table thread for this entry. */
-	ind = hash_nullchar(tab[id].s) % tab_size;
-
-	/* Free the string. */
-	tfree_chars(tab[id].s);
-	tab[id].s = NULL;
-
-	/* Find the pointer to this entry. */
-	for (p = &hashtab[ind]; p && *p != id; p = &tab[*p].next);
-
-	/* Remove this entry and add it to blanks. */
-	*p = tab[id].next;
-	tab[id].next = blanks;
-	blanks = id;
-    }
-}
-
-Ident ident_dup(Ident id) {
-    tab[id].refs++;
-
-    if (!tab[id].s)
-      panic("ident_dup tried to duplicate freed name.");
-
-    return id;
-}
-
-char *ident_name(Ident id) {
-    return tab[id].s;
-}
-
-uLong ident_hash(Ident id) {
-    return tab[id].hash;
-}

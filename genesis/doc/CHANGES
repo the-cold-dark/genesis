@@ -6,6 +6,11 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-22 [15-Jan-97] Brian, Miro, Brandon
+      * fixed corruption bug in scatter assignments causing crashes (Miro)
+      * fixed leak in scatter assignment (Miro)
+      * fixed defaults for cache width/depth so they initialized correctly.
+      * fixed a minor inconsistency in strfmt() with %e (Brian)
 1.0-21 [21-Dec-96] Brandon
       * fixed a problem with buf_to_str() -- its less efficient again, but
         is at least stable.

@@ -404,6 +404,9 @@ Bool running;
 Bool atomic;
 Int  heartbeat_freq;
 
+Int cache_width;
+Int cache_depth;
+
 void init_defs(void);
 
 /*

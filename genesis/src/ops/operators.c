@@ -1928,6 +1928,7 @@ static void scatter_loop (void)
 
 	case SPLICE: {
 	    Int len=list_length(l);
+            cList *sublist;
 
 	    if (list_index >= len)
 		/* Sorry, we're out of data. Empty list. */
@@ -1936,7 +1937,9 @@ static void scatter_loop (void)
 	    if (stack[stack_pos-3].type == INTEGER)
 		anticipate_assignment();
 	    c = ++cur_frame->pc;
-	    push_list(list_sublist(l, list_index, len-list_index));
+            sublist = list_sublist(list_dup(l), list_index, len-list_index);
+            push_list(sublist);
+            list_discard(sublist);
 	    (*op_table[opcodes[c-1]].func)();
 	    if (cur_frame->pc != c+1)
 		return;
@@ -1956,6 +1959,7 @@ void op_scatter_start (void)
 	return;
     }
 
+    check_stack(2);
     stack[stack_pos+1]=stack[stack_pos-1];
     stack[stack_pos-1].type=INTEGER;
     stack[stack_pos-1].u.val=0;

@@ -944,7 +944,9 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
                         value = string_truncate(value, pad - 3);
                         value = string_add_chars(value, "...", 3);
                     } else if (string_length(value) < pad) {
-                        value=string_add_padding(value,fill,strlen(fill),pad);
+                        value=string_add_padding(value,fill,strlen(fill),
+                                               pad-string_length(value));
+
                     }
                 }
                 break;
@@ -1157,8 +1159,8 @@ int string_index(cStr * str, cStr * sub, int origin) {
 
     if (reverse) {
         if (slen == 1)
-            return str_rindexc(s, len, *ss, -origin);
-        return str_rindexs(s, len, ss, slen, -origin);
+            return str_rindexc(s, len, *ss, origin);
+        return str_rindexs(s, len, ss, slen, origin);
     } else if (origin > 0) {
         origin--;
         if (len - origin < slen)

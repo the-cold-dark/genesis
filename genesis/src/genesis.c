@@ -84,7 +84,6 @@ void get_my_hostname(void) {
         } else {
             string_discard(str_hostname);
             str_hostname = string_from_chars(cbuf, strlen(cbuf));
-            printf("hostname: %s\n", cbuf);
         }
     } else {
         fprintf(stderr, "Unable to determine hostname.\n");

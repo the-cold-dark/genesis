@@ -5,14 +5,6 @@
 #ifndef cdc_cache_h
 #define cdc_cache_h
 
-#ifndef _cache_
-extern Int cache_width;
-extern Int cache_depth;
-#else
-Int cache_width = 10;
-Int cache_depth = 30;
-#endif
-
 void init_cache(void);
 Obj *cache_get_holder(Long objnum);
 Obj *cache_retrieve(Long objnum);

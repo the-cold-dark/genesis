@@ -266,6 +266,7 @@ cList * task_info(Long tid) {
 
     /* frames */
     list = list_add(list, &d);
+    list_discard(d.u.list);
     d.type = LIST;
     frame = vm->cur_frame;
     while (frame) {

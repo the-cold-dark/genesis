@@ -34,6 +34,8 @@ void init_defs(void) {
 
     logfile = stdout;
     errfile = stderr;
+    cache_width = CACHE_WIDTH;
+    cache_depth = CACHE_DEPTH;
 
 #ifdef HAVE_TM_ZONE
     time(&t);

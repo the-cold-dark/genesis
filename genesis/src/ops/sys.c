@@ -15,10 +15,6 @@
 #include "execute.h"
 #include "binarydb.h"
 
-#ifdef USE_CLEANER_THREAD
-#include "pthread.h"
-#endif
-
 void func_dblog(void) {
     cData * args;
 

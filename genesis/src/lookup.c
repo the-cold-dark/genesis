@@ -24,8 +24,6 @@
 #include <string.h>
 
 #ifdef USE_CLEANER_THREAD
-#include <pthread.h>
-
 pthread_mutex_t lookup_mutex;
 
 #ifdef DEBUG_LOOKUP_LOCK

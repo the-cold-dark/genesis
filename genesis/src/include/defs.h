@@ -396,6 +396,10 @@ typedef bool              Bool;
 #define NULL 0
 #endif
 
+#ifdef USE_CLEANER_THREAD
+#include <pthread.h>
+#endif
+
 #include <setjmp.h>
 #include "cdc_errs.h"
 #include "cdc_types.h"

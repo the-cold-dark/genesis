@@ -17,8 +17,6 @@
 #include "execute.h"
 
 #ifdef USE_CLEANER_THREAD
-#include <pthread.h>
-
 pthread_mutex_t cleaner_lock;
 pthread_t cleaner;
 void *cache_cleaner_worker(void *dummy);

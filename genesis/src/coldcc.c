@@ -12,7 +12,6 @@
 #include <ctype.h>
 
 #ifdef USE_CLEANER_THREAD
-#include <pthread.h>
 extern pthread_t cleaner;
 #endif
 

@@ -21,8 +21,6 @@
 #include <ctype.h>
 
 #ifdef USE_CLEANER_THREAD
-#include <pthread.h>
-
 pthread_mutex_t db_mutex;
 
 #ifdef DEBUG_DB_LOCK

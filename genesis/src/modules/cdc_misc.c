@@ -41,8 +41,8 @@ NATIVE_METHOD(strftime) {
     }
 #else
     tt = ((argc == 2) ? (time_t) INT2 : time(NULL));
-    t  = localtime(&tt);
 #endif
+    t  = localtime(&tt);
  
     fmt = string_chars(STR1);
 

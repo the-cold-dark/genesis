@@ -1327,8 +1327,9 @@ Int text_dump(Bool objnames) {
     }
 
     last_length = 0;
-    cur_search++;
+    START_SEARCH();
     dump_object(ROOT_OBJNUM, fp, objnames);
+    END_SEARCH();
 
     close_scratch_file(fp);
 
@@ -1388,7 +1389,7 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
     }
 
     /* ok, lets do it then, mark it dirty and update cur_search */
-    obj->dirty = 1;
+    /*obj->dirty = 1;*/
     obj->search = cur_search;
 
     /* let them know? */

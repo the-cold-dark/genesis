@@ -210,8 +210,8 @@ void init_binary_db(void) {
     lookup_open(fdb_index, 0);
     init_bitmaps();
     sync_index();
-    fprintf (errfile, "Binary database fragmentation: %.2f%%\n",
-		100.0*(1.0-(float)allocated_blocks/(float)bitmap_blocks));
+    fprintf (errfile, "Binary database free space: %.2f%%\n",
+		(100.0*(1.0-(float)allocated_blocks/(float)bitmap_blocks)));
 
     db_clean = 1;
 }

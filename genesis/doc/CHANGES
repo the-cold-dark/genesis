@@ -6,6 +6,12 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-26 [22-Mar-97] Miro, Brandon
+      * Fixed crypt() and match_crypted() for 64bit OS's (Brandon)
+      * minor bug in fromliteral() fixed, in regard to handled frobs (Miro)
+      * changed how searching is handled, to reduce collisions and not
+        overflow.  Also changed it so an object is dirty if obj->dirty
+        OR obj->search == cur_search. (Brandon)
 1.0-25 [10-Mar-97] Brandon, Miro, Brad/Ted
       * new mechanism for type handling: the basic methods are called via
         function pointers, so you don't have to hunt for switches through
@@ -489,7 +495,7 @@ contributors to that version.
 0.2-3 []: Brandon
       * Fixed long-time bug in lowercase and uppercase, they were calling
         prepare_to_modify, unnecessarily, which was causing problems.
-      * Created ColdX Process Controller (control).  Control will
+      * Created Cold Process Controller (control).  Control will
         be the process run, and will fork the driver or coldcc.  Once
         running, it will also connect to the driver (shared mem or
         pipes) for running blocked or forked tasks (name lookups and

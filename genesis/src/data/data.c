@@ -660,8 +660,8 @@ char * data_from_literal(cData *d, char *s) {
 		s++;
 		while (isspace(*s))
 		    s++;
-		s = data_from_literal(&chandler, s + 1);
-		if (chandler.type != IDENT) {
+		s = data_from_literal(&chandler, s);
+		if (chandler.type != SYMBOL) {
 		    data_discard(&crep);
 		    d->type = -1;
 		    if (chandler.type != -1)

@@ -249,26 +249,39 @@ typedef bool              Bool;
 #elif SIZEOF_INT == 4
   typedef int               Int;
   typedef unsigned int      uInt;
+# define MAX_INT  2147483647
+# define MAX_UINT 4294967295
 #elif SIZEOF_LONG == 4
   typedef long              Int;
   typedef unsigned long     uInt; 
+# define MAX_INT  2147483647L
+# define MAX_UINT 4294967295UL
 #else
 # error "Unable to specify size for Int type (32 bits)"
 #endif
 
 #ifdef USE_BIG_NUMBERS
+
 #  if SIZEOF_LONG == 8
      typedef long              Long;
      typedef unsigned long     uLong;
+#    define MAX_LONG  9223372036854775807L
+#    define MAX_ULONG 18446744073709551615UL
 #  elif SIZEOF_LLONG == 8
      typedef long long         Long;
      typedef unsigned long long uLong;
+#    define MAX_LONG  9223372036854775807LL
+#    define MAX_ULONG 18446744073709551615ULL
 #  else
 #    error "Unable to specify size for BIG Long type (64 bits)"
 #  endif
 #else
+
   typedef Int               Long;
   typedef uInt              uLong;
+
+# define MAX_LONG  MAX_INT
+# define MAX_ULONG MAX_UINT
 #endif
 
 #ifdef USE_BIG_FLOATS
@@ -335,7 +348,7 @@ typedef bool              Bool;
 #define forever for (;;)
 #define INTERNAL static
 
-#define SERVER_NAME "Genesis (the ColdX driver)"
+#define SERVER_NAME "Genesis (the Cold driver)"
 
 /* incase it doesn't exist */
 #ifndef O_BINARY

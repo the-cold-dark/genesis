@@ -257,3 +257,46 @@ NATIVE_METHOD(from_veil_pkts) {
     CLEAN_RETURN_BUFFER(out);
 }
 
+/*
+
+$veil:
+
+.close_channel(id, buffer)
+.abort_channel(id, buffer)
+.send_message(id, buffer)
+
+.parse_channel(buffer) -- ALWAYS CALL IN SYNC--keeps an internal buffer
+
+.parse_message(id, flag, buffer)
+
+Breakup buffer as needed, and send push bit.
+
+*/
+
+/*
+// -------------------------------------------------------------------
+// 
+// .open_channel(id, buffer)
+//
+// buffer may be fragmented across multiple packets, but will be sent
+// as one message.
+*/
+NATIVE_METHOD(veil_open_channel) {
+    cBuf  * buf;
+    cList * packets;
+
+    INIT_1_OR_2_ARGS(BUFFER, BUFFER);
+
+    if (argc == 1) {
+        buf = buffer_dup(_BUF(ARG1));
+    } else {
+        /* if they sent us a second argument, concatenate it on the end */
+        buf = buffer_append(buffer_dup(_BUF(ARG1)), _BUF(ARG2));
+    }
+
+    packets = buf_to_veil_packets(buf);
+
+    buffer_discard(buf);
+
+    CLEAN_RETURN_LIST(packets);
+}

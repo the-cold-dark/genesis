@@ -67,7 +67,7 @@ Obj * object_new(Long objnum, cList * parents) {
     cnew->idents_size = IDENTS_STARTING_SIZE;
     cnew->num_idents = 0;
 
-    cnew->search = 0;
+    cnew->search = -1;
 
     /* Add this object to the children list of parents. */
     object_update_parents(cnew, list_add);
@@ -217,8 +217,10 @@ cList * object_ancestors(Long objnum) {
 
     /* Get the ancestor list, backwards. */
     ancestors = list_new(0);
-    cur_search++;
+
+    START_SEARCH();
     ancestors = object_ancestors_aux(objnum, ancestors);
+    END_SEARCH();
 
     return list_reverse(ancestors);
 }
@@ -234,7 +236,7 @@ INTERNAL cList *object_ancestors_aux(Long objnum, cList *ancestors) {
 	cache_discard(object);
 	return ancestors;
     }
-    object->dirty = 1;
+    /* object->dirty = 1; */
     object->search = cur_search;
 
     parents = list_dup(object->parents);
@@ -251,10 +253,15 @@ INTERNAL cList *object_ancestors_aux(Long objnum, cList *ancestors) {
 
 Int object_has_ancestor(Long objnum, Long ancestor)
 {
+    Int retv;
+
     if (objnum == ancestor)
 	return 1;
-    cur_search++;
-    return object_has_ancestor_aux(objnum, ancestor);
+
+    START_SEARCH();
+    retv = object_has_ancestor_aux(objnum, ancestor);
+    END_SEARCH();
+    return retv;
 }
 
 static Int object_has_ancestor_aux(Long objnum, Long ancestor)
@@ -270,7 +277,7 @@ static Int object_has_ancestor_aux(Long objnum, Long ancestor)
 	cache_discard(object);
 	return 0;
     }
-    object->dirty = 1;
+    /* object->dirty = 1; */
     object->search = cur_search;
 
     parents = list_dup(object->parents);
@@ -680,7 +687,7 @@ Method *object_find_method(Long objnum, Long name, Bool is_frob) {
             method = object_find_method(list_elem(parents, 0)->u.objnum, name, is_frob);
         } else {
             /* We've hit a bulge; resort to the reverse depth-first search. */
-            cur_search++;
+            START_SEARCH();
             params.name = name;
             params.stop_at = -1;
             params.done = 0;
@@ -689,6 +696,7 @@ Method *object_find_method(Long objnum, Long name, Bool is_frob) {
             for (d = list_last(parents); d; d = list_prev(parents, d))
                 search_object(d->u.objnum, &params);
             method = params.last_method_found;
+            END_SEARCH();
         }
     }
 
@@ -742,7 +750,7 @@ Method *object_find_next_method(Long objnum, Long name, Long after, Bool is_frob
 	    method = object_find_next_method(parent, name, after, is_frob);
     } else {
 	/* Object has more than one parent; use complicated search. */
-	cur_search++;
+	START_SEARCH();
 	params.name = name;
 	params.stop_at = (objnum == after) ? -1 : after;
 	params.done = 0;
@@ -752,6 +760,7 @@ Method *object_find_next_method(Long objnum, Long name, Long after, Bool is_frob
 	    search_object(d->u.objnum, &params);
 	cache_discard(object);
 	method = params.last_method_found;
+	END_SEARCH();
     }
 
     if (method)
@@ -778,7 +787,7 @@ static void search_object(Long objnum, Search_params *params)
 	cache_discard(object);
 	return;
     }
-    object->dirty = 1;
+    /* object->dirty = 1; */
     object->search = cur_search;
 
     /* Grab the parents list and discard the object. */

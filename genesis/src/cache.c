@@ -29,6 +29,8 @@ Int        _acounter = 0;
 Int        _icounter = 0;
 #endif
 
+#define isdirty(_obj_) (_obj_->dirty || _obj_->search == cur_search)
+
 /*
 // ----------------------------------------------------------------------
 //
@@ -85,7 +87,7 @@ Obj * cache_get_holder(Long objnum) {
 
 	/* Check if we need to swap anything out. */
 	if (obj->objnum != INV_OBJNUM) {
-	    if (obj->dirty) {
+	    if (isdirty(obj)) {
 		if (!db_put(obj, obj->objnum))
 		    panic("Could not store an object.");
 	    }
@@ -307,8 +309,8 @@ void cache_sync(void) {
     for (i = 0; i < cache_width; i++) {
 	/* Check active chain. */
 	for (obj = active[i].next; obj != &active[i]; obj = obj->next) {
-	    if (obj->dirty) {
-		if (!db_put(obj, obj->objnum))
+	    if (isdirty(obj)) {
+                if (!db_put(obj, obj->objnum))
 		    panic("Could not store an object.");
 		obj->dirty = 0;
 	    }
@@ -316,8 +318,8 @@ void cache_sync(void) {
 
 	/* Check inactive chain. */
 	for (obj = inactive[i].next; obj != &inactive[i]; obj = obj->next) {
-	    if (obj->objnum != INV_OBJNUM && obj->dirty) {
-		if (!db_put(obj, obj->objnum))
+	    if (obj->objnum != INV_OBJNUM && isdirty(obj)) {
+                if (!db_put(obj, obj->objnum))
 		    panic("Could not store an object.");
 		obj->dirty = 0;
 	    }
@@ -415,7 +417,7 @@ void cache_cleanup(void) {
             obj->ucounter >>= 1;
             if (obj->ucounter > 0)
                 continue;
-            if (obj->objnum != INV_OBJNUM && obj->dirty) {
+            if (obj->objnum != INV_OBJNUM && isdirty(obj)) {
                 if (!db_put(obj, obj->objnum))
                     panic("Could not store an object.");
                 obj->dirty = 0;

@@ -3,9 +3,9 @@
 #define SHS_OUTPUT_SIZE 120
 
 char * shs_crypt(const unsigned char * pw,
-                 const int pl,
+                 const Int pl,
                  const unsigned char * sp,
-                 const int sl,
+                 const Int sl,
                  char * passwd);
 
 cStr * strcrypt(cStr * str, cStr * seed);
@@ -19,17 +19,17 @@ Int match_crypted(cStr * encrypted, cStr * possible);
 #ifdef _SHS_include_
 
 typedef struct {
-  unsigned long H[5];
-  unsigned long W[80];
-  int lenW;
-  unsigned long sizeHi,sizeLo;
+  uInt H[5];
+  uInt W[80];
+  Int lenW;
+  uInt sizeHi,sizeLo;
 } SHS_CTX;
 
 void shsInit(SHS_CTX *ctx);
-void shsUpdate(SHS_CTX *ctx, const unsigned char *dataIn, int len);
-void shsFinal(SHS_CTX *ctx, unsigned char hashOut[20]);
+void shsUpdate(SHS_CTX *ctx, const uChar *dataIn, Int len);
+void shsFinal(SHS_CTX *ctx, uChar hashOut[20]);
 #ifdef LINT
-void shsBlock(const unsigned char *dataIn, int len, unsigned char hashOut[20]);
+void shsBlock(const uChar *dataIn, Int len, uChar hashOut[20]);
 #endif
 
 #endif

@@ -13,6 +13,10 @@ your world directory (wherever it may be).
 
 The directory 'bin' contains a few useful scripts.
 
+Full installation instructions can be found at:
+
+      http://www.cold.org/Software/Genesis/
+
 NOTE: Because SunOS 4.1.x is not POSIX compliant nor even ANSI complaint
       there are certain problems that will arise in running Genesis on
       that type of system.  Unfortunately, they are serious problems
@@ -73,10 +77,10 @@ Documentation:
 ------------------------------------------------------------------------
 NOTES
 
-Verified to compile on:
+Verified to compile and run on:
 
-    * FreeBSD 2.1-R and 2.1.5-R
-    * DEC OSF/1 2.0
+    * FreeBSD 2.1-R and 2.1.5-R, 2.2, 3.0
+    * DEC OSF/1 2.0, 3.2
     * DEC Ultrix 4.4
     * Sun Solaris 2.5
 

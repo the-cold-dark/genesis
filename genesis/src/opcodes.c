@@ -114,12 +114,14 @@ static Op_info op_info[] = {
     { SCATTER_END,      "SCATTER_END",     0},
 
     /* Object variable functions */
-    FDEF(F_ADD_VAR,    "add_var",   add_var)
-    FDEF(F_DEL_VAR,    "del_var",   del_var)
-    FDEF(F_SET_VAR,    "set_var",   set_var)
-    FDEF(F_GET_VAR,    "get_var",   get_var)
-    FDEF(F_CLEAR_VAR,  "clear_var", clear_var)
-    FDEF(F_VARIABLES,  "variables", variables)
+    FDEF(F_ADD_VAR,       "add_var",   add_var)
+    FDEF(F_DEL_VAR,       "del_var",   del_var)
+    FDEF(F_SET_VAR,       "set_var",   set_var)
+    FDEF(F_GET_VAR,       "get_var",   get_var)
+    FDEF(F_INHERITED_VAR, "inherited_var", get_var)
+    FDEF(F_DEFAULT_VAR,   "default_var", get_var)
+    FDEF(F_CLEAR_VAR,     "clear_var", clear_var)
+    FDEF(F_VARIABLES,     "variables", variables)
 
     /* debugger */
     FDEF(F_DEBUG_CALLERS, "debug_callers", debug_callers)

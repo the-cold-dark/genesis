@@ -192,7 +192,7 @@ fi
 
 trap 'rm -fr conftest* confdefs* core core.* *.core $ac_clean_files; exit 1' 1 2 15
 
-echo "-- Configuration for Genesis $VERSION (the ColdX Driver) --"
+echo "-- Configuration for Genesis $VERSION (the Cold Driver) --"
 
 # File descriptor usage:
 # 0 standard input

@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
             init_binary_db();
             init_core_objects();
             if (text_dump(print_names))
-               fprintf(stderr,"Database decompiled to \"%s\"\n",c_dir_textdump);
+               fprintf(stderr,"\nDatabase decompiled to \"%s\"\n",c_dir_textdump);
         } else if (c_opt == OPT_COMP) {
             fprintf(stderr, "Compiling database...\n");
             compile_db(NEW_DB);

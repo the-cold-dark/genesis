@@ -147,6 +147,12 @@ struct error_list {
     Int *error_ids;
 };
 
+#define START_SEARCH() \
+    if (last_search >= MAX_LONG) \
+        last_search = 0; \
+    cur_search = ++last_search
+#define END_SEARCH() cur_search = 0
+
 /* ..................................................................... */
 /* function prototypes */
 
@@ -239,6 +245,7 @@ Int     object_del_objname(Obj * object);
 
 /* Count for keeping track of of already-searched objects during searches. */
 Long cur_search;
+Long last_search;
 
 /* Keeps track of objnum for next object in database. */
 Long db_top;
@@ -293,6 +300,7 @@ extern Int     object_set_method_access(Obj * object, Long name, Int access);
 /* variables */
 extern Long db_top;
 extern Long cur_search;
+extern Long last_search;
 
 #endif /* _object_ */
 

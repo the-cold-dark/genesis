@@ -1,4 +1,4 @@
-# ColdX driver
+# Cold driver
 
 CFLAGS=@CFLAGS@ -I../include
 LDFLAGS=@LDFLAGS@

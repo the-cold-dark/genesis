@@ -355,7 +355,7 @@ static datum offset_size_value(off_t offset, Int size, Number_buf nbuf)
     datum value;
 
     /* Set up a value for the offset and size. */
-#if _FILE_OFFSET_BITS=32
+#if _FILE_OFFSET_BITS == 32
     s = long_to_ascii(offset, tmp_buf);
 #else
     s = long_long_to_ascii(offset, tmp_buf);
@@ -374,7 +374,7 @@ static void parse_offset_size_value(datum value, off_t *offset, Int *size)
 {
     char *p;
 
-#if _FILE_OFFSET_BITS=32
+#if _FILE_OFFSET_BITS == 32
     *offset = atol(value.dptr);
 #else
     *offset = atoll(value.dptr);

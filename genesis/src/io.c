@@ -449,6 +449,7 @@ INTERNAL void pend_discard(pending_t *pend) {
 INTERNAL void server_discard(server_t *serv) {
     SOCK_CLOSE(serv->server_socket);
     string_discard(serv->addr);
+    efree(serv);
 }
 
 /*

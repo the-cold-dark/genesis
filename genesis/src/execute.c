@@ -443,6 +443,11 @@ void task_cancel(Long tid) {
     VMState * vm = task_lookup(tid),
             * old_vm;
 
+    if (vm == NULL) {
+        write_err("ACK:  Tried to cancel an invalid task id.");
+        return;
+    }
+
     if (task_id == vm->task_id) {
         old_vm = NULL;
     } else {

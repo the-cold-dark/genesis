@@ -19,7 +19,7 @@
  * added in before we allocate.  This works if a Data is sixteen bytes. */
   
 #define MALLOC_DELTA    3
-#define STARTING_SIZE   (64 - MALLOC_DELTA)
+#define STARTING_SIZE   (16 - MALLOC_DELTA)
 
 /* Input to this routine should be a list you want to modify, a start, and a
  * length.  The start gives the offset from list->el at which you start being
@@ -71,12 +71,10 @@ cList * list_prep(cList *list, Int start, Int len) {
         for (; list->len > len; list->len--)
             data_discard(&list->el[list->len - 1]);
         list->len = len;
-        size = ROUND_UP(len, STARTING_SIZE);
-	if (size != list->size) {
-            list = (cList *) erealloc(list,
+        size = len;
+        list = (cList *) erealloc(list,
                                    sizeof(cList) + (size * sizeof(cData)));
-            list->size = size;
-	}
+        list->size = size;
         return list;
     }
 
@@ -94,13 +92,11 @@ cList * list_prep(cList *list, Int start, Int len) {
 
 cList *list_new(Int len) {
     cList * cnew;
-    Int size;
 
-    size = ROUND_UP(len, STARTING_SIZE);
-    cnew = (cList *) emalloc(sizeof(cList) + (size * sizeof(cData)));
+    cnew = (cList *) emalloc(sizeof(cList) + (len * sizeof(cData)));
     cnew->len = 0;
     cnew->start = 0;
-    cnew->size = size;
+    cnew->size = len;
     cnew->refs = 1;
     return cnew;
 }

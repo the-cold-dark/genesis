@@ -90,9 +90,6 @@ RELEASE INFORMATION:
       * Add has_method() to ColdC to make up for catch ~methodnf and
         find_method() being so slow.  has_method() does and -must-
         search ancestry.  That's why it exists. (Bruce)
-      * Added defines_var checking to coldcc to catch dead variables that
-        are no longer defined on the ancestor. (Bruce)
-        DISABLED: Bruce indicated performance issues (Brad)
       * don't save all of obj->string_tab's data, some can easily be
         rebuilt during unpack (Brad)
         DISABLED: TEC crashed with string tab corruption a few times

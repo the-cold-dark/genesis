@@ -159,14 +159,7 @@
 // with the name cache above.
 */
 #define ANCESTOR_CACHE_SIZE 25601
-#ifdef BUILDING_COLDCC
-/*
-// ---------------------------------------------------------------------
-// size of defines var cache. only used in coldcc. use prime numbers and
-// follow guidelines as with the name cache above.
-*/
-#define DEFINES_VAR_CACHE_SIZE 2551
-#endif
+
 /*
 // ---------------------------------------------------------------------
 // Default indent for decompiled code.

@@ -537,7 +537,11 @@ Int object_change_parents(Obj *object, cList *parents)
 
     /* Invalidate the method cache. */
     /* NOTE:  is there a better way to invalidate this? */
-    method_cache_invalidate_all();
+    if (list_length(object->children) != 0) {
+        method_cache_invalidate_all();
+    } else {
+        method_cache_invalidate(object->objnum);
+    }
 
     /* Invalidate the ancestor cache */
     ancestor_cache_invalidate();

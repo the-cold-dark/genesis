@@ -113,6 +113,9 @@
 /* Define if you have the strstr function.  */
 #undef HAVE_STRSTR
 
+/* Define if you have the finite function.  */
+#undef HAVE_FINITE
+
 /* Define if you have the <fcntl.h> header file.  */
 #undef HAVE_FCNTL_H
 
@@ -128,3 +131,5 @@
 #undef RESTRICTIVE_FILES
 
 #undef SYSTEM_TYPE
+
+#undef USE_OS_CRYPT

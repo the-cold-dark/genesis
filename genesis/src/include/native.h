@@ -20,7 +20,7 @@ typedef struct native_s {
 
 typedef struct module_s {
     void (*init)(Int argc, char ** argv);
-    void (*uninit)();
+    void (*uninit)(void);
 } module_t;
 
 Int init_modules(Int argc, char ** argv);

@@ -19,9 +19,10 @@ cDict * dict_prep(cDict *);
 Long dict_find(cDict * dict, cData * key, cData * ret);
 Int dict_contains(cDict * dict, cData * key);
 cList * dict_keys(cDict * dict);
+cList * dict_values(cDict * dict);
 cList * dict_key_value_pair(cDict * mapping, Int i);
 Int dict_size(cDict * dict);
-cStr * dict_add_literal_to_str(cStr * str, cDict * dict);
+cStr * dict_add_literal_to_str(cStr * str, cDict * dict, Bool objnames);
 cDict *dict_union (cDict *d1, cDict *d2);
 
 

@@ -16,22 +16,12 @@ MODULES=$(SRCDIR)/modules
 
 VERSION=@VERSION@
 
-CDC_OBJS = cdc.o cdc_buffer.o cdc_misc.o cdc_dict.o cdc_list.o cdc_string.o
-VEIL_O   = veil.o
-WEB_OBJS = web.o
+## we don't need any rules as 'make xxxx.o' will still function correctly,
+## and the builds are usually called from ../Makefile anyway.
 
-OBJS = $(CDC_OBJS) $(VEIL_O) $(WEB_OBJS)
+## Just add the standard rules.
 
-SRCS = `echo $(CDC_OBJS) $(VEIL_O) | sed -e 's/\.o/.c/g'`
-
-#######
-# rules
-
-all: cdc veil web
-
-cdc: $(CDC_OBJS)
-veil: $(VEIL_O)
-web: $(WEB_OBJS)
+all:
 
 clean:
 	rm -f *~ *.BAK *.bak
@@ -45,8 +35,8 @@ makefile:
 install: all
 
 depend:
-	@makedepend -- $(CFLAGS) -- $(SRCS) > /dev/null 2>&1
-	@rm Makefile.bak
+#	@makedepend -- $(CFLAGS) -- $(SRCS) > /dev/null 2>&1
+#	@rm Makefile.bak
 
 lint:
 	$(LINT) -u $(SRCS)
@@ -54,10 +44,9 @@ lint:
 patchable: scrub
 	@chmod -f u+w Makefile
 	@echo "all:" > Makefile
-	@echo "	@echo \"** Invalid Makefile! **\"" >> Makefile
-	@echo "	@echo \"** running the configure script ... **\"" >> Makefile
-	@echo "	@cd ../..; configure" >> Makefile
+	@echo " @echo \"** Invalid Makefile! **\"" >> Makefile
+	@echo " @echo \"** running the configure script ... **\"" >> Makefile
+	@echo " @cd ../..; configure" >> Makefile
 
-../include/parse.h:
-	cd ../; make grammar.o include/parse.h
-
+reconfig:
+	cd ..; make reconfig

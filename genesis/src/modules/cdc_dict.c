@@ -6,6 +6,16 @@
 
 #include "cdc.h"
 
+NATIVE_METHOD(dict_values) {
+    cList * list;
+
+    INIT_1_ARG(DICT);
+
+    list = dict_values(DICT1);
+
+    CLEAN_RETURN_LIST(list);
+}
+
 NATIVE_METHOD(dict_keys) {
     cList * list;
 

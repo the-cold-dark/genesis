@@ -27,6 +27,7 @@
 Int    c_nowrite = 1;
 Int    c_opt = OPT_COMP;
 Bool   print_objs = YES;
+Bool   print_names = NO;
 
 #define NEW_DB       1
 #define EXISTING_DB  0
@@ -49,6 +50,7 @@ INTERNAL void   shutdown(void) {
 /*
 // --------------------------------------------------------------------
 */
+
 /*
 // --------------------------------------------------------------------
 */
@@ -60,7 +62,7 @@ int main(int argc, char **argv) {
             fprintf(stderr, "Decompiling database...\n");
             init_binary_db();
             init_core_objects();
-            if (text_dump())
+            if (text_dump(print_names))
                fprintf(stderr,"Database decompiled to \"%s\"\n",c_dir_textdump);
         } else if (c_opt == OPT_COMP) {
             fprintf(stderr, "Compiling database...\n");
@@ -201,6 +203,7 @@ void print_natives(void) {
     }
 
 INTERNAL void initialize(Int argc, char **argv) {
+    Bool   opt_bool = NO;
     char * name = NULL,
          * opt = NULL,
          * buf;
@@ -212,12 +215,14 @@ INTERNAL void initialize(Int argc, char **argv) {
     argv++;
     argc--;
 
-    init_util();
     init_defs();
+    init_match();
+    init_util();
 
     while (argc) {
-        if (**argv == '-') {
+        if (**argv == '-' || **argv == '+') {
             opt = *argv;
+            opt_bool = (*opt == '+');
             opt++;
             switch (*opt) {
                 case 'v':
@@ -239,8 +244,11 @@ INTERNAL void initialize(Int argc, char **argv) {
                 case 'd':
                     c_opt = OPT_DECOMP;
                     break;
+                case '#':
+                    print_names = !opt_bool;
+                    break;
                 case 'o':
-                    print_objs = NO;
+                    print_objs = opt_bool;
                     break;
                 case 'p':
                     c_opt = OPT_PARTIAL;
@@ -298,7 +306,6 @@ INTERNAL void initialize(Int argc, char **argv) {
     init_codegen();
     init_ident();
     init_op_table();
-    init_match();
     init_execute();
     init_scratch_file();
     init_token();
@@ -315,21 +322,24 @@ void usage (char * name) {
 Usage: %s [options]\n\
 \n\
 Options:\n\n\
-        -f              force native methods to override existing methods.\n\
-        -v              version\n\
-        -h              This message.\n\
-        -d              Decompile.\n\
-        -c              Compile (default).\n\
-        -b binary       binary db directory name, default: \"%s\"\n\
-        -t target       target text db, default: \"%s\"\n\
-                        if this is \"stdin\" it will read from stdin\n\
-                        instead.  <target> may be a directory or file.\n\
-        -p              Partial compile, compile object(s) and insert\n\
-                        into database accordingly.  Can be used with -w\n\
-                        for a ColdC code verification program.\n\
-        -s WIDTHxDEPTH  Cache size, default 10x30\n\
-        -n              List native method configuration\n\
-        -o              Do not print objects as they are compiled/decompiled\n\
+    -f              force native methods to override existing methods.\n\
+    -v              version\n\
+    -h              This message.\n\
+    -d              Decompile.\n\
+    -c              Compile (default).\n\
+    -b binary       binary db directory name, default: \"%s\"\n\
+    -t target       target text db, default: \"%s\"\n\
+                    if this is \"stdin\" it will read from stdin\n\
+                    instead.  <target> may be a directory or file.\n\
+    -p              Partial compile, compile object(s) and insert\n\
+                    into database accordingly.  Can be used with -w\n\
+                    for a ColdC code verification program.\n\
+    +|-#            Print/Do not print object numbers by default\n\
+                    Default option is +#\n\
+                    print object names by default, if they exist.\n\
+    -s WIDTHxDEPTH  Cache size, default 10x30\n\
+    -n              List native method configuration\n\
+    +|-o            Print/Do not print objects as they are processed\n\
 \n\
 \n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, name, c_dir_binary, c_dir_textdump);
 }

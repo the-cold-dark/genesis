@@ -1,5 +1,119 @@
-/* Integrated into Cold on July 23, 1996, by Brandon Gillespie, pulled from
-   FreeBSD-2.1.0 distribution */
+
+#define _SHS_include_
+
+#include "defs.h"
+
+#include <ctype.h>
+#include "execute.h"
+#include "util.h"
+#include "crypt.h"
+
+static unsigned char ascii64[] =        /* 0 ... 63 => ascii - 64 */
+        "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+/*
+// crypt() is not POSIX--this is here for backwards compatability,
+// nasty word that.
+*/
+#ifdef USE_OS_CRYPT
+extern char * crypt(const char *, const char *);
+#endif
+
+/*
+// Encrypt a string.  The salt can be NULL--force SHS encryption,
+// match_crypted() will handle older DES passwords
+*/
+cStr * strcrypt(cStr * key, cStr * salt) {
+    char   pwd_buf[SHS_OUTPUT_SIZE];  /* output buffer for the password */
+    unsigned char * pp, * sp,
+                    rsalt[9];         /* 8 chars of salt, one NULL */
+    int    x,
+           pl,
+           sl;
+
+    if (!salt) {
+        random_salt:
+
+        for (x=0; x < 8; x++)
+            rsalt[x] = ascii64[random_number(64)];
+        rsalt[8] = (char) NULL;
+        sp = rsalt;
+        sl = 8;
+    } else {
+        sp = (unsigned char *) string_chars(salt);
+        if (sp[0] == '$' && sp[1] == '2' && sp[2] == '$') {
+            sp += 3;
+            for (x=0; x < 8 && sp[x] != '$'; x++)
+                rsalt[x] = sp[x];
+            rsalt[x] = (char) NULL;
+            sp = rsalt;
+            sl = strlen((char *) sp);
+            if (!sl)
+                goto random_salt;
+        } else {
+            sl = string_length(salt);
+        }
+    }
+
+    pp = (unsigned char *) string_chars(key);
+    pl = string_length(key);
+
+    shs_crypt(pp, pl, sp, sl, pwd_buf);
+
+    return string_from_chars(pwd_buf, strlen(pwd_buf));
+}   
+
+/*
+// match the encrypted string, use SHS (default for crypt()) if
+// 'encrypted' begins with "$2$" (FreeBSD standard); otherwise
+// pass back to the OS crypt()
+*/
+Int match_crypted(cStr * encrypted, cStr * possible) {
+    unsigned char * ep, * pp, *sp,
+           salt[9];
+    char   p_buf[SHS_OUTPUT_SIZE];
+    int    sl,
+           el,
+           pl,
+           x;
+
+    ep = (unsigned char *) string_chars(encrypted);
+    el = string_length(encrypted);
+    pp = (unsigned char *) string_chars(possible);
+    pl = string_length(possible);
+
+    if (el < 3) {
+        cthrow(type_id, "Invalid password format");
+        return -1;
+    }
+
+    if (ep[0] == '$' && ep[1] == '2' && ep[2] == '$') {
+        sp = ep + 3;
+        for (x=0; x < 8 && sp[x] != '$'; x++)
+            salt[x] = sp[x];
+        salt[x] = (char) NULL;
+        sp = salt;
+        sl = strlen((char *) sp);
+
+        shs_crypt((unsigned char *) pp, pl, sp, sl, p_buf);
+
+        return (!strcmp((char *) ep, p_buf));
+    } else {
+#ifdef USE_OS_CRYPT
+        /* assume ancient DES format, with the first two chars as salt */
+        salt[0] = ep[0];
+        salt[1] = ep[1];
+        salt[2] = (char) NULL;
+
+        return
+            (!strcmp((char *) ep, (char *) crypt((char *) pp, (char *) salt)));
+#else
+        cthrow(type_id, "Driver was not compiled with OS crypt() support.");
+        return -1;
+#endif
+    }
+}
+
 /*
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
@@ -7,153 +121,118 @@
  * can do whatever you want with this stuff. If we meet some day, and you think
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
- * 
- * This has had its entry point changed to crypt_md5 for use in 
- * a dual-personality (DES & MD5) environment)  -- MarkM - Nov 1995
  *
- * $Id: crypt.c,v 1.4 1998/06/24 07:36:28 braddr Exp $
+ * $Id: crypt.c,v 1.5 1998/06/24 07:43:59 braddr Exp $
+ *
+ ***
+ *** This license somewhat applies to shs_crypt() as its based off PHK's
+ *** original MD5 crypt for FreeBSD -- Brandon Gillespie
+ ***
  *
  */
 
-#if 0
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$Header: /cvsroot/cold/genesis/src/crypt.c,v 1.4 1998/06/24 07:36:28 braddr Exp $";
-#endif /* LIBC_SCCS and not lint */
-#endif
-
-#include <unistd.h>
-#include <stdio.h>
-#include <string.h>
-#include <md5.h>
-
-static unsigned char itoa64[] =		/* 0 ... 63 => ascii - 64 */
-	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-static void
+void
 to64(s, v, n)
-	char *s;
-	unsigned long v;
-	int n;
+        char *s;
+        unsigned long v;
+        int n;
 {
-	while (--n >= 0) {
-		*s++ = itoa64[v&0x3f];
-		v >>= 6;
-	}
+        while (--n >= 0) {
+                *s++ = ascii64[v&0x3f];
+                v >>= 6;
+        }
 }
 
-/*
- * UNIX password
- *
- * Use MD5 for what it is best at...
- */
-
-char *
-crypt_md5(pw, salt)
-	register const char *pw;
-	register const char *salt;
+char * shs_crypt(const unsigned char * pw,
+                 const int pl,
+                 const unsigned char * sp,
+                 const int sl,
+                 char * passwd)
 {
-	static char	*magic = "$1$";	/*
-						 * This string is magic for
-						 * this algorithm.  Having
-						 * it this way, we can get
-						 * get better later on
-						 */
-	static char     passwd[120], *p;
-	static const char *sp,*ep;
-	unsigned char	final[16];
-	int sl,pl,i,j;
-	MD5_CTX	ctx,ctx1;
-	unsigned long l;
+    char *p;
+    unsigned char    final[SHS_DIGEST_SIZE];
+    int i,j;
+    SHS_CTX    ctx,ctx1;
+    unsigned long l;
 
-	/* Refine the Salt first */
-	sp = salt;
+    shsInit(&ctx);
 
-	/* If it starts with the magic string, then skip that */
-	if(!strncmp(sp,magic,strlen(magic)))
-		sp += strlen(magic);
+    /* The password first, since that is what is most unknown */
+    shsUpdate(&ctx,pw,pl);
 
-	/* It stops at the first '$', max 8 chars */
-	for(ep=sp;*ep && *ep != '$' && ep < (sp+8);ep++)
-		continue;
+    /* Then our magic string */
+    shsUpdate(&ctx,(unsigned char *)"$2$",3);
 
-	/* get the length of the true salt */
-	sl = ep - sp;
+    /* Then the raw salt */
+    shsUpdate(&ctx,sp,sl);
 
-	MD5Init(&ctx);
+    /* Then just as many characters of the shs(pw,salt,pw) */
+    shsInit(&ctx1);
+    shsUpdate(&ctx1,pw,pl);
+    shsUpdate(&ctx1,sp,sl);
+    shsUpdate(&ctx1,pw,pl);
+    shsFinal(&ctx1,final);
+    for(i = pl; i > 0; i -= SHS_DIGEST_SIZE)
+        shsUpdate(&ctx,final,i>SHS_DIGEST_SIZE ? SHS_DIGEST_SIZE : i);
 
-	/* The password first, since that is what is most unknown */
-	MD5Update(&ctx,pw,strlen(pw));
+    /* Don't leave anything around in vm they could use. */
+    memset(final,0,sizeof final);
 
-	/* Then our magic string */
-	MD5Update(&ctx,magic,strlen(magic));
+    /* Then something really weird... */
+    for (j=0,i = pl; i ; i >>= 1)
+        if(i&1)
+            shsUpdate(&ctx, final+j, 1);
+        else
+            shsUpdate(&ctx, pw+j, 1);
 
-	/* Then the raw salt */
-	MD5Update(&ctx,sp,sl);
+    /* Now make the output string */
+    strcpy(passwd, "$2$");
+    strncat(passwd, (char *)sp, (int)sl);
+    strcat(passwd, "$");
 
-	/* Then just as many characters of the MD5(pw,salt,pw) */
-	MD5Init(&ctx1);
-	MD5Update(&ctx1,pw,strlen(pw));
-	MD5Update(&ctx1,sp,sl);
-	MD5Update(&ctx1,pw,strlen(pw));
-	MD5Final(final,&ctx1);
-	for(pl = strlen(pw); pl > 0; pl -= 16)
-		MD5Update(&ctx,final,pl>16 ? 16 : pl);
+    shsFinal(&ctx,final);
 
-	/* Don't leave anything around in vm they could use. */
-	memset(final,0,sizeof final);
+    /*
+     * and now, just to make sure things don't run too fast
+     * On a 60 Mhz Pentium this takes 34 msec, so you would
+     * need 30 seconds to build a 1000 entry dictionary...
+     */
+    for(i=0;i<1000;i++) {
+        shsInit(&ctx1);
+        if(i & 1)
+            shsUpdate(&ctx1,pw,pl);
+        else
+            shsUpdate(&ctx1,final,SHS_DIGEST_SIZE);
 
-	/* Then something really weird... */
-	for (j=0,i = strlen(pw); i ; i >>= 1)
-		if(i&1)
-		    MD5Update(&ctx, final+j, 1);
-		else
-		    MD5Update(&ctx, pw+j, 1);
+        if(i % 3)
+            shsUpdate(&ctx1,sp,sl);
 
-	/* Now make the output string */
-	strcpy(passwd,magic);
-	strncat(passwd,sp,sl);
-	strcat(passwd,"$");
+        if(i % 7)
+            shsUpdate(&ctx1,pw,pl);
 
-	MD5Final(final,&ctx);
+        if(i & 1)
+            shsUpdate(&ctx1,final,SHS_DIGEST_SIZE);
+        else
+            shsUpdate(&ctx1,pw,pl);
+        shsFinal(&ctx1,final);
+    }
 
-	/*
-	 * and now, just to make sure things don't run too fast
-	 * On a 60 Mhz Pentium this takes 34 msec, so you would
-	 * need 30 seconds to build a 1000 entry dictionary...
-	 */
-	for(i=0;i<1000;i++) {
-		MD5Init(&ctx1);
-		if(i & 1)
-			MD5Update(&ctx1,pw,strlen(pw));
-		else
-			MD5Update(&ctx1,final,16);
+    p = passwd + strlen(passwd);
 
-		if(i % 3)
-			MD5Update(&ctx1,sp,sl);
+    l = (final[ 0]<<16) | (final[ 6]<<8) | final[12]; to64(p,l,4); p += 4;
+    l = (final[ 1]<<16) | (final[ 7]<<8) | final[13]; to64(p,l,4); p += 4;
+    l = (final[ 2]<<16) | (final[ 8]<<8) | final[14]; to64(p,l,4); p += 4;
+    l = (final[ 3]<<16) | (final[ 9]<<8) | final[15]; to64(p,l,4); p += 4;
+    l = (final[ 4]<<16) | (final[10]<<8) | final[16]; to64(p,l,4); p += 4;
+    l = (final[ 5]<<16) | (final[11]<<8) | final[17]; to64(p,l,4); p += 4;
+    l =                   (final[18]<<8) | final[19]; to64(p,l,3); p += 3;
 
-		if(i % 7)
-			MD5Update(&ctx1,pw,strlen(pw));
+    *p = '\0';
 
-		if(i & 1)
-			MD5Update(&ctx1,final,16);
-		else
-			MD5Update(&ctx1,pw,strlen(pw));
-		MD5Final(final,&ctx1);
-	}
+    /* Don't leave anything around in vm they could use. */
+    memset(final,0,sizeof final);
 
-	p = passwd + strlen(passwd);
-
-	l = (final[ 0]<<16) | (final[ 6]<<8) | final[12]; to64(p,l,4); p += 4;
-	l = (final[ 1]<<16) | (final[ 7]<<8) | final[13]; to64(p,l,4); p += 4;
-	l = (final[ 2]<<16) | (final[ 8]<<8) | final[14]; to64(p,l,4); p += 4;
-	l = (final[ 3]<<16) | (final[ 9]<<8) | final[15]; to64(p,l,4); p += 4;
-	l = (final[ 4]<<16) | (final[10]<<8) | final[ 5]; to64(p,l,4); p += 4;
-	l =                    final[11]                ; to64(p,l,2); p += 2;
-	*p = '\0';
-
-	/* Don't leave anything around in vm they could use. */
-	memset(final,0,sizeof final);
-
-	return passwd;
+    return passwd;
 }
 
+#undef _crypt_c_

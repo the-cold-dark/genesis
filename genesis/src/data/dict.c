@@ -216,6 +216,11 @@ Int dict_contains(cDict *dict, cData *key)
     return (pos != F_FAILURE);
 }
 
+cList *dict_values(cDict *dict)
+{
+    return list_dup(dict->values);
+}
+
 cList *dict_keys(cDict *dict)
 {
     return list_dup(dict->keys);
@@ -234,16 +239,16 @@ cList *dict_key_value_pair(cDict *dict, Int i)
     return l;
 }
 
-cStr *dict_add_literal_to_str(cStr *str, cDict *dict)
+cStr *dict_add_literal_to_str(cStr *str, cDict *dict, Bool objnames)
 {
     Int i;
 
     str = string_add_chars(str, "#[", 2);
     for (i = 0; i < dict->keys->len; i++) {
 	str = string_addc(str, '[');
-	str = data_add_literal_to_str(str, &dict->keys->el[i]);
+	str = data_add_literal_to_str(str, &dict->keys->el[i], objnames);
 	str = string_add_chars(str, ", ", 2);
-	str = data_add_literal_to_str(str, &dict->values->el[i]);
+	str = data_add_literal_to_str(str, &dict->values->el[i], objnames);
 	str = string_addc(str, ']');
 	if (i < dict->keys->len - 1)
 	    str = string_add_chars(str, ", ", 2);

@@ -102,7 +102,7 @@ extern Bool print_objs;
 */
 INTERNAL Method * get_method(FILE * fp, Obj * obj, char * name);
 char * strchop(char * str, Int len);
-INTERNAL void print_objname(Obj * obj, FILE * fp);
+INTERNAL void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames);
 char * data_from_literal(cData *d, char *s);
 void blank_and_print_obj(char * what, Obj * obj);
 
@@ -680,7 +680,7 @@ INTERNAL void handle_namecmd(char * line, char * s, Int new) {
     Long       num, other;
     Ident      id;
 
-    /* backwards compatability, grr, bad nasty word */
+    /* bump if they have a '$' in the name */
     if (*s == '$')
         s++;
 
@@ -696,7 +696,7 @@ INTERNAL void handle_namecmd(char * line, char * s, Int new) {
     id = ident_get(name);
     if (lookup_retrieve_name(id, &other)) {
         ident_discard(id);
-        WARN(("objname $%s is already bound to objnum #%li", name, (long) other));
+        WARN(("objname $%s is already bound to objnum #%li",name,(long) other));
         return;
     }
 
@@ -706,7 +706,7 @@ INTERNAL void handle_namecmd(char * line, char * s, Int new) {
     for (; isspace(*p) && *p != (char) NULL; p++);
 
     if (*p != ';') {
-        if (!p) { 
+        if (!p) {
             ERR("Abnormal termination of name directive:");
             DIEf("\"%s\"", line);
         }
@@ -726,7 +726,6 @@ INTERNAL void handle_namecmd(char * line, char * s, Int new) {
 
     add_objname(name, num);
 }
-
 
 /*
 // ------------------------------------------------------------------------
@@ -803,10 +802,10 @@ INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
             data_from_literal(&d, s);
             if (d.type == -1) {
                 printf("\rLine %ld: WARNING: invalid data for variable ", (long) line_count);
-                print_objname(cur_obj, stdout);
+                print_dbref(cur_obj, cur_obj->objnum, stdout, TRUE);
                 if (cur_obj->objnum!=definer && (def=cache_retrieve(definer))) {
                     fputc('<', stdout);
-                    print_objname(def, stdout);
+                    print_dbref(def, def->objnum, stdout, TRUE);
                     fputc('>', stdout);
                     cache_discard(def);
                 }
@@ -1424,23 +1423,40 @@ char * data_from_literal(cData *d, char *s) {
 // decompile the binary db to a text file
 */
 Int last_length; /* used in doing fancy formatting */
-void dump_object(Long objnum, FILE *fp);
+void dump_object(Long objnum, FILE *fp, Bool objnames);
 INTERNAL char * method_definition(Method * m);
 
-INTERNAL void print_objname(Obj * obj, FILE * fp) {
-    if (!obj || obj->objname == -1) {
-        fputc('#', fp);
-        fprintf(fp, "%li", (long) obj->objnum);
+#define PRINT_OBJNAME(__obj, __fp) { \
+        fputc('$', __fp); \
+        fputs(ident_name(__obj->objname), __fp); \
+    }
+#define PRINT_OBJNUM(__num, __fp) { \
+        fprintf(fp, "#%li", (long) __num); \
+    }
+
+INTERNAL void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames) {
+    Bool cachepull = FALSE;
+
+    if (objnames) {
+        if (!obj) {
+            obj = cache_retrieve(objnum);
+            cachepull = TRUE;
+        }
+        if (!obj || obj->objname == -1)
+            PRINT_OBJNUM(objnum, fp)
+        else
+            PRINT_OBJNAME(obj, fp)
+        if (cachepull)
+            cache_discard(obj);
     } else {
-        fputc('$', fp);
-        fputs(ident_name(obj->objname), fp);
+        PRINT_OBJNUM(objnum, fp);
     }
 }
 
 /*
 // ------------------------------------------------------------------------
 */
-Int text_dump(void) {
+Int text_dump(Bool objnames) {
     FILE      * fp;
     char        buf[BUF];
 
@@ -1455,7 +1471,7 @@ Int text_dump(void) {
 
     last_length = 0;
     cur_search++;
-    dump_object(ROOT_OBJNUM, fp);
+    dump_object(ROOT_OBJNUM, fp, objnames);
 
     close_scratch_file(fp);
 
@@ -1469,15 +1485,9 @@ Int text_dump(void) {
     return 1;
 }
 #define is_system(__n) (__n == ROOT_OBJNUM || __n == SYSTEM_OBJNUM)
-#define print_objname_by_num(__o, __fp) { \
-        tmp = cache_retrieve(__o); \
-        print_objname(tmp, __fp); \
-        cache_discard(tmp); \
-    }
 
-void dump_object(Long objnum, FILE *fp) {
-    Obj    * obj,
-           * tmp;
+void dump_object(Long objnum, FILE *fp, Bool objnames) {
+    Obj    * obj;
     cList  * objs,
            * code;
     cData  * d;
@@ -1489,41 +1499,54 @@ void dump_object(Long objnum, FILE *fp) {
 
     obj = cache_retrieve(objnum);
 
+    /* try to handle this */
     if (obj == NULL) {
-        printf("\rWARNING: NULL object pointer found, you used a corrupt binary db!\nWARNING: Attempting to work around.  This will probably create a\nWARNING: textdump with invalid ancestors\n");
+        printf("\rWARNING: NULL object pointer found, you likely used a corrupt binary db!\nWARNING: Attempting to work around.  This will probably create a\nWARNING: textdump with invalid ancestors\n");
         return;
     }
 
+    /* have we looked at this object yet? */
     if (obj->search == cur_search) {
         cache_discard(obj);
         return;
     }
+
+    /* grab the parents list */
     objs = list_dup(obj->parents);
     cache_discard(obj); 
 
-    /* Dump any parents which haven't already been dumped. */
+    /* first dump any parents which haven't already been dumped. */
     if (list_length(objs) != 0) {
         for (d = list_first(objs); d; d = list_next(objs, d))
-            dump_object(d->u.objnum, fp);
+            dump_object(d->u.objnum, fp, objnames);
     }
 
+    /* ok, get this object now */
     obj = cache_retrieve(objnum);
-    if (obj->search == cur_search) { /* were we written out already ? */
+
+    /* did we get written out since the last check? */
+    if (obj->search == cur_search) {
         cache_discard(obj);
         return;
     }
 
+    /* ok, lets do it then, mark it dirty and update cur_search */
     obj->dirty = 1;
     obj->search = cur_search;
 
+    /* let them know? */
     if (print_objs)
         blank_and_print_obj("Decompiling ", obj);
 
+    /* put 'new' on everything except the system objects */
     if (!is_system(obj->objnum))
        fputs("new ", fp);
-    fputs("object ", fp);
-    print_objname(obj, fp);
 
+    /* print the object definition */
+    fputs("object ", fp);
+    print_dbref(obj, obj->objnum, fp, objnames);
+
+    /* add the parents */
     if (objs->len != 0) {
         fputc(':', fp);
         fputc(' ', fp);
@@ -1532,13 +1555,20 @@ void dump_object(Long objnum, FILE *fp) {
             if (!first)
                 fputs(", ", fp);
             first = 0;
-            print_objname_by_num(d->u.objnum, fp);
+            print_dbref(NULL, d->u.objnum, fp, objnames);
         }
     }
-
     list_discard(objs);
+    fputs(";\n", fp);
 
-    fputs(";\n\n", fp);
+    /* if we are doing number-only, put a name definition in */
+    if (!objnames && obj->objname != -1) {
+        fputs("name $", fp);
+        fputs(ident_name(obj->objname), fp);
+        fprintf(fp, " #%li", (long) obj->objnum);
+        fputs(";\n", fp);
+    }
+    fputc('\n', fp);
 
     /* define variables */
     for (i = 0; i < obj->vars.size; i++) {
@@ -1547,9 +1577,9 @@ void dump_object(Long objnum, FILE *fp) {
             continue;
         if (!cache_check(var->cclass))
             continue;
-        str = data_to_literal(&var->val);
+        str = data_to_literal(&var->val, objnames);
         fputs("var ", fp);
-        print_objname_by_num(var->cclass, fp);
+        print_dbref(NULL, var->cclass, fp, objnames);
         fformat(fp, " %I = %S;\n", var->name, str);
         string_discard(str);
     }
@@ -1600,7 +1630,7 @@ void dump_object(Long objnum, FILE *fp) {
 
     if (objs->len) {
         for (d = list_first(objs); d; d = list_next(objs, d))
-            dump_object(d->u.objnum, fp);
+            dump_object(d->u.objnum, fp, objnames);
     }
     list_discard(objs);
 }

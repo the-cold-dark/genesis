@@ -11,6 +11,24 @@
 
 /* ----------------------------------------------------------------- */
 /* cancel a suspended task                                           */
+COLDC_FUNC(task_info) {
+    cList * list;
+    cData *args;
+ 
+    if (!func_init_1(&args, INTEGER))
+        return;
+
+    list = task_info(INT1);
+
+    if (!list)
+        THROW((type_id, "No task %d.", INT1))
+    pop(1);
+    push_list(list);
+    list_discard(list);
+}
+
+/* ----------------------------------------------------------------- */
+/* cancel a suspended task                                           */
 COLDC_FUNC(cancel) {
     cData *args;
  

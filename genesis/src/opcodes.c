@@ -117,11 +117,10 @@ static Op_info op_info[] = {
     FDEF(F_VARIABLES,  "variables", variables)
 
     /* Object method functions */
-    FDEF(F_COMPILE,           "compile",           add_method)
-    FDEF(F_DECOMPILE,         "decompile",         decompile)
+    FDEF(F_LIST_METHOD,       "list_method",       list_method)
     FDEF(F_ADD_METHOD,        "add_method",        add_method)
     FDEF(F_DEL_METHOD,        "del_method",        del_method)
-    FDEF(F_GET_METHOD,        "get_method",        get_method)
+    FDEF(F_METHOD_BYTECODE,   "method_bytecode",   method_bytecode)
     FDEF(F_RENAME_METHOD,     "rename_method",     rename_method)
     FDEF(F_SET_METHOD_FLAGS,  "set_method_flags",  set_method_flags)
     FDEF(F_SET_METHOD_ACCESS, "set_method_access", set_method_access)
@@ -137,7 +136,6 @@ static Op_info op_info[] = {
     FDEF(F_CHILDREN,     "children",     children)
     FDEF(F_ANCESTORS,    "ancestors",    ancestors)
     FDEF(F_HAS_ANCESTOR, "has_ancestor", has_ancestor)
-    FDEF(F_DESCENDANTS,  "descendants",  descendants)
     FDEF(F_SIZE,         "size",         size)
     FDEF(F_CREATE,       "create",       create)
     FDEF(F_CHPARENTS,    "chparents",    chparents)
@@ -160,6 +158,7 @@ static Op_info op_info[] = {
     { F_RESUME,           "resume",               func_resume },
     { F_SUSPEND,          "suspend",              func_suspend },
     { F_TASKS,            "tasks",                func_tasks },
+    { F_TASK_INFO,        "task_info",            func_task_info },
     { F_TASK_ID,          "task_id",              func_task_id },
     { F_CANCEL,           "cancel",               func_cancel },
     { F_PAUSE,            "pause",                func_pause },
@@ -278,6 +277,7 @@ static Op_info op_info[] = {
     { F_JOIN,             "join",            func_join },
 
     /* Dictionary manipulation (dictop.c). */
+    { F_DICT_VALUES,      "dict_values",     func_dict_values },
     { F_DICT_KEYS,        "dict_keys",       func_dict_keys },
     { F_DICT_ADD,         "dict_add",        func_dict_add },
     { F_DICT_DEL,         "dict_del",        func_dict_del },

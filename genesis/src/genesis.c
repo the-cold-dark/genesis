@@ -110,6 +110,7 @@ INTERNAL void initialize(Int argc, char **argv) {
     /* basic initialization */
     init_defs();
     init_match();
+    init_util();
 
     /* db argument list */
     args = list_new(0);
@@ -204,7 +205,6 @@ INTERNAL void initialize(Int argc, char **argv) {
     init_codegen();
     init_ident();
     init_op_table();
-    init_util();
     init_sig();
     init_execute();
     init_scratch_file();
@@ -281,7 +281,7 @@ INTERNAL void initialize(Int argc, char **argv) {
 
         fputs("Calling $sys.startup(", errfile);
         for (d=list_first(args); d; d=list_next(args, d)) {
-            str = data_to_literal(d);
+            str = data_to_literal(d, TRUE);
             if (!first) {
                 fputc(',', errfile);
                 fputc(' ', errfile);

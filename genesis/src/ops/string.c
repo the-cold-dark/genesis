@@ -10,6 +10,7 @@
 #include "execute.h"
 #include "strutil.h"
 #include "util.h"
+#include "crypt.h"
 
 COLDC_FUNC(strlen) {
     cData *args;
@@ -357,87 +358,38 @@ COLDC_FUNC(strsed) {
 
 /* Encrypt a string. */
 COLDC_FUNC(crypt) {
-    Int num_args;
-    cData *args;
-    char *s, *encrypted;
-    cStr *str;
+    Int     argc;
+    cData * args;
+    cStr  * str;
 
     /* Accept a string to encrypt and an optional salt. */
-    if (!func_init_1_or_2(&args, &num_args, STRING, STRING))
+    if (!func_init_1_or_2(&args, &argc, STRING, STRING))
 	return;
 
-#ifndef sys_freebsd
-    if (num_args == 2 && string_length(args[1].u.str) != 2) {
-	cthrow(salt_id, "Salt (%S) is not two characters.", args[1].u.str);
-	return;
-    }
-#endif
+    str = strcrypt(STR1, ((argc == 2) ? (STR2) : ((cStr *) NULL)));
 
-    s = string_chars(args[0].u.str);
-
-    if (num_args == 2) {
-	encrypted = crypt_string(s, string_chars(args[1].u.str));
-    } else {
-	encrypted = crypt_string(s, NULL);
-    }
-
-    pop(num_args);
-    str = string_from_chars(encrypted, strlen(encrypted));
+    pop(argc);
     push_string(str);
     string_discard(str);
 }
 
 /* Match Encrypted string. */
+/* first arg: already encrypted password */
+/* second arg: word which may be what the encrypted password is */
 COLDC_FUNC(match_crypted) {
-    cData *args;
-    char *p, *s, *encrypted;
-    cStr *seed;
-    Int plen, slen, match;
-    int x;
+    cData * args;
+    Int     rval;
 
     /* Accept a string to encrypt and an optional salt. */
     if (!func_init_2(&args, STRING, STRING))
 	return;
 
-    /* all encryption formats should at LEAST be this small, lets hope */
-    plen = string_length(STR1);
-    slen = string_length(STR2);
-
-    /* magic number 5, all passwords I've seen are at least this long,
-       this makes it easier for us to assume things below, when finding
-       the seed in the password */
-    if (plen < 5 || slen <= 0)
-        THROW((type_id, "Invalid passwords."))
-
-    p = string_chars(STR1);
-    s = string_chars(STR2);
-
-#ifdef __Win32__
-    /* in Win32 we dont actually encrypt anything; bad */
-    encrypted = s;
-#else
-#ifdef sys_freebsd
-    /* look at the password to see what type of encryption it has */
-    if (plen > 4 && (p[0] == '$' && p[2] == '$' && atoi((p+1)))) {
-        /* FreeBSD advanced encryption */
-        /* get the seed */
-        for (x=3; p[x] && p[x] != '$'; x++);
-        seed = string_from_chars(p+3, x-4);
-    } else {
-#endif
-    /* older DES encryption */
-    seed = string_from_chars(p, 2);
-#ifdef sys_freebsd
-    }
-#endif
-    encrypted = crypt_string(s, string_chars(seed));
-    string_discard(seed);
-#endif
-
-    match = !(strcmp(p, encrypted));
+    /* match_crypted returns F_FAILURE when it throws */
+    if ((rval = match_crypted(STR1, STR2)) == F_FAILURE)
+        return;
 
     pop(2);
-    push_int(match);
+    push_int(rval);
 }
 
 COLDC_FUNC(uppercase) {

@@ -21,7 +21,7 @@ extern Ident directory_id, eof_id, backup_done_id;
 
 extern Ident public_id, protected_id, private_id, root_id, driver_id;
 extern Ident noover_id, sync_id, locked_id, native_id, fork_id, atomic_id;
-extern Ident fpe_id;
+extern Ident fpe_id, inf_id;
 
 extern Ident SEEK_SET_id, SEEK_CUR_id, SEEK_END_id;
 

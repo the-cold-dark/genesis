@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include "strutil.h"
 #include "util.h"
+#include "crypt.h"
 
 NATIVE_METHOD(strlen) {
     Int len;
@@ -307,19 +308,13 @@ NATIVE_METHOD(strsed) {
 
 /* Encrypt a string. */
 NATIVE_METHOD(crypt) {
-    char     * s,
-             * crypted;
+    cStr * str;
 
     INIT_1_OR_2_ARGS(STRING, STRING)
 
-    s = string_chars(STR1);
+    str = strcrypt(STR1, ((argc == 2) ? (STR2) : ((cStr *) NULL)));
 
-    if (argc == 2)
-        crypted = crypt_string(s, string_chars(STR2));
-    else
-        crypted = crypt_string(s, NULL);
-
-    CLEAN_RETURN_STRING(string_from_chars(crypted, strlen(crypted)));
+    CLEAN_RETURN_STRING(str);
 }
 
 NATIVE_METHOD(uppercase) {

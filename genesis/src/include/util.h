@@ -31,7 +31,6 @@ Int        strnccmp(char *s1, char *s2, Int n);
 char     * strcchr(char *s, Int c);
 char     * strcstr(char *s, char *search);
 Long       random_number(Long n);
-char     * crypt_string(char *key, char *salt);
 cStr     * vformat(char * fmt, va_list arg);
 cStr     * format(char * fmt, ...);
 char     * timestamp(char * str);

@@ -119,6 +119,38 @@ Int is_valid_ident(char *s)
     return 1;
 }
 
+Bool is_reserved_word(char *s)
+{
+    int start, i, j, len;
+    char * word;
+
+    len = strlen(s);
+
+    start = starting[SUBSCRIPT(*s)].start;
+    if (start != -1) {
+	for (i = start; i < start + starting[SUBSCRIPT(*s)].num; i++) {
+	    /* Compare remaining letters of word against s. */
+	    word = reserved_words[i].word;
+	    for (j = 1; j < len && word[j]; j++) {
+		if (s[j] != word[j]) {
+		    break;
+                }
+	    }
+
+	    /* Comparison fails if we didn't match all the characters in word,
+	     * or if word is an identifier and the next character in s isn't
+	     * punctuation. */
+	    if (word[j])
+		continue;
+	    if (isalpha(*s) && j < len && (isalnum(s[j]) || s[j] == '_'))
+		continue;
+
+	    return TRUE;
+	}
+    }
+    return FALSE;
+}
+
 Int yylex(void)
 {
     cData *d = (cData *)0;

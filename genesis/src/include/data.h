@@ -17,9 +17,9 @@ uLong   data_hash(cData * d);
 void    data_dup(cData * dest, cData * src);
 void    data_discard(cData * data);
 cStr  * data_tostr(cData * data);
-cStr  * data_to_literal(cData * data);
-cStr  * data_add_list_literal_to_str(cStr * str, cList * list);
-cStr  * data_add_literal_to_str(cStr * str, cData * data);
+cStr  * data_to_literal(cData * data, Bool objnames);
+cStr  * data_add_list_literal_to_str(cStr * str, cList * list, Bool objnames);
+cStr  * data_add_literal_to_str(cStr * str, cData * data, Bool objnames);
 Long    data_type_id(Int type);
 
 #endif

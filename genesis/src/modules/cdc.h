@@ -19,6 +19,7 @@ NATIVE_METHOD(buf_to_strings);
 NATIVE_METHOD(str_to_buf);
 NATIVE_METHOD(strings_to_buf);
 NATIVE_METHOD(dict_keys);
+NATIVE_METHOD(dict_values);
 NATIVE_METHOD(dict_add);
 NATIVE_METHOD(dict_del);
 NATIVE_METHOD(dict_add_elem);

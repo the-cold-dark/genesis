@@ -1440,105 +1440,6 @@ EOF
   fi
 fi
 
-
-# Checks for library functions.
-echo $ac_n "  Checking for vprintf""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_func_vprintf'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  cat > conftest.$ac_ext <<EOF
-#line 1543 "configure"
-#include "confdefs.h"
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char vprintf(); below.  */
-#include <assert.h>
-/* Override any gcc2 internal prototype to avoid an error.  */
-char vprintf(); 
-
-int main() { return 0; }
-int t() {
-
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_vprintf) || defined (__stub___vprintf)
-choke me
-#else
-vprintf();
-#endif
-
-; return 0; }
-EOF
-if eval $ac_link; then
-  rm -rf conftest*
-  eval "ac_cv_func_vprintf=yes"
-else
-  rm -rf conftest*
-  eval "ac_cv_func_vprintf=no"
-fi
-rm -f conftest*
-
-fi
-if eval "test \"`echo '$ac_cv_func_'vprintf`\" = yes"; then
-  echo "$ac_t""yes" 1>&6
-  cat >> confdefs.h <<\EOF
-#define HAVE_VPRINTF 1
-EOF
-
-else
-  echo "$ac_t""no" 1>&6
-fi
-
-if test "$ac_cv_func_vprintf" != yes; then
-echo $ac_n "  Checking for _doprnt""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_func__doprnt'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  cat > conftest.$ac_ext <<EOF
-#line 1591 "configure"
-#include "confdefs.h"
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char _doprnt(); below.  */
-#include <assert.h>
-/* Override any gcc2 internal prototype to avoid an error.  */
-char _doprnt(); 
-
-int main() { return 0; }
-int t() {
-
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub__doprnt) || defined (__stub____doprnt)
-choke me
-#else
-_doprnt();
-#endif
-
-; return 0; }
-EOF
-if eval $ac_link; then
-  rm -rf conftest*
-  eval "ac_cv_func__doprnt=yes"
-else
-  rm -rf conftest*
-  eval "ac_cv_func__doprnt=no"
-fi
-rm -f conftest*
-
-fi
-if eval "test \"`echo '$ac_cv_func_'_doprnt`\" = yes"; then
-  echo "$ac_t""yes" 1>&6
-  cat >> confdefs.h <<\EOF
-#define HAVE_DOPRNT 1
-EOF
-
-else
-  echo "$ac_t""no" 1>&6
-fi
-
-fi
-
 ac_safe=`echo "vfork.h" | tr './\055' '___'`
 echo $ac_n "  Checking for vfork.h""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
@@ -1569,124 +1470,6 @@ EOF
 
 else
   echo "$ac_t""no" 1>&6
-fi
-
-echo $ac_n "  Checking for working vfork""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_func_vfork'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  if test "$cross_compiling" = yes; then
-  ac_cv_func_vfork=no
-else
-cat > conftest.$ac_ext <<EOF
-#line 1675 "configure"
-#include "confdefs.h"
-/* Thanks to Paul Eggert for this test.  */
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifdef HAVE_VFORK_H
-#include <vfork.h>
-#endif
-/* On some sparc systems, changes by the child to local and incoming
-   argument registers are propagated back to the parent.
-   The compiler is told about this with #include <vfork.h>,
-   but some compilers (e.g. gcc -O) don't grok <vfork.h>.
-   Test for this by using a static variable whose address
-   is put into a register that is clobbered by the vfork.  */
-static
-#ifdef __cplusplus
-sparc_address_test (int arg)
-#else
-sparc_address_test (arg) int arg;
-#endif
-{
-  static pid_t child;
-  if (!child) {
-    child = vfork ();
-    if (child < 0)
-      perror ("vfork");
-    if (!child) {
-      arg = getpid();
-      write(-1, "", 0);
-      _exit (arg);
-    }
-  }
-}
-main() {
-  pid_t parent = getpid ();
-  pid_t child;
-
-  sparc_address_test ();
-
-  child = vfork ();
-
-  if (child == 0) {
-    /* Here is another test for sparc vfork register problems.
-       This test uses lots of local variables, at least
-       as many local variables as main has allocated so far
-       including compiler temporaries.  4 locals are enough for
-       gcc 1.40.3 on a Solaris 4.1.3 sparc, but we use 8 to be safe.
-       A buggy compiler should reuse the register of parent
-       for one of the local variables, since it will think that
-       parent can't possibly be used any more in this routine.
-       Assigning to the local variable will thus munge parent
-       in the parent process.  */
-    pid_t
-      p = getpid(), p1 = getpid(), p2 = getpid(), p3 = getpid(),
-      p4 = getpid(), p5 = getpid(), p6 = getpid(), p7 = getpid();
-    /* Convince the compiler that p..p7 are live; otherwise, it might
-       use the same hardware register for all 8 local variables.  */
-    if (p != p1 || p != p2 || p != p3 || p != p4
-	|| p != p5 || p != p6 || p != p7)
-      _exit(1);
-
-    /* On some systems (e.g. IRIX 3.3),
-       vfork doesn't separate parent from child file descriptors.
-       If the child closes a descriptor before it execs or exits,
-       this munges the parent's descriptor as well.
-       Test for this by closing stdout in the child.  */
-    _exit(close(fileno(stdout)) != 0);
-  } else {
-    int status;
-    struct stat st;
-
-    while (wait(&status) != child)
-      ;
-    exit(
-	 /* Was there some problem with vforking?  */
-	 child < 0
-
-	 /* Did the child fail?  (This shouldn't happen.)  */
-	 || status
-
-	 /* Did the vfork/compiler bug occur?  */
-	 || parent != getpid()
-
-	 /* Did the file descriptor bug occur?  */
-	 || fstat(fileno(stdout), &st) != 0
-	 );
-  }
-}
-EOF
-eval $ac_link
-if test -s conftest && (./conftest; exit) 2>/dev/null; then
-  ac_cv_func_vfork=yes
-else
-  ac_cv_func_vfork=no
-fi
-fi
-rm -fr conftest*
-fi
-echo "$ac_t""$ac_cv_func_vfork" 1>&6
-if test $ac_cv_func_vfork = no; then
-  cat >> confdefs.h <<\EOF
-#define vfork fork
-EOF
-
 fi
 
 # lib -lnsl (Solaris)
@@ -1724,10 +1507,12 @@ else
 fi
 
 # lib -lcrypt
+libcrypt=no
 echo $ac_n "  Checking for -lcrypt""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_lib_crypt'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
+  libcrypt=yes
   ac_save_LIBS="$LIBS"
 LIBS="-lcrypt $LIBS"
 cat > conftest.$ac_ext <<EOF
@@ -1750,6 +1535,7 @@ rm -f conftest*
 LIBS="$ac_save_LIBS"
 
 fi
+
 if eval "test \"`echo '$ac_cv_lib_'crypt`\" = yes"; then
   echo "$ac_t""yes" 1>&6
   LIBS="-lcrypt $LIBS"
@@ -1987,9 +1773,226 @@ fi
 #   echo "$ac_t""no" 1>&6
 # fi
 
-for ac_func in strftime gettimeofday mkdir select socket strcspn strerror getrusage strstr memmove
+# Checks for library functions.
+echo $ac_n "  Checking for vprintf()""... $ac_c" 1>&6
+if eval "test \"`echo '$''{'ac_cv_func_vprintf'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 1543 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char vprintf(); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+char vprintf(); 
+
+int main() { return 0; }
+int t() {
+
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_vprintf) || defined (__stub___vprintf)
+choke me
+#else
+vprintf();
+#endif
+
+; return 0; }
+EOF
+if eval $ac_link; then
+  rm -rf conftest*
+  eval "ac_cv_func_vprintf=yes"
+else
+  rm -rf conftest*
+  eval "ac_cv_func_vprintf=no"
+fi
+rm -f conftest*
+
+fi
+if eval "test \"`echo '$ac_cv_func_'vprintf`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
+  cat >> confdefs.h <<\EOF
+#define HAVE_VPRINTF 1
+EOF
+
+else
+  echo "$ac_t""no" 1>&6
+fi
+
+if test "$ac_cv_func_vprintf" != yes; then
+
+echo $ac_n "  Checking for _doprnt()""... $ac_c" 1>&6
+if eval "test \"`echo '$''{'ac_cv_func__doprnt'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 1591 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char _doprnt(); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+char _doprnt(); 
+
+int main() { return 0; }
+int t() {
+
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub__doprnt) || defined (__stub____doprnt)
+choke me
+#else
+_doprnt();
+#endif
+
+; return 0; }
+EOF
+if eval $ac_link; then
+  rm -rf conftest*
+  eval "ac_cv_func__doprnt=yes"
+else
+  rm -rf conftest*
+  eval "ac_cv_func__doprnt=no"
+fi
+rm -f conftest*
+
+fi
+if eval "test \"`echo '$ac_cv_func_'_doprnt`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
+  cat >> confdefs.h <<\EOF
+#define HAVE_DOPRNT 1
+EOF
+
+else
+  echo "$ac_t""no" 1>&6
+fi
+
+fi
+
+echo $ac_n "  Checking for working vfork()""... $ac_c" 1>&6
+if eval "test \"`echo '$''{'ac_cv_func_vfork'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  if test "$cross_compiling" = yes; then
+  ac_cv_func_vfork=no
+else
+cat > conftest.$ac_ext <<EOF
+#line 1675 "configure"
+#include "confdefs.h"
+/* Thanks to Paul Eggert for this test.  */
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_VFORK_H
+#include <vfork.h>
+#endif
+/* On some sparc systems, changes by the child to local and incoming
+   argument registers are propagated back to the parent.
+   The compiler is told about this with #include <vfork.h>,
+   but some compilers (e.g. gcc -O) don't grok <vfork.h>.
+   Test for this by using a static variable whose address
+   is put into a register that is clobbered by the vfork.  */
+static
+#ifdef __cplusplus
+sparc_address_test (int arg)
+#else
+sparc_address_test (arg) int arg;
+#endif
+{
+  static pid_t child;
+  if (!child) {
+    child = vfork ();
+    if (child < 0)
+      perror ("vfork");
+    if (!child) {
+      arg = getpid();
+      write(-1, "", 0);
+      _exit (arg);
+    }
+  }
+}
+main() {
+  pid_t parent = getpid ();
+  pid_t child;
+
+  sparc_address_test ();
+
+  child = vfork ();
+
+  if (child == 0) {
+    /* Here is another test for sparc vfork register problems.
+       This test uses lots of local variables, at least
+       as many local variables as main has allocated so far
+       including compiler temporaries.  4 locals are enough for
+       gcc 1.40.3 on a Solaris 4.1.3 sparc, but we use 8 to be safe.
+       A buggy compiler should reuse the register of parent
+       for one of the local variables, since it will think that
+       parent can't possibly be used any more in this routine.
+       Assigning to the local variable will thus munge parent
+       in the parent process.  */
+    pid_t
+      p = getpid(), p1 = getpid(), p2 = getpid(), p3 = getpid(),
+      p4 = getpid(), p5 = getpid(), p6 = getpid(), p7 = getpid();
+    /* Convince the compiler that p..p7 are live; otherwise, it might
+       use the same hardware register for all 8 local variables.  */
+    if (p != p1 || p != p2 || p != p3 || p != p4
+	|| p != p5 || p != p6 || p != p7)
+      _exit(1);
+
+    /* On some systems (e.g. IRIX 3.3),
+       vfork doesn't separate parent from child file descriptors.
+       If the child closes a descriptor before it execs or exits,
+       this munges the parent's descriptor as well.
+       Test for this by closing stdout in the child.  */
+    _exit(close(fileno(stdout)) != 0);
+  } else {
+    int status;
+    struct stat st;
+
+    while (wait(&status) != child)
+      ;
+    exit(
+	 /* Was there some problem with vforking?  */
+	 child < 0
+
+	 /* Did the child fail?  (This shouldn't happen.)  */
+	 || status
+
+	 /* Did the vfork/compiler bug occur?  */
+	 || parent != getpid()
+
+	 /* Did the file descriptor bug occur?  */
+	 || fstat(fileno(stdout), &st) != 0
+	 );
+  }
+}
+EOF
+eval $ac_link
+if test -s conftest && (./conftest; exit) 2>/dev/null; then
+  ac_cv_func_vfork=yes
+else
+  ac_cv_func_vfork=no
+fi
+fi
+rm -fr conftest*
+fi
+echo "$ac_t""$ac_cv_func_vfork" 1>&6
+if test $ac_cv_func_vfork = no; then
+  cat >> confdefs.h <<\EOF
+#define vfork fork
+EOF
+
+fi
+
+for ac_func in strftime gettimeofday mkdir select socket strcspn strerror getrusage strstr memmove crypt
 do
-echo $ac_n "  Checking for $ac_func""... $ac_c" 1>&6
+echo $ac_n "  Checking for $ac_func()""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -2039,7 +2042,7 @@ fi
 done
 
 ########## look for inet_aton()
-echo $ac_n "  Checking for inet_aton... $ac_c" 1>&6
+echo $ac_n "  Checking for inet_aton()... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_func_inet_aton'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -2088,6 +2091,61 @@ EOF
  
 else
   echo "$ac_t""no" 1>&6
+fi
+
+########## look for finite()
+echo $ac_n "  Checking for finite()... $ac_c" 1>&6
+if eval "test \"`echo '$''{'ac_cv_func_finite'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 1873 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with finite(); below.  */
+#include <assert.h>
+#include <math.h>
+
+int main() { return 0; }
+int t() {
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_finite) || defined (__stub___finite)
+choke me
+#else
+finite(0.0);
+#endif
+
+return 0; }
+EOF
+if eval $ac_link; then
+  rm -rf conftest*
+  eval "ac_cv_func_finite=yes"
+else
+  rm -rf conftest*
+  eval "ac_cv_func_finite=no"
+fi
+rm -f conftest*
+
+fi
+
+if eval "test \"`echo '$ac_cv_func_'finite`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
+    ac_tr_func=HAVE_`echo finite | tr '[a-z]' '[A-Z]'`
+  cat >> confdefs.h <<EOF
+#define $ac_tr_func 1
+EOF
+else
+  echo "$ac_t""no" 1>&6
+  cat <<END
+!!
+!! Your OS does not support the math function 'finite()'!
+!!
+!! This means no checks are made on floating numbers, to see if they
+!! are NaN or Inf.  This can lead to corrupted data!
+!!
+END
 fi
 
 ######################################################################
@@ -2145,6 +2203,41 @@ read input
 
 if [ "$input" = y -o "$input" = yes -o "$input" = Y -o "$input" = YES ]; then
     MALLOC_O=malloc.o
+fi
+
+cat <<END
+
+# 
+# The ColdC builtin function crypt() uses SHA-1 encryption based off FreeBSD's
+# MD5 crypt().  If your OS has its own crypt() (likely DES based), and your
+# database includes DES encrypted passwords (this used to be the default for
+# ColdC crypt()), you may want to have match_crypted() use DES encryption
+# as well as SHA-1 for the DES passwords.  If your database does not have
+# any DES encrypted passwords, there is no need to include DES encryption.
+# If your database predates Genesis 1.0p14 it will have DES based passwords.
+#
+END
+
+if [ "$ac_cv_func_crypt" != yes ]; then
+    echo "#"
+    echo "# Your OS ($SYS) does not seem to support crypt()"
+    echo "#"
+    echo $ac_n "[continue]$ac_c"
+    read in
+else
+    echo
+    echo $ac_n "Include your OS crypt() in match_crypted()? [no] $ac_c"
+    read in
+    if [ "$in" = y -o "$in" = yes -o "$in" = Y -o "$in" = YES ]; then
+        cat >> confdefs.h <<EOF
+#define USE_OS_CRYPT 1
+EOF
+    else
+        ## nix libcrypt from the LIBS list
+        if [ $libcrypt = yes ]; then
+            LIBS=`echo $LIBS | sed -e's: *-lcrypt *: :'`
+        fi
+    fi
 fi
 
 cat <<END
@@ -2211,23 +2304,37 @@ fi
 ## the echo rips out extra spaces
 CFLAGS=`echo $CFLAGS $input`
 
+##########################################################################
+## Modules
+##
 ## to add modules in the config file:
 ##
 ##  1) add to 'modules' variable
 ##  2) add an 'ac_cv_mod_xxx' variable
 ##  3) add to BOTH locations where modules are printed
 ##
-modules=" cdc veil web sql"
-
-ac_cv_mod_veil=${ac_cv_mod_veil='yes'}
-ac_cv_mod_cdc=${ac_cv_mod_cdc='yes'}
-ac_cv_mod_web=${ac_cv_mod_web='yes'}
-ac_cv_mod_sql=${ac_cv_mod_sql='no'}
 
 moddir="src/modules"
 modfile="src/modules/moddef.h"
 inc="module.inc"
 defs="module.defs"
+conf="$moddir/mod.conf"
+
+modules=`grep -v '^ *#' $conf | cut -d'	' -f1`
+moddef=`grep -v '^ *#' $conf | cut -d'	' -f1,2`
+modname=`grep -v '^ *#' $conf | cut -d'	' -f1,3`
+
+## fix formatting
+modules=`echo $modules`
+moddef=`echo $moddef`
+modname=`echo $modname`
+
+for i in $modules; do
+    tmp=`grep "^$i	" $conf | cut -d'	' -f2`
+    eval "ac_cv_mod_${i}=$tmp"
+    tmp=`grep "^$i	" $conf | cut -d'	' -f3`
+    eval "mod_${i}_name=$tmp"
+done
 
 trap "rm -f $inc $defs $moduledef; exit" 1 2 15
 
@@ -2241,12 +2348,15 @@ cat <<END
 END
 
 if test -z "$PERL"; then
+    echo "# Your current configuration is:"
+    echo "#"
+    for i in $modules; do
+        eval "tmp_name=`echo '$mod_'${i}'_name'`"
+        eval "tmp_value=`echo '$ac_cv_mod_'${i}`"
+        echo "#         $tmp_name: $tmp_value"
+    done
+
     cat <<END
-# Your current configuration is:
-#
-#           ColdC Module (cdc):  $ac_cv_mod_cdc
-#           Veil Module (veil):  $ac_cv_mod_veil
-#           Web Module (web):    $ac_cv_mod_web
 
 !!
 !! configure was unable to find 'perl' in your PATH.  The programs which
@@ -2271,14 +2381,14 @@ else
 
     query=no
     while true; do
-        cat <<END
-# Your current configuration is:
-#
-#           ColdC Module (cdc):  $ac_cv_mod_cdc
-#           Veil Module (veil):  $ac_cv_mod_veil
-#           Web Module (web):    $ac_cv_mod_web
-
-END
+        echo "# Your current module configuration is:"
+        echo "#"
+        for i in $modules; do
+            eval "tmp_name=`echo '$mod_'${i}'_name'`"
+            eval "tmp_value=`echo '$ac_cv_mod_'${i}`"
+            echo "#         $tmp_name: $tmp_value"
+        done
+        echo
         echo $ac_n "Reconfigure Modules? [$query] $ac_c" 1>&6
         read inp
         inp=`echo $inp | tr '[A-Z]' '[a-z]'`
@@ -2312,7 +2422,8 @@ END
     done
 
 #    if test "$mod_config" != "$modules" -o ! -f $modfile; then
-        echo "- Generating module files for" $mod_config
+        ## odd quoting makes even spacing
+        echo "- Generating module files for:" $mod_config
         owd=`pwd`
         cd $moddir
         objs=`perl modbuild $mod_config`;

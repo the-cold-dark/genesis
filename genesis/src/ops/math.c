@@ -17,57 +17,226 @@
 #include "util.h"
 #include "sig.h"
 
-#ifndef PI
-#define PI 3.141592654
-#endif
+#define RESET_FPE (caught_fpe = 0)
 
 #define HANDLE_FPE \
         if (caught_fpe) { \
-            caught_fpe = 0; \
+            RESET_FPE; \
             THROW((fpe_id, "floating-point exception")); \
         }
 
-#define MATH_HOOK_FPE_2(_name_) \
-    COLDC_FUNC(_name_) { \
-        double r = 0; \
-        cData * args; \
-        if (!func_init_2(&args, FLOAT, FLOAT))\
-            return; \
-        r = _name_ ((double) _FLOAT(ARG1), (double) _FLOAT(ARG2)); \
-        HANDLE_FPE; \
-        pop(2); push_float((cFloat) r);\
-    }
+#ifdef HAVE_FINITE
+#define CHECK_FINITE(__x) \
+        if (!finite((double) __x)) \
+            THROW((inf_id, "Infinite result."))
+#else
+#define CHECK_FINITE(__x)
+#endif
 
-#define MATH_HOOK_FPE( _name_ ) \
-    COLDC_FUNC(_name_) { \
-        double r = 0; \
-        cData * args; \
-        if (!func_init_1(&args, FLOAT))\
-            return; \
-        r = _name_ ((double) _FLOAT(ARG1)); \
-        HANDLE_FPE; \
-        pop(1); push_float((cFloat) r);\
-    }
+/* man: no */
+COLDC_FUNC(sin) {
+    cData * args;
+    double  r;
 
-#define MATH_HOOK(_name_) \
-    COLDC_FUNC(_name_) { \
-        cData * args; \
-        if (!func_init_1(&args, FLOAT))\
-            return; \
-        pop(1); push_float((cFloat) _name_ ((double) _FLOAT(ARG1))); \
-    }
+    if (!func_init_1(&args, FLOAT))
+        return;
 
-MATH_HOOK(sin)
-MATH_HOOK(exp)
-MATH_HOOK_FPE(log)
-MATH_HOOK(cos)
-MATH_HOOK_FPE(tan)
-MATH_HOOK_FPE(sqrt)
-MATH_HOOK_FPE(asin)
-MATH_HOOK_FPE(acos)
-MATH_HOOK(atan)
-MATH_HOOK_FPE_2(pow)
-MATH_HOOK_FPE_2(atan2)
+    r = sin((double) FLOAT1);
+
+    CHECK_FINITE(r);
+
+    pop(1);
+    push_float((cFloat) r);
+}
+
+/* man: ? */
+COLDC_FUNC(exp) {
+    cData  * args;
+    double   r;
+
+    if (!func_init_1(&args, FLOAT))
+        return;
+
+    r = exp((double) FLOAT1);
+
+    CHECK_FINITE(r);
+
+    pop(1);
+    push_float((cFloat) r);
+}
+
+/* man: ? */
+COLDC_FUNC(log) {
+    double   r;
+    cData  * args;
+
+    if (!func_init_1(&args, FLOAT))
+        return;
+
+    RESET_FPE;
+
+    r = log((double) FLOAT1);
+
+    HANDLE_FPE;
+
+    CHECK_FINITE(r);
+
+    pop(1);
+    push_float((cFloat) r);
+}
+
+/* man: no */
+COLDC_FUNC(cos) {
+    cData  * args;
+    double   r;
+
+    if (!func_init_1(&args, FLOAT))
+        return;
+
+    r = cos((double) FLOAT1);
+
+    CHECK_FINITE(r);
+
+    pop(1);
+    push_float((cFloat) r);
+}
+
+/* man: no? */
+COLDC_FUNC(tan) {
+    double   r;
+    cData  * args;
+
+    if (!func_init_1(&args, FLOAT))
+        return;
+
+    RESET_FPE;
+
+    r = tan((double) FLOAT1);
+
+    HANDLE_FPE;
+
+    CHECK_FINITE(r);
+
+    pop(1);
+    push_float((cFloat) r);
+}
+
+/* man: ? */
+COLDC_FUNC(sqrt) {
+    double   r;
+    cData  * args;
+
+    if (!func_init_1(&args, FLOAT))
+        return;
+
+    RESET_FPE;
+
+    r = sqrt((double) FLOAT1);
+
+    HANDLE_FPE;
+
+    CHECK_FINITE(r);
+
+    pop(1);
+    push_float((cFloat) r);
+}
+
+/* man: ? */
+COLDC_FUNC(asin) {
+    double   r;
+    cData  * args;
+
+    if (!func_init_1(&args, FLOAT))
+        return;
+
+    RESET_FPE;
+
+    r = asin((double) FLOAT1);
+
+    HANDLE_FPE;
+
+    CHECK_FINITE(r);
+
+    pop(1);
+    push_float((cFloat) r);
+}
+
+/* man: ? */
+COLDC_FUNC(acos) {
+    double   r;
+    cData  * args;
+
+    if (!func_init_1(&args, FLOAT))
+        return;
+
+    RESET_FPE;
+
+    r = acos((double) FLOAT1);
+
+    HANDLE_FPE;
+
+    CHECK_FINITE(r);
+
+    pop(1);
+    push_float((cFloat) r);
+}
+
+/* man: ? */
+COLDC_FUNC(atan) {
+    cData  * args;
+    double   r;
+
+    if (!func_init_1(&args, FLOAT))
+        return;
+
+    r = atan((double) FLOAT1);
+
+    CHECK_FINITE(r);
+
+    pop(1);
+    push_float((cFloat) r);
+}
+
+/* man: yes */
+COLDC_FUNC(pow) {
+    double   r;
+    cData  * args;
+
+    if (!func_init_2(&args, FLOAT, FLOAT))
+        return;
+
+    RESET_FPE;
+
+    r = pow((double) FLOAT1, (double) FLOAT2);
+
+    HANDLE_FPE;
+
+    CHECK_FINITE(r);
+
+    pop(1);
+
+    push_float((cFloat) r);
+}
+
+COLDC_FUNC(atan2) {
+    double   r;
+    cData  * args;
+
+    if (!func_init_2(&args, FLOAT, FLOAT))
+        return;
+
+    RESET_FPE;
+
+    r = pow((double) FLOAT1, (double) FLOAT2);
+
+    HANDLE_FPE;
+
+    CHECK_FINITE(r);
+
+    pop(1);
+
+    push_float((cFloat) r);
+}
 
 COLDC_FUNC(random) {
     cData * args;
@@ -77,7 +246,7 @@ COLDC_FUNC(random) {
         return;
 
     /* Replace argument on stack with a random number. */
-    _INT(ARG1) = random_number(_INT(ARG1)) + 1;
+    INT1 = random_number(INT1) + 1;
 }
 
 /* which is 1 for max, -1 for min. */
@@ -133,10 +302,10 @@ COLDC_FUNC(abs) {
         return;
 
     if (args[0].type == INTEGER) {
-        if (_INT(ARG1) < 0)
-            _INT(ARG1) = -_INT(ARG1);
+        if (INT1 < 0)
+            INT1 = -INT1;
     } else if (args[0].type == FLOAT) {
-        _FLOAT(ARG1) = (cFloat) fabs((double) _FLOAT(ARG1));
+        FLOAT1 = (cFloat) fabs((double) FLOAT1);
     }
 }
 

@@ -122,7 +122,6 @@ int inet_aton (const char * cp, struct in_addr * addr) {
 SOCKET get_server_socket(Int port, char * addr) {
     Int one=1;
     SOCKET sock;
-    unsigned long ipaddr;
 
     /* verify the address first */
     memset(&sockin, 0, sizeof(sockin));               /* zero it */

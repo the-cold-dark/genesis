@@ -20,9 +20,6 @@
 #define FORMAT_BUF_INITIAL_LENGTH 48
 #define MAX_SCRATCH 2
 
-/* crypt() is not POSIX. */
-extern char * crypt(const char *, const char *);
-
        char lowercase[128];
        char uppercase[128];
 static Int  reserve_fds[MAX_SCRATCH];
@@ -171,24 +168,6 @@ Long random_number(Long n) {
     return num % n;
 }
 
-/* Encrypt a string.  The salt can be NULL. */
-char * crypt_string(char * key, char * salt) {
-#ifdef __Win32__
-    return key;
-#else
-    char rsalt[3];
-
-    if (!salt) {
-	rsalt[0] = random_number(95) + 32;
-	rsalt[1] = random_number(95) + 32;
-	rsalt[2] = (char) NULL;
-	salt = rsalt;
-    }
-
-    return crypt(key, salt);
-#endif
-}
-
 /* Result must be copied before it can be re-used.  Non-reentrant. */
 cStr * vformat(char * fmt, va_list arg) {
     cStr   * buf,
@@ -237,7 +216,7 @@ cStr * vformat(char * fmt, va_list arg) {
 	    break;
 
 	  case 'D':
-	    str = data_to_literal(va_arg(arg, cData *));
+	    str = data_to_literal(va_arg(arg, cData *), TRUE);
 	    if (string_length(str) > MAX_DATA_DISPLAY) {
 		str = string_truncate(str, MAX_DATA_DISPLAY - 3);
 		str = string_add_chars(str, "...", 3);
@@ -250,7 +229,7 @@ cStr * vformat(char * fmt, va_list arg) {
             cData d;
             d.type = OBJNUM;
             d.u.objnum = va_arg(arg, cObjnum);
-            str = data_to_literal(&d);
+            str = data_to_literal(&d, TRUE);
             buf = string_add_chars(buf, string_chars(str), string_length(str));
             string_discard(str);
           }
@@ -325,50 +304,65 @@ void fformat(FILE *fp, char *fmt, ...) {
     va_end(arg);
 }
 
-#if 1
+#if DISABLED
 cStr *fgetstring(FILE *fp) {
     cStr *line;
     Int len;
     char buf[BIGBUF];
 
-    line = string_new(0);
+    line = string_new(0);  
 
     while (fgets(buf, BIGBUF, fp)) {
-	len = strlen(buf);
-	if (buf[len - 1] == '\n') {
-	    line = string_add_chars(line, buf, len-1);
-	    return line;
-	} else
-	    line = string_add_chars(line, buf, len);
+        len = strlen(buf);
+        if (buf[len - 1] == '\n') {
+            line = string_add_chars(line, buf, len-1);
+            return line;
+        } else
+            line = string_add_chars(line, buf, len);
     }
-
-    if (line->len) {
-	return line;
+        
+    if (line->len) { 
+        return line;
     } else {
-	string_discard(line);
-	return NULL;
-    }
+        string_discard(line);
+        return NULL;
+    } 
 }
 #else
 cStr *fgetstring(FILE *fp) {
-    cStr    * line;
+    cStr        * line;
     Int           len;
-    static char * start;
-    static char   buf[BUF*2];
+    char        * p;
 
-    if (
-    if (fgets(buf, BIGBUF, fp)) {
+    /* we have a bigger line in general, but it reduces
+       copies for the most common situation */
+    line = string_new(BUF);
+    p = string_chars(line);
+    if (fgets(p, BUF, fp)) {
+	len = strlen(p);
+        if (p[len - 1] == '\n') {
+            p[len - 1] = (char) NULL;
+            line->len = len - 1;
+            return line;
+        } else {
+            char   buf[BIGBUF];
 
-    while (fgets(buf, BIGBUF, fp)) {
-	len = strlen(buf);
-	if (buf[len - 1] == '\n') {
-	    line = string_add_chars(line, buf, len-1);
-	    return line;
-	} else
-	    line = string_add_chars(line, buf, len);
+            line->len = len;
+
+            /* drop to something less efficient for bigger cases */
+            while (fgets(buf, BIGBUF, fp)) {
+        	len = strlen(buf);
+        	if (buf[len - 1] == '\n') {
+        	    line = string_add_chars(line, buf, len-1);
+        	    return line;
+        	} else {
+        	    line = string_add_chars(line, buf, len);
+                }
+            }
+        }
     }
 
-    if (line->len) {
+    if (line->len > 0) {
 	return line;
     } else {
 	string_discard(line);
@@ -466,6 +460,10 @@ Int parse_strcpy(char * b1, char * b2, Int slen) {
         if (*s == '\\') {
             s++, l--;
             switch (*s) {
+                case 't':
+                    add_char(b, '\t');
+                    len--;
+                    break;
                 case 'n':
                     add_char(b, '\n');
                     len--;

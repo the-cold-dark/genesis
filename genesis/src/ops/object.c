@@ -154,10 +154,17 @@ COLDC_FUNC(add_method) {
     cList   * code,
             * errors;
     Int       flags=-1, access=-1, native=-1;
+    char    * name;
 
     /* Accept a list of lines of code and a symbol for the name. */
     if (!func_init_2(&args, LIST, SYMBOL))
 	return;
+
+    name = ident_name(SYM2);
+    if (is_reserved_word(name))
+        THROW((parse_id,
+              "%I is a reserved word, and cannot be used as a method name",
+              SYM2))
 
     method = object_find_method(cur_frame->object->objnum, args[1].u.symbol);
 
@@ -419,6 +426,7 @@ COLDC_FUNC(method_info) {
     list[5].u.list = list_method_flags(method->m_flags);
 
     pop(1);
+    cache_discard(method->object);
     push_list(output);
     list_discard(output);
 }
@@ -489,7 +497,7 @@ COLDC_FUNC(find_next_method) {
     }
 }
 
-COLDC_FUNC(decompile) {
+COLDC_FUNC(list_method) {
     Int      num_args,
              indent,
              parens;
@@ -552,18 +560,6 @@ COLDC_FUNC(children) {
 
     /* Push the children list onto the stack. */
     push_list(cur_frame->object->children);
-}
-
-COLDC_FUNC(descendants) {
-    cList * desc;
-
-    if (!func_init_0())
-        return;
-
-    desc = object_descendants(cur_frame->object->objnum);
-
-    push_list(desc);
-    list_discard(desc);
 }
 
 COLDC_FUNC(ancestors) {
@@ -821,12 +817,6 @@ COLDC_FUNC(objnum) {
     push_int(cur_frame->object->objnum);
 }
 
-COLDC_FUNC(compile) {
-    if (!func_init_0())
-        return;
-    push_int(1);
-}
-
 INTERNAL cList * add_op_arg(cList * out, Int type, Long op, Obj * obj) {
     cData d;
 
@@ -869,7 +859,7 @@ INTERNAL cList * add_op_arg(cList * out, Int type, Long op, Obj * obj) {
     return out;
 }
 
-COLDC_FUNC(get_method) {
+COLDC_FUNC(method_bytecode) {
     cData       * args, d;
     Method     * method;
     cList       * list;

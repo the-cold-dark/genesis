@@ -180,6 +180,7 @@ void propagate_error(cList *traceback, Ident error);
 void pop_error_action_specifier(void);
 void pop_handler_info(void);
 void task_suspend(void);
+cList * task_info(Long tid);
 void task_resume(Long tid, cData *ret);
 void task_cancel(Long tid);
 void task_pause(void);

@@ -1,0 +1,197 @@
+This document outlines the creation of native methods in a module.  Until
+better documentation appears your best bet along side using this document
+is to simply look at existing modules.
+
+Modules
+=======
+
+Use the following steps to create a native module; all steps assume you
+are in src/modules:
+
+1)  create a .mod file for the module, such as mystuff.mod.  Format it as
+    follows (lines beginning with '#' are comments, blank lines are ignored):
+
+      * Create a native declaration for each native method.  Do this as:
+
+            native <ref> <function>
+
+        Where <ref> is an $object.method() reference which represents
+        the native's default configuration, and <function> is the name
+        of the native function (as specified with the NATIVE_FUNCTION()
+        macro).
+      * define all of the objects used in the module by beginning a line
+        with 'objs' followed by all of the objects, seperated by a space.
+        Example:
+
+            objs mystuff.o morestuff.o
+
+        In general you have a primary file based off the name of the module
+        (in this case mystuff.c/mystuff.o).
+
+2)  create a C include file based off the name of the module (in the
+    above example this would be 'mystuff.h').  Include the following
+    in this file, replacing each occurance of 'mystuff' which your
+    appropriate module name:
+
++-------------
+#ifndef _mystuff_h_
+#define _mystuff_h_
+
+#include "defs.h"
+#include "cdc_pcode.h"
+
+void init_mystuff(Int argc, char ** argv);
+void uninit_mystuff(void);
+
+#ifndef _mystuff_
+extern module_t mystuff_module;
+#endif
+
+NATIVE_METHOD(...);
+
+#endif
++-------------
+
+    Define each of the native methods in the module where the macro
+    NATIVE_METHOD(...) is, replacing '...' with the name of the native
+    method function (see step 1).
+
+    NOTE: "defs.h" includes many of the standard C includes, so you can
+    likely leave these out, view the file for specifics.
+
+3)  create the primary C file for the module, generally named from the
+    name of the file (such as 'mystuff.c'), and as is specified in step 1.
+    Format this file as follows, replacing occurances of 'mystuff' with
+    the name of your module:
+
++-------------
+/*
+// Explain the module
+*/
+
+#define _mystuff_
+
+#include "mystuff.h"
+
+module_t mystuff_module = {init_mystuff, uninit_mystuff};
+
+void init_mystuff(Int argc, char ** argv) {
+    /* hook into initialization here */
+}
+
+void uninit_mystuff(void) {
+    /* hook into uninitialization here */
+}
+
+#undef _mystuff_
++-------------
+
+    If you do not wish to initialize / uninitialize, do not prototype or
+    define the initialization method and set it in the module_t definition
+    to NULL.
+
+4)  Define the native methods.  For each NATIVE_METHOD() defined in the
+    include file, define it here (or in another object file, appropriately),
+    as follows.  Read 'Native Methods' below for more information on how
+    to setup the native method internally.
+
++-------------
+NATIVE_METHOD(mymethod) {
+    /* definitions */
+}
++-------------
+
+5)  Define the module in mod.conf.  This is a tab delimited file, with the
+    first field being the name of the module ('mystuff'), the second field
+    being the default answer for configure (either 'yes' or 'no'), and the
+    third field being a short description of the module, quoted if it contains
+    more than one word.
+
+6)  The command 'moddef' will recreate the other required module files, and
+    is usefull as you write the module.  To run it simply specify each module
+    name on the command line (such as 'moddef cdc web veil mystuff').  If
+    you do this by hand, you will have to manually insert the printed
+    object files into ../Makefile (i.e. src/Makefile).
+
+    When rebuilding multiple times over you will have to remove the file
+    ../native.o, there is not likely a dependancy on this so native method
+    changes will not appear without removing it and having it re-compiled.
+
+    In general it is suggested that you 'make reconfig'.
+
+Native Methods
+==============
+
+Define the native method with NATIVE_METHOD(name), where 'name' is the name
+of the native method function, as defined in the module.mod file (step 1).
+After defining your C variables, include an INIT line, which is logically
+formatted ala 'INIT_1_OR_2_ARGS' or 'INIT_NO_ARGS' or 'INIT_3_ARGS'.  Not
+all cases have been defined, look in src/include/macros.h to find all of
+the defined INIT macros.  NOTE: do not include any statement after your
+C defines and the INIT macro, as the INIT macro also defines:
+
+    cData * args;
+    cInt    argc;
+
+For each of the possible arguments to be initialized as, include a type
+definition, ala:
+
+    INIT_1_OR_2_ARGS(INTEGER, BUFFER);
+
+The INIT macros do not cover open ended arguments as a ColdC method does
+with lists (i.e. arg [data]), nor does it include variable typed arguments.
+Look at how other methods handle this if you wish to do it (cdc_dict.c
+includes many examples of variable typed arguments).
+
+You can use <type>n to specify specific arguments, in a one based list (not a
+zero based list).  The type names are abbreviated, and are as follow:
+
+    INT1, INT2, INT3, INT4, INT5, FLOAT1, FLOAT2, FLOAT3, OBJNUM1, OBJNUM2,
+    OBJNUM3, SYM1, SYM2, SYM3, ERR1, ERR2, ERR3, STR1, STR2, STR3, LIST1,
+    LIST2, LIST3, BUF1, BUF2, BUF3, FROB1, FROB2, FROB3, DICT1, DICT2, DICT3
+
+(this list is also in include/macros.h)
+
+Use the macro THROW() to throw an error, do not terminate the macro with a
+semi-colon as it evaluates to a bracketed statement block.  There is one
+argument to THROW which is a parethesised expression representing the
+arguments for cthrow() (the actual throw function in C).  Args for this
+function are the same as throw() in ColdC, except for Cold formatting
+can be performed on the string (this is not printf formatting, but it is
+similar).  The first argument is the symbol to throw, as a variable.  Look
+in include/ident.h for a list of symbols (they all end with '_id').
+
+Handling data references can get confusing.  In general you are best off
+having an experienced driver hacker examine your code for leaks before
+using it (unless you are an experienced driver hacker :)  The following
+explains how natives handle data references, which may be confusing to
+those who do not understand how data references work.
+
+The stack must be cleared of all data, including the name of the method
+and the object the method is on, before pushing the result onto the stack.
+This differs from functions in that the method name and object are on
+the stack before the arguments are.  The macro CLEAN_STACK() will clean
+the stack.  To keep references at their most minimal, hopefully reducing
+copies, duplicate the arguments and clean the stack, if you are going to
+be modifying the data.  The following macro's exist for returning data
+from a native method:
+
+  RETURN_INTEGER(d)
+  RETURN_FLOAT(d)
+  RETURN_OBJNUM(d)
+  RETURN_SYMBOL(d)
+  RETURN_ERROR(d)
+  RETURN_STRING(d)
+  RETURN_BUFFER(d)
+  RETURN_FROB(d)
+  RETURN_DICT(d)
+  RETURN_LIST(d)
+
+where 'd' is the data type (i.e. RETURN_LIST(cList)).  There are also
+duplicate macro's beginning with 'CLEAN_' which will inherently clean
+the stack before returning the data (so you do not have to call
+CLEAN_STACK()).  Be warned when using the latter macro's, if you do not
+increment references to your data it will be purged before it is returned,
+causing a segmentation violation.
+
+

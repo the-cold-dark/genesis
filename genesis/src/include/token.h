@@ -12,6 +12,8 @@ void lex_start(cList * code_lines);
 Int  yylex(void);
 Int  is_valid_ident(char * s);
 Int  cur_lineno(void);
+Bool is_reserved_word(char *s);
+
 
 #endif
 

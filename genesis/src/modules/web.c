@@ -31,6 +31,7 @@
 
 module_t web_module = {init_web, uninit_web};
 
+/* we pre-define this for speed */
 char * dec_2_hex[] = {
    (char) NULL, (char) NULL, (char) NULL, (char) NULL, (char) NULL,
    (char) NULL, (char) NULL, (char) NULL, (char) NULL, (char) NULL,

@@ -1387,7 +1387,7 @@ void op_add(void) {
                 d2->u.str = str;
                 break;
             default:
-                str = data_to_literal(d2);
+                str = data_to_literal(d2, TRUE);
                 data_discard(d2);
                 d2->type = STRING;
                 d2->u.str = str;
@@ -1409,7 +1409,7 @@ void op_add(void) {
         	d1->u.list = list_append(d1->u.list, d2->u.list);
                 break;
             case STRING: {
-                cStr * str = data_to_literal(d1);
+                cStr * str = data_to_literal(d1, TRUE);
                 data_discard(d1);
                 d1->type = STRING;
                 d1->u.str = str;
@@ -1439,7 +1439,7 @@ void op_add(void) {
                 d1->type = STRING;
                 d1->u.str = str;
             } else {
-                str = data_to_literal(d1);
+                str = data_to_literal(d1, TRUE);
                 data_discard(d1);
                 d1->type = STRING;
                 d1->u.str = str;
@@ -1517,7 +1517,7 @@ void op_doeq_add(void) {
                 d2->u.str = str;
                 break;
             default:
-                str = data_to_literal(d2);
+                str = data_to_literal(d2, TRUE);
                 data_discard(d2);
                 d2->type = STRING;
                 d2->u.str = str;
@@ -1547,7 +1547,7 @@ void op_doeq_add(void) {
                 return;
             }
             case STRING: {
-                cStr * str = data_to_literal(d1);
+                cStr * str = data_to_literal(d1, TRUE);
                 data_discard(d1);
                 d1->type = STRING;
                 d1->u.str = str;
@@ -1581,7 +1581,7 @@ void op_doeq_add(void) {
                 d1->type = STRING;
                 d1->u.str = str;
             } else {
-                str = data_to_literal(d1);
+                str = data_to_literal(d1, TRUE);
                 data_discard(d1);
                 d1->type = STRING;
                 d1->u.str = str;

@@ -134,7 +134,7 @@ COLDC_FUNC(toliteral) {
 	return;
 
     /* Replace the argument with its unparsed version. */
-    str = data_to_literal(&args[0]);
+    str = data_to_literal(&args[0], TRUE);
     pop(1);
     push_string(str);
     string_discard(str);
@@ -162,6 +162,10 @@ COLDC_FUNC(tosym) {
     /* Accept one string argument. */
     if (!func_init_1(&args, STRING))
 	return;
+
+    /* no NULL symbols */
+    if (string_length(STR1) < 1)
+        THROW((symbol_id, "Symbols must be one or more characters."))
 
     /* sometimes strings are not NULL terminated, make sure it is */
     s = string_chars(STR1);

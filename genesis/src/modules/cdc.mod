@@ -6,6 +6,7 @@ native $buffer.to_string()           buf_to_str
 native $buffer.to_strings()          buf_to_strings
 native $buffer.from_string()         str_to_buf
 native $buffer.from_strings()        strings_to_buf
+native $dictionary.values()          dict_values
 native $dictionary.keys()            dict_keys
 native $dictionary.add()             dict_add
 native $dictionary.union()           dict_union

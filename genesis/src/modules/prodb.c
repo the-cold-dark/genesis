@@ -5,15 +5,15 @@
 // expand upon later for other dbs.
 */
 
-#define NATIVE_MODULE "$sql"
+#define NATIVE_MODULE "PROGRESS interface"
 
-#define _sql_
+#define _prodb_
 
-#include "sql.h"
+#include "prodb.h"
 
 /*
 // -------------------------------------------------------------------
-// Parse the output of an sql statement from Progress 7
+// Parse the output of an export statement from PROGRESS
 //
 // Progress returns fields with a frustrating quote delimitation, quotes
 // are escaped within a quote field by doubling them up.  For instance,

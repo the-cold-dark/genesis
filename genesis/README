@@ -13,10 +13,7 @@ RELEASE INFORMATION
 
 Read doc/CHANGES for information on release changes.
 
-Known Bugs:
-
-  * $dictionary.del_elem and $dictionary.add_elem cause crashes, they
-    are disabled in the cdc.mod
+Read doc/TODO for a list of current tasks and known bugs.
 
 ------------------------------------------------------------------------
 FURTHER INFORMATION
@@ -31,9 +28,13 @@ The following email lists are available:
     genesis-bugs        Bug (feature) reporting for Genesis
     genesis-hackers     Genesis development list
 
-To subscribe to a list, send a mail message to majordomo@cold.org with
-a 'subscribe list' line for each list.  For instance, if you wanted to
-subscribe to 'coldstuff' and 'coldcore', your message body would be:
+You can easilly subscribe to the lists at:
+
+    http://www.cold.org/info.html
+
+Or by sending a mail message to majordomo@cold.org with a 'subscribe list'
+line for each list.  For instance, if you wanted to subscribe to 'coldstuff'
+and 'coldcore', your message body would be:
 
 subscribe coldstuff
 subscribe coldcore
@@ -42,7 +43,7 @@ All lists are at cold.org (i.e. coldstuff@cold.org).
 
 Lists are archived at:
 
-    http://www.cold.org/~mail/
+    http://www.cold.org/info.html
 
 Documentation:
 
@@ -54,7 +55,7 @@ NOTES
 
 Verified to compile on:
 
-    * FreeBSD 2.1-R and 2.1.5
+    * FreeBSD 2.1-R and 2.1.5-R
     * DEC OSF/1 2.0
     * DEC Ultrix 4.4
     * Sun Solaris 2.5

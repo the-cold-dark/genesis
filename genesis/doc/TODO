@@ -1,9 +1,13 @@
 -----------------------
-Immediate:
+Immediate (before 1.1):
 
 * Change method scope to change based off the method access, so a frob
   '.name()'  can exist alongside a public '.name()'.  Do this by using
   the method access in matching.
+* force eval execution in coldcc to be atomic
+* sort x in (list|dict) where|with? (expr);
+* for x in (string) {..}
+  Add string capabilities to others too (filter, etc)
 
 -----------------------
 Bugs:
@@ -25,8 +29,6 @@ Cleanup:
   added if an ancestor defines it as !overridable.
 
 * sanity checks are still not done, do them?
-
-* descendants()
 
 * Implement a more efficient malloc for our specific uses, perhaps
   build on top of phkmalloc.

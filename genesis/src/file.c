@@ -18,6 +18,11 @@
 #include "cache.h"
 #include "util.h"
 
+#define THROWN(_args_) { \
+        cthrow _args_ ; \
+        return NULL; \
+    }
+
 /*
 // --------------------------------------------------------------------
 // The first routines deal with file controllers, and should be system
@@ -152,27 +157,45 @@ Int flush_file(filec_t * file) {
 cBuf * read_binary_file(filec_t * file, Int block) {
     cBuf * buf = buffer_new(block);
 
-    if (feof(file->fp)) {
-        cthrow(eof_id, "End of file.");
-        return NULL;
-    }
+    if (feof(file->fp))
+        THROWN((eof_id, "End of file."))
 
     buf->len = fread(buf->s, sizeof(unsigned char), block, file->fp);
 
     return buf;
 }
 
+/* slower, but we get clean output */
 cStr * read_file(filec_t * file) {
+    register char * p, * s;
+    register int len;
     cStr * str;
 
-    if (feof(file->fp)) {
-        cthrow(eof_id, "End of file.");
-        return NULL;
-    }
+    if (feof(file->fp))
+        THROWN((eof_id, "End of file."))
 
     str = fgetstring(file->fp);
-    if (str == NULL)
-        cthrow(eof_id, "End of file.");
+
+    if (!str)
+        THROWN((eof_id, "End of file."))
+
+    /* ok, munch meta-characters */
+    p = s = string_chars(str);
+    len = string_length(str);
+
+    while (len-- && *s) {
+        if (ISPRINT(*s)) {
+            *p = *s;
+            p++;
+        } else if (*s == '\t') {
+            *p = ' ';
+            p++;
+        }
+        s++;
+    }
+    *p = (char) NULL;
+
+    str->len = p - string_chars(str);
 
     return str;
 }
@@ -207,16 +230,12 @@ cStr * build_path(char * fname, struct stat * sbuf, Int nodir) {
     Int         len = strlen(fname);
     cStr  * str = NULL;
 
-    if (len == 0) {
-        cthrow(file_id, "No file specified.");
-        return NULL;
-    }
+    if (len == 0)
+        THROWN((file_id, "No file specified."))
 
 #ifdef RESTRICTIVE_FILES
-    if (strstr(fname, "../") || strstr(fname, "/..") || !strcmp(fname, "..")) {
-        cthrow(perm_id, "Filename \"%s\" is not legal.", fname);
-        return NULL;
-    }
+    if (strstr(fname, "../") || strstr(fname, "/..") || !strcmp(fname, ".."))
+        THROWN((perm_id, "Filename \"%s\" is not legal.", fname))
 
     str = string_from_chars(c_dir_root, strlen(c_dir_root));
     str = string_addc(str, '/');
@@ -330,10 +349,8 @@ cList * open_file(cStr * name, cStr * smode, Obj * obj) {
        have a special case which we need to handle differently */
 
     if (stat(fnew->path->s, &sbuf) == F_SUCCESS) {
-        if (S_ISDIR(sbuf.st_mode)) {
-            cthrow(directory_id, "\"%s\" is a directory.", fnew->path->s);
-            return NULL;
-        }
+        if (S_ISDIR(sbuf.st_mode))
+            THROWN((directory_id, "\"%s\" is a directory.", fnew->path->s))
     }
 
     fnew->fp = fopen(fnew->path->s, mode);

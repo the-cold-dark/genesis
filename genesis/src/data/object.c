@@ -211,44 +211,6 @@ INTERNAL void object_update_parents(Obj * object,
 
 /*
 // -----------------------------------------------------------------
-//
-// Note: descendants is something which should NOT be used often, it is
-// for maintenance purposes.
-//
-// it is handle this inneficient way because the other
-// method used was loosing objects, the reason is unknown.
-*/
-cList * object_descendants(Long objnum) {
-    Int        i = 1;
-    cList   * list;
-    Obj * obj;
-    cData   * d;
-
-    cur_search++;
-    obj = cache_retrieve(objnum);
-    obj->search = cur_search;
-
-    list = list_dup(obj->children);
-
-    cache_discard(obj);
-
-    for (i=1; i <= list->len; i++) {
-        d = list_elem(list, i);
-        if ((obj = cache_retrieve(d->u.objnum)) != NULL) {
-            if (obj->search != cur_search) {
-                obj->search = cur_search;
-                obj->dirty = 1;
-                list = list_union(list, obj->children);
-            }
-            cache_discard(obj);
-        }
-    }
-
-    return list;
-}
-
-/*
-// -----------------------------------------------------------------
 */
 cList * object_ancestors(Long objnum) {
     cList * ancestors;

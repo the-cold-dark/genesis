@@ -1,0 +1,126 @@
+data objects...
+module objects...
+`cdc.o' is up to date.
+`cdc_buffer.o' is up to date.
+`cdc_dict.o' is up to date.
+`cdc_list.o' is up to date.
+`cdc_misc.o' is up to date.
+`cdc_string.o' is up to date.
+`cdc_integer.o' is up to date.
+`veil.o' is up to date.
+`web.o' is up to date.
+operator and function objects...
+gcc -g -O -I../include -c math.c
+math.c:32: parse error before `:'
+math.c:37: parse error before `if'
+math.c:40: conflicting types for `r'
+math.c:35: previous declaration of `r'
+math.c:40: `args' undeclared here (not in a function)
+math.c:40: initializer element is not constant
+math.c:40: warning: data definition has no type or storage class
+math.c:42: parse error before `if'
+math.c:44: parse error before `1'
+math.c:44: conflicting types for `pop'
+../include/execute.h:131: previous declaration of `pop'
+math.c:44: warning: data definition has no type or storage class
+math.c:45: parse error before `('
+math.c:51: conflicting types for `r'
+math.c:40: previous declaration of `r'
+math.c:53: parse error before `if'
+math.c:56: conflicting types for `r'
+math.c:51: previous declaration of `r'
+math.c:56: `args' undeclared here (not in a function)
+math.c:56: initializer element is not constant
+math.c:56: warning: data definition has no type or storage class
+math.c:58: parse error before `if'
+math.c:60: parse error before `1'
+math.c:60: warning: data definition has no type or storage class
+math.c:61: parse error before `('
+math.c:69: parse error before `if'
+math.c:72: parse error before `='
+math.c:74: redefinition of `r'
+math.c:56: `r' previously defined here
+math.c:74: initializer element is not constant
+math.c:74: warning: data definition has no type or storage class
+math.c:76: parse error before `if'
+math.c:80: parse error before `1'
+math.c:80: warning: data definition has no type or storage class
+math.c:81: parse error before `('
+math.c:87: conflicting types for `r'
+math.c:74: previous declaration of `r'
+math.c:89: parse error before `if'
+math.c:92: conflicting types for `r'
+math.c:87: previous declaration of `r'
+math.c:92: initializer element is not constant
+math.c:92: warning: data definition has no type or storage class
+math.c:94: parse error before `if'
+math.c:96: parse error before `1'
+math.c:96: warning: data definition has no type or storage class
+math.c:97: parse error before `('
+math.c:105: parse error before `if'
+math.c:108: parse error before `='
+math.c:110: redefinition of `r'
+math.c:92: `r' previously defined here
+math.c:110: initializer element is not constant
+math.c:110: warning: data definition has no type or storage class
+math.c:112: parse error before `if'
+math.c:116: parse error before `1'
+math.c:116: warning: data definition has no type or storage class
+math.c:117: parse error before `('
+math.c:125: parse error before `if'
+math.c:128: parse error before `='
+math.c:130: redefinition of `r'
+math.c:110: `r' previously defined here
+math.c:130: initializer element is not constant
+math.c:130: warning: data definition has no type or storage class
+math.c:132: parse error before `if'
+math.c:136: parse error before `1'
+math.c:136: warning: data definition has no type or storage class
+math.c:137: parse error before `('
+math.c:145: parse error before `if'
+math.c:148: parse error before `='
+math.c:150: redefinition of `r'
+math.c:130: `r' previously defined here
+math.c:150: initializer element is not constant
+math.c:150: warning: data definition has no type or storage class
+math.c:152: parse error before `if'
+math.c:156: parse error before `1'
+math.c:156: warning: data definition has no type or storage class
+math.c:157: parse error before `('
+math.c:165: parse error before `if'
+math.c:168: parse error before `='
+math.c:170: redefinition of `r'
+math.c:150: `r' previously defined here
+math.c:170: initializer element is not constant
+math.c:170: warning: data definition has no type or storage class
+math.c:172: parse error before `if'
+math.c:176: parse error before `1'
+math.c:176: warning: data definition has no type or storage class
+math.c:177: parse error before `('
+math.c:183: conflicting types for `r'
+math.c:170: previous declaration of `r'
+math.c:185: parse error before `if'
+math.c:188: conflicting types for `r'
+math.c:183: previous declaration of `r'
+math.c:188: initializer element is not constant
+math.c:188: warning: data definition has no type or storage class
+math.c:190: parse error before `if'
+math.c:192: parse error before `1'
+math.c:192: warning: data definition has no type or storage class
+math.c:193: parse error before `('
+math.c:201: parse error before `if'
+math.c:204: parse error before `='
+math.c:206: redefinition of `r'
+math.c:188: `r' previously defined here
+math.c:206: initializer element is not constant
+math.c:206: warning: data definition has no type or storage class
+math.c:208: parse error before `if'
+math.c:212: parse error before `1'
+math.c:212: warning: data definition has no type or storage class
+math.c:214: parse error before `('
+*** Error code 1
+
+Stop.
+*** Error code 1
+
+Stop.

@@ -193,6 +193,72 @@ VMState *task_lookup(Long tid) {
 
 /*
 // ---------------------------------------------------------------
+// dump info on an entire task
+//
+*/
+
+cList * frame_info(Frame * frame) {
+    cList * list;
+    cData   d;
+
+    if (!frame)
+        return NULL;
+
+    list = list_new(8);
+
+    d.type = OBJNUM;
+    d.u.objnum = frame->object->objnum;
+    list = list_add(list, &d);
+    d.u.objnum = frame->caller;
+    list = list_add(list, &d);
+    d.u.objnum = frame->sender;
+    list = list_add(list, &d);
+    d.u.objnum = frame->user;
+    list = list_add(list, &d);
+    d.type = INTEGER;
+    d.u.val = frame->pc;
+    list = list_add(list, &d);
+    d.u.val = frame->last_opcode;
+    list = list_add(list, &d);
+    d.u.val = frame->ticks;
+    list = list_add(list, &d);
+    d.type = SYMBOL;
+    d.u.symbol = ident_dup(frame->method->name);
+    list = list_add(list, &d);
+
+    return list;
+}
+
+cList * task_info(Long tid) {
+    cList   * list;
+    Frame   * frame;
+    cData     d;
+    VMState * vm = task_lookup(tid);
+
+    if (!vm)
+        return NULL;
+
+    list = list_new(4);
+
+    d.type = INTEGER;
+    d.u.val = vm->task_id;
+    list = list_add(list, &d);
+    d.u.val = vm->preempted;
+    list = list_add(list, &d);
+    frame = vm->cur_frame;
+    d.type = LIST;
+    while (frame) {
+        d.u.list = frame_info(frame);
+        list = list_add(list, &d);
+        list_discard(d.u.list);
+        frame = frame->caller_frame;
+    }
+
+    return list;
+}
+
+/*
+// ---------------------------------------------------------------
 // we assume tid is a non-preempted task
 //
 */
@@ -681,7 +747,7 @@ void dump_execute_profile(void) {
     fputs("Methods:\n", errfile);
     for (x=0; x < meth_p_last; x++) {
         d.u.objnum = meth_prof[x].objnum;
-        str = data_to_literal(&d);
+        str = data_to_literal(&d, TRUE);
         fprintf(errfile, "  %-10ld %s.%s\n",
                 meth_prof[x].count, string_chars(str), meth_prof[x].name);
         string_discard(str);

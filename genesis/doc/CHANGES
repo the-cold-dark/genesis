@@ -6,6 +6,48 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-14 [-Sep-96] Brandon Gillespie, Miroslav Silovic
+      * at one point I had an odd idea to allow people to submit bytecode
+        as well as lists of strings.  I adjusted the method handling
+        functions in anticipation of this, and later realized what a
+        nightmare this would be.  To cleanup the changes I have made the
+        following alterations:
+            compile()    => deleted--nobody uses this anyway
+            decompile()  => list_method()
+            add_method()
+            del_method()    
+            get_method() => method_bytecode()
+        The only things this will effect are methods which call decompile(),
+        which will need to be changed to call list_method() instead.  If
+        you used get_method() change it as well (most people did not know
+        it existed).
+      * Changed configure to read the module configuration from
+        src/modules/mod.conf, rather than having it hardcoded (Brandon)
+      * coldcc now decompiles with object numbers by default, not mapping
+        everything to a name (it still binds the name).  You use '-#' to
+        turn off objnum printing over objname (i.e. -# to get the older
+        behaviour).  Objnums are much faster than names--this is noticed
+        most on larger db's (10MB+ text) (Brandon)
+      * after much trevail a small but impacting db corruption bug was
+        found (in regard to floats).  (Miro)
+      * Fixed a ~fpe bug reported by Brad
+      * Added ~inf which can be thrown if the resulting value is Inf or NaN
+      * removed descendants() -- this is better implemented in ColdC
+        due to its intensive and laggy nature (you can pause()) (Brandon)
+      * added task_info() -- make sure to bind it to something (Brandon)
+      * new function dict_values() (Brandon)
+      * SHA-1 encryption module provided by Jon Callas <jon@worldbenders.com>,
+        written by Paul C. Kocher (read the copyright in shs.c for full
+        information).  Changed crypt() to use SHA-1 encryption based off
+        FreeBSD's MD5 crypt().  Older DES encrypted passwords can still
+        be matched with 'match_crypted()' (it hooks into the system's
+        crypt() if it exists). (Brandon)
+      * fixed a leak in method_info() (Miro)
+      * optimized fgetstring() (Brandon)
+      * allow "\t" like "\n" etc, when converting to buffers, need to
+        eventually change this to be the actual characters. (Brandon)
+      * changed fread() on text to eat all meta characters (it converts
+        \t to a space). (Brandon)
 1.0-13 [20-Aug-96] Brandon Gillespie, Miroslav Silovic
       * binary database patch to fix wild db growth (Miro)
       * toerr() was always throwing (my stupidity: Brandon)

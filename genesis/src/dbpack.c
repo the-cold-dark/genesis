@@ -716,7 +716,7 @@ Int size_data(cData *data) {
 	break;
 
       case FLOAT:
-        size += size_long(*((cFloat*)(&data->u.fval)));
+        size += size_long(*((Long*)(&data->u.fval)));
         break;
 
       case STRING:

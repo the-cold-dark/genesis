@@ -6,6 +6,19 @@
 #include "operators.h"
 #include "execute.h"
 
+void func_dict_values(void) {
+    cData * args;
+    cList * values;
+
+    if (!func_init_1(&args, DICT))
+	return;
+
+    values = dict_values(DICT1);
+    pop(1);
+    push_list(values);
+    list_discard(values);
+}
+
 void func_dict_keys(void) {
     cData * args;
     cList * keys;
@@ -13,7 +26,7 @@ void func_dict_keys(void) {
     if (!func_init_1(&args, DICT))
 	return;
 
-    keys = dict_keys(args[0].u.dict);
+    keys = dict_keys(DICT1);
     pop(1);
     push_list(keys);
     list_discard(keys);

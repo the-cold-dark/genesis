@@ -2445,6 +2445,36 @@ cat >> confdefs.h <<EOF
 EOF
 
 ##########################################
+## use cache cleaner or not
+cat <<END
+###
+### Cache Cleaning
+###
+#
+# Genesis supports an optional cache cleaning mechanism using Posix
+# threads.  This cache cleaner writes out inactive, dirty objects
+# in the background.
+#
+
+END
+
+echo $ac_n "Use Cache Cleaner? [no] $ac_c"
+
+read input
+if [ x$input != x -a \
+     x$input != x"n" -a \
+     x$input != x"no" -a \
+     x$input != x"No" -a \
+     x$input != x"N" -a \
+     x$input != x"NO" ]; then
+    cat >> confdefs.h <<EOF
+#define USE_CLEANER_THREAD 1
+EOF
+
+fi
+
+
+##########################################
 ## install directory
 cat <<END
 

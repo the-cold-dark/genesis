@@ -144,6 +144,8 @@
 #undef CACHE_WIDTH
 #undef CACHE_DEPTH
 
+#undef USE_CLEANER_THREAD
+
 #undef SYSTEM_TYPE
 
 #undef USE_OS_CRYPT

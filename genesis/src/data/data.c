@@ -93,6 +93,9 @@ Int data_cmp(cData *d1, cData *d2) {
 	    return 1;
 	return MEMCMP(d1->u.buffer->s, d2->u.buffer->s, d1->u.buffer->len);
 
+      case OBJECT:
+	return (d1->u.object->objnum == d2->u.object->objnum);
+
       default: {
 	INSTANCE_RECORD(d1->type, r);
 	return r->compare(d1, d2);
@@ -135,6 +138,9 @@ Int data_true(cData *d)
 
       case BUFFER:
 	return (d->u.buffer->len != 0);
+
+      case OBJECT:
+	return (d->u.object->objnum >= 0);
 
       default:
 	return 1;
@@ -186,6 +192,9 @@ uLong data_hash(cData *d)
 	    return d->u.buffer->s[0] + d->u.buffer->s[d->u.buffer->len - 1];
 	else
 	    return 300;
+
+      case OBJECT:
+	return d->u.object->objnum;
 
     default: {
 	INSTANCE_RECORD(d->type, r);
@@ -243,6 +252,10 @@ void data_dup(cData *dest, cData *src)
 	dest->u.buffer = buffer_dup(src->u.buffer);
 	break;
 
+      case OBJECT:
+	dest->u.object = cache_grab(src->u.object);
+	break;
+
       default: {
 	    INSTANCE_RECORD(src->type, r);
 	    r->dup(dest, src);
@@ -288,6 +301,10 @@ void data_discard(cData *data)
       case INTEGER:
       case FLOAT:
       case OBJNUM:
+	break;
+
+      case OBJECT:
+	cache_discard(data->u.object);
 	break;
 
       default: {
@@ -349,6 +366,19 @@ cStr *data_tostr(cData *data) {
 
       case BUFFER:
 	return string_from_chars("`[buffer]", 9);
+
+      case OBJECT: {
+          char       prefix[] = {'$', (char) NULL};
+
+          if (data->u.object->objname == -1) {
+              s = long_to_ascii(data->u.object->objnum, nbuf);
+              prefix[0] = '#';
+          } else {
+              s = ident_name(data->u.object->objname);
+          }
+
+          return string_add_chars(string_from_chars(prefix, 1), s, strlen(s));
+      }
 
       default:
 	return string_from_chars("<instance>",10);
@@ -474,6 +504,27 @@ cStr *data_add_literal_to_str(cStr *str, cData *data, int flags) {
 	}
 	return string_addc(str, ']');
 
+      case OBJECT: {
+          char    pre = '$';
+          cObjnum onum;
+
+          if (flags & DF_WITH_OBJNAMES) {
+              if (data->u.object->objname == -1) {
+                  onum = data->u.object->objnum;
+                  s = long_to_ascii(onum, nbuf);
+                  pre = '#';
+              } else {
+                  s = ident_name(data->u.object->objname);
+              }
+          } else {
+              pre = '#';
+              s = long_to_ascii(data->u.object->objnum, nbuf);
+          }
+
+	  str = string_addc(str, pre);
+	  return string_add_chars(str, s, strlen(s));
+      }
+
     default: {
 	INSTANCE_RECORD(data->type, r);
 	return r->addstr(str, data, flags);
@@ -496,6 +547,7 @@ Long data_type_id(Int type)
       case FROB:	return frob_id;
       case DICT:	return dictionary_id;
       case BUFFER:	return buffer_id;
+      case OBJECT:	return object_id;
     default:		{ INSTANCE_RECORD(type, r); return r->id_name; }
     }
 }

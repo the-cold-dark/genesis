@@ -70,6 +70,7 @@ RELEASE INFORMATION:
       * If new and old parents lists are equal, change_parents()
         should do no work. (Including cache invalidations) (Bruce)
       * Add cache_stats() and related data gathering code. (Bruce)
+      * Add support for Obj*'s as a subtype of cData's.
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

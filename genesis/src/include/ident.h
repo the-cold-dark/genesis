@@ -15,7 +15,7 @@ extern Ident numargs_id, range_id, varnf_id, file_id, ticks_id, connect_id;
 extern Ident disconnect_id, parse_id, startup_id, socket_id, bind_id;
 extern Ident servnf_id, varexists_id, dictionary_id, keynf_id, address_id;
 extern Ident refused_id, net_id, timeout_id, other_id, failed_id;
-extern Ident heartbeat_id, regexp_id, buffer_id, namenf_id, salt_id;
+extern Ident heartbeat_id, regexp_id, buffer_id, object_id, namenf_id, salt_id;
 extern Ident function_id, opcode_id, method_id, interpreter_id;
 extern Ident directory_id, eof_id, backup_done_id;
 

@@ -30,9 +30,9 @@ Ident perm_id, type_id, div_id, integer_id, float_id, string_id, objnum_id,
       file_id, ticks_id, connect_id, disconnect_id, startup_id, parse_id,
       socket_id, bind_id, servnf_id, varexists_id, dictionary_id, keynf_id,
       address_id, refused_id, net_id, timeout_id, other_id, failed_id,
-      heartbeat_id, regexp_id, buffer_id, namenf_id, salt_id, function_id,
-      opcode_id, method_id, interpreter_id, signal_id, directory_id, eof_id,
-      backup_done_id;
+      heartbeat_id, regexp_id, buffer_id, object_id, namenf_id, salt_id,
+      function_id, opcode_id, method_id, interpreter_id, signal_id,
+      directory_id, eof_id, backup_done_id;
 
 Ident public_id, protected_id, private_id, root_id, driver_id, fpe_id, inf_id,
       noover_id, sync_id, locked_id, native_id, forked_id, atomic_id;
@@ -111,6 +111,7 @@ void init_ident(void)
     heartbeat_id = ident_get("heartbeat");
     regexp_id = ident_get("regexp");
     buffer_id = ident_get("buffer");
+    object_id = ident_get("object");
     namenf_id = ident_get("namenf");
     salt_id = ident_get("salt");
     function_id = ident_get("function");

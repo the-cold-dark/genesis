@@ -60,6 +60,7 @@ struct cData {
         cDict    * dict;
         cBuf     * buffer;
 	void     * instance;
+	Obj	 * object;
     } u;
     Int type;
 };

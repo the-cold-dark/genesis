@@ -70,6 +70,7 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %token  <fnum>  FLOAT
 %token	<s>	STRING SYMBOL OBJNAME T_ERROR
 %token          LIST DICT BUFFER FROB
+%token          OBJECT
 
 %token  DATA_END
 

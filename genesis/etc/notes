@@ -10,90 +10,11 @@ Help can be found through the web site, or on the mailing list
       http://www.cold.org/info/lists
 
 RELEASE INFORMATION:
-1.2.0 [6-Jan-2001]
-      * cleanup config() and add a new 'cachelog parameter (Brad)
-      * add logging of object name and size at all db_put()'s (Brad)
-      * add pre-allocation to cBuf's (Brad)
-      * add sync() builtin to allow cache_sync without backup (Brad)
-      * fix pad to disallow 0 length pad string (Brad)
-      * method cache fixes: don't flush cache in as many
-        cases, and also cache negative method lookups (Bruce)
-      * added a test for the above pad() bug, as well as
-        some other missing tests. (Bruce)
-      * added bufsub() and $buffer.bufsub() (Bruce)
-      * Change task_stack() to let it obtain the stack for any
-        given frame and to generate either line numbers or 
-        opcode index values. (Bruce)
-      * Add log_task_stack() and log_all_task_stacks() callable
-        from C. (Bruce)
-      * Re-enable AC_INLINE check in configure (Bruce)
-      * cleanup cache.c to have a dirty list and reduce overhead of
-        cache holder array (Brad)
-      * Add linefeed to panic() message. (Bruce)
-      * panic() now tries to call log_all_task_stacks(). (Bruce)
-      * Integrate patch to support using doubles for the ColdC
-        float type. (Brian, trivial modifications by Bruce and Brad)
-      * Adjust size_* functions to all return Int. (Bruce)
-      * html_escape needs to encode if there are doublequotes,
-        otherwise Bruce's added case won't be used. (Allen Noe)
-      * Corrected random(x)'s throw message for x < 1 (Allen Noe)
-      * Make method_bytecode() act like list_method(), specifically
-        not returning bytecode for methods on parent objects (Allen Noe)
-      * Also fix a bug in method_bytecode where it checks the wrong
-        variable.  (Allen Noe)
-      * Win32 build fix involving VRELEASE. (Allen Noe)
-      * Add func_init_0_to_2(). (Bruce)
-      * Make stack() accept parameters to specify task id and 
-        whether or not line numbers are desired. (Bruce)
-      * Add 'log_malloc_size parameter for config(). (Bruce)
-      * Add explode_quoted() patch. (Jeremy Weatherford)
-      * Add calling_method() patch. (Allen Noe)
-      * Make method_bytecode() output info on jumps. (Allen Noe)
-      * Makefile fix, putting textdb.c into EVERYTHING_O (Jeff Dubrule)
-      * Change binarydb/dbpack routines to read/write entire object at
-        once going through a cBuf. (Brad)
-      * Fix db_alloc to call grow_bitmap once when expanding to fit an
-        object that's > the size of the standard increment (Brad)
-      * Add ancestor caching to speed up has_ancestor() and coldcc.
-        (Bruce, Brad)
-      * Added a cache_check cache in handle_varcmd (Brad)
-      * Minor code cleanups in binarydb.c (Brad)
-      * Add percent done to coldcc compile and decompile (Brad)
-      * valid() works on frobs (normal and handled-frobs). Tests
-        added to the test suite. (Bruce)
-      * Error handling optimization to shift expense from throw()
-        to traceback(). (Bruce)
-      * Add background cleaner thread to write dirty objects to disk (Brad)
-      * Further method cache cleanups, including a config()
-        option to control logging of information about
-        invalidations. (Bruce)
-      * If new and old parents lists are equal, change_parents()
-        should do no work. (Including cache invalidations) (Bruce)
-      * Add cache_stats() and related data gathering code. (Bruce)
-      * Add support for Obj*'s as a subtype of cData's. (Brad)
-      # Add config('cleanerwait, ##) to control the number of seconds
-        between cleaner thread runs (Brad)
-      * Add config('cleanerignore, #[]) to give the cleaner thread objects
-        to ignore, the key is the only relevant part. (Brad)
-      * Add config('cachewatch, $obj) and config('cachewatchcount, ##)
-        to log the call stack of a specific $obj every cachewatchcount
-	dirtys. (Brad)
-      * Add ability to get both size and char* data from an ident to avoid
-        useless strlen() calls. (Bruce)
-      * Avoid writing back size/offset values if they haven't changed in
-        binarydb.c. (Bruce)
-      * Lookup and bind native methods while compiling the DB so that they
-        can be used within eval blocks in coldcc to let you test natives
-        in the test suite. (Bruce)
-      * data_cmp() compares objnums by their numerical value now. (Bruce)
-      * New lookup implementation that uses Berkeley DB. (Bruce)
-      * Add has_method() to ColdC to make up for catch ~methodnf and
-        find_method() being so slow.  has_method() does and -must-
-        search ancestry.  That's why it exists. (Bruce)
-      * Added defines_var checking to coldcc to catch dead variables that
-        are no longer defined on the ancestor. (Bruce)
+1.1.10 [xxx]
+      * fix object size for objects without an objnum (Brad)
+      * fix parent list leak in binarydb decompilation (Brad)
 
-1.1.9  [1-Oct-2000]
+1.1.9  [1-Oct-100]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)
       * misc cleanup (Generic Bob)
       * removed dnsserv (Brandon)

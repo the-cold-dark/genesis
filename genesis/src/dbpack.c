@@ -768,7 +768,21 @@ cBuf * pack_object(cBuf *buf, Obj *obj)
 
 void unpack_object(cBuf *buf, Long *buf_pos, Obj *obj)
 {
+#ifdef USE_PARENT_OBJS
+    cData *d, cthis;
+#endif
+
     obj->parents = unpack_list(buf, buf_pos);
+#ifdef USE_PARENT_OBJS
+    obj->parent_objs = list_new(list_length(obj->parents));
+    cthis.type = OBJECT;
+    for (d=list_first(obj->parents); d; d=list_next(obj->parents, d))
+    {
+	cthis.u.object = cache_retrieve(d->u.objnum);
+        obj->parent_objs = list_add(obj->parent_objs, &cthis);
+    }
+#endif
+
     obj->children = unpack_list(buf, buf_pos);
     unpack_vars(buf, buf_pos, obj);
     unpack_methods(buf, buf_pos, obj);

@@ -453,6 +453,10 @@ Int  heartbeat_freq;
 
 Int cache_width;
 Int cache_depth;
+#ifdef USE_CLEANER_THREAD
+Int  cache_wait;
+cDict * cleaner_ignore_dict;
+#endif
 
 void init_defs(void);
 
@@ -502,6 +506,8 @@ extern Int cache_width;
 extern Int cache_depth;
 #ifdef USE_CLEANER_THREAD
 extern pthread_mutex_t cleaner_lock;
+extern cDict * cleaner_ignore_dict;
+extern Int  cache_wait;
 #endif
 
 extern void init_defs(void); 

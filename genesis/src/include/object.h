@@ -10,6 +10,9 @@
 
 struct Obj {
     cList * parents;
+#ifdef USE_PARENT_OBJS
+    cList * parent_objs;
+#endif
     cList * children;
 
     /* Variables are stored in a table, with index threads starting at the

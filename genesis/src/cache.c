@@ -186,12 +186,16 @@ void init_cache(Bool spawn_cleaner)
     Obj *obj;
     Int	i, j;
 
-    cache_log_flag     = 0;
-    cache_watch_object = INV_OBJNUM;
-    cache_watch_count  = 100;
-    active             = EMALLOC(CacheBuckets, cache_width);
-    inactive           = EMALLOC(CacheBuckets, cache_width);
-    dirty              = EMALLOC(DirtyBuckets, cache_width);
+    cache_log_flag      = 0;
+    cache_watch_object  = INV_OBJNUM;
+    cache_watch_count   = 100;
+#ifdef USE_CLEANER_THREAD
+    cache_wait          = 10;
+    cleaner_ignore_dict = dict_new_empty();
+#endif
+    active              = EMALLOC(CacheBuckets, cache_width);
+    inactive            = EMALLOC(CacheBuckets, cache_width);
+    dirty               = EMALLOC(DirtyBuckets, cache_width);
 
 #ifdef USE_CLEANER_THREAD
     pthread_mutex_init(&cleaner_lock, NULL);
@@ -520,12 +524,16 @@ void cache_sync(void) {
 #ifdef USE_CLEANER_THREAD
 void *cache_cleaner_worker(void *dummy)
 {
-    Int cache_bucket = 0;
-    Obj *tobj, *tobj2;
-    Long obj_size;
+    Int     cache_bucket = 0,
+            start_bucket,
+	    wrote_something;
+    Obj   * tobj,
+          * tobj2;
+    Long    obj_size;
+    cData   cthis;
 
     while (running) {
-	sleep(10);
+	sleep(cache_wait);
 
 #ifdef DEBUG_CLEANER_LOCK
         write_err("cache_cleaner_worker: locking cleaner");
@@ -535,37 +543,43 @@ void *cache_cleaner_worker(void *dummy)
         write_err("cache_cleaner_worker: locked cleaner");
 #endif
 
-	LOCK_BUCKET("cache_cleaner_worker", cache_bucket)
-
-	tobj = dirty[cache_bucket].first;
-	while (tobj) {
-	    if (tobj->refs == 0) {
-	        if (tobj->dead) {
-		    if (cache_log_flag & CACHE_LOG_DEAD_WRITE)
-		        write_err("cache_cleaner_worker: skipping dead object");
-		} else {
-		    if (!db_put(tobj, tobj->objnum, &obj_size)) {
-			UNLOCK_BUCKET("cache_cleaner_worker", cache_bucket)
-		        panic("Could not store an object.");
+	start_bucket = cache_bucket;
+        wrote_something = 0;
+	cthis.type = OBJNUM;
+	do {
+	    LOCK_BUCKET("cache_cleaner_worker", cache_bucket)
+	    tobj = dirty[cache_bucket].first;
+	    while (tobj) {
+		cthis.u.objnum = tobj->objnum;
+	        if (tobj->refs == 0 && !dict_contains(cleaner_ignore_dict, &cthis)) {
+	            if (tobj->dead) {
+		        if (cache_log_flag & CACHE_LOG_DEAD_WRITE)
+		            write_err("cache_cleaner_worker: skipping dead object");
+		    } else {
+		        wrote_something = 1;
+		        if (!db_put(tobj, tobj->objnum, &obj_size)) {
+			    UNLOCK_BUCKET("cache_cleaner_worker", cache_bucket)
+		            panic("Could not store an object.");
+		        }
+		        if (cache_log_flag & CACHE_LOG_SYNC)
+		            write_err("cache_cleaner_worker: wrote object %s (size: %d bytes) (dirty: %d)",
+			              ident_name(tobj->objname), obj_size, tobj->dirty);
+		        tobj->dirty = 0;
 		    }
-		    if (cache_log_flag & CACHE_LOG_SYNC)
-		        write_err("cache_cleaner_worker: wrote object %s (size: %d bytes) (dirty: %d)",
-			          ident_name(tobj->objname), obj_size, tobj->dirty);
-		    tobj->dirty = 0;
-		}
 
-	        tobj2 = tobj->next_dirty;
-	        cache_remove_from_dirty(&dirty[cache_bucket], tobj);
-	        tobj = tobj2;
+	            tobj2 = tobj->next_dirty;
+	            cache_remove_from_dirty(&dirty[cache_bucket], tobj);
+	            tobj = tobj2;
+	        }
+	        else
+		    tobj = tobj->next_dirty;
 	    }
-	    else
-		tobj = tobj->next_dirty;
-	}
 
-	UNLOCK_BUCKET("cache_cleaner_worker", cache_bucket)
+	    UNLOCK_BUCKET("cache_cleaner_worker", cache_bucket)
 
-	if (++cache_bucket == cache_width)
-	    cache_bucket = 0;
+	    if (++cache_bucket == cache_width)
+	        cache_bucket = 0;
+	} while (!wrote_something && cache_bucket != start_bucket);
 
         pthread_mutex_unlock(&cleaner_lock);
 #ifdef DEBUG_CLEANER_LOCK

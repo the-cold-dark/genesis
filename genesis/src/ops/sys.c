@@ -233,48 +233,69 @@ COLDC_FUNC(set_heartbeat) {
    we'll go multithreaded then, and it'll be much harder to lag the server)
 
 */
+
+#define _CONFIG_INT(id, var) \
+	if (SYM1 == id) { \
+	    if (argc == 2) { \
+	        if (args[ARG2].type != INTEGER) \
+		    THROW((type_id, "Expected an integer")) \
+		var = INT2; \
+	    } \
+	    pop(argc); \
+	    push_int(var); \
+	    return; \
+	}
+
+#define _CONFIG_OBJNUM(id, var) \
+	if (SYM1 == id) { \
+	    if (argc == 2) { \
+	        if (args[ARG2].type != OBJNUM) \
+		    THROW((type_id, "Expected an $object")) \
+		var = OBJNUM2; \
+	    } \
+	    pop(argc); \
+	    push_objnum(var); \
+	    return; \
+	}
+
+#define _CONFIG_DICT(id, var) \
+	if (SYM1 == id) { \
+	    if (argc == 2) { \
+	        if (args[ARG2].type != DICT) \
+		    THROW((type_id, "Expected a dict")) \
+		dict_discard(var); \
+		var = dict_dup(DICT2); \
+	    } \
+	    pop(argc); \
+	    push_dict(var); \
+	    return; \
+	}
+
 COLDC_FUNC(config) {
     cData * args;
-    Int     argc,
-            rval;
+    Int     argc;
 
     /* change to ANY and adjust appropriately below, if we start accepting
        non-integers */
-    if (!func_init_1_or_2(&args, &argc, SYMBOL, INTEGER))
+    if (!func_init_1_or_2(&args, &argc, SYMBOL, ANY_TYPE))
         return;
 
-    if (argc == 1) {
-	if (SYM1 == datasize_id)	rval = limit_datasize;
-	else if (SYM1 == forkdepth_id)	rval = limit_fork;
-	else if (SYM1 == calldepth_id)	rval = limit_calldepth;
-	else if (SYM1 == recursion_id)	rval = limit_recursion;
-	else if (SYM1 == objswap_id)	rval = limit_objswap;
-	else if (SYM1 == cachelog_id)	rval = cache_log_flag;
-	else if (SYM1 == cachewatch_id)	rval = cache_watch_object;
-	else if (SYM1 == cachewatchcount_id)	rval = cache_watch_count;
-        else if (SYM1 == log_malloc_size_id)    rval = log_malloc_size;
-        else if (SYM1 == log_method_cache_id)   rval = log_method_cache;
-	else if (SYM1 == cache_history_size_id) rval = cache_history_size;
-	else
-	    THROW((type_id, "Invalid configuration name."))
-    } else {
-	if (SYM1 == datasize_id)	rval = limit_datasize     = INT2;
-	else if (SYM1 == forkdepth_id)	rval = limit_fork         = INT2;
-	else if (SYM1 == calldepth_id)	rval = limit_calldepth    = INT2;
-	else if (SYM1 == recursion_id)	rval = limit_recursion    = INT2;
-	else if (SYM1 == objswap_id)	rval = limit_objswap      = INT2;
-	else if (SYM1 == cachelog_id)	rval = cache_log_flag     = INT2;
-	else if (SYM1 == cachewatch_id)	rval = cache_watch_object = INT2;
-	else if (SYM1 == cachewatchcount_id)	rval = cache_watch_count = INT2;
-        else if (SYM1 == log_malloc_size_id)    rval = log_malloc_size = INT2;
-        else if (SYM1 == log_method_cache_id)   rval = log_method_cache = INT2;
-	else if (SYM1 == cache_history_size_id) rval = cache_history_size = INT2;
-	else
-	    THROW((type_id, "Invalid configuration name."))
-    }
-
-    pop(argc);
-    push_int(rval);
+    _CONFIG_INT(datasize_id,           limit_datasize)
+    _CONFIG_INT(forkdepth_id,          limit_fork)
+    _CONFIG_INT(calldepth_id,          limit_calldepth)
+    _CONFIG_INT(recursion_id,          limit_recursion)
+    _CONFIG_INT(objswap_id,            limit_objswap)
+    _CONFIG_INT(cachelog_id,           cache_log_flag)
+    _CONFIG_INT(cachewatchcount_id,    cache_watch_count)
+    _CONFIG_OBJNUM(cachewatch_id,      cache_watch_object)
+#ifdef USE_CLEANER_THREAD
+    _CONFIG_INT(cachewait_id,          cache_wait)
+    _CONFIG_DICT(cleanerignore_id,     cleaner_ignore_dict)
+#endif
+    _CONFIG_INT(log_malloc_size_id,    log_malloc_size)
+    _CONFIG_INT(log_method_cache_id,   log_method_cache)
+    _CONFIG_INT(cache_history_size_id, cache_history_size)
+    THROW((type_id, "Invalid configuration name."))
 }
 
 COLDC_FUNC(cache_info) {

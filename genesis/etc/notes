@@ -70,7 +70,11 @@ RELEASE INFORMATION:
       * If new and old parents lists are equal, change_parents()
         should do no work. (Including cache invalidations) (Bruce)
       * Add cache_stats() and related data gathering code. (Bruce)
-      * Add support for Obj*'s as a subtype of cData's.
+      * Add support for Obj*'s as a subtype of cData's. (Brad)
+      # Add config('cachewait, ##) to control the number of seconds between
+        cleaner thread runs (Brad)
+      * Add config('cleanerignore, #[]) to give the cleaner thread objects
+        to ignore, the key is the only relevant part.
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

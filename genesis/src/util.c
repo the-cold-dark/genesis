@@ -443,6 +443,7 @@ char * english_type(Int type) {
       case FROB:	return "a frob";
       case DICT:	return "a dictionary";
       case BUFFER:	return "a buffer";
+      case OBJECT:	return "an object";
     default:		{INSTANCE_RECORD(type, r); return r->name; }
     }
 }

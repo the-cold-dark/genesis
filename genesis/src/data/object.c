@@ -75,8 +75,11 @@ static inline void ancestor_cache_invalidate()
 */
 
 Obj * object_new(Long objnum, cList * parents) {
-    Obj * cnew;
-    Int        i;
+    Obj   * cnew;
+    Int     i;
+#ifdef USE_PARENT_OBJS
+    cData * d, cthis;
+#endif
 
     if (objnum == -1)
 	objnum = db_top++;
@@ -85,6 +88,16 @@ Obj * object_new(Long objnum, cList * parents) {
 
     cnew = cache_get_holder(objnum);
     cnew->parents = list_dup(parents);
+#ifdef USE_PARENT_OBJS
+    cnew->parent_objs = list_new(list_length(parents));
+    cthis.type = OBJECT;
+    for (d=list_first(parents); d; d=list_next(parents, d))
+    {
+	cthis.u.object = cache_retrieve(d->u.objnum);
+        cnew->parent_objs = list_add(cnew->parent_objs, &cthis);
+    }
+#endif
+
     cnew->children = list_new(0);
 
     /* Initialize variables table and hash table. */
@@ -152,6 +165,9 @@ void object_free(Obj *object) {
 
     /* Free parents and children list. */
     list_discard(object->parents);
+#ifdef USE_PARENT_OBJS
+    list_discard(object->parent_objs);
+#endif
     list_discard(object->children);
 
     /* Free variable names and contents. */
@@ -201,6 +217,9 @@ void object_destroy(Obj *object) {
     cList *children;
     cData *d, cthis;
     Obj *kid;
+#ifdef USE_PARENT_OBJS
+    cData *d2, cthat, cother;
+#endif
 
     /*
      * Invalidate the method cache if object is not a leaf object,
@@ -227,14 +246,31 @@ void object_destroy(Obj *object) {
 
     cthis.type = OBJNUM;
     cthis.u.objnum = object->objnum;
+#ifdef USE_PARENT_OBJS
+    cthat.type = OBJECT;
+    cthat.u.object = object;
+    cother.type = OBJECT;
+#endif
     for (d = list_first(children); d; d = list_next(children, d)) {
 	kid = cache_retrieve(d->u.objnum);
 	cache_dirty_object(kid);
 
 	kid->parents = list_delete_element(kid->parents, &cthis);
+#ifdef USE_PARENT_OBJS
+	kid->parent_objs = list_delete_element(kid->parent_objs, &cthat);
+#endif
 	if (!kid->parents->len) {
 	    list_discard(kid->parents);
 	    kid->parents = list_dup(object->parents);
+#ifdef USE_PARENT_OBJS
+	    list_discard(kid->parent_objs);
+	    kid->parent_objs = list_new(list_length(object->parents));
+            for (d2=list_first(kid->parents); d2; d2=list_next(kid->parents, d2))
+            {
+		cother.u.object = cache_retrieve(d2->u.objnum);
+                kid->parent_objs = list_add(kid->parent_objs, &cother);
+            }
+#endif
 	    object_update_parents(kid, list_add);
 	}
 	cache_discard(kid);
@@ -480,6 +516,9 @@ Int object_change_parents(Obj *object, cList *parents)
 {
     cObjnum parent;
     cData *d;
+#ifdef USE_PARENT_OBJS
+    cData cthis;
+#endif
 
     /* If the new and old parent lists are equal, then do no work */
     if (list_cmp(object->parents, parents) == 0)
@@ -509,10 +548,22 @@ Int object_change_parents(Obj *object, cList *parents)
      * parents list. */
     object_update_parents(object, list_delete_element);
     list_discard(object->parents);
+#ifdef USE_PARENT_OBJS
+    list_discard(object->parent_objs);
+#endif
 
     /* Set the object's parents list to a copy of the new list, and tell all
      * our new parents that we're a kid. */
     object->parents = list_dup(parents);
+#ifdef USE_PARENT_OBJS
+    object->parent_objs = list_new(list_length(parents));
+    cthis.type = OBJECT;
+    for (d=list_first(parents); d; d=list_next(parents, d))
+    {
+	cthis.u.object = cache_retrieve(d->u.objnum);
+        object->parent_objs = list_add(object->parent_objs, &cthis);
+    }
+#endif
     object_update_parents(object, list_add);
 
     /* Return -1, meaning that all the parents were okay. */

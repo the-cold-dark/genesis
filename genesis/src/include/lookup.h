@@ -11,19 +11,19 @@
 #include <sys/types.h>
 #endif
 
-void lookup_open(char *name, Int cnew);
-void lookup_close(void);
-void lookup_sync(void);
-Int lookup_retrieve_objnum(Long objnum, off_t *offset, Int *size);
-Int lookup_store_objnum(Long objnum, off_t offset, Int size);
-Int lookup_remove_objnum(Long objnum);
-Long lookup_first_objnum(void);
-Long lookup_next_objnum(void);
-Int lookup_retrieve_name(Long name, Long *objnum);
-Int lookup_store_name(Long name, Long objnum);
-Int lookup_remove_name(Long name);
-Long lookup_first_name(void);
-Long lookup_next_name(void);
+void    lookup_open(char *name, Int cnew);
+void    lookup_close(void);
+void    lookup_sync(void);
+Int     lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size);
+Int     lookup_store_objnum(cObjnum objnum, off_t offset, Int size);
+Int     lookup_remove_objnum(cObjnum objnum);
+cObjnum lookup_first_objnum(void);
+cObjnum lookup_next_objnum(void);
+Int     lookup_retrieve_name(Ident name, cObjnum *objnum);
+Int     lookup_store_name(Ident name, cObjnum objnum);
+Int     lookup_remove_name(Ident name);
+Ident   lookup_first_name(void);
+Ident   lookup_next_name(void);
 
 #endif
 

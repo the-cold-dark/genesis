@@ -59,22 +59,22 @@ pthread_mutex_t lookup_mutex;
 Int name_cache_hits = 0;
 Int name_cache_misses = 0;
 
-static datum objnum_key(Long objnum, Number_buf nbuf);
-static datum name_key(Long name);
+static datum objnum_key(cObjnum objnum, Number_buf nbuf);
+static datum name_key(Ident name);
 static datum offset_size_value(off_t offset, Int size, Number_buf nbuf);
 static void parse_offset_size_value(datum value, off_t *offset, Int *size);
-static datum objnum_value(Long objnum, Number_buf nbuf);
+static datum objnum_value(cObjnum objnum, Number_buf nbuf);
 static void sync_name_cache(void);
-static Int store_name(Long name, Long objnum);
-static Int get_name(Long name, Long *objnum);
+static Int store_name(Ident name, cObjnum objnum);
+static Int get_name(Ident name, cObjnum *objnum);
 
 static DBM *dbp;
 
 struct name_cache_entry {
-    Long name;
-    Long objnum;
-    char dirty;
-    char on_disk;
+    Ident   name;
+    cObjnum objnum;
+    char    dirty;
+    char    on_disk;
 } name_cache[NAME_CACHE_SIZE + 1];
 
 void lookup_open(char *name, Int cnew) {
@@ -118,7 +118,7 @@ void lookup_sync(void) {
 	panic("Cannot reopen dbm database file.");
 }
 
-Int lookup_retrieve_objnum(Long objnum, off_t *offset, Int *size)
+Int lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size)
 {
     datum key, value;
     Number_buf nbuf;
@@ -139,7 +139,7 @@ Int lookup_retrieve_objnum(Long objnum, off_t *offset, Int *size)
     return 1;
 }
 
-Int lookup_store_objnum(Long objnum, off_t offset, Int size)
+Int lookup_store_objnum(cObjnum objnum, off_t offset, Int size)
 {
     datum key, value;
     Number_buf nbuf1, nbuf2;
@@ -157,7 +157,7 @@ Int lookup_store_objnum(Long objnum, off_t offset, Int size)
     return 1;
 }
 
-Int lookup_remove_objnum(Long objnum)
+Int lookup_remove_objnum(cObjnum objnum)
 {
     datum key;
     Number_buf nbuf;
@@ -175,7 +175,7 @@ Int lookup_remove_objnum(Long objnum)
 }
 
 /* only called during startup, nothing can be dirty so no chance the cleaner can call it */
-Long lookup_first_objnum(void)
+cObjnum lookup_first_objnum(void)
 {
     datum key;
 
@@ -188,7 +188,7 @@ Long lookup_first_objnum(void)
 }
 
 /* only called during startup, nothing can be dirty so no chance the cleaner can call it */
-Long lookup_next_objnum(void)
+cObjnum lookup_next_objnum(void)
 {
     datum key;
 
@@ -200,7 +200,7 @@ Long lookup_next_objnum(void)
     return lookup_next_objnum();
 }
 
-Int lookup_retrieve_name(Long name, Long *objnum)
+Int lookup_retrieve_name(Ident name, cObjnum *objnum)
 {
     Int i = name % NAME_CACHE_SIZE;
 
@@ -238,7 +238,7 @@ Int lookup_retrieve_name(Long name, Long *objnum)
     return 1;
 }
 
-Int lookup_store_name(Long name, Long objnum)
+Int lookup_store_name(Ident name, cObjnum objnum)
 {
     Int i = name % NAME_CACHE_SIZE;
 
@@ -271,7 +271,7 @@ Int lookup_store_name(Long name, Long objnum)
     return 1;
 }
 
-Int lookup_remove_name(Long name)
+Int lookup_remove_name(Ident name)
 {
     datum key;
     Int i = name % NAME_CACHE_SIZE;
@@ -302,7 +302,7 @@ Int lookup_remove_name(Long name)
 
 #if 0
 /* not called by anything */
-Long lookup_first_name(void)
+Ident lookup_first_name(void)
 {
     datum key;
 
@@ -316,7 +316,7 @@ Long lookup_first_name(void)
 }
 
 /* not called by anything */
-Long lookup_next_name(void)
+Ident lookup_next_name(void)
 {
     datum key;
 
@@ -329,7 +329,7 @@ Long lookup_next_name(void)
 }
 #endif
 
-static datum objnum_key(Long objnum, Number_buf nbuf)
+static datum objnum_key(cObjnum objnum, Number_buf nbuf)
 {
     char *s;
     datum key;
@@ -375,7 +375,7 @@ static void parse_offset_size_value(datum value, off_t *offset, Int *size)
     *size = atol(p + 1);
 }
 
-static datum name_key(Long name)
+static datum name_key(Ident name)
 {
     datum key;
 
@@ -385,7 +385,7 @@ static datum name_key(Long name)
     return key;
 }
 
-static datum objnum_value(Long objnum, Number_buf nbuf)
+static datum objnum_value(cObjnum objnum, Number_buf nbuf)
 {
     char *s;
     datum value;
@@ -411,7 +411,7 @@ static void sync_name_cache(void)
     }
 }
 
-static Int store_name(Long name, Long objnum)
+static Int store_name(Ident name, cObjnum objnum)
 {
     datum key, value;
     Number_buf nbuf;
@@ -428,7 +428,7 @@ static Int store_name(Long name, Long objnum)
     return 1;
 }
 
-static Int get_name(Long name, Long *objnum)
+static Int get_name(Ident name, cObjnum *objnum)
 {
     datum key, value;
 

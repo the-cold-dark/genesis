@@ -49,24 +49,24 @@ struct _offset_size {
     Int   size;
 };
 
-static void objnum_keyvalue(Long objnum, char *buf, DBT *key);
-static void name_key(Long name, DBT *key);
+static void objnum_keyvalue(cObjnum objnum, char *buf, DBT *key);
+static void name_key(Ident name, DBT *key);
 static void offset_size_value(off_t offset, Int size,
                                 _offset_size *os, DBT *value);
 static void parse_offset_size_value(DBT *value, off_t *offset, Int *size);
 static void sync_name_cache(void);
-static Int store_name(Long name, Long objnum);
-static Int get_name(Long name, Long *objnum);
+static Int store_name(Ident name, cObjnum objnum);
+static Int get_name(Ident name, cObjnum *objnum);
 
 static DB *objnum_dbp;
 static DB *name_dbp;
 static DBC *dbc;
 
 struct name_cache_entry {
-    Long name;
-    Long objnum;
-    char dirty;
-    char on_disk;
+    Ident   name;
+    cObjnum objnum;
+    char    dirty;
+    char    on_disk;
 } name_cache[NAME_CACHE_SIZE + 1];
 
 void lookup_open(char *name, Int cnew) {
@@ -181,7 +181,7 @@ void lookup_sync(void) {
 	panic("Cannot sync index database file.");
 }
 
-Int lookup_retrieve_objnum(Long objnum, off_t *offset, Int *size)
+Int lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size)
 {
     DBT key, value;
     int ret;
@@ -203,7 +203,7 @@ Int lookup_retrieve_objnum(Long objnum, off_t *offset, Int *size)
     return 1;
 }
 
-Int lookup_store_objnum(Long objnum, off_t offset, Int size)
+Int lookup_store_objnum(cObjnum objnum, off_t offset, Int size)
 {
     DBT key, value;
     _offset_size os;
@@ -224,7 +224,7 @@ Int lookup_store_objnum(Long objnum, off_t offset, Int size)
     return 1;
 }
 
-Int lookup_remove_objnum(Long objnum)
+Int lookup_remove_objnum(cObjnum objnum)
 {
     DBT key;
     char buf[SIZEOF_LONG];
@@ -243,7 +243,7 @@ Int lookup_remove_objnum(Long objnum)
 }
 
 /* only called during startup, nothing can be dirty so no chance the cleaner can call it */
-Long lookup_first_objnum(void)
+cObjnum lookup_first_objnum(void)
 {
     DBT key, value;
     int ret;
@@ -256,11 +256,11 @@ Long lookup_first_objnum(void)
     if (ret != 0)
 	return INV_OBJNUM;
 
-    return (*(Long*)key.data);
+    return (*(cObjnum*)key.data);
 }
 
 /* only called during startup, nothing can be dirty so no chance the cleaner can call it */
-Long lookup_next_objnum(void)
+cObjnum lookup_next_objnum(void)
 {
     DBT key, value;
     int ret;
@@ -273,10 +273,10 @@ Long lookup_next_objnum(void)
         return NOT_AN_IDENT;
     }
 
-    return (*(Long*)key.data);
+    return (*(cObjnum*)key.data);
 }
 
-Int lookup_retrieve_name(Long name, Long *objnum)
+Int lookup_retrieve_name(Ident name, cObjnum *objnum)
 {
     Int i = name % NAME_CACHE_SIZE;
 
@@ -314,7 +314,7 @@ Int lookup_retrieve_name(Long name, Long *objnum)
     return 1;
 }
 
-Int lookup_store_name(Long name, Long objnum)
+Int lookup_store_name(Ident name, cObjnum objnum)
 {
     Int i = name % NAME_CACHE_SIZE;
 
@@ -347,7 +347,7 @@ Int lookup_store_name(Long name, Long objnum)
     return 1;
 }
 
-Int lookup_remove_name(Long name)
+Int lookup_remove_name(Ident name)
 {
     DBT key;
     Int i = name % NAME_CACHE_SIZE;
@@ -377,7 +377,7 @@ Int lookup_remove_name(Long name)
     return 1;
 }
 
-static void objnum_keyvalue(Long objnum, char *buf, DBT *key)
+static void objnum_keyvalue(cObjnum objnum, char *buf, DBT *key)
 {
     memset(key, 0, sizeof(*key));
     memcpy(buf, (uChar*)(&objnum), sizeof(objnum));
@@ -405,7 +405,7 @@ static void parse_offset_size_value(DBT *value, off_t *offset, Int *size)
     *size = os->size;
 }
 
-static void name_key(Long name, DBT *key)
+static void name_key(Ident name, DBT *key)
 {
     int size;
     char* name_str = ident_name_size(name, &size);
@@ -431,7 +431,7 @@ static void sync_name_cache(void)
     }
 }
 
-static Int store_name(Long name, Long objnum)
+static Int store_name(Ident name, cObjnum objnum)
 {
     DBT key, value;
     char buf[SIZEOF_LONG];
@@ -450,7 +450,7 @@ static Int store_name(Long name, Long objnum)
     return 1;
 }
 
-static Int get_name(Long name, Long *objnum)
+static Int get_name(Ident name, cObjnum *objnum)
 {
     DBT key, value;
     int ret;

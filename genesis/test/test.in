@@ -2222,6 +2222,30 @@ eval {
     list = list.sorted_insert([1], 1);
 };
 
+	// List test 13
+	//
+	// testing native sorted_index()
+	// Output:
+
+		List test 13
+		  32 in [32, 8, 27, 19] -> 1
+		  8 in [32, 8, 27, 19] -> 2
+		  27 in [32, 8, 27, 19] -> 3
+		  19 in [32, 8, 27, 19] -> 4
+		  48 in [32, 8, 27, 19] -> -1
+
+eval {
+    var list;
+
+    list = [32, 8, 27, 19];
+    dblog("List test 13");
+    dblog("  32 in " + toliteral(list) + " -> " + toliteral(list.sorted_index(32)));
+    dblog("  8 in " + toliteral(list) + " -> " + toliteral(list.sorted_index(8)));
+    dblog("  27 in " + toliteral(list) + " -> " + toliteral(list.sorted_index(27)));
+    dblog("  19 in " + toliteral(list) + " -> " + toliteral(list.sorted_index(19)));
+    dblog("  48 in " + toliteral(list) + " -> " + toliteral(list.sorted_index(48)));
+};
+
 	// String test 1
 	//
 	// testing strlen()

@@ -2836,6 +2836,30 @@ eval {
     .calling_method_test();
 };
 
+	// valid()
+	// Output
+		valid() tests
+		  valid($root) = 1
+		  valid(#-1) = 0
+		  valid(#12822) = 0
+		  valid(<$root, []>) = 1
+		  valid(<#-18, []>) = 0
+		  valid(<$root, [], 'ehh>) = 1
+		  valid(<#-29, [], 'ehh>) = 0
+
+eval {
+    dblog("valid() tests");
+    dblog("  valid($root) = " + toliteral(valid($root)));
+    dblog("  valid(#-1) = " + toliteral(valid(#-1)));
+    dblog("  valid(#12822) = " + toliteral(valid(#12822)));
+    dblog("  valid(<$root, []>) = " + toliteral(valid(<$root, []>)));
+    dblog("  valid(<#-18, []>) = " + toliteral(valid(<#-18, []>)));
+    dblog("  valid(<$root, [], 'ehh>) = " + 
+                   toliteral(valid(<$root, [], 'ehh>)));
+    dblog("  valid(<#-29, [], 'ehh>) = " +
+                   toliteral(valid(<#-29, [], 'ehh>)));
+};
+
 // -------------------------------------
 // Shut down the server--leave this last
 eval {

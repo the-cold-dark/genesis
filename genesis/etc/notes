@@ -58,6 +58,8 @@ RELEASE INFORMATION:
         (Bruce, Brad)
       * Added a cache_check cache in handle_varcmd (Brad)
       * Minor code cleanups in binarydb.c (Brad)
+      * valid() works on frobs (normal and handled-frobs). Tests
+        added to the test suite. (Bruce)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

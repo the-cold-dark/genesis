@@ -224,12 +224,17 @@ COLDC_FUNC(toerr) {
 }
 
 COLDC_FUNC(valid) {
-    Int is_valid;
+    Int is_valid, type;
 
     INIT_1_ARG(ANY_TYPE);
 
-    if (args[0].type == OBJNUM)
+    type = args[ARG1].type;
+    if (type == OBJNUM)
         is_valid = VALID_OBJECT(OBJNUM1);
+    else if (type == FROB)
+        is_valid = VALID_OBJECT(FROB1->cclass);
+    else if (type == HANDLED_FROB_TYPE)
+        is_valid = VALID_OBJECT(HANDLED_FROB(&args[ARG1])->cclass);
     else
         is_valid = NO;
 

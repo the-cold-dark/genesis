@@ -214,6 +214,7 @@ INTERNAL int use_prebound(SOCKET * sock, int port, char * addr, int socktype) {
 
 INTERNAL SOCKET grab_port(Int port, char * addr, int socktype) {
     int    one = 1;
+    Int flags;
     SOCKET sock;
 
     /* see if its pre-bound? */
@@ -249,6 +250,15 @@ INTERNAL SOCKET grab_port(Int port, char * addr, int socktype) {
 	server_failure_reason = bind_id;
 	return SOCKET_ERROR;
     }
+
+#ifdef __Win32__
+    one = 1;
+    ioctlsocket(sock, FIONBIO, &one);
+#else
+    flags = fcntl(sock, F_GETFL);
+    flags |= O_NONBLOCK;
+    fcntl(sock, F_SETFL, flags);
+#endif
 
     return sock;
 }
@@ -374,7 +384,7 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
 		continue;
 #ifdef __Win32__
             result = 1;
-            ioctlsocket(fd, FIONBIO, &result);
+            ioctlsocket(serv->client_socket, FIONBIO, &result);
 #else
             flags = fcntl(serv->client_socket, F_GETFL);
 	    flags |= O_NONBLOCK;

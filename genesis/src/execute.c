@@ -948,7 +948,7 @@ void dump_execute_profile(void) {
     fputs("Methods:\n", errfile);
     for (x=0; x < meth_p_last; x++) {
         d.u.objnum = meth_prof[x].objnum;
-        str = data_to_literal(&d, TRUE);
+        str = data_to_literal(&d, DF_WITH_OBJNAMES);
         fprintf(errfile, "  %-10ld %s.%s\n",
                 meth_prof[x].count, string_chars(str), meth_prof[x].name);
         string_discard(str);

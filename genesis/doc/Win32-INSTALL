@@ -28,7 +28,10 @@ Instructions for Win32 Genesis BorlandC 5.01 Compile, by Jon Lambert
    The source code I found was rather hacked but compiled without errors
    to a static lib file.  Although there were no errors, make sure all
    integers and longs are defined to 32-bits instead of DOS's 16-bits.
-   This is especially critical in the hashing algorithms.
+   This is especially critical in the hashing algorithms.  A copy of
+   GDBM for Win32 (not necessarily up to date) can be found at:
+
+       ftp://ftp.cold.org/cold/contrib/gdbm173s.zip
 
 8. Copy the NDBM.H header into your Genesis include directory and your LIB file
    into the Genesis src directory. (I called it WINGDBM.LIB in my makefile)
@@ -37,7 +40,7 @@ Instructions for Win32 Genesis BorlandC 5.01 Compile, by Jon Lambert
    This make links everything static and has debugging options on.
    Make it anyway you prefer.  
 
-10. Finally run Borlands make against it.
+10. Finally run Borland's make against it.
 
 11. With a little luck, it should run.  If you have any questions, feel free
     to to Email me at jlsysin@ix.netcom.com 

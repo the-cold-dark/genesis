@@ -15,6 +15,7 @@ extern short caught_fpe;
 
 /* void catch_signal(int sig, int code, struct sigcontext *scp); */
 void catch_signal(int sig);
+void dump_core_and_exit(void);
 
 #endif
 

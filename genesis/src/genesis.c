@@ -483,7 +483,7 @@ INTERNAL void initialize(Int argc, char **argv) {
 
         fputs("Calling $sys.startup([", errfile);
         for (d=list_first(args); d; d=list_next(args, d)) {
-            str = data_to_literal(d, TRUE);
+            str = data_to_literal(d, DF_WITH_OBJNAMES);
             if (!first) {
                 fputc(',', errfile);
                 fputc(' ', errfile);

@@ -342,7 +342,7 @@
     int CAT(hash_,_class_) (cData*); \
     void CAT(dup_,_class_) (cData*, cData*); \
     void CAT(discard_,_class_) (cData*); \
-    cStr* CAT(string_,_class_) (cStr*, cData*, Bool)
+    cStr* CAT(string_,_class_) (cStr*, cData*, int)
 
 #define INSTANCE_INIT(_class_,_name_) \
     { \

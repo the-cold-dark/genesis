@@ -243,3 +243,16 @@ COLDC_FUNC(config) {
     push_int(rval);
 }
 
+COLDC_FUNC(cache_info) {
+    cList * list;
+
+    if (!func_init_0())
+        return;
+
+    list = cache_info(0);
+
+/*    pop(1); */
+    push_list(list);
+    list_discard(list);
+}
+

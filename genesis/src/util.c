@@ -251,7 +251,7 @@ cStr * vformat(char * fmt, va_list arg) {
 	    break;
 
 	  case 'D':
-	    str = data_to_literal(va_arg(arg, cData *), TRUE);
+	    str = data_to_literal(va_arg(arg, cData *), DF_WITH_OBJNAMES);
 	    if (string_length(str) > MAX_DATA_DISPLAY) {
 		str = string_truncate(str, MAX_DATA_DISPLAY - 3);
 		str = string_add_chars(str, "...", 3);
@@ -264,7 +264,7 @@ cStr * vformat(char * fmt, va_list arg) {
             cData d;
             d.type = OBJNUM;
             d.u.objnum = va_arg(arg, cObjnum);
-            str = data_to_literal(&d, TRUE);
+            str = data_to_literal(&d, DF_WITH_OBJNAMES);
             buf = string_add_chars(buf, string_chars(str), string_length(str));
             string_discard(str);
           }

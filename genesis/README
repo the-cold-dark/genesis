@@ -7,29 +7,23 @@ support the Cold Project at:
 
     http://www.cold.org/support/
 
-******** This is the Developmental release of    ********
-******** Genesis and should be used with caution ********
-
-Release information can be found in doc/CHANGES.  A list of tasks can
-be found in doc/TODO.
+Release information can be found in doc/CHANGES.
 
 ------------------------------------------------------------------------
 INSTALL/COMPILATION IN UNIX
 
-If you do not have an ANSI/ISO C compiler, give up or get GCC.  Genesis
-is compliant to ANSI/ISO standards, but if your compiler does not (such
-as the SunOS 4.1.x compiler) it may compile, but you will have serious
-instability problems.
+Genesis should compile on most ANSI/ISO C compilers.  If your compiler
+is somewhat non-standard, Genesis may compile but you will have serious
+instability problems.  The only OS which we know you WILL have problems
+with is SunOS 4.1.x (which is dead and no longer supported by Sun--we
+suggest NetBSD as an alternative).
 
-To compile simply type 'make'.
+To compile simply type: make
 
-Installation is undefined as people generally move the binaries to
-other locations.  Generally you should copy 'coldcc' and 'genesis' to
-your world directory (wherever it may be).
+To install simply type: make install
 
-The directory 'bin' contains a few useful scripts.
-
-Full installation instructions can be found at:
+The directory 'bin' contains a few useful scripts for Genesis database
+manipulation.  Full installation instructions can be found at:
 
       http://www.cold.org/Software/Genesis/
 
@@ -40,6 +34,13 @@ You will need an ndbm implementation in Win32.  You can get GNU's ndbm
 implementation (gdbm) to cover this role.  You must first have access
 to a unix system, with either bison or yacc.  Read doc/Win32-INSTALL
 for full instructions.
+
+A copy of GDBM for Win32 can be found at:
+
+      ftp://ftp.cold.org/cold/contrib/gdbm173s.zip
+
+It is suggested that you try to find more current versions before using
+this copy.
 
 ------------------------------------------------------------------------
 FURTHER INFORMATION
@@ -54,22 +55,10 @@ The following email lists are available:
     genesis-bugs        Bug (feature) reporting for Genesis
     genesis-hackers     Genesis development list
 
-You can easilly subscribe to the lists at:
+Further information, Archives and Subscription mechanisms for the lists are
+available at:
 
-    http://www.cold.org/info.html
-
-Or by sending a mail message to majordomo@cold.org with a 'subscribe list'
-line for each list.  For instance, if you wanted to subscribe to 'coldstuff'
-and 'coldcore', your message body would be:
-
-subscribe coldstuff
-subscribe coldcore
-
-All lists are at cold.org (i.e. coldstuff@cold.org).
-
-Lists are archived at:
-
-    http://www.cold.org/info.html
+    http://www.cold.org/info/lists.html
 
 Documentation:
 

@@ -6,6 +6,15 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.1.0  [17-Nov-97] Brandon
+      * Branched 1.1.0-STABLE
+1.0-38 [17-Nov-97] Brandon, Brian
+      * cache_info() added to help people determine a decent size for their
+        cache width/depth (Brandon)
+      * fixed a old object hanging bug--no discard in breadth_search (Brian)
+      * panic will now dump core after syncing, rather than exiting (Brandon)
+      * negative objnums always test false, now (Brandon)
+      * fixed %S/%s bug in $dns.ip() (Brandon)
 1.0-37 [18-Sep-97] Brandon
       * added 'partial or 'full option to $http.encode(), default
         is 'full, if 'partial is given it will only encode what

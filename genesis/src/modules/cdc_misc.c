@@ -182,7 +182,7 @@ NATIVE_METHOD(ip) {
 
     switch (lookup_ip_by_name(p, buf)) {
         case DNS_NORESOLV:
-            THROW((failed_id, "Address %S does not resolv", p))
+            THROW((failed_id, "Address %s does not resolv", p))
         case DNS_OVERFLOW:
             THROW((range_id, "DNS Response overflows DNS_MAXLEN!"))
     }

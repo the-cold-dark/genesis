@@ -22,7 +22,7 @@ cList * dict_keys(cDict * dict);
 cList * dict_values(cDict * dict);
 cList * dict_key_value_pair(cDict * mapping, Int i);
 Int dict_size(cDict * dict);
-cStr * dict_add_literal_to_str(cStr * str, cDict * dict, Bool objnames);
+cStr * dict_add_literal_to_str(cStr * str, cDict * dict, int flags);
 cDict *dict_union (cDict *d1, cDict *d2);
 
 

@@ -435,4 +435,68 @@ void cache_cleanup(void) {
 }
 #endif
 
+/*
+// ----------------------------------------------------------------------
+//
+// Requires: Initialized cache.
+// Effects: returns a list mapping out the current state of the cache
+//
+// Returned list will always be:
+//
+//    [WIDTH, DEPTH, ...]
+//
+// where ... is currently a list of strings, where each string contains
+// characters representing objects, as:
+//
+//    a=active to current task
+//    A=active and dirty
+//    i=inactive
+//    I=inactive and dirty
+//
+// -Brandon
+*/
+
+cList * cache_info(int level) {
+    int     x, y;
+    Obj   * obj;
+    cList * out;
+    cList * list;
+    cData * d;
+    cStr  * str;
+
+    out = list_new(3);
+    list = list_new(cache_width);
+    d = list_empty_spaces(out, 3);
+    d[0].type = INTEGER;
+    d[0].u.val = cache_width;
+    d[1].type = INTEGER;
+    d[1].u.val = cache_depth;
+    d[2].type = LIST;
+    d[2].u.list = list;
+    d = list_empty_spaces(list, cache_width);
+
+    for (x=0; x < cache_width; x++) {
+        str = string_new(cache_depth);
+        for (obj = active[x].next; obj != &active[x]; obj = obj->next) {
+            if (obj->objnum != INV_OBJNUM) {
+                if (obj->dirty)
+                    str = string_addc(str, 'A');
+                else
+                    str = string_addc(str, 'a');
+            }
+        }
+        for (obj = inactive[x].next; obj != &inactive[x]; obj = obj->next) {
+            if (obj->objnum != INV_OBJNUM) {
+                if (obj->dirty)
+                    str = string_addc(str, 'I');
+                else
+                    str = string_addc(str, 'i');
+             }
+        }
+        d[x].type = STRING;
+        d[x].u.val = str;
+    }
+
+    return out;
+}
 #undef _cache_

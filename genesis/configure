@@ -2293,7 +2293,7 @@ cat <<END
 # it is integrated into the functionality of genesis for better error
 # recovery.  We suggest using this malloc over your system's malloc,
 # however if you encounter problems you should drop back to your system's
-# malloc.  The best suggestion is to try both, analize the memory
+# malloc.  The best suggestion is to try both, analyze the memory
 # imprint and run-time behaviour and decide which to stay with.
 #
 ##
@@ -2380,6 +2380,71 @@ if [ x$input != x"n" -a \
 EOF
 
 fi
+
+##########################################
+## cache size
+
+cat <<END
+
+###
+### CACHE SIZE
+###
+# 
+# The size of the object cache will ultimately determine how much memory
+# genesis will use, when running.  The cache is defined as WIDTH by DEPTH.
+# the primary number to be concerned with is WIDTH, as the DEPTH is only
+# used when collisions occur.  For better distribution, the WIDTH size
+# should be a prime number.  If you want low memory usage (about 4MB in
+# unix) a cache size of 32x10 is suggested, increase as you desire.
+# Keep in mind this is ONLY active objects in your database, namely those
+# which are currently in use.
+#
+
+END
+
+CACHE_WIDTH=64
+CACHE_DEPTH=10
+
+loop=yes
+while [ "$loop" = "yes" ]; do
+    echo $ac_n "Cache Width [$CACHE_WIDTH] $ac_c"
+    read input
+
+    if [ "$input" = "" ]; then
+        loop=no
+    else
+        expr=`expr $input + 0 2>&1`
+        if [ "$expr" != "$input" ]; then
+            expr=`echo "$expr" | sed -e 's/^expr: *//'`
+            echo "Invalid Width: $expr"
+        else
+            loop=no
+        fi
+    fi
+done
+
+loop=yes
+while [ "$loop" = "yes" ]; do
+    echo $ac_n "Cache Depth [$CACHE_DEPTH] $ac_c"
+    read input
+
+    if [ "$input" = "" ]; then
+        loop=no
+    else
+        expr=`expr $input + 0 2>&1`
+        if [ "$expr" != "$input" ]; then
+            expr=`echo "$expr" | sed -e 's/^expr: *//'`
+            echo "Invalid DEPTH: $expr"
+        else
+            loop=no
+        fi
+    fi
+done
+
+cat >> confdefs.h <<EOF
+#define CACHE_WIDTH $CACHE_WIDTH
+#define CACHE_DEPTH $CACHE_DEPTH
+EOF
 
 ##########################################
 ## install directory

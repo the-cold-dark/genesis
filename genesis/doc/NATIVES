@@ -70,10 +70,14 @@ NATIVE_METHOD(...);
 */
 
 #define _mystuff_
+#define NATIVE_MODULE "$mystuff" /* this should be the object the methods
+                                    are bound to--tho its ignored so its
+                                    not too important, what is important is
+                                    that NATIVE_MODULE is defined */
 
 #include "mystuff.h"
 
-module_t mystuff_module = {init_mystuff, uninit_mystuff};
+module_t mystuff_module = {YES, init_mystuff, YES, uninit_mystuff};
 
 void init_mystuff(Int argc, char ** argv) {
     /* hook into initialization here */

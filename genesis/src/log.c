@@ -28,12 +28,9 @@ void panic(char * s, ...) {
 	cache_sync();
         fputs("Done\n", errfile);
     }
-    exit(1);
-}
 
-void abort(void) {
-  panic("Aborted");
-  exit(1);  /* Never reached.  Avoids warnings on some compilers, tho */
+    fprintf(errfile, "[%s] Creating Core Image...", timestamp(NULL));
+    dump_core_and_exit();
 }
 
 void fail_to_start(char *s) {

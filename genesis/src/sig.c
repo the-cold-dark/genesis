@@ -62,6 +62,11 @@ void catch_SIGCHLD(int sig) {
 }
 #endif
 
+void dump_core_and_exit(void) {
+    uninit_sig();
+    abort();
+}
+
 void catch_SIGFPE(int sig) {
     caught_fpe++;
     signal(SIGFPE,  catch_SIGFPE);

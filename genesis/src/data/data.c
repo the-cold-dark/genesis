@@ -108,7 +108,7 @@ Int data_true(cData *d)
 	return (string_length(d->u.str) != 0);
 
       case OBJNUM:
-	return 1;
+	return (d->u.objnum >= 0);
 
       case LIST:
 	return (list_length(d->u.list) != 0);
@@ -348,13 +348,13 @@ cStr *data_tostr(cData *data) {
 }
 
 /* Effects: Returns a string containing a printed representation of data. */
-cStr *data_to_literal(cData *data, Bool objnames) {
+cStr *data_to_literal(cData *data, int flags) {
     cStr *str = string_new(0);
 
-    return data_add_literal_to_str(str, data, objnames);
+    return data_add_literal_to_str(str, data, flags);
 }
 
-cStr *data_add_list_literal_to_str(cStr *str, cList *list, Bool objnames) {
+cStr *data_add_list_literal_to_str(cStr *str, cList *list, int flags) {
     cData *d, *next;
 
     str = string_addc(str, '[');
@@ -362,12 +362,12 @@ cStr *data_add_list_literal_to_str(cStr *str, cList *list, Bool objnames) {
     if (d) {
 	next = list_next(list, d);
 	while (next) {
-	    str = data_add_literal_to_str(str, d, objnames);
+	    str = data_add_literal_to_str(str, d, flags);
 	    str = string_add_chars(str, ", ", 2);
 	    d = next;
 	    next = list_next(list, d);
 	}
-	str = data_add_literal_to_str(str, d, objnames);
+	str = data_add_literal_to_str(str, d, flags);
     }
     return string_addc(str, ']');
 }
@@ -375,7 +375,7 @@ cStr *data_add_list_literal_to_str(cStr *str, cList *list, Bool objnames) {
 /* Modifies: str (mutator, claims reference count).
  * Effects: Returns a string with the printed representation of data added to
  *	    it. */
-cStr *data_add_literal_to_str(cStr *str, cData *data, Bool objnames) {
+cStr *data_add_literal_to_str(cStr *str, cData *data, int flags) {
     char *s;
     Number_buf nbuf;
     Int i;
@@ -395,16 +395,20 @@ cStr *data_add_literal_to_str(cStr *str, cData *data, Bool objnames) {
 	return string_add_unparsed(str, s, string_length(data->u.str));
 
       case OBJNUM: {
-          char   pre = '$';
-          Obj  * obj;
+          char    pre = '$';
+          Obj   * obj;
+          cObjnum onum;
 
-          if (objnames) {
+          if (flags & DF_WITH_OBJNAMES) {
               obj = cache_retrieve(data->u.objnum);
 
               if (!obj || obj->objname == -1) {
-                  if (!obj && data->u.objnum > 0)
-                      data->u.objnum = -data->u.objnum;
-                  s = long_to_ascii(data->u.objnum, nbuf);
+                  onum = data->u.objnum;
+                  if (!obj && data->u.objnum > 0 && (flags & DF_INV_OBJNUMS)) {
+                      onum = -onum;
+                      data->u.objnum = onum;
+                  }
+                  s = long_to_ascii(onum, nbuf);
                   pre = '#';
               } else {
                   s = ident_name(obj->objname);
@@ -421,7 +425,7 @@ cStr *data_add_literal_to_str(cStr *str, cData *data, Bool objnames) {
       }
 
       case LIST:
-	return data_add_list_literal_to_str(str, data->u.list, objnames);
+	return data_add_list_literal_to_str(str, data->u.list, flags);
 
       case SYMBOL:
 	str = string_addc(str, '\'');
@@ -445,14 +449,14 @@ cStr *data_add_literal_to_str(cStr *str, cData *data, Bool objnames) {
 	str = string_addc(str, '<');
         d.type = OBJNUM;
         d.u.objnum = data->u.frob->cclass;
-        str = data_add_literal_to_str(str, &d, objnames);
+        str = data_add_literal_to_str(str, &d, flags);
 	str = string_add_chars(str, ", ", 2);
-	str = data_add_literal_to_str(str, &data->u.frob->rep, objnames);
+	str = data_add_literal_to_str(str, &data->u.frob->rep, flags);
 	return string_addc(str, '>');
       }
 
       case DICT:
-	return dict_add_literal_to_str(str, data->u.dict, objnames);
+	return dict_add_literal_to_str(str, data->u.dict, flags);
 
       case BUFFER:
 	str = string_add_chars(str, "`[", 2);
@@ -466,7 +470,7 @@ cStr *data_add_literal_to_str(cStr *str, cData *data, Bool objnames) {
 
     default: {
 	INSTANCE_RECORD(data->type, r);
-	return r->addstr(str, data, objnames);
+	return r->addstr(str, data, flags);
 	}
     }
 }

@@ -1,2 +1,11 @@
-******** This is the Developmental release of Genesis, and     ********
-******** should be used with the appropriate amount of caution ********
+This is the STABLE release of Genesis.  This means no features will
+be added to this release--only bug fixes and patches.  There is also
+a higher level of run-time stability for this release which you will
+not have with the DEV release (alpha developmental).
+
+Help can be found through the web site, or on the mailing list
+(genesis@cold.org).  A few pointer URLs:
+
+      http://www.cold.org/Software/Genesis/
+      http://www.cold.org/info/lists
+

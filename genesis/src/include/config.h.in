@@ -135,6 +135,9 @@
 
 #undef RESTRICTIVE_FILES
 
+#undef CACHE_WIDTH
+#undef CACHE_DEPTH
+
 #undef SYSTEM_TYPE
 
 #undef USE_OS_CRYPT

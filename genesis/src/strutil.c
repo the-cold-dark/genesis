@@ -766,7 +766,7 @@ cStr * strsed(cStr * reg,  /* the regexp string */
             value = string_from_chars(buf, strlen(buf));\
             break;\
         default:\
-            value = data_to_literal(&args[cur], TRUE);\
+            value = data_to_literal(&args[cur], DF_WITH_OBJNAMES);\
             break;\
     }
 
@@ -872,7 +872,7 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
             case 'D':
                 trunc++;
             case 'd':
-                value = data_to_literal(&args[cur], TRUE);
+                value = data_to_literal(&args[cur], DF_WITH_OBJNAMES);
                 goto fmt_left;
             case 'S':
             case 'L':

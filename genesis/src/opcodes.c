@@ -163,9 +163,10 @@ static Op_info op_info[] = {
     { F_BACKUP,            "backup",              func_backup },
     { F_SHUTDOWN,          "shutdown",            func_shutdown },
     { F_SET_HEARTBEAT,     "set_heartbeat",       func_set_heartbeat },
+    { F_CACHE_INFO,       "cache_info",           func_cache_info },
 
     /* Task/Frame functions */
-    { F_TICK,           "tick",                 func_tick },
+    { F_TICK,             "tick",                 func_tick },
     { F_RESUME,           "resume",               func_resume },
     { F_SUSPEND,          "suspend",              func_suspend },
     { F_TASKS,            "tasks",                func_tasks },

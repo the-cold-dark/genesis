@@ -316,7 +316,7 @@ void list_discard(cList *list) {
             s = string_add_chars(s, sp, strlen(sp)); \
             break; \
         default: \
-            s = data_add_literal_to_str(s, d, TRUE); \
+            s = data_add_literal_to_str(s, d, DF_WITH_OBJNAMES); \
             break; \
     }
 

@@ -102,14 +102,6 @@
 
 /*
 // ---------------------------------------------------------------------
-// Default Width and depth of object cache. (10 and 30 are defaults),
-// use the command line to change these at run-time.
-*/
-#define CACHE_WIDTH    10
-#define CACHE_DEPTH    30
-
-/*
-// ---------------------------------------------------------------------
 // Maximum depth of method calls.
 */
 #define MAX_CALL_DEPTH             128

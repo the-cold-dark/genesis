@@ -82,7 +82,7 @@ void discard_handled (cData *d)
     ident_discard(h->handler);
 }
 
-cStr *string_handled (cStr *str, cData *data, Bool objnames)
+cStr *string_handled (cStr *str, cData *data, int flags)
 {
     HandledFrob *h = HANDLED_FROB(data);
     cData d;
@@ -90,12 +90,12 @@ cStr *string_handled (cStr *str, cData *data, Bool objnames)
     str = string_addc (str, '<');
     d.type = OBJNUM;
     d.u.objnum = h->cclass;
-    str = data_add_literal_to_str(str, &d, objnames);
+    str = data_add_literal_to_str(str, &d, flags);
     str = string_add_chars(str, ", ", 2);
-    str = data_add_literal_to_str(str, &h->rep, objnames);
+    str = data_add_literal_to_str(str, &h->rep, flags);
     str = string_add_chars(str, ", ", 2);
     d.type = SYMBOL;
     d.u.symbol = h->handler;
-    str = data_add_literal_to_str(str, &d, objnames);
+    str = data_add_literal_to_str(str, &d, flags);
     return string_addc(str, '>');
 }

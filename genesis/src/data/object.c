@@ -264,7 +264,6 @@ cList * object_ancestors_depth(Long objnum) {
 
 cList * object_ancestors_breadth(Long objnum) {
     Hash   * h;
-    Obj    * obj;
     Obj    * parent;
     int      pos;
     cList  * list;
@@ -283,7 +282,6 @@ cList * object_ancestors_breadth(Long objnum) {
 
     START_SEARCH();
 
-    obj = cache_retrieve(objnum);
     for (pos=0; list_length(h->keys) > pos; pos++) {
         c = list_elem(h->keys, pos);
         parent = cache_retrieve(c->u.objnum);

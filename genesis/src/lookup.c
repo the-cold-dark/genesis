@@ -300,35 +300,6 @@ Int lookup_remove_name(Ident name)
     return 1;
 }
 
-#if 0
-/* not called by anything */
-Ident lookup_first_name(void)
-{
-    datum key;
-
-    sync_name_cache();
-    key = dbm_firstkey(dbp);
-    if (key.dptr == NULL)
-	return NOT_AN_IDENT;
-    if (key.dsize == 1 || *key.dptr != 0)
-	return ident_get(key.dptr);
-    return lookup_next_name();
-}
-
-/* not called by anything */
-Ident lookup_next_name(void)
-{
-    datum key;
-
-    key = dbm_nextkey(dbp);
-    if (key.dptr == NULL)
-	return NOT_AN_IDENT;
-    if (key.dsize == 1 || *key.dptr != 0)
-	return ident_get(key.dptr);
-    return lookup_next_name();
-}
-#endif
-
 static datum objnum_key(cObjnum objnum, Number_buf nbuf)
 {
     char *s;

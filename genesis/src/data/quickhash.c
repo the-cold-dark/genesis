@@ -78,10 +78,6 @@ void hash_discard(Hash * hash)
 Hash * hash_add(Hash * hash, cData * key) {
     Int pos;
 
-#if 0
-    hash = hash_prep(hash);
-#endif
-
     pos = hash_find(hash, key);
     if (pos != F_FAILURE)
         return hash;

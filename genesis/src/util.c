@@ -354,31 +354,6 @@ void fformat(FILE *fp, char *fmt, ...) {
     va_end(arg);
 }
 
-#if DISABLED
-cStr *fgetstring(FILE *fp) {
-    cStr *line;
-    Int len;
-    char buf[BIGBUF];
-
-    line = string_new(0);  
-
-    while (fgets(buf, BIGBUF, fp)) {
-        len = strlen(buf);
-        if (buf[len - 1] == '\n') {
-            line = string_add_chars(line, buf, len-1);
-            return line;
-        } else
-            line = string_add_chars(line, buf, len);
-    }
-        
-    if (line->len) { 
-        return line;
-    } else {
-        string_discard(line);
-        return NULL;
-    } 
-}
-#else
 cStr *fgetstring(FILE *fp) {
     cStr        * line;
     Int           len;
@@ -434,7 +409,6 @@ cStr *fgetstring(FILE *fp) {
 	return NULL;
     }
 }
-#endif
 
 char * english_type(Int type) {
     switch (type) {

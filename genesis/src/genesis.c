@@ -578,7 +578,9 @@ static void main_loop(void) {
     while (running) {
         flush_defunct();
 
-        /* cache_sanity_check(); */
+#ifdef DRIVER_DEBUG
+        cache_sanity_check();
+#endif
 
         /* determine io wait */
         if (heartbeat_freq != -1) {

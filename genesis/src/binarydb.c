@@ -358,7 +358,7 @@ static void simble_mark(off_t start, Int size)
 
 static void dump_copy (off_t start, Int blocks)
 {
-#if 0
+#if USE_OLD_DUMP_COPY
     Int i;
     char buf[BLOCK_SIZE];
 

@@ -77,36 +77,6 @@ NATIVE_METHOD(explode) {
 }
 
 NATIVE_METHOD(strsub) {
-#if DISABLED
-    Int len, search_len, replace_len;
-    char *search, *replace, *s, *p, *q;
-    cStr *subbed;
-
-    INIT_3_ARGS(STRING, STRING, STRING)
-
-    s = string_chars(STR1);
-    len = string_length(STR1);
-    search = string_chars(STR2);
-    search_len = string_length(STR2);
-    replace = string_chars(STR3);
-    replace_len = string_length(STR3);
-
-    if (*s == (char) NULL || *search == (char) NULL) {
-        subbed = string_dup(STR1);
-    } else {
-        subbed = string_new(search_len);
-        p = s;
-        for (q = strcstr(p, search); q; q = strcstr(p, search)) {
-            subbed = string_add_chars(subbed, p, q - p);
-            subbed = string_add_chars(subbed, replace, replace_len);
-            p = q + search_len;
-        }
-    
-        subbed = string_add_chars(subbed, p, len - (p - s));
-    }
-
-    CLEAN_RETURN_STRING(subbed);
-#endif
     Int     flags = RF_GLOBAL;
     cStr  * out;
 

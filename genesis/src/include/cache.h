@@ -27,8 +27,6 @@ Obj *cache_grab(Obj *object);
 void cache_discard(Obj *obj);
 Int cache_check(Long objnum);
 void cache_sync(void);
-Obj *cache_first(void);
-Obj *cache_next(void);
 void cache_sanity_check(void);
 #ifdef CLEAN_CACHE
 void cache_cleanup(void);

@@ -92,12 +92,6 @@ COLDC_FUNC(explode) {
 }
 
 COLDC_FUNC(strsub) {
-#if 0
-    Int len, search_len, replace_len;
-    cData *args;
-    char *search, *replace, *s, *p, *q;
-    cStr *subbed;
-#endif
     cData * args;
     int     argc;
     Int     flags = RF_GLOBAL;
@@ -107,28 +101,6 @@ COLDC_FUNC(strsub) {
     if (!func_init_3_or_4(&args, &argc, STRING, STRING, STRING, STRING))
 	return;
 
-#if DISABLED
-    s = string_chars(args[0].u.str);
-    len = string_length(args[0].u.str);
-    search = string_chars(args[1].u.str);
-    search_len = string_length(args[1].u.str);
-    replace = string_chars(args[2].u.str);
-    replace_len = string_length(args[2].u.str);
-
-    if (*s == (char) NULL || *search == (char) NULL) {
-        subbed = string_dup(args[0].u.str);
-    } else {
-        subbed = string_new(search_len);
-        p = s;
-        for (q = strcstr(p, search); q; q = strcstr(p, search)) {
-            subbed = string_add_chars(subbed, p, q - p);
-            subbed = string_add_chars(subbed, replace, replace_len);
-            p = q + search_len;
-        }
-    
-        subbed = string_add_chars(subbed, p, len - (p - s));
-    }
-#endif
     if (argc == 4)
         flags = parse_regfunc_args(string_chars(STR4), flags);
 

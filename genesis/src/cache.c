@@ -705,34 +705,7 @@ void *cache_cleaner_worker(void *dummy)
 }
 #endif
 
-#if 0
-/*
-// ----------------------------------------------------------------------
-*/
-
-Obj *cache_first(void) {
-    Long objnum;
-
-    cache_sync();
-    objnum = lookup_first_objnum();
-    if (objnum == INV_OBJNUM)
-	return NULL;
-    return cache_retrieve(objnum);
-}
-
-/*
-// ----------------------------------------------------------------------
-*/
-
-Obj *cache_next(void) {
-    Long objnum;
-
-    objnum = lookup_next_objnum();
-    if (objnum == INV_OBJNUM || objnum == NOT_AN_IDENT)
-	return NULL;
-    return cache_retrieve(objnum);
-}
-
+#ifdef DRIVER_DEBUG
 /*
 // ----------------------------------------------------------------------
 //
@@ -741,24 +714,27 @@ Obj *cache_next(void) {
 //
 */
 
+/* NOTE: NOT well checked, updated to match current variable names and
+ *       structure of the active list, but it might I think it might be
+ *       buggy.  Does it need to walk up the stack and check every frame?
+ *       How about the frame's method->obj?
+ */
 void cache_sanity_check(void) {
-#if DISABLED /* need to do some more work here */
-    Int        i;
-    Obj * obj;
-    VMState  * task;
+    Int       i;
+    Obj     * obj;
+    VMState * task;
 
-    /* using labels was the best way I could come up with, I'm sorry... */
     for (i = 0; i < cache_width; i++) {
-        for (obj = active[i].next; obj != &active[i]; obj = obj->next) {
+        for (obj = active[i].first; obj; obj = obj->next_obj) {
 
             /* check suspended tasks */
-            for (task = tasks; task != NULL; task = task->next) {
+            for (task = suspended; task != NULL; task = task->next) {
                 if (task->cur_frame->object->objnum == obj->objnum)
                     goto end;
             }
 
-            /* check paused tasks */
-            for (task = paused; task != NULL; task = task->next) {
+            /* check preempted tasks */
+            for (task = preempted; task != NULL; task = task->next) {
                 if (task->cur_frame->object->objnum == obj->objnum)
                     goto end;
             }
@@ -767,14 +743,10 @@ void cache_sanity_check(void) {
 	    panic("Active object #%d at start of main loop.", (Int) obj->objnum);
 
             /* label both for loops can jump to, skipping the panic */
-            end:
+end:
+            ;
         }
     }
-#endif
-#if 0
-	if (active[i].next != &active[i]) 
-	    panic("Active objects at start of main loop.");
-#endif
 }
 #endif
 
@@ -792,7 +764,7 @@ void cache_cleanup(void) {
     Long  obj_size;
 
     for (i = 0; i < cache_width; i++) {
-        for (obj = inactive[i].next; obj != &inactive[i]; obj = obj->next) {
+        for (obj = inactive[i].first; obj; obj = obj->next_obj) {
             obj->ucounter >>= 1;
             if (obj->ucounter > 0)
                 continue;
@@ -804,7 +776,7 @@ void cache_cleanup(void) {
 			      obj->objname != -1 ? ident_name(obj->objname) : "not named", obj_size, obj->dirty);
                 obj->dirty = 0;
             }
-            if(obj->objnum != INV_OBJNUM) {
+            if (obj->objnum != INV_OBJNUM) {
 #if DEBUG_CACHE
                 _icounter--;
                 fprintf(errfile,"<%d\n",_icounter);

@@ -22,8 +22,6 @@ cObjnum lookup_next_objnum(void);
 Int     lookup_retrieve_name(Ident name, cObjnum *objnum);
 Int     lookup_store_name(Ident name, cObjnum objnum);
 Int     lookup_remove_name(Ident name);
-Ident   lookup_first_name(void);
-Ident   lookup_next_name(void);
 
 #endif
 

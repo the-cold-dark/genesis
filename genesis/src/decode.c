@@ -127,12 +127,6 @@ Int line_number(Method *method, Int pc) {
     Int count = 1;
     unsigned flags;
 
-#if DISABLED
-    /* Count declaration lines. */
-    if (method->m_flags & MF_NOOVER)
-	count++;
-#endif
-
     if (method->num_args || method->rest != -1)
 	count++;
     if (method->num_vars)

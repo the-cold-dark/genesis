@@ -219,24 +219,6 @@ cStr * string_parse(char **sptr) {
     cStr * str;
     char * p;
     char * s;
-#if 0
-    char * start = *sptr;
-
-    /* compress escaped, trust me, it works this time (BJG) */
-    for (p=s=start; *p && *p != '"'; p++, s++) {
-        if (*p == '\\' && *(p+1) && (*(p+1) == '"' || *(p+1) == '\\'))
-            p++;
-        *s = *p;
-    }
-
-#ifndef ONLY_PARSE_TEXTDB
-    /* make it into a string */
-    str = string_from_chars(start, s - start);
-#endif
-
-    /* push *sptr to its new position */
-    *sptr = *p ? p+1 : p;
-#else
     Int len;
 
 #ifndef ONLY_PARSE_TEXTDB
@@ -244,8 +226,8 @@ cStr * string_parse(char **sptr) {
 #endif
 
     s = *sptr;
-    while (s && *s && *s != '"') /* search until end of string or closing " */
-    {   
+    while (s && *s != '"') /* search until end of string or closing " */
+    {
         p = strpbrk(s, "\"\\"); /* search for escape char or closing " */
         if (p)
         {
@@ -256,7 +238,7 @@ cStr * string_parse(char **sptr) {
             /* really escaping anything.  ColdC escaping isn't just like C */
             if (*p == '\\')
             {
-                if (*(p+1) && (*(p+1) == '"' || *(p+1) == '\\'))
+                if (*(p+1) == '"' || *(p+1) == '\\')
                     p++;
 #ifndef ONLY_PARSE_TEXTDB
                 str = string_addc(str, *p);
@@ -278,7 +260,6 @@ cStr * string_parse(char **sptr) {
         }
     }
     *sptr = *s ? s+1 : s;
-#endif
 
     /* give them the string */
     return str;
@@ -428,11 +409,6 @@ cStr * string_prep(cStr *str, Int start, Int len) {
 
     /* Figure out if we need to resize the string or move its contents.  Moving
      * contents takes precedence. */
-#if DISABLED
-    need_to_resize = (len - start) * 4 < str->size;
-    need_to_resize = need_to_resize && str->size > STARTING_SIZE;
-    need_to_resize = need_to_resize || (str->size <= len);
-#endif
     need_to_resize = str->size <= len + start;
     need_to_move = (str->refs > 1) || (need_to_resize && start > 0);
 

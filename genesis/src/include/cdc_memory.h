@@ -26,9 +26,7 @@ void * pmalloc(Pile *pile, size_t size);
 void  pfree(Pile *pile);
 void efree(void * block);
 
-#if DISABLED
-#define DOFUNC_FREE
-#else
+#ifndef DOFUNC_FREE
 #define efree(what) free(what)
 #endif
 

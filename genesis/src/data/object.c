@@ -1185,7 +1185,7 @@ static void method_cache_set(Long objnum, Long name, Long after, Long loc, Bool 
 {
     Int i;
 
-    i = (10 + objnum + (name << 4) + after) % METHOD_CACHE_SIZE;
+    i = (10 + objnum + (name << 4) + (is_frob << 8) + after) % METHOD_CACHE_SIZE;
     if (method_cache[i].stamp != 0) {
  /*     write_err("##method_cache_set %d %s", method_cache[i].name, ident_name(method_cache[i].name));*/
       ident_discard(method_cache[i].name);

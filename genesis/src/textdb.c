@@ -280,6 +280,8 @@ INTERNAL void cleanup_holders(void) {
 
         ident_discard(id);
     }
+    list_discard(keys);
+    list_discard(values);
     dict_discard(holders);
     holders = NULL;
 }

@@ -842,9 +842,7 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
     Obj      * def;
     Int        slen;
     Bool       result;
-    char     * var_name,
-               obj_name[1000],
-               def_name[1000];
+    char     * var_name;
 
     if (*s == '#' || *s == '$') {
         s += get_idref(s, &name, ISOBJ);
@@ -951,19 +949,17 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
 
         if (!result) {
             var_name = ident_name(var);
-            def = cache_retrieve(definer);
-            if (def->objname != NOT_AN_IDENT) {
-                snprintf(def_name, 999, "$%s", ident_name(def->objname));
-            } else {
-                snprintf(def_name, 999, "#%d", definer);
+            if (print_warn) {
+                printf("\rLine %ld: WARNING: Variable ", (long) line_count);
+                print_dbref(cur_obj, cur_obj->objnum, stdout, TRUE);
+                if (cur_obj->objnum != definer && (def = cache_retrieve(definer))) {
+                    fputc('<', stdout);
+                    print_dbref(def, definer, stdout, TRUE);
+                    fputc('>', stdout);
+                    cache_discard(def);
+                }
+                printf(",%s no longer defined.\n", var_name);
             }
-            if (cur_obj->objname != NOT_AN_IDENT) {
-                snprintf(obj_name, 999, "$%s", ident_name(cur_obj->objname));
-            } else {
-                snprintf(obj_name, 999, "#%d", cur_obj->objnum);
-            }
-            WARN(("Variable %s<%s>,%s no longer defined.", obj_name, def_name, var_name))
-            cache_discard(def);
         }
     }
 }

@@ -6,6 +6,8 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-36 [10-Jul-97] Brandon
+      * fixed bug which was saying #0 ($sys) was invalid (Brandon)
 1.0-35 [09-Jul-97] Brandon
       * fixed a bug in compiling $names in textdumps.
       * fixed a bug with #-xx becoming #xx again.

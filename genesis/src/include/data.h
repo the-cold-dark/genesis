@@ -7,7 +7,7 @@
 
 #include "cdc_types.h"
 
-#define VALID_OBJECT(_objnum_) (_objnum_ > 0 && cache_check(_objnum_))
+#define VALID_OBJECT(_objnum_) (_objnum_ >= 0 && cache_check(_objnum_))
 
 /* Buffer contents must be between 0 and 255 inclusive, even if an unsigned
  * char can hold other values. */

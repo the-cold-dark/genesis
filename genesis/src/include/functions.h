@@ -7,6 +7,7 @@
 
 #include "macros.h"
 
+COLDC_FUNC(anticipate_assignment);
 COLDC_FUNC(buflen);
 COLDC_FUNC(bufgraft);
 COLDC_FUNC(buf_replace);
@@ -22,6 +23,7 @@ COLDC_FUNC(toint);
 COLDC_FUNC(tofloat);
 COLDC_FUNC(tostr);
 COLDC_FUNC(toliteral);
+COLDC_FUNC(fromliteral);
 COLDC_FUNC(toobjnum);
 COLDC_FUNC(tosym);
 COLDC_FUNC(toerr);
@@ -73,6 +75,8 @@ COLDC_FUNC(mtime);
 COLDC_FUNC(ctime);
 COLDC_FUNC(bind_function);
 COLDC_FUNC(unbind_function);
+COLDC_FUNC(debug_callers);
+COLDC_FUNC(call_trace);
 COLDC_FUNC(reassign_connection);
 COLDC_FUNC(bind_port);
 COLDC_FUNC(unbind_port);
@@ -115,6 +119,7 @@ COLDC_FUNC(lookup);
 COLDC_FUNC(objnum);
 COLDC_FUNC(strlen);
 COLDC_FUNC(strgraft);
+COLDC_FUNC(stridx);
 COLDC_FUNC(substr);
 COLDC_FUNC(explode);
 COLDC_FUNC(strsub);

@@ -45,9 +45,13 @@ cList * list_prep(cList *list, Int start, Int len) {
 
     /* Figure out if we need to resize the list or move its contents.  Moving
      * contents takes precedence. */
+#if DISABLED
     resize = (len - start) * 4 < list->size;
     resize = resize && list->size > STARTING_SIZE;
     resize = resize || (list->size < len);
+#endif
+    resize = list->size < len + start;
+
 
     /* Move the list contents into a new list. */
     if ((list->refs > 1) || (resize && start > 0)) {

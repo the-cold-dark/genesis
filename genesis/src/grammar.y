@@ -75,7 +75,7 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %token		PASS CRITLEFT CRITRIGHT PROPLEFT PROPRIGHT
 
 %right	OP_ASSIGN
-%right	MINUS_EQ DIV_EQ MULT_EQ PLUS_EQ
+%right	MINUS_EQ DIV_EQ MULT_EQ PLUS_EQ OPTIONAL_ASSIGN
 %left	TO
 %right	OP_COND_IF ':' OP_COND_OTHER_ELSE
 %right	OR
@@ -110,11 +110,13 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %token BINARY CONDITIONAL SPLICE NEG SPLICE_ADD POP START_ARGS ZERO ONE
 %token SET_LOCAL SET_OBJ_VAR GET_LOCAL GET_OBJ_VAR CATCH_END HANDLER_END
 %token CRITICAL CRITICAL_END PROPAGATE PROPAGATE_END JUMP
+%token OPTIONAL_END SCATTER_START SCATTER_END
 
 %token OP_MAP_RANGE OP_MAPHASH_RANGE OP_FILTER_RANGE OP_FIND_RANGE 
 
-%token F_TYPE F_CLASS F_TOINT F_TOFLOAT F_TOSTR F_TOLITERAL
-%token F_TOOBJNUM F_TOSYM F_TOERR F_VALID F_STRFMT F_STRLEN
+%token F_DEBUG_CALLERS F_CALL_TRACE
+%token F_TYPE F_CLASS F_TOINT F_TOFLOAT F_TOSTR F_TOLITERAL F_FROMLITERAL
+%token F_TOOBJNUM F_TOSYM F_TOERR F_VALID F_STRFMT F_STRLEN F_STRIDX
 %token F_SUBSTR F_EXPLODE F_STRSED F_STRSUB F_PAD F_MATCH_BEGIN
 %token F_MATCH_TEMPLATE F_STRGRAFT F_LISTGRAFT F_BUFGRAFT
 %token F_MATCH_PATTERN F_MATCH_REGEXP F_REGEXP F_SPLIT F_CRYPT F_UPPERCASE
@@ -145,6 +147,7 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %token F_BIND_FUNCTION F_UNBIND_FUNCTION F_ATOMIC
 %token F_METHOD_INFO F_ENCODE F_DECODE F_SIN F_EXP F_LOG F_COS
 %token F_TAN F_SQRT F_ASIN F_ACOS F_ATAN F_POW F_ATAN2 F_CONFIG
+%token F_FLUSH
 
 /* Reserved for future use. */
 /*%token FORK*/
@@ -303,7 +306,8 @@ expr	: INTEGER			{ $$ = integer_expr($1); }
 	| IDENT DIV_EQ expr		{ $$ = doeq_expr(DIV_EQ, $1, $3); }
 	| IDENT PLUS_EQ expr		{ $$ = doeq_expr(PLUS_EQ, $1, $3); }
 	| IDENT MINUS_EQ expr		{ $$ = doeq_expr(MINUS_EQ, $1, $3); }
-	| IDENT OP_ASSIGN expr		{ $$ = assign_expr($1, $3); }
+	| IDENT OPTIONAL_ASSIGN expr	{ $$ = opt_expr($1, $3); }
+	| expr OP_ASSIGN expr		{ $$ = assign_expr($1, $3); }
 	| '(' expr ')'			{ $$ = $2; }
         | CRITLEFT expr CRITRIGHT       { $$ = critical_expr($2); }
 	| PROPLEFT expr PROPRIGHT	{ $$ = propagate_expr($2); }

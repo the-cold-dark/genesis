@@ -22,5 +22,7 @@ cStr  * data_add_list_literal_to_str(cStr * str, cList * list, Bool objnames);
 cStr  * data_add_literal_to_str(cStr * str, cData * data, Bool objnames);
 Long    data_type_id(Int type);
 
+char  * data_from_literal(cData *d, char *s);
+
 #endif
 

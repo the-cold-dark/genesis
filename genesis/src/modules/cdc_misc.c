@@ -122,9 +122,12 @@ NATIVE_METHOD(version) {
 NATIVE_METHOD(hostname) {
     cStr * name;
 
-    INIT_1_ARG(STRING);
+    INIT_0_OR_1_ARGS(STRING);
 
-    name = hostname(string_chars(STR1));
+    if (!argc)
+        name = string_dup(str_hostname);
+    else
+        name = hostname(string_chars(STR1));
 
     CLEAN_RETURN_STRING(name);
 }
@@ -135,9 +138,12 @@ NATIVE_METHOD(hostname) {
 NATIVE_METHOD(ip) {
     cStr * sip;
 
-    INIT_1_ARG(STRING);
+    INIT_0_OR_1_ARGS(STRING);
 
-    sip = ip(string_chars(STR1));
+    if (!argc)
+        sip = ip(string_chars(str_hostname));
+    else
+        sip = ip(string_chars(STR1));
 
     CLEAN_RETURN_STRING(sip);
 }

@@ -27,10 +27,6 @@
 // common defines in both functions and natives
 // -----------------------------------------------------------------------
 */
-/* this doesn't vary from functions to native methods */
-#define ARG_COUNT    stack_pos - arg_start
-#define DEF_argc     Int argc = ARG_COUNT
-#define DEF_args     cData * args = &stack[arg_start]
 
 #define THROW_NUM_ERROR(_num_, _str_) { \
         func_num_error(_num_, _str_); \
@@ -61,6 +57,11 @@
     if (INVALID_BINDING) \
         THROW((perm_id, "%s() is bound to %O", FUNC_NAME(), FUNC_BINDING()));
 #endif
+
+#ifdef NATIVE_MODULE
+#define ARG_COUNT    stack_pos - arg_start
+#define DEF_argc     Int argc = ARG_COUNT
+#define DEF_args     cData * args = &stack[arg_start]
 
 /* this macro is mainly handy when you want to parse the args yourself */
 #define INIT_ARGC(_argc_, _expected_, _str_) \
@@ -95,13 +96,12 @@
         INIT_ARGC(ARG_COUNT, 1, "one") \
         INIT_ARG1(_type_) \
 
-#define INIT_0_OR_1_ARG(_type_) \
+#define INIT_0_OR_1_ARGS(_type_) \
         DEF_args; \
         DEF_argc; \
         CHECK_BINDING \
-        INIT_ARG1(_type_) \
-        else \
-            THROW_NUM_ERROR(argc, "zero or one")
+        if (argc) \
+            INIT_ARG1(_type_)
 
 #define INIT_2_ARGS(_type1_, _type2_) \
         DEF_args; \
@@ -152,10 +152,48 @@
                        break; \
             default:   THROW_NUM_ERROR(argc, "one to three") \
         }
+#else
+/*
+// -----------------------------------------------------------------------
+*/
+#define DEF_argc     Int argc
+#define DEF_args     cData * args
 
+#define INIT_FUNC(_name_, _args_) \
+        if (!CAT(func_init_, _name_) _args_) return
+
+#define INIT_NO_ARGS() \
+        if (!func_init_0()) return
+
+#define INIT_0_OR_1_ARGS(_type1_) \
+        DEF_args; DEF_argc; \
+        INIT_FUNC(0_or_1, (&args, &argc, _type1_))
+
+#define INIT_1_ARG(_type1_) \
+        DEF_args; \
+        INIT_FUNC(1, (&args, _type1_))
+
+#define INIT_1_OR_2_ARGS(_type1_, _type2_) \
+        DEF_args; DEF_argc; \
+        INIT_FUNC(1_or_2, (&args, &argc, _type1_, _type2_))
+
+#define INIT_2_ARGS(_type1_, _type2_) \
+        DEF_args; \
+        INIT_FUNC(2, (&args, _type1_, _type2_))
+
+#define INIT_2_OR_3_ARGS(_type1_, _type2_, _type3_) \
+        DEF_args; DEF_argc; \
+        INIT_FUNC(2_or_3, (&args, &argc, _type1_, _type2_, _type3_))
+
+#endif
+
+/*
+// -----------------------------------------------------------------------
+*/
 #define COLDC_FUNC(_name_) void CAT(func_, _name_) (void)
 #define NATIVE_METHOD(_name_) \
         Int CAT(native_, _name_) (Int stack_start, Int arg_start)
+#define ANY_TYPE 0
 
 /*
 // -----------------------------------------------------------------------
@@ -166,7 +204,6 @@
 
 #define VARIABLE 1
 #define FIXED    0
-#define ANY_DATA 0
 
 #include "execute.h"
 

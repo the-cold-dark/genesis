@@ -173,16 +173,17 @@ void func_shutdown(void) {
 //
 */
 
-void func_set_heartbeat(void) {
+COLDC_FUNC(set_heartbeat) {
     cData *args;
 
     if (!func_init_1(&args, INTEGER))
         return;
 
-    if (args[0].u.val <= 0)
-        args[0].u.val = -1;
-    heartbeat_freq = args[0].u.val;
-    pop(1);
+    if (INT1 <= 0)
+        INT1 = -1;
+    heartbeat_freq = INT1;
+
+    /* don't push or pop--let the arg be the return value */
 }
 
 /*

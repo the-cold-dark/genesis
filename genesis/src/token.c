@@ -76,6 +76,7 @@ static struct {
     { "-=",			MINUS_EQ },
     { "/=",			DIV_EQ },
     { "*=",			MULT_EQ },
+    { "?=",			OPTIONAL_ASSIGN },
     { "?",			OP_COND_IF },
 };
 
@@ -109,18 +110,26 @@ void lex_start(cList * code_list) {
 }
 
 /* Returns if s can be parsed as an identifier. */
-Int is_valid_ident(char *s)
-{
-    while (*s) {
+Bool is_valid_ident(char *s) {
+    for (; *s; s++) {
 	if (!isalnum(*s) && *s != '_')
 	    return 0;
-	s++;
     }
     return 1;
 }
 
-Bool is_reserved_word(char *s)
-{
+Bool string_is_valid_ident(cStr * str) {
+    char * s =   string_chars(str);
+    int    len = string_length(str);
+
+    for (; len; len--, s++) {
+	if (!isalnum(*s) && *s != '_')
+	    return 0;
+    }
+    return 1;
+}
+
+Bool is_reserved_word(char *s) {
     int start, i, j, len;
     char * word;
 

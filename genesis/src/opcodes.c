@@ -107,6 +107,10 @@ static Op_info op_info[] = {
     { DIV_EQ,           "DIV_EQ",          op_doeq_divide },
     { PLUS_EQ,          "PLUS_EQ",         op_doeq_add },
     { MINUS_EQ,         "MINUS_EQ",        op_doeq_subtract },
+    { OPTIONAL_ASSIGN,  "OPTIONAL_ASSIGN", op_optional_assign, JUMP },
+    { OPTIONAL_END,     "OPTIONAL_END",    op_optional_end },
+    { SCATTER_START,    "SCATTER_START",   op_scatter_start },
+    { SCATTER_END,      "SCATTER_END",     0},
 
     /* Object variable functions */
     FDEF(F_ADD_VAR,    "add_var",   add_var)
@@ -115,6 +119,10 @@ static Op_info op_info[] = {
     FDEF(F_GET_VAR,    "get_var",   get_var)
     FDEF(F_CLEAR_VAR,  "clear_var", clear_var)
     FDEF(F_VARIABLES,  "variables", variables)
+
+    /* debugger */
+    FDEF(F_DEBUG_CALLERS, "debug_callers", debug_callers)
+    FDEF(F_CALL_TRACE,    "call_trace",    call_trace)
 
     /* Object method functions */
     FDEF(F_LIST_METHOD,       "list_method",       list_method)
@@ -182,6 +190,7 @@ static Op_info op_info[] = {
     { F_TOFLOAT,          "tofloat",              func_tofloat },
     { F_TOSTR,            "tostr",                func_tostr },
     { F_TOLITERAL,        "toliteral",            func_toliteral },
+    { F_FROMLITERAL,      "fromliteral",          func_fromliteral },
     { F_TOOBJNUM,         "toobjnum",             func_toobjnum },
     { F_TOSYM,            "tosym",                func_tosym },
     { F_TOERR,            "toerr",                func_toerr },
@@ -221,6 +230,7 @@ static Op_info op_info[] = {
     { F_FFLUSH,         "fflush",               func_fflush },
 
     /* Miscellaneous functions */
+    { F_FLUSH,  "anticipate_assignment",     func_anticipate_assignment},
     { F_LOCALTIME,        "localtime",       func_localtime },
     { F_TIME,             "time",            func_time },
     { F_MTIME,            "mtime",           func_mtime },
@@ -264,6 +274,7 @@ static Op_info op_info[] = {
     { F_STRCMP,           "strcmp",          func_strcmp },
     { F_STRSED,           "strsed",          func_strsed },
     { F_STRGRAFT,         "strgraft",        func_strgraft },
+    { F_STRIDX,           "stridx",          func_stridx },
 
     /* List manipulation (listop.c). */
     { F_LISTLEN,          "listlen",         func_listlen },

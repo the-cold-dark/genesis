@@ -29,13 +29,8 @@ cStr *string_new(Int size_needed) {
     cStr *cnew;
     Int size;
 
-#if DISABLED
-    size = STARTING_SIZE;
-    while (size < size_needed)
-	size = size * 2 + MALLOC_DELTA;
-#else
+    /* plus one for NULL */
     size = size_needed + 1;
-#endif
     cnew = (cStr *) emalloc(sizeof(cStr) + sizeof(char) * size);
     cnew->start = 0;
     cnew->len = 0;
@@ -166,23 +161,23 @@ cStr *string_substring(cStr *str, Int start, Int len) {
 }
 
 cStr * string_uppercase(cStr *str) {
-    char *s, *start, *end;
+    char *s, *end;
  
     str = string_prep(str, str->start, str->len);
-    start = str->s + str->start;
-    end = start + str->len;
-    for (s = start; s < end; s++)
+    s = string_chars(str);
+    end = s + str->len;
+    for (; s < end; s++)
         *s = UCASE(*s);
     return str;
 }
 
 cStr * string_lowercase(cStr *str) {
-    char *s, *start, *end;
+    char *s, *end;
 
     str = string_prep(str, str->start, str->len);
-    start = str->s + str->start;
-    end = start + str->len;
-    for (s = start; s < end; s++)
+    s = string_chars(str);
+    end = s + str->len;
+    for (; s < end; s++)
         *s = LCASE(*s);
     return str;
 }
@@ -282,29 +277,29 @@ cStr * string_prep(cStr *str, Int start, Int len) {
 
     /* Figure out if we need to resize the string or move its contents.  Moving
      * contents takes precedence. */
+#if DISABLED
     need_to_resize = (len - start) * 4 < str->size;
     need_to_resize = need_to_resize && str->size > STARTING_SIZE;
-    need_to_resize = need_to_resize || (str->size < len);
+    need_to_resize = need_to_resize || (str->size <= len);
+#endif
+    need_to_resize = str->size <= len + start;
     need_to_move = (str->refs > 1) || (need_to_resize && start > 0);
+
 
     if (need_to_move) {
         /* Move the string's contents into a new string. */
         cnew = string_new(len);
         MEMCPY(cnew->s, str->s + start, (len > str->len) ? str->len : len);
+        cnew->s[len] = (char) NULL;
         cnew->len = len;
         string_discard(str);
         return cnew;
     } else if (need_to_resize) {
         /* Resize the string.  We can assume that string->start == start == 0 */
         str->len = len;
-#if DISABLED
-        size = STARTING_SIZE;
-        while (size < len)
-            size = size * 2 + MALLOC_DELTA;
-#else
-        size = len + 1;
-#endif
+        size = len + 1; /* plus one for NULL */
         str = (cStr *)erealloc(str, sizeof(cStr)+(size * sizeof(char)));
+        str->s[start+len] = (char) NULL;
         str->size = size;
         return str;
     } else {
@@ -314,6 +309,7 @@ cStr * string_prep(cStr *str, Int start, Int len) {
         }
         str->start = start;
         str->len = len;
+        str->s[start+len] = (char) NULL;
         return str;
     }
 }

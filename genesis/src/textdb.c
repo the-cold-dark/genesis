@@ -38,6 +38,7 @@ Long       line_count;
 Long       method_start;
 Obj * cur_obj;
 extern Bool print_objs;
+extern Bool print_invalid;
 
 #define ERR(__s)  (printf("\rLine %ld: %s\n", (long) line_count, __s))
 
@@ -104,7 +105,6 @@ extern Bool print_objs;
 INTERNAL Method * get_method(FILE * fp, Obj * obj, char * name);
 char * strchop(char * str, Int len);
 INTERNAL void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames);
-char * data_from_literal(cData *d, char *s);
 void blank_and_print_obj(char * what, Obj * obj);
 
 /*
@@ -174,6 +174,20 @@ INTERNAL Int add_objname(char * str, Long objnum) {
 
     return 1;
 }
+
+/* here because data_from_literal() calls it, and genesis wants to handle
+   it differently -- bad, will fix eventually */
+cObjnum get_object_name(Ident id) {
+    cObjnum num;
+
+    if (!lookup_retrieve_name(id, &num)) {
+        num = db_top++;
+        add_objname(ident_name(id), num);
+    }
+
+    return num;
+}
+
 
 INTERNAL void cleanup_holders(void) {
     holder_t * holder = holders,
@@ -1254,172 +1268,6 @@ void compile_cdc_file(FILE * fp) {
     cleanup_holders();
     fputs("done.\n", stdout);
     fflush(stdout);
-}
-
-/* defined here, rather than in data.c, because it would be lint for genesis */
-char * data_from_literal(cData *d, char *s) {
-
-    while (isspace(*s))
-	s++;
-
-    d->type = -1;
-
-    if (isdigit(*s) || ((*s == '-' || *s == '+') && isdigit(s[1]))) {
-        char *t = s;
-
-	d->type = INTEGER;
-	d->u.val = (Long) atol(s);
-	while (isdigit(*++s));
-        if (*s=='.' || *s=='e') {
- 	    d->type = FLOAT;
- 	    d->u.fval = (Float) atof(t);
- 	    s++;
-            while (isdigit(*s) ||
-                   *s == '.' ||
-                   *s == 'e' ||
-                   *s == '-' ||
-                   *s == '+')
-                s++;
- 	}
-	return s;
-    } else if (*s == '"') {
-	d->type = STRING;
-	d->u.str = string_parse(&s);
-	return s;
-    } else if (*s == '#' && (isdigit(s[1]) || ((s[1] == '-' || s[1] == '+') && isdigit(s[2])))) {
-	d->type = OBJNUM;
-	d->u.objnum = (cObjnum) atol(++s);
-	while (isdigit(*++s));
-	return s;
-    } else if (*s == '$') {
-        idref_t    id;
-        Ident      name;
-	cObjnum   objnum;
-
-        s += get_idref(s, &id, ISOBJ);
-        if (id.err || id.str[0] == (char) NULL)
-            DIE("Invalid object definition in data.")
-        name = ident_get(id.str);
-	if (!lookup_retrieve_name(name, &objnum)) {
-            objnum = db_top++;
-            add_objname(ident_name(name), objnum);
-        }
-	ident_discard(name);
-	d->type = OBJNUM;
-	d->u.objnum = objnum;
-	return s;
-    } else if (*s == '[') {
-	cList *list;
-
-	list = list_new(0);
-	s++;
-	while (*s && *s != ']') {
-	    s = data_from_literal(d, s);
-	    if (d->type == -1) {
-		list_discard(list);
-		d->type = -1;
-		return s;
-	    }
-	    list = list_add(list, d);
-	    data_discard(d);
-	    while (isspace(*s))
-		s++;
-	    if (*s == ',')
-		s++;
-	    while (isspace(*s))
-		s++;
-	}
-	d->type = LIST;
-	d->u.list = list;
-	return (*s) ? s + 1 : s;
-    } else if (*s == '#' && s[1] == '[') {
-	cData assocs;
-
-	/* Get associations. */
-	s = data_from_literal(&assocs, s + 1);
-	if (assocs.type != LIST) {
-	    if (assocs.type != -1)
-		data_discard(&assocs);
-	    d->type = -1;
-	    return s;
-	}
-
-	/* Make a dict from the associations. */
-	d->type = DICT;
-	d->u.dict = dict_from_slices(assocs.u.list);
-	data_discard(&assocs);
-	if (!d->u.dict)
-	    d->type = -1;
-	return s;
-    } else if (*s == '`' && s[1] == '[') {
-	cData *p, byte_data;
-	cList *bytes;
-	cBuf *buf;
-	Int i;
-
-	/* Get the contents of the buffer. */
-	s = data_from_literal(&byte_data, s + 1);
-	if (byte_data.type != LIST) {
-	    if (byte_data.type != -1)
-		data_discard(&byte_data);
-	    return s;
-	}
-	bytes = byte_data.u.list;
-
-	/* Verify that the bytes are numbers. */
-	for (p = list_first(bytes); p; p = list_next(bytes, p)) {
-	    if (p->type != INTEGER) {
-		data_discard(&byte_data);
-		return s;
-	    }
-	}
-
-	/* Make a buffer from the numbers. */
-	buf = buffer_new(list_length(bytes));
-	i = 0;
-	for (p = list_first(bytes); p; p = list_next(bytes, p))
-	    buf->s[i++] = p->u.val;
-
-	data_discard(&byte_data);
-	d->type = BUFFER;
-	d->u.buffer = buf;
-	return s;
-    } else if (*s == '\'') {
-	s++;
-	d->type = SYMBOL;
-	d->u.symbol = parse_ident(&s);
-	return s;
-    } else if (*s == '~') {
-	s++;
-	d->type = T_ERROR;
-	d->u.symbol = parse_ident(&s);
-	return s;
-    } else if (*s == '<') {
-	cData cclass;
-
-	s = data_from_literal(&cclass, s + 1);
-	if (cclass.type == OBJNUM) {
-	    while (isspace(*s))
-		s++;
-	    if (*s == ',')
-		s++;
-	    while (isspace(*s))
-		s++;
-	    d->type = FROB;
-	    d->u.frob = TMALLOC(cFrob, 1);
-	    d->u.frob->cclass = cclass.u.objnum;
-	    s = data_from_literal(&d->u.frob->rep, s);
-	    if (d->u.frob->rep.type == -1) {
-		TFREE(d->u.frob, 1);
-		d->type = -1;
-	    }
-	} else if (cclass.type != -1) {
-	    data_discard(&cclass);
-	}
-	return (*s) ? s + 1 : s;
-    } else {
-	return (*s) ? s + 1 : s;
-    }
 }
 
 /*

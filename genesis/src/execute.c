@@ -41,6 +41,8 @@ Long tick;
 #define DEBUG_VM DISABLED
 #define DEBUG_EXECUTE DISABLED
 
+cData debug;
+
 VMState *suspended = NULL, *preempted = NULL, *vmstore = NULL;
 VMStack *stack_store = NULL, *holder_cache = NULL; 
 
@@ -120,6 +122,10 @@ VMState * vm_current(void) {
     vm->limit_objswap = limit_objswap;
     vm->limit_calldepth = limit_calldepth;
 
+#ifdef DRIVER_DEBUG
+    data_dup(&vm->debug, &debug);
+#endif
+
     return vm;
 }
 
@@ -140,6 +146,14 @@ void restore_vm(VMState *vm) {
     limit_recursion = vm->limit_recursion;
     limit_objswap = vm->limit_objswap;
     limit_calldepth = vm->limit_calldepth;
+
+#ifdef DRIVER_DEBUG
+    data_discard(&debug);
+    debug = vm->debug;
+    vm->debug.type = INTEGER;
+    vm->debug.u.val = 0;
+#endif
+
 #if DEBUG_VM
     write_err("restore_vm: tid %d opcode %s",
               vm->task_id, op_table[cur_frame->opcodes[cur_frame->pc]].name);
@@ -208,7 +222,7 @@ cList * frame_info(Frame * frame) {
     d.u.val = frame->ticks;
     list = list_add(list, &d);
     d.type = SYMBOL;
-    d.u.symbol = ident_dup(frame->method->name);
+    d.u.symbol = frame->method->name;
     list = list_add(list, &d);
 
     return list;
@@ -527,6 +541,10 @@ void init_execute(void) {
     limit_recursion = 128;
     limit_objswap = 0;
     limit_calldepth = 128;
+
+#ifdef DRIVER_DEBUG
+    clear_debug();
+#endif
 }
 
 /*
@@ -548,6 +566,7 @@ void task(cObjnum objnum, Long name, Int num_args, ...) {
 
     /* Set global variables. */
     frame_depth = 0;
+    clear_debug();
 
     va_start(arg, num_args);
     check_stack(num_args);
@@ -581,6 +600,7 @@ void task(cObjnum objnum, Long name, Int num_args, ...) {
 //
 */
 void task_method(Obj *obj, Method *method) {
+    clear_debug();
     frame_start(obj, method, NOT_AN_IDENT, NOT_AN_IDENT, NOT_AN_IDENT, 0, 0, FROB_NO);
 
     execute();
@@ -687,6 +707,55 @@ Int frame_start(Obj * obj,
     frame->caller_frame = cur_frame;
     cur_frame = frame;
 
+#ifdef DRIVER_DEBUG
+    if (debug.u.val > 0) {
+      Int parms;
+      cList *list;  
+      cData d; 
+
+      parms = (debug.u.val == 2 ||
+               (debug.u.val >= 4 &&
+                list_length(list_elem(debug.u.list,0)->u.list) == 5));
+
+      if (debug.type != LIST) {
+          debug.type = LIST;
+          debug.u.list = list_new(256);
+      }
+
+      list = list_new(4);
+      d.type=INTEGER;
+      d.u.val = tick;
+      list = list_add(list, &d);
+      d.type = OBJNUM;
+      d.u.objnum = frame->object->objnum;
+      list = list_add(list, &d);
+      d.type = OBJNUM;
+      d.u.objnum = method->object->objnum;
+      list = list_add(list, &d);
+      d.type = SYMBOL;
+      d.u.symbol = ident_dup(method->name);
+      list = list_add(list, &d);
+      ident_discard(method->name);
+
+      if (parms) {
+          cList *l;
+          Int i; 
+
+          l = list_new(1);
+          for (i = arg_start; i < stack_pos - method->num_vars; i++)
+              l = list_add(l, &stack[i]);
+          d.type = LIST;
+          d.u.list = l;
+          list = list_add(list, &d);
+          list_discard(l);
+      }
+      d.type = LIST;
+      d.u.list = list;
+      debug.u.list = list_add(debug.u.list, &d);
+      list_discard(list);
+    }           
+#endif
+
     return CALL_OK;
 }
 
@@ -696,6 +765,20 @@ Int frame_start(Obj * obj,
 void frame_return(void) {
     Int i;
     Frame *caller_frame = cur_frame->caller_frame;
+
+#ifdef DRIVER_DEBUG
+    if (debug.u.val > 0) {
+      cData d;
+    
+      if (debug.type == LIST) {
+          /* We skip the case when there hasn't been any calls yet,
+             That's to prefent the other routine from getting confused */
+          d.type = INTEGER;
+          d.u.val = tick;
+          debug.u.list = list_add (debug.u.list, &d);
+      }   
+    }     
+#endif    
 
     /* Free old data on stack. */
     for (i = cur_frame->stack_start; i < stack_pos; i++)
@@ -856,20 +939,24 @@ void anticipate_assignment(void) {
     Int opcode, ind;
     Long id;
     cData *dp, d;
+    Int pc=cur_frame->pc;
 
-    opcode = cur_frame->opcodes[cur_frame->pc];
+    /* skip error handling */
+    while ((opcode = cur_frame->opcodes[pc]) == CRITICAL_END)
+	pc++;
+
     switch (opcode) {
       case SET_LOCAL:
         /* Zero out local variable value. */
         dp = &stack[cur_frame->var_start +
-                    cur_frame->opcodes[cur_frame->pc + 1]];
+                    cur_frame->opcodes[pc + 1]];
         data_discard(dp);
         dp->type = INTEGER;
         dp->u.val = 0;
         break;
       case SET_OBJ_VAR:
         /* Zero out the object variable, if it exists. */
-        ind = cur_frame->opcodes[cur_frame->pc + 1];
+        ind = cur_frame->opcodes[pc + 1];
         id = object_get_ident(cur_frame->method->object, ind);
         d.type = INTEGER;
         d.u.val = 0;
@@ -945,9 +1032,10 @@ Int pass_method(Int stack_start, Int arg_start) {
     method = object_find_next_method(cur_frame->object->objnum,
                                      cur_frame->method->name,
                                      cur_frame->method->object->objnum,
-				     cur_frame->is_frob);
+				     cur_frame->method->m_access == MS_FROB ?
+                                     FROB_YES : FROB_NO);
     if (!method) {
-	if (cur_frame->is_frob == FROB_YES) {
+	if (cur_frame->method->m_access == MS_FROB) {
 	    method = object_find_next_method(cur_frame->object->objnum,
 					     cur_frame->method->name,
 					     cur_frame->method->object->objnum,
@@ -1012,9 +1100,9 @@ Int call_method(cObjnum objnum,     /* the object */
     if (!obj)
         call_error(CALL_ERR_OBJNF);
 
-    /* If we're executing as a frob method, treat any method calls to
+    /* If we're executing a frob method, treat any method calls to
        this() as if it were a frob call */
-    if (cur_frame && cur_frame->is_frob == FROB_YES &&
+    if (cur_frame && cur_frame->method->m_access == MS_FROB &&
         cur_frame->object->objnum == objnum)
         is_frob = FROB_YES;
 
@@ -1324,17 +1412,31 @@ void func_type_error(char *which, cData *wrong, char *required)
     cthrow(type_id, "The %s argument (%D) is not %s.", which, wrong, required);
 }
 
+INTERNAL Bool is_critical (void) {
+    if (cur_frame
+	&& cur_frame->specifiers
+	&& cur_frame->specifiers->type==CRITICAL)
+	return TRUE;
+    return FALSE;
+}
+
 void cthrow(Ident error, char *fmt, ...)
 {
     cStr *str;
     va_list arg;
 
-    va_start(arg, fmt);
-    str = vformat(fmt, arg);
+    if (!is_critical()) {
+	va_start(arg, fmt);
+	str = vformat(fmt, arg);
 
-    va_end(arg);
+	va_end(arg);
+    }
+    else
+	str=NULL;
+
     interp_error(error, str);
-    string_discard(str);
+    if (str)
+	string_discard(str);
 }
 
 void interp_error(Ident error, cStr *explanation)
@@ -1344,31 +1446,37 @@ void interp_error(Ident error, cStr *explanation)
     cData *d;
     char *opname;
 
-    /* Get the opcode name and decide whether it's a function or not. */
-    opname = op_table[cur_frame->last_opcode].name;
-    location_type = (islower(*opname)) ? function_id : opcode_id;
+    if (explanation) {
+	/* Get the opcode name and decide whether it's a function or not. */
+	opname = op_table[cur_frame->last_opcode].name;
+	location_type = (islower(*opname)) ? function_id : opcode_id;
 
-    /* Construct a two-element list giving the location. */
-    location = list_new(2);
-    d = list_empty_spaces(location, 2);
+	/* Construct a two-element list giving the location. */
+	location = list_new(2);
+	d = list_empty_spaces(location, 2);
 
-    /* The first element is 'function or 'opcode. */
-    d->type = SYMBOL;
-    d->u.symbol = ident_dup(location_type);
-    d++;
+	/* The first element is 'function or 'opcode. */
+	d->type = SYMBOL;
+	d->u.symbol = ident_dup(location_type);
+	d++;
 
-    /* The second element is the symbol for the opcode. */
-    d->type = SYMBOL;
-    d->u.symbol = ident_dup(op_table[cur_frame->last_opcode].symbol);
+	/* The second element is the symbol for the opcode. */
+	d->type = SYMBOL;
+	d->u.symbol = ident_dup(op_table[cur_frame->last_opcode].symbol);
+    }
+    else
+	location = NULL;
 
     start_error(error, explanation, NULL, location);
-    list_discard(location);
+    if (location)
+	list_discard(location);
 }
 
 void user_error(Ident error, cStr *explanation, cData *arg)
 {
     cList * location;
     cData *d;
+
 
     /* Construct a list giving the location. */
     location = list_new(5);
@@ -1421,40 +1529,44 @@ INTERNAL void start_error(Ident error, cStr *explanation, cData *arg,
     cList * error_condition, *traceback;
     cData *d;
 
-    /* Construct a three-element list for the error condition. */
-    error_condition = list_new(3);
-    d = list_empty_spaces(error_condition, 3);
+    if (location) {
+	/* Construct a three-element list for the error condition. */
+	error_condition = list_new(3);
+	d = list_empty_spaces(error_condition, 3);
 
-    /* The first element is the error code. */
-    d->type = T_ERROR;
-    d->u.error = ident_dup(error);
-    d++;
+	/* The first element is the error code. */
+	d->type = T_ERROR;
+	d->u.error = ident_dup(error);
+	d++;
 
-    /* The second element is the explanation string. */
-    d->type = STRING;
-    d->u.str = string_dup(explanation);
-    d++;
+	/* The second element is the explanation string. */
+	d->type = STRING;
+	d->u.str = string_dup(explanation);
+	d++;
 
-    /* The third element is the error arg, or 0 if there is none. */
-    if (arg) {
-        data_dup(d, arg);
-    } else {
-        d->type = INTEGER;
-        d->u.val = 0;
+	/* The third element is the error arg, or 0 if there is none. */
+	if (arg) {
+	    data_dup(d, arg);
+	} else {
+	    d->type = INTEGER;
+	    d->u.val = 0;
+	}
+
+	/* Now construct a traceback, starting as a two-element list. */
+	traceback = list_new(2);
+	d = list_empty_spaces(traceback, 2);
+
+	/* The first element is the error condition. */
+	d->type = LIST;
+	d->u.list = error_condition;
+	d++;
+
+	/* The second argument is the location. */
+	d->type = LIST;
+	d->u.list = list_dup(location);
     }
-
-    /* Now construct a traceback, starting as a two-element list. */
-    traceback = list_new(2);
-    d = list_empty_spaces(traceback, 2);
-
-    /* The first element is the error condition. */
-    d->type = LIST;
-    d->u.list = error_condition;
-    d++;
-
-    /* The second argument is the location. */
-    d->type = LIST;
-    d->u.list = list_dup(location);
+    else
+	traceback=NULL;
 
     /* Start the error propagating.  This consumes traceback. */
     propagate_error(traceback, error);
@@ -1480,7 +1592,8 @@ void propagate_error(cList * traceback, Ident error)
     }
 
     /* Add message to traceback. */
-    traceback = traceback_add(traceback, error);
+    if (traceback)
+	traceback = traceback_add(traceback, error);
 
     /* Look for an appropriate specifier in this frame. */
     for (; cur_frame->specifiers; pop_error_action_specifier()) {
@@ -1512,7 +1625,8 @@ void propagate_error(cList * traceback, Ident error)
             /* Pop this error spec, discard the traceback, and continue
              * processing. */
             pop_error_action_specifier();
-            list_discard(traceback);
+            if (traceback)
+		list_discard(traceback);
             return;
 
           case PROPAGATE:
@@ -1653,3 +1767,32 @@ INTERNAL void fill_in_method_info(cData *d)
 void bind_opcode(Int opcode, cObjnum objnum) {
     op_table[opcode].binding = objnum;
 }
+
+/* ------------------------------------------------------ */
+#ifdef DRIVER_DEBUG
+void init_debug(void) {     
+    debug.type = INTEGER;
+    debug.u.val = 0;
+}   
+
+void clear_debug(void) {   
+    data_discard(&debug);
+    init_debug();
+}     
+          
+void start_debug(void) {         
+    data_discard(&debug);
+    debug.type = INTEGER;
+    debug.u.val=1;
+}   
+              
+void start_full_debug(void) {         
+    data_discard(&debug);
+    debug.type = INTEGER;
+    debug.u.val=2;
+}   
+
+void get_debug(cData *d) { 
+    data_dup(d, &debug);
+}
+#endif

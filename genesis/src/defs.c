@@ -46,6 +46,8 @@ void init_defs(void) {
     str_tzname = string_new(0);
 # endif
 #endif
+
+    str_hostname = string_new(0);
 }
 
 #undef INIT_VAR

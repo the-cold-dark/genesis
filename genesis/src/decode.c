@@ -95,6 +95,7 @@ static struct {
     { MINUS_EQ,		 1 },
     { MULT_EQ,		 1 },
     { DIV_EQ,		 1 },
+    { OPTIONAL_ASSIGN,   1 },
     { CONDITIONAL,	 2 },
     { OR,		 3 },
     { AND,		 4 },
@@ -744,6 +745,59 @@ static Expr_list *decompile_expressions(Int *pos_ptr)
     return decompile_expressions_bounded(pos_ptr, -1);
 }
 
+static Expr *decompile_scatter (Int *pos_ptr)
+{
+    Int pos=*pos_ptr, end;
+    Expr_list *args = NULL;
+    char *s;
+    Int is_splice=FALSE;
+
+    while (1) {
+	switch (the_opcodes[pos]) {
+	case SET_LOCAL:
+	    s = varname(the_opcodes[pos + 1]);
+	    args = expr_list(var_expr(s), args);
+	    pos += 2;
+	    break;
+	    
+	case SET_OBJ_VAR:
+	    s = ident_name(object_get_ident(the_object, the_opcodes[pos + 1]));
+	    args = expr_list(var_expr(s), args);
+	    pos += 2;
+	    break;
+
+	case OPTIONAL_ASSIGN: {
+	    Expr_list *rhs;
+
+	    end = the_opcodes[pos + 1];
+	    pos += 2;
+	    rhs = decompile_expressions_bounded(&pos, end);
+	    pos = end + 1; /* skip OPTIONAL_END */
+	    args = expr_list(opt_expr(rhs->expr->u.assign.lval->u.name,
+				      rhs->expr->u.assign.value),
+			     args);
+	    break;
+	}
+	case SCATTER_START:
+	    pos++;
+	    args = expr_list(decompile_scatter(&pos), args);
+	    break;
+
+	case SPLICE:
+	    pos++;
+	    is_splice=TRUE;
+	    break;
+
+	case SCATTER_END:
+	    if (is_splice)
+		args->expr = splice_expr(args->expr);
+	    *pos_ptr=pos+1;
+	    return list_expr(args);
+	}
+    }
+}
+
+
 /* This function constructs the list of expressions that would result from
  * interpreting the opcodes starting at (*pos_ptr).  We stop at end, at a
  * statement token, or at a token which pops an argument list off the stack. */
@@ -843,19 +897,40 @@ static Expr_list *decompile_expressions_bounded(Int *pos_ptr, Int expr_end)
             pos += 3;
             break;
 
-          case SET_LOCAL:
+	  case SET_LOCAL:
             /* SET_LOCAL opcode follows one expression. */
             s = varname(the_opcodes[pos + 1]);
-            stack->expr = assign_expr(s, stack->expr);
+            stack->expr = assign_expr(var_expr(s), stack->expr);
             pos += 2;
             break;
 
           case SET_OBJ_VAR:
             /* SET_OBJ_VAR opcode follows one expression. */
             s = ident_name(object_get_ident(the_object, the_opcodes[pos + 1]));
-            stack->expr = assign_expr(s, stack->expr);
+            stack->expr = assign_expr(var_expr(s), stack->expr);
             pos += 2;
             break;
+
+	  case OPTIONAL_ASSIGN: {
+	    /* This is optional assignment. It can't be in the scatter,
+	       since it's handled from there. */
+	    
+	      Expr_list *rhs;
+
+	      end = the_opcodes[pos + 1];
+	      pos += 2;
+	      rhs = decompile_expressions_bounded(&pos, end);
+	      pos = end;
+	      stack = expr_list(opt_expr(rhs->expr->u.assign.lval->u.name,
+					 rhs->expr->u.assign.value),
+				stack->next /*skip the get_var*/ );
+	      break;
+	  }
+
+	  case SCATTER_START:
+	      pos++;
+	      stack->expr = assign_expr(decompile_scatter(&pos), stack->expr);
+	      break;
 
 	  case START_ARGS: {
 	      Expr_list *args;
@@ -1454,14 +1529,24 @@ static cStr *unparse_expr(cStr *str, Expr *expr, Int paren) {
 	return string_add_chars(str, expr->u.name, strlen(expr->u.name));
 
       case ASSIGN:
-        s = expr->u.assign.var;
         if (paren)
             str = string_addc(str, '(');
-        str = string_add_chars(str, s, strlen(s));
-        str = string_add_chars(str, " = ", 3);
-        str = unparse_expr(str, expr->u.assign.value, PAREN_ASSIGN);
+	str = unparse_expr(str, expr->u.assign.lval, PAREN_ASSIGN);
+	str = string_add_chars(str, " = ", 3);
+	str = unparse_expr(str, expr->u.assign.value, PAREN_ASSIGN);
+	if (paren)
+	    str = string_addc(str, ')');
+        return str;
+
+      case OPTIONAL_ASSIGN:
+        s = expr->u.optassign.var;
         if (paren)
-            str = string_addc(str, ')');
+            str = string_addc(str, '(');
+	str = string_add_chars(str, s, strlen(s));
+	str = string_add_chars(str, " ?= ", 4);
+	str = unparse_expr(str, expr->u.optassign.value, PAREN_ASSIGN);
+	if (paren)
+	    str = string_addc(str, ')');
         return str;
 
       case INDECR:

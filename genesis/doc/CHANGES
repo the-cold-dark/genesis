@@ -6,6 +6,22 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-20 [16-Dec-96] Brandon, Miro, Brad Roberts, Brian Buchanan
+      * $network.hostname()/.ip() now return the machine's primary
+        hostname/ip, if no argument is given (Brandon)
+      * Corrected logic in string_prep() and list_prep()--it would not
+        function correctly on specific subrange() situations (Miro)
+      * Run-time execution debugging hooks added (Miro)
+      * Changed string_prep() to always NULL terminated (Brian)
+      * Fixed a bug in tosym() and creating 'idents' and hashes (Brandon)
+      * Fixed a minor problem in buf_to_str() reported by Brad (Brandon)
+      * rewrote/optimized buf_to_str to reduce copies (Brandon)
+      * Optimized (| .. |) (Miro)
+      * Added anticipate_assignment() (Miro)
+      * Added scatter assignments (Miro)
+      * Added default assignment (?=) (Miro)
+      * fixed some stack-corrupting bugs in file-ops (Brandon/Miro/Brad)
+      * tweaked how frob-methods are chosen (Brian)
 1.0-19 [14-Nov-96] Brandon Gillespie, Miroslav Silovic
       * Signifigantly sped up symbols and methods lookups. (Miro)
       * added 'config()' to be used to set task limits.  Currently recognized

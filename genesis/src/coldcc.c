@@ -28,6 +28,7 @@ Int    c_nowrite = 1;
 Int    c_opt = OPT_COMP;
 Bool   print_objs = YES;
 Bool   print_names = NO;
+Bool   print_invalid = YES;
 
 #define NEW_DB       1
 #define EXISTING_DB  0

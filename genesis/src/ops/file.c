@@ -40,14 +40,11 @@
 /*
 // -----------------------------------------------------------------
 */
-void func_fopen(void) {
-    cData  * args;
-    Int       nargs;
+COLDC_FUNC(fopen) {
     cList  * stat; 
     filec_t * file;
 
-    if (!func_init_1_or_2(&args, &nargs, STRING, STRING))
-        return;
+    INIT_1_OR_2_ARGS(STRING, STRING);
 
     file = find_file_controller(cur_frame->object);
 
@@ -60,14 +57,13 @@ void func_fopen(void) {
 
     /* open the file, it will automagically be set on the current object,
        if we are sucessfull, otherwise our stat list is NULL */
-    stat = open_file(args[0].u.str,
-                     (nargs == 2 ? args[1].u.str : NULL),
-                     cur_frame->object);
+    stat = open_file(STR1, (argc == 2 ? STR2 : NULL), cur_frame->object);
 
+    /* if its null, open_file() threw an error */
     if (stat == NULL)
         return;
 
-    pop(nargs);
+    pop(argc);
     push_list(stat);
     list_discard(stat);
 }
@@ -75,13 +71,12 @@ void func_fopen(void) {
 /*
 // -----------------------------------------------------------------
 */
-void func_file(void) {
+COLDC_FUNC(file) {
     filec_t * file;
     cList  * info;
     cData  * list;
 
-    if (!func_init_0())
-        return;
+    INIT_NO_ARGS();
 
     GET_FILE_CONTROLLER(file)
 
@@ -106,20 +101,18 @@ void func_file(void) {
 /*
 // -----------------------------------------------------------------
 */
-void func_files(void) {
-    cData   * args;
-    cStr * path,
-             * name;
-    cList   * out;
-    cData     d;
+COLDC_FUNC(files) {
+    cStr          * path,
+                  * name;
+    cList         * out;
+    cData           d;
     struct dirent * dent;
-    DIR      * dp;
-    struct stat sbuf;
+    DIR           * dp;
+    struct stat     sbuf;
 
-    if (!func_init_1(&args, STRING))
-        return;
+    INIT_1_ARG(STRING);
 
-    path = build_path(args[0].u.str->s, NULL, -1);
+    path = build_path(STR1->s, NULL, -1);
     if (!path)
         return;
 
@@ -164,12 +157,11 @@ void func_files(void) {
 /*
 // -----------------------------------------------------------------
 */
-void func_fclose(void) {
+COLDC_FUNC(fclose) {
     filec_t * file;
     Int       err;
 
-    if (!func_init_0())
-        return;
+    INIT_NO_ARGS();
 
     file = find_file_controller(cur_frame->object);
 
@@ -196,21 +188,18 @@ void func_fclose(void) {
 // This makes it easier defaulting to this() file.
 //
 */
-void func_fchmod(void) {
+COLDC_FUNC(fchmod) {
     filec_t * file;
-    cData  * args;
     cStr    * path;
-    Int       failed,
-              nargs;
+    Int       failed;
     Long      mode;
     char    * p,
             * ep;
 
-    if (!func_init_1_or_2(&args, &nargs, STRING, STRING))
-        return;
+    INIT_1_OR_2_ARGS(STRING, STRING);
 
     /* frob the string to a mode_t, somewhat taken from FreeBSD's chmod.c */
-    p = args[0].u.str->s;
+    p = STR1->s;
 
     SETERR(0);
     mode = strtol(p, &ep, 8);
@@ -231,13 +220,13 @@ void func_fchmod(void) {
     }
 #endif
 
-    if (nargs == 1) {
+    if (argc == 1) {
         GET_FILE_CONTROLLER(file)
         path = string_dup(file->path);
     } else {
         struct stat sbuf;
 
-        path = build_path(args[1].u.str->s, &sbuf, ALLOW_DIR);
+        path = build_path(STR1->s, &sbuf, ALLOW_DIR);
         if (path == NULL)
             return;
     }
@@ -250,24 +239,21 @@ void func_fchmod(void) {
         return;
     }
 
-    pop(2);
+    pop(argc);
     push_int(1);
 }
 
 /*
 // -----------------------------------------------------------------
 */
-void func_frmdir(void) {
-    cData      * args;
-    cStr    * path;
+COLDC_FUNC(frmdir) {
+    cStr        * path;
     Int           err;
     struct stat   sbuf;
 
-    if (!func_init_1(&args, STRING))
-        return;
+    INIT_1_ARG(STRING);
 
-    path = build_path(args[0].u.str->s, &sbuf, ALLOW_DIR);
-    if (!path)
+    if (!(path = build_path(STR1->s, &sbuf, ALLOW_DIR)))
         return;
 
     err = rmdir(path->s);
@@ -284,17 +270,14 @@ void func_frmdir(void) {
 /*
 // -----------------------------------------------------------------
 */
-void func_fmkdir(void) {
-    cData      * args;
-    cStr    * path;
+COLDC_FUNC(fmkdir) {
+    cStr        * path;
     Int           err;
     struct stat   sbuf;
 
-    if (!func_init_1(&args, STRING))
-        return;
+    INIT_1_ARG(STRING);
 
-    path = build_path(args[0].u.str->s, NULL, -1);
-    if (!path)
+    if (!(path = build_path(args[0].u.str->s, NULL, -1)))
         return;
 
     if (stat(path->s, &sbuf) == F_SUCCESS) {
@@ -318,19 +301,16 @@ void func_fmkdir(void) {
 /*
 // -----------------------------------------------------------------
 */
-void func_fremove(void) {
-    cData      * args;
+COLDC_FUNC(fremove) {
     filec_t     * file;
-    cStr    * path;
-    Int           nargs,
-                  err;
+    cStr        * path;
+    Int           err;
     struct stat   sbuf;
 
-    if (!func_init_0_or_1(&args, &nargs, STRING))
-        return;
+    INIT_0_OR_1_ARGS(STRING);
 
-    if (nargs) {
-        path = build_path(args[0].u.str->s, &sbuf, DISALLOW_DIR);
+    if (argc) {
+        path = build_path(STR1->s, &sbuf, DISALLOW_DIR);
         if (!path)
             return;
     } else {
@@ -344,7 +324,7 @@ void func_fremove(void) {
     if (err != F_SUCCESS)
         THROW((file_id, strerror(GETERR())))
 
-    if (nargs)
+    if (argc)
         pop(1);
 
     push_int(1);
@@ -353,13 +333,11 @@ void func_fremove(void) {
 /*
 // -----------------------------------------------------------------
 */
-void func_fseek(void) {
-    cData   * args;
+COLDC_FUNC(fseek) {
     filec_t * file;
     Int       whence;
 
-    if (!func_init_2(&args, INTEGER, SYMBOL))
-        return;
+    INIT_2_ARGS(INTEGER, SYMBOL);
 
     GET_FILE_CONTROLLER(file)
  
@@ -387,29 +365,23 @@ void func_fseek(void) {
 /*
 // -----------------------------------------------------------------
 */
-void func_frename(void) {
-    cStr    * from,
+COLDC_FUNC(frename) {
+    cStr        * from,
                 * to;
-    cData      * args;
     struct stat   sbuf;
-    Int           err,
-                  nargs;
+    Int           err;
     filec_t     * file = NULL;
 
-    if (!func_init_1_or_2(&args, &nargs, 0, STRING))
-        return;
+    INIT_1_OR_2_ARGS(ANY_TYPE, STRING);
 
     if (args[0].type != STRING) {
         GET_FILE_CONTROLLER(file)
         from = string_dup(file->path);
-    } else {
-        from = build_path(args[0].u.str->s, &sbuf, ALLOW_DIR);
-        if (!from)
-            return;
-    }
+    } else if (!(from = build_path(args[0].u.str->s, &sbuf, ALLOW_DIR)))
+        return;
 
     /* stat it seperately so that we can give a better error */
-    to = build_path(args[1].u.str->s, NULL, ALLOW_DIR);
+    to = build_path(STR2->s, NULL, ALLOW_DIR);
     if (stat(to->s, &sbuf) < 0) {
         cthrow(file_id, "Destination \"%s\" already exists.", to->s);
         string_discard(to);
@@ -430,18 +402,17 @@ void func_frename(void) {
         return;
     }
 
-    pop(nargs);
+    pop(argc);
     push_int(1);
 }
 
 /*
 // -----------------------------------------------------------------
 */
-void func_fflush(void) {
+COLDC_FUNC(fflush) {
     filec_t * file;
 
-    if (!func_init_0())
-        return;
+    INIT_NO_ARGS();
 
     GET_FILE_CONTROLLER(file)
 
@@ -456,11 +427,10 @@ void func_fflush(void) {
 /*
 // -----------------------------------------------------------------
 */
-void func_feof(void) {
+COLDC_FUNC(feof) {
     filec_t * file;
 
-    if (!func_init_0())
-        return;
+    INIT_NO_ARGS();
 
     GET_FILE_CONTROLLER(file);
 
@@ -473,13 +443,10 @@ void func_feof(void) {
 /*
 // -----------------------------------------------------------------
 */
-void func_fread(void) {
-    cData  * args;
-    Int       nargs;
+COLDC_FUNC(fread) {
     filec_t  * file;
 
-    if (!func_init_0_or_1(&args, &nargs, INTEGER))
-        return;
+    INIT_0_OR_1_ARGS(INTEGER);
 
     GET_FILE_CONTROLLER(file)
 
@@ -492,8 +459,8 @@ void func_fread(void) {
         cBuf * buf = NULL;
         Int      block = DEF_BLOCKSIZE;
 
-        if (nargs) {
-            block = args[0].u.val;
+        if (argc) {
+            block = INT1;
             pop(1);
         }
 
@@ -507,10 +474,11 @@ void func_fread(void) {
     } else {
         cStr * str = read_file(file);
 
+        /* if its null, read_file() threw an error .. */
         if (!str)
             return;
 
-        if (nargs)
+        if (argc)
             pop(1);
 
         push_string(str);
@@ -521,13 +489,11 @@ void func_fread(void) {
 /*
 // -----------------------------------------------------------------
 */
-void func_fwrite(void) {
-    cData   * args;
+COLDC_FUNC(fwrite) {
     Int        count;
     filec_t  * file;
 
-    if (!func_init_1(&args, 0))
-        return;
+    INIT_1_ARG(ANY_TYPE);
 
     GET_FILE_CONTROLLER(file)
 
@@ -569,22 +535,20 @@ void func_fwrite(void) {
 /*
 // -----------------------------------------------------------------
 */
-void func_fstat(void) {
+COLDC_FUNC(fstat) {
     struct stat    sbuf;
-    cList       * stat;
-    cData       * args;
-    Int            nargs;
+    cList        * stat;
     filec_t      * file;
 
-    if (!func_init_0_or_1(&args, &nargs, STRING))
-        return;
+    INIT_0_OR_1_ARGS(STRING);
 
-    if (!nargs) {
+    if (!argc) {
         GET_FILE_CONTROLLER(file)
         stat_file(file, &sbuf);
     } else {
-        cStr * path = build_path(args[0].u.str->s, &sbuf, ALLOW_DIR);
+        cStr * path = build_path(STR1->s, &sbuf, ALLOW_DIR);
 
+        /* if path == NULL build_path() threw an error */
         if (!path)
             return;
 
@@ -592,6 +556,10 @@ void func_fstat(void) {
     }
 
     stat = statbuf_to_list(&sbuf);
+
+    /* don't call pop unless we need to */
+    if (argc)
+        pop(1);
 
     push_list(stat);
     list_discard(stat);
@@ -605,7 +573,7 @@ void func_fstat(void) {
 //
 */
 
-void func_execute(void) {
+COLDC_FUNC(execute) {
     cData *args, *d;
     cList *script_args;
     Int num_args, argc, len, i, fd, dlen;

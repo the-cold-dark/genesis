@@ -396,35 +396,43 @@ NATIVE_METHOD(strfmt) {
 NATIVE_METHOD(trim) {
     register char * s;
     char          * ss;
-    cStr      * str;
+    cStr          * str;
     Int             start;
     Int             len;
+    Ident           how;
 
-    INIT_1_ARG(STRING);
+    INIT_1_OR_2_ARGS(STRING, SYMBOL);
+
+    if (argc == 1)
+        how = both_id;
+    else
+        how = SYM2;
 
     str = string_dup(STR1);
-
-    /* get the start and length of the 'sub' trimmed string */
+    ss = string_chars(str);
     len = string_length(str);
 
-    /* they gave us an empty string, dup it and return it */
+    /* they gave us an empty string just return */
     if (!len) {
         CLEAN_RETURN_STRING(str);
     }
 
-    ss = string_chars(str);
+    if (how == both_id || how == left_id) {
+        for (s=ss; *s == ' '; s++);
+        start = s - ss;
+    } else {
+        start = 0;
+    }
 
-    for (s=ss; *s == ' '; s++);
-    start = s - ss;
-
-    /* if start is len set len to zero and jump past the length figuring */
+    /* if start is len set len to zero and jump past the right side */
     if (start == len) {
         len = 0;
-    } else {
+    } else if (how == both_id || how || right_id) {
         for (s=(ss + len-1); *s == ' '; s--);
         len = ((s+1) - start) - ss;
     }
 
+    /* reduce references to 'str' */
     CLEAN_STACK();
     anticipate_assignment();
 

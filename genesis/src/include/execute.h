@@ -38,6 +38,9 @@ struct vmstate {
               arg_size;
     Int       task_id;
     Int       preempted;
+#ifdef DRIVER_DEBUG
+    cData     debug;
+#endif
     Int       limit_datasize;
     Int       limit_fork;
     Int       limit_calldepth;
@@ -213,6 +216,14 @@ cList * task_list(void);
 cList * task_stack(void);
 void run_paused_tasks(void);
 void bind_opcode(Int opcode, cObjnum objnum);
+
+#ifdef DRIVER_DEBUG
+void init_debug();
+void clear_debug();
+void start_debug();
+void start_full_debug();
+void get_debug (cData *d);
+#endif
 
 #ifdef PROFILE_EXECUTE
 void dump_execute_profile(void);

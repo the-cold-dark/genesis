@@ -31,8 +31,12 @@ extern Ident datasize_id, forkdepth_id, calldepth_id, recursion_id, objswap_id;
 /* method id's */
 extern Ident signal_id;
 
+/* used by cdc_string, set here incase they are needed elsewhere */
+extern Ident left_id, right_id, both_id;
+
 void   init_ident(void);
 Ident  ident_get(char *s);
+Ident  ident_get_string(cStr * str);
 void   ident_discard(Ident id);
 Ident  ident_dup(Ident id);
 char * ident_name(Ident id);

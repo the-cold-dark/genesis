@@ -99,9 +99,14 @@ struct expr {
 	} function;
 
         struct {
-            char *var;
+            Expr *lval;
             Expr *value;
         } assign;
+
+        struct {
+            char *var;
+            Expr *value;
+        } optassign;
 
 	struct {
 	    Expr *message;

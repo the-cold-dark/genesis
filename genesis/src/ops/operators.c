@@ -7,6 +7,7 @@
 #include "defs.h"
 
 #include <string.h>
+#include "cdc_pcode.h"
 #include "operators.h"
 #include "execute.h"
 #include "lookup.h"
@@ -1840,6 +1841,143 @@ void op_p_decrement(void) {
             cthrow(type_id, "%D is not an integer or float.", d1);
             return;
     }
+}
+
+/* Here stars the scatter assign block. BEWARE: big stuff ahead. */
+
+static void scatter_loop (void)
+{
+    Int list_index = stack[stack_pos - 2].u.val;
+    cData *d = &stack[stack_pos - 1];
+    cList *l = d->u.list;
+    Long *opcodes = cur_frame->opcodes;
+    Long c;
+
+    while (1) {
+	switch (opcodes[cur_frame->pc++]) {
+	case SCATTER_END:
+	    pop(2);
+
+	    if (stack[stack_pos-1].type == LIST) {
+		/* We allow for more arguments than needed. So, 
+		   no extra error check. */
+		list_index = stack[stack_pos - 2].u.val;
+		l = (d = &stack[stack_pos - 1])->u.list;
+		break;
+	    }
+	    else {
+		stack[stack_pos-1].u.val=1;
+		return;
+	    }
+
+	case SET_LOCAL:
+	case SET_OBJ_VAR:
+	    if (list_index >= list_length(l)) {
+		cthrow (range_id, "Too few arguments in the list (%D)",d);
+		return;
+	    }
+	    check_stack(1);
+	    data_dup(&stack[stack_pos++],list_elem(l, list_index));
+	    c = cur_frame->pc;
+	    (*op_table[opcodes[c-1]].func)();
+	    if (cur_frame->pc != c+1)
+		return;
+	    pop(1);
+	    break;
+
+	case OPTIONAL_ASSIGN:
+	    if (list_index >= list_length(l)) {
+		/* Setup for expression evaluation and exit. */
+		stack[stack_pos - 2].u.val = list_index;
+		cur_frame->pc++;
+		return;
+	    }
+	    else {
+		/* Do the assignment right away */
+		c = cur_frame->pc = cur_frame->opcodes[cur_frame->pc] - 1;
+		check_stack(1);
+		data_dup(&stack[stack_pos++],list_elem(l, list_index));
+		(*op_table[opcodes[c-1]].func)();
+		if (cur_frame->pc != c+1)
+		    return;
+		cur_frame->pc++; /* skip OPTIONAL_END */
+		pop(1);
+	    }
+	    break;
+
+	case SCATTER_START: {
+	    /* Here's the fun part. Recursive scatter! */
+
+	    if (list_index >= list_length(l)) {
+		cthrow (range_id, "Too few arguments in the list (%D)",d);
+		return;
+	    }
+	    d=list_elem(l, list_index);
+	    if (d->type != LIST) {
+		cthrow (type_id, "Attempting to scatter non-list (%D)",d);
+		return;
+	    }
+	    stack[stack_pos-2].u.val = list_index;
+	    check_stack(2);
+	    stack[stack_pos].type = INTEGER;
+	    list_index = stack[stack_pos++].u.val = -1;
+	    data_dup(&stack[stack_pos++],d);
+	    l = d->u.list;
+	    break;
+	}
+
+	case SPLICE: {
+	    Int len=list_length(l);
+
+	    if (list_index >= len)
+		/* Sorry, we're out of data. Empty list. */
+		list_index = len;
+	    /* Don't anticipate if we're not at the top level */
+	    if (stack[stack_pos-3].type == INTEGER)
+		anticipate_assignment();
+	    c = ++cur_frame->pc;
+	    push_list(list_sublist(l, list_index, len-list_index));
+	    (*op_table[opcodes[c-1]].func)();
+	    if (cur_frame->pc != c+1)
+		return;
+	    pop(1);
+	    break;
+	}
+	}
+	list_index++;
+    }
+}
+
+void op_scatter_start (void)
+{
+    if (stack[stack_pos-1].type != LIST) {
+	cthrow (type_id, "Attempting to scatter non-list (%D)",
+		&stack[stack_pos-1]);
+	return;
+    }
+
+    stack[stack_pos+1]=stack[stack_pos-1];
+    stack[stack_pos-1].type=INTEGER;
+    stack[stack_pos-1].u.val=0;
+    stack[stack_pos]=stack[stack_pos-1];
+    stack_pos+=2;
+    scatter_loop();
+}
+
+void op_optional_assign(void)
+{
+    if (!data_true(&stack[stack_pos-1])) {
+        cur_frame->pc++;
+        pop(1);
+    } else {
+        cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+    }
+}
+
+void op_optional_end(void)
+{
+    pop(1);
+    scatter_loop();
 }
 
 /* Effects: Pops the top two values on the stack and pushes 1 if they are

@@ -13,6 +13,51 @@
 #include "util.h"
 #include "opcodes.h"
 
+void func_anticipate_assignment(void) {
+    Int opcode, ind;
+    Long id;
+    cData *dp, d;
+    Frame *caller_frame = cur_frame->caller_frame;
+    Int pc;
+
+    if (!func_init_0())
+	return;
+    if (!caller_frame) {
+	push_int(1);
+	return;
+    }
+
+    pc=caller_frame->pc;
+
+    /* Most of this is from anticipate_assignment() */
+    
+    /* skip error handling */
+    while ((opcode = caller_frame->opcodes[pc]) == CRITICAL_END)
+	pc++;
+
+    switch (opcode) {
+      case SET_LOCAL:
+        /* Zero out local variable value. */
+        dp = &stack[caller_frame->var_start +
+                    caller_frame->opcodes[pc + 1]];
+        data_discard(dp);
+        dp->type = INTEGER;
+        dp->u.val = 0;
+        break;
+      case SET_OBJ_VAR:
+        /* Zero out the object variable, if it exists. */
+        ind = caller_frame->opcodes[pc + 1];
+        id = object_get_ident(caller_frame->method->object, ind);
+        d.type = INTEGER;
+        d.u.val = 0;
+        object_assign_var(caller_frame->object, caller_frame->method->object,
+                          id, &d);
+        break;
+    }
+    push_int(1);
+    return;
+}
+
 void func_time(void) {
     /* Take no arguments. */
     if (!func_init_0())
@@ -150,3 +195,27 @@ void func_unbind_function(void) {
     pop(1);
     push_int(1);
 }
+
+#ifdef DRIVER_DEBUG
+void func_debug_callers(void) {
+    cData *args;
+
+    if (!func_init_1(&args, INTEGER))
+        return;
+
+    if (args[0].u.val == 0)
+        clear_debug();
+    else if (args[0].u.val == 2)
+        start_full_debug();
+    else
+        start_debug();
+}
+
+void func_call_trace(void) {
+    if (!func_init_0())
+      return;
+
+    check_stack(1);
+    get_debug(&stack[stack_pos++]);
+}
+#endif

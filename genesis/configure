@@ -23,6 +23,7 @@ ac_default_prefix=/usr/local
 build=NONE
 cache_file=./etc/config.cache
 exec_prefix=NONE
+system=NONE
 host=NONE
 no_create=
 nonopt=NONE
@@ -76,6 +77,11 @@ do
   host=*)
     host="$ac_optarg"
     echo "- Using host \"$host\"."
+    ;;
+
+  system=*)
+    system="$ac_optarg"
+    echo "- Using system \"$system\"."
     ;;
 
   disable-*)
@@ -164,7 +170,8 @@ Options:
 
   --cache-file=FILE       cache test results in FILE
   --help                  print this message
-  --host=HOST             specify your machine type, guessed by default
+  --system=TYPE           specify your machine type, guessed by default
+  --host=NAME             use this internet hostname
   --no-create             do not create output files
   --quiet                 do not print \`Checking...' messages
   --prefix=PREFIX         install architecture-independent files in PREFIX
@@ -312,23 +319,23 @@ ac_config_guess=$ac_aux_dir/config.guess
 ac_config_sub=$ac_aux_dir/config.sub
 ac_configure=$ac_aux_dir/configure # This should be Cygnus configure.
 
-# Do some error Checking and defaulting for the host.
+# Do some error Checking and defaulting for the system.
 # The inputs are:
-#    configure --host=HOST
+#    configure --system=HOST
 #
 # The rules are:
-# 1. You are not allowed to specify --host, and nonopt at the same time. 
+# 1. You are not allowed to specify --system, and nonopt at the same time. 
 # 2. Host defaults to nonopt.
-# 3. If nonopt is not specified, then host defaults to the current host,
+# 3. If nonopt is not specified, then system defaults to the current system,
 #    as determined by config.guess.
 # 4. Target and build default to nonopt.
-# 5. If nonopt is not specified, then target and build default to host.
+# 5. If nonopt is not specified, then target and build default to system.
 
-# The aliases save the names the user supplied, while $host etc.
+# The aliases save the names the user supplied, while $system etc.
 # will get canonicalized.
-# case $host---$nonopt in
+# case $system---$nonopt in
 # NONE---*---* | *---NONE---* | *---*---NONE) ;;
-# *) { echo "configure: error: can only configure for one host and one target at a time" 1>&2; exit 1; } ;;
+# *) { echo "configure: error: can only configure for one system and one target at a time" 1>&2; exit 1; } ;;
 # esac
 
 # Make sure we can run config.sub.
@@ -339,10 +346,28 @@ fi
 #####################################################################
 echo "- System configuration"
 
+echo $ac_n "  Getting hostname""... $ac_c" 1>&6
+hostname=`(hostname || uname -n) 2>/dev/null`
+if [ -x $hostname ]; then
+    if [ $host = NONE ]; then
+        cat <<END
+** UNABLE TO DETERMINE **
+
+      You may need to execute genesis with the -n option to
+      specify your hostname.
+END
+    else
+        hostname=$host
+    fi
+fi
+echo $hostname 1>&2
+
+HOSTNAME=$hostname
+
 ##
 echo $ac_n "  Checking system type""... $ac_c" 1>&6
 
-host_alias=$host
+host_alias=$system
 case "$host_alias" in
 NONE)
   case $nonopt in
@@ -354,12 +379,12 @@ NONE)
   esac ;;
 esac
 
-host=`$ac_config_sub $host_alias`
-echo "$ac_t""$host" 1>&6
-CPU=`echo $host | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\1/g;s/\./_/g'`
-VENDOR=`echo $host | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\2/g;s/\./_/g'`
-SYS=`echo $host | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\3/g;s/[0-9\.]//g'`
-echo "#define SYSTEM_TYPE \"$host\"" >> confdefs.h
+system=`$ac_config_sub $host_alias`
+echo "$ac_t""$system" 1>&6
+CPU=`echo $system | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\1/g;s/\./_/g'`
+VENDOR=`echo $system | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\2/g;s/\./_/g'`
+SYS=`echo $system | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\3/g;s/[0-9\.]//g'`
+echo "#define SYSTEM_TYPE \"$system\"" >> confdefs.h
 
 # Linux is either 'linux' (elf) or 'linuxaout' (a.out)
 SYS=`echo $SYS | sed 's/aout$//g'`
@@ -2552,11 +2577,12 @@ s%@LIBS@%$LIBS%g
 s%@exec_prefix@%$exec_prefix%g
 s%@prefix@%$prefix%g
 s%@program_transform_name@%$program_transform_name%g
-s%@host@%$host%g
+s%@system@%$system%g
 s%@host_alias@%$host_alias%g
 s%@CPU@%$CPU%g
 s%@VENDOR@%$VENDOR%g
 s%@SYS@%$SYS%g
+s%@HOSTNAME@%$hostname%g
 s%@target@%$target%g
 s%@target_alias@%$target_alias%g
 s%@target_cpu@%$target_cpu%g
@@ -2586,6 +2612,7 @@ CONFIG_FILES=\${CONFIG_FILES-"src/Makefile src/modules/Makefile src/ops/Makefile
 SYS=${SYS}
 VENDOR=${VENDOR}
 CPU=${CPU}
+HOSTNAME=${hostname}
 EOF
 cat >> $CONFIG_STATUS <<\EOF
 for ac_file in .. $CONFIG_FILES; do if test "x$ac_file" != x..; then
@@ -2726,6 +2753,7 @@ cat >> $CONFIG_STATUS <<\EOF
   echo "#define sys_${SYS}" >> conftest.h
   echo "#define vendor_${VENDOR}" >> conftest.h
   echo "#define cpu_${CPU}" >> conftest.h
+  echo "#define HOSTNAME $hostname" >> conftest.h
   echo "#endif" >> conftest.h
   rm -f $ac_file
   mv conftest.h $ac_file

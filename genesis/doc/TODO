@@ -1,8 +1,13 @@
 -----------------------
 Immediate:
 
+* add warning to coldcc when compiling -# and an object without a name is
+  encountered--perhaps add a name to it at that point?
+* add a flag to coldcc -d to remove invalid objects from any lists, etc (-v)
+  requires a special copy of data_add_literal_to_str() for textdb.c
+* change name $xxxx; to use cur_obj not create a new id.
+* fix coldcc so it will decompile even on a bad binarydb
 * force eval execution in coldcc to be atomic
-* sort x in (list|dict) where|with? (expr);
 * for x in (string) {..}
   Add string capabilities to others too (filter, etc)
 
@@ -57,16 +62,18 @@ Possiblilities:
 * "\n" in strings should be character '10', not '\' and 'n'.
 * optionally declare a set type for variables, ala:
 
-      'type variable
+      varname as 'type
 
   when it is declared, such as:
 
-      arg 'string cmd, 'integer num, [more];
-      var 'integer i, some, other, that;
+      arg cmd as 'string, num as 'integer, [more];
+      var i as 'integer, some, other, that;
 
   When the type is set, it is forced to always be that type,
   and assignments contrary will cause errors (this will allow for
   better optimization).
+
+  Automatic type checking can also be done for method calls.
 
 * Declare the default value of a variable when starting, such as:
 
@@ -83,6 +90,11 @@ Possiblilities:
       var i = 1; 
       var y = .default_value();
 
+* scatter assignments
+
+      [a, b, c] = @list;
+
+* more powerful 'index' operator to handle ranges inherently.
 * with this allow multiple 'var' declarations.
 * Change the pcode for a method call.  Currently we have:
 

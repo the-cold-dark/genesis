@@ -41,6 +41,7 @@ Ident SEEK_SET_id, SEEK_CUR_id, SEEK_END_id;
 
 /* limits */
 Ident datasize_id, forkdepth_id, calldepth_id, recursion_id, objswap_id;     
+Ident left_id, right_id, both_id;
 
 void init_ident(void)
 {
@@ -132,29 +133,20 @@ void init_ident(void)
     recursion_id = ident_get("recursion");
     objswap_id = ident_get("objswap");
     calldepth_id = ident_get("calldepth");
+
+    left_id = ident_get("left");
+    right_id = ident_get("right");
+    both_id = ident_get("both");
 }
 
-
-void ident_dump(Int id, char *msg) {
-  write_err("##ident_dump: %s name:%s number:%d refs:%d",
-	    msg, tab[id].s, id, tab[id].refs);
-}
-
-
-Ident ident_get(char *s)
-{
-    uLong hval = hash(s);
+INTERNAL Ident ident_from_hash(uLong hval, char * s, int len) {
     Long ind, new_size, i;
 
     /* Look for an existing identifier. */
     ind = hashtab[hval % tab_size];
     while (ind != -1) {
-	if (tab[ind].hash == hval && strcmp(tab[ind].s, s) == 0) {
+	if (tab[ind].hash == hval && strncmp(tab[ind].s, s, len) == 0) {
 	    tab[ind].refs++;
-#ifdef IDENT_DEBUG
-	    write_err("get(old) %s: %d refs %d", s, ind, tab[ind].refs);
-#endif
-
 	    return ind;
 	}
 	ind = tab[ind].next;
@@ -191,31 +183,37 @@ Ident ident_get(char *s)
     /* Install symbol at first blank. */
     ind = blanks;
     blanks = tab[ind].next;
-    tab[ind].s = tstrdup(s);
+    tab[ind].s = tstrndup(s, len);
     tab[ind].hash = hval;
     tab[ind].refs = 1;
     tab[ind].next = hashtab[hval % tab_size];
     hashtab[hval % tab_size] = ind;
 
-#ifdef IDENT_DEBUG
-    write_err("get(new) %s: %d refs %d", s, ind, tab[ind].refs);
-#endif
-
     return ind;
 }
 
-void ident_discard(Ident id)
-{
+Ident ident_get(char *s) {
+    uLong hval = hash_nullchar(s);
+
+    return ident_from_hash(hval, s, strlen(s));
+}
+
+Ident ident_get_string(cStr * str) {
+    uLong hval;
+
+    hval = hash_string(str);
+
+    return ident_from_hash(hval, string_chars(str), string_length(str));
+}
+
+void ident_discard(Ident id) {
     Long ind, *p;
 
     tab[id].refs--;
 
-#ifdef IDENT_DEBUG
-    write_err("discard %s: %d refs %d", tab[id].s, id, tab[id].refs);
-#endif
     if (!tab[id].refs) {
 	/* Get the hash table thread for this entry. */
-	ind = hash(tab[id].s) % tab_size;
+	ind = hash_nullchar(tab[id].s) % tab_size;
 
 	/* Free the string. */
 	tfree_chars(tab[id].s);
@@ -231,25 +229,19 @@ void ident_discard(Ident id)
     }
 }
 
-Ident ident_dup(Ident id)
-{
+Ident ident_dup(Ident id) {
     tab[id].refs++;
 
     if (!tab[id].s)
       panic("ident_dup tried to duplicate freed name.");
 
-#ifdef IDENT_DEBUG
-    write_err("dup %s: %d refs %d", tab[id].s, id, tab[id].refs);
-#endif
     return id;
 }
 
-char *ident_name(Ident id)
-{
+char *ident_name(Ident id) {
     return tab[id].s;
 }
 
-uLong ident_hash(Ident id)
-{
+uLong ident_hash(Ident id) {
     return tab[id].hash;
 }

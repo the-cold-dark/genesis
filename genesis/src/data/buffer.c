@@ -71,46 +71,83 @@ cBuf *buffer_resize(cBuf *buf, Int len) {
     return buf;
 }
 
-cStr * buf_to_string(cBuf * buf) {
-    cStr * str, * out;
-    unsigned char * string_start, *p, *q;
-    char * s;
-    size_t len;
+
+/* REQUIRES char *s and unsigned char *q are defined */
 
 #define SEPCHAR '\n'
 #define SEPLEN 1
 
-    out = string_new(0);
-    string_start = p = buf->s;
-    while (p + SEPLEN <= buf->s + buf->len) {
-        p = (unsigned char *) memchr(p, SEPCHAR, (buf->s + buf->len) - p);
-        if (!p)
+#define VERIFY_SIZE(_STR_) \
+
+/* new and improved */
+cStr * buf_to_string(cBuf * buf) {
+    cStr                   * str;
+    unsigned char          * end;
+    char                   * start;
+    register char          * s;
+    register unsigned char * cur;
+    int                      len,
+                             sub,
+                             size;
+
+    /* internally work on out->s -- dangerous but saves us from copying twice */
+    len = buf->len;
+    str = string_new(len);
+    size = str->size;
+    start = str->s;
+    end = cur = buf->s;
+    while (end + SEPLEN <= buf->s + buf->len) {
+        end = (unsigned char *) memchr(end, SEPCHAR, (buf->s + buf->len) - end);
+
+        if (!end)
             break;
-        str = string_new(p - string_start);
-        s = str->s;
-        for (q = string_start; q < p; q++) {
-            if (ISPRINT(*q))
-                *s++ = *q;
+
+        /* figure anticipated sublength (buf + "\n"), resize if needed */
+        sub = end - cur + 2;
+
+        if (sub > size - str->len) {
+            size = str->len + sub;
+            str = (cStr *) erealloc(str, sizeof(cStr) + (size * sizeof(char)));
+            str->size = size;
         }
-        *s = 0;
-        str->len = s - str->s;
-        out = string_add(out, str);
-        out = string_add_chars(out, "\\n", 2);
-        string_discard(str);
-        string_start = p = p + SEPLEN;
+
+        /* copy valid chars */
+        for (s = start; cur < end; cur++) {
+            if (ISPRINT(*cur))
+                *s++ = *cur;
+        }
+
+        *s++ = '\\';
+        *s++ = 'n';
+        *s = (char) NULL;  /* precaution */
+        str->len += s - start;
+
+        start = s;
+        cur = end = end + SEPLEN;
     }
 
-    len = (buf->s + buf->len) - string_start;
-    s = (char *) tmalloc(sizeof(char) + len);
-    MEMCPY(s, string_start, len);
-    out = string_add_chars(out, s, len);
-    tfree(s, len);
+    if ((sub = ((buf->s + buf->len) - cur))) {
+        sub += 2;
+        if (sub > size - str->len) {
+            size = str->len + sub;
+            str = (cStr *) erealloc(str, sizeof(cStr) + (size * sizeof(char)));
+            str->size = size;
+        }
+        end = &(buf->s[buf->len]);
+        for (s = start; cur < end; cur++) {
+            if (ISPRINT(*cur))
+                *s++ = *cur;
+        }
+        *s = (char) NULL;
+
+        str->len += (s - start);
+    }
+
+    return str;
+}
 
 #undef SEPCHAR
 #undef SEPLEN
-
-    return out;
-}
 
 /* If sep (separator buffer) is NULL, separate by newlines. */
 cList *buf_to_strings(cBuf *buf, cBuf *sep)
@@ -128,6 +165,7 @@ cList *buf_to_strings(cBuf *buf, cBuf *sep)
     seplen = (sep) ? sep->len : 1;
     result = list_new(0);
     string_start = p = buf->s;
+    d.type = STRING;
     while (p + seplen <= buf->s + buf->len) {
 	/* Look for sepchar staring from p. */
 	p = (unsigned char *)memchr(p, sepchar, 
@@ -144,15 +182,14 @@ cList *buf_to_strings(cBuf *buf, cBuf *sep)
 	/* We found a separator.  Copy the printable characters in the
 	 * intervening text into a string. */
 	str = string_new(p - string_start);
-	s = str->s;
-	for (q = string_start; q < p; q++) {
-	    if (ISPRINT(*q))
-		*s++ = *q;
-	}
-	*s = 0;
-	str->len = s - str->s;
+        s = str->s;
+        for (q = string_start; q < p; q++) {
+            if (ISPRINT(*q))
+                *s++ = *q;
+        }
+        *s = (char) NULL;
+        str->len = s - str->s;
 
-	d.type = STRING;
 	d.u.str = str;
 	result = list_add(result, &d);
 	string_discard(str);

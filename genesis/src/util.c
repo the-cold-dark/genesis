@@ -37,7 +37,7 @@ void init_util(void) {
     srand(time(NULL) + getpid());
 }
 
-uLong hash(char *s) {
+uLong hash_nullchar(char * s) {
     uLong hashval = 0, g;
 
     /* Algorithm by Peter J. Weinberger. */
@@ -52,21 +52,48 @@ uLong hash(char *s) {
     return hashval;
 }
 
-uLong hash_case(char *s, Int n) {
+uLong hash_string(cStr * str) {
     uLong hashval = 0, g;
-    Int i;
+    int len;
+    char * s;
+
+    s = string_chars(str);
+    len = string_length(str);
 
     /* Algorithm by Peter J. Weinberger. */
-    for (i = 0; i < n; i++) {
-	hashval = (hashval << 4) + (s[i] & 0x5f);
+    for (; len; len--, s++) {
+	hashval = (hashval << 4) + *s;
 	g = hashval & 0xf0000000;
 	if (g) {
 	    hashval ^= g >> 24;
 	    hashval ^= g;
 	}
     }
+
     return hashval;
 }
+
+uLong hash_string_nocase(cStr * str) {
+    uLong hashval = 0, g;
+    int len;
+    char * s;
+
+    s = string_chars(str);
+    len = string_length(str);
+
+    /* Algorithm by Peter J. Weinberger. */
+    for (; len; len--, s++) {
+	hashval = (hashval << 4) + (*s & 0x5f);
+	g = hashval & 0xf0000000;
+	if (g) {
+	    hashval ^= g >> 24;
+	    hashval ^= g;
+	}
+    }
+
+    return hashval;
+}
+
 
 Long atoln(char *s, Int n) {
     Long val = 0;
@@ -398,22 +425,21 @@ char *english_integer(Int n, Number_buf nbuf) {
 	return long_to_ascii(n, nbuf);
 }
 
-Long parse_ident(char **sptr) {
+Ident parse_ident(char **sptr) {
     cStr *str;
     char *s = *sptr;
     Long id;
 
-    if (*s == '"') {
-	str = string_parse(&s);
-    } else {
-	while (isalnum(*s) || *s == '_')
-	    s++;
-	str = string_from_chars(*sptr, s - *sptr);
-    }
+    while (isalnum(*s) || *s == '_')
+        s++;
+
+    str = string_from_chars(*sptr, s - *sptr);
 
     id = ident_get(string_chars(str));
     string_discard(str);
+
     *sptr = s;
+
     return id;
 }
 

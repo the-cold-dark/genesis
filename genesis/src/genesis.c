@@ -73,6 +73,30 @@ int main(int argc, char **argv) {
 // Initialization
 //
 */
+void get_my_hostname(void) {
+    FILE * cp = popen("(hostname || uname -n) 2>/dev/null", "r");
+    char   cbuf[LINE];
+    char * s,
+         * e;
+
+    if (!cp)
+        fprintf(stderr, "Unable to determine hostname.\n");
+    else {
+        fgets(cbuf, LINE, cp);
+        s = cbuf;
+        while (isspace(*s))
+            s++;
+        e = &s[strlen(s)-1];
+        while (isspace(*e))
+            e--;
+        *(e+1) = (char) NULL;
+        if (strlen(s)) {
+            string_discard(str_hostname);
+            str_hostname = string_from_chars(s, strlen(s));
+        } else
+            fprintf(stderr, "Unable to determine hostname.\n");
+    }
+}
 
 #define addarg(__str) { \
         arg.type = STRING; \
@@ -148,6 +172,13 @@ INTERNAL void initialize(Int argc, char **argv) {
                         argv += getarg(name,&buf,opt,argv,&argc,usage);
                         NEWFILE(c_runfile, buf);
                         break;
+                    case 'n':
+                        argv += getarg(name,&buf,opt,argv,&argc,usage);
+                        if (buf && strlen(buf)) {
+                            string_discard(str_hostname);
+                            str_hostname = string_from_chars(buf, strlen(buf));
+                        }
+                        break;
                     case 's': {
                         char * p;
     
@@ -202,6 +233,9 @@ INTERNAL void initialize(Int argc, char **argv) {
     }
 
     /* Initialize internal tables and variables. */
+#ifdef DRIVER_DEBUG
+    init_debug();
+#endif
     init_codegen();
     init_ident();
     init_op_table();
@@ -211,6 +245,10 @@ INTERNAL void initialize(Int argc, char **argv) {
     init_token();
     init_modules(argc, argv);
     init_net();
+
+    /* Figure out our hostname */
+    if (!string_length(str_hostname))
+        get_my_hostname();
 
     /* where is the base db directory ? */
     if (basedir == NULL)
@@ -397,6 +435,17 @@ Options:\n\n\
         -s WIDTHxDEPTH Cache size, default 10x30\n\
 \n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, name, c_dir_binary,
      c_dir_root, c_dir_bin, c_logfile, c_errfile, c_runfile);
+}
+
+/* TEMPORARY-- we need an area where identical functions 'names' (yet
+   different behaviours) between genesis/coldcc exist */
+
+cObjnum get_object_name(Ident id) {
+    cObjnum num;
+
+    if (!lookup_retrieve_name(id, &num))
+        num = db_top++;
+    return num;
 }
 
 #undef _main_

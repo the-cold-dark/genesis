@@ -494,12 +494,10 @@ COLDC_FUNC(strfmt) {
 }
 
 COLDC_FUNC(split) {
-    cData * args;
-    Int      argc, flags = RF_NONE;
+    Int     flags = RF_NONE;
     cList * list;
 
-    if (!func_init_2_or_3(&args, &argc, STRING, STRING, STRING))
-        return;
+    INIT_2_OR_3_ARGS(STRING, STRING, STRING);
 
     if (argc == 3)
         flags = parse_regfunc_args(string_chars(STR3));
@@ -507,7 +505,26 @@ COLDC_FUNC(split) {
     if (!(list = strsplit(STR1, STR2, flags)))
         return;
 
-    pop(3);
+    pop(argc);
     push_list(list);
     list_discard(list);
 }
+
+COLDC_FUNC(stridx) {
+    int origin;
+    int r;
+
+    INIT_2_OR_3_ARGS(STRING, STRING, INTEGER);
+
+    if (argc == 3)
+        origin = INT3;
+    else
+        origin = 1;
+
+    if ((r = string_index(STR1, STR2, origin)) == F_FAILURE)
+        return;
+
+    pop(argc);
+    push_int(r);
+}
+

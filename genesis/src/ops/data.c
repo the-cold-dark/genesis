@@ -8,59 +8,44 @@
 #include "cdc_db.h"
 
 COLDC_FUNC(size) {
-    cData * args;
-    Int      nargs,
-             size;
+    Int size;
 
-    if (!func_init_0_or_1(&args, &nargs, 0))
-	return;
+    INIT_0_OR_1_ARGS(ANY_TYPE);
 
-    if (nargs) {
+    if (argc) {
         size = size_data(&args[0]);
         pop(1);
     } else {
         size = size_object(cur_frame->object);
     }
 
-    /* Push size of current object. */
     push_int(size);
 }
 
 COLDC_FUNC(type) {
-    cData *args;
     Int type;
 
-    /* Accept one argument of any type. */
-    if (!func_init_1(&args, 0))
-	return;
+    INIT_1_ARG(ANY_TYPE);
 
-    /* Replace argument with symbol for type name. */
     type = args[0].type;
     pop(1);
     push_symbol(data_type_id(type));
 }
 
 COLDC_FUNC(class) {
-    cData *args;
     Long cclass;
 
-    /* Accept one argument of frob type. */
-    if (!func_init_1(&args, FROB))
-	return;
+    INIT_1_ARG(FROB);
 
-    /* Replace argument with class. */
     cclass = args[0].u.frob->cclass;
     pop(1);
     push_objnum(cclass);
 }
 
 COLDC_FUNC(toint) {
-    cData *args;
     Long val = 0;
 
-    /* Accept a string or integer to convert into an integer. */
-    if (!func_init_1(&args, 0))
-	return;
+    INIT_1_ARG(ANY_TYPE);
 
     switch (args[0].type) {
         case STRING:
@@ -73,7 +58,7 @@ COLDC_FUNC(toint) {
             return;
         default:
             cthrow(type_id,
-                   "The first argument (%D) is not an integer or string.",
+                 "The first argument (%D) is not a number, objnum or string.",
                    &args[0]);
             return;
     }
@@ -83,12 +68,9 @@ COLDC_FUNC(toint) {
 }
 
 COLDC_FUNC(tofloat) {
-      cData * args;
       float val = 0;
   
-      /* Accept a string, integer or integer to convert into a float. */
-      if (!func_init_1(&args, 0))
-          return;
+      INIT_1_ARG(ANY_TYPE);
   
       switch (args[0].type) {
           case STRING:
@@ -101,7 +83,7 @@ COLDC_FUNC(tofloat) {
               val = (float) args[0].u.objnum; break;
           default:
               cthrow(type_id,
-                "The first argument (%D) is not an integer or string.",
+                "The first argument (%D) is not a number, objnum or string.",
                 &args[0]);
               return;
       }
@@ -110,14 +92,10 @@ COLDC_FUNC(tofloat) {
 }
 
 COLDC_FUNC(tostr) {
-    cData *args;
     cStr *str;
 
-    /* Accept one argument of any type. */
-    if (!func_init_1(&args, 0))
-	return;
+    INIT_1_ARG(ANY_TYPE);
 
-    /* Replace the argument with its text version. */
     str = data_tostr(&args[0]);
 
     pop(1);
@@ -126,28 +104,35 @@ COLDC_FUNC(tostr) {
 }
 
 COLDC_FUNC(toliteral) {
-    cData *args;
     cStr *str;
 
-    /* Accept one argument of any type. */
-    if (!func_init_1(&args, 0))
-	return;
+    INIT_1_ARG(ANY_TYPE);
 
-    /* Replace the argument with its unparsed version. */
     str = data_to_literal(&args[0], TRUE);
+
     pop(1);
     push_string(str);
     string_discard(str);
 }
 
+COLDC_FUNC(fromliteral) {
+    cData d;
+
+    INIT_1_ARG(STRING);
+
+    data_from_literal(&d, string_chars(STR1));
+
+    if (d.type == -1)
+        THROW((type_id, "Unable to parse data \"%s\"", string_chars(STR1)))
+
+    string_discard(STR1);
+    args[0] = d;
+}
+
 COLDC_FUNC(toobjnum) {
-    cData *args;
+    INIT_1_ARG(INTEGER);
 
-    /* Accept an integer to convert into a objnum. */
-    if (!func_init_1(&args, INTEGER))
-	return;
-
-    if (args[0].u.val < 0)
+    if (INT1 < 0)
         cthrow(type_id, "Objnums must be 0 or greater");
 
     args[0].u.objnum = args[0].u.val;
@@ -155,56 +140,44 @@ COLDC_FUNC(toobjnum) {
 }
 
 COLDC_FUNC(tosym) {
-    cData *args;
     Long sym;
-    char * s;
 
-    /* Accept one string argument. */
-    if (!func_init_1(&args, STRING))
-	return;
+    INIT_1_ARG(STRING);
 
     /* no NULL symbols */
     if (string_length(STR1) < 1)
         THROW((symbol_id, "Symbols must be one or more characters."))
 
-    /* sometimes strings are not NULL terminated, make sure it is */
-    s = string_chars(STR1);
-    s[string_length(STR1)] = (char) NULL;
-
     /* this is wrong, we should check this everywhere, not just here,
        but at the moment everywhere assumes 'ident_get' returns a valid
        ident irregardless */
-    if (!is_valid_ident(s))
+    if (!string_is_valid_ident(STR1))
         THROW((symbol_id, "Symbol contains non-alphanumeric characters."))
 
-    sym = ident_get(s);
+    sym = ident_get_string(STR1);
 
     pop(1);
     push_symbol(sym);
 }
 
 COLDC_FUNC(toerr) {
-    cData *args;
-    Long error;
+    Ident error;
 
-    /* Accept one string argument. */
-    if (!func_init_1(&args, STRING))
-	return;
+    INIT_1_ARG(STRING);
 
-    error = ident_get(string_chars(args[0].u.str));
+    error = ident_get(string_chars(STR1));
+
     pop(1);
     push_error(error);
 }
 
 COLDC_FUNC(valid) {
-    cData *args;
     Int is_valid;
 
-    /* Accept one argument of any type (only objnums can be valid, though). */
-    if (!func_init_1(&args, 0))
-	return;
+    INIT_1_ARG(ANY_TYPE);
 
     is_valid = (args[0].type == OBJNUM && cache_check(args[0].u.objnum));
+
     pop(1);
     push_int(is_valid);
 }

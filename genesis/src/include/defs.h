@@ -56,6 +56,17 @@
 
 /*
 // ---------------------------------------------------------------------
+// This enables execution debuging in the ColdC language--using the
+// functions debug_callers() and call_trace().
+*/
+
+#if ENABLED
+#  define DRIVER_DEBUG
+#endif
+
+
+/*
+// ---------------------------------------------------------------------
 // Turn this on to get a profile of what methods are called and how often,
 // do NOT use this in a regular run-time environment as its laggy
 */
@@ -386,6 +397,7 @@ char * c_runfile;
 FILE * logfile;
 FILE * errfile;
 cStr * str_tzname;
+cStr * str_hostname;
 
 Int  c_interactive;
 Bool running;

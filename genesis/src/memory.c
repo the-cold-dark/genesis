@@ -179,7 +179,7 @@ char *tstrndup(char *s, Int len) {
 
     cnew = TMALLOC(char, len + 1);
     memcpy(cnew, s, len);
-    cnew[len] = 0;
+    cnew[len] = (char) NULL;
     return cnew;
 }
 

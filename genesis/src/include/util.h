@@ -19,8 +19,9 @@ typedef char Number_buf[NUMBER_BUF_SIZE];
 extern char lowercase[128];
 extern char uppercase[128];
 
-uLong hash(char *s);
-uLong hash_case(char *s, Int n);
+uLong hash_nullchar(char *s);
+uLong hash_string(cStr * str);
+uLong hash_string_nocase(cStr * str);
 
 void       init_util(void);
 Long       atoln(char *s, Int n);
@@ -38,7 +39,7 @@ void       fformat(FILE *fp, char *fmt, ...);
 cStr     * fgetstring(FILE *fp);
 char     * english_type(Int type);
 char     * english_integer(Int n, Number_buf nbuf);
-Long       parse_ident(char **sptr);
+Ident      parse_ident(char **sptr);
 FILE     * open_scratch_file(char *name, char *type);
 void       close_scratch_file(FILE *fp);
 void       init_scratch_file(void);

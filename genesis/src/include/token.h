@@ -10,7 +10,8 @@
 void init_token(void);
 void lex_start(cList * code_lines);
 Int  yylex(void);
-Int  is_valid_ident(char * s);
+Bool is_valid_ident(char * s);
+Bool string_is_valid_ident(cStr * str);
 Int  cur_lineno(void);
 Bool is_reserved_word(char *s);
 

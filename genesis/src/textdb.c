@@ -1206,7 +1206,7 @@ void compile_cdc_file(FILE * fp) {
 
     fstat(fileno(fp), &statbuf);
     filesize = statbuf.st_size;
-    dump_hash = hash_new(250000);
+    dump_hash = hash_new(0);
 
     /* start at line 0 */
     line_count = 0;

@@ -8,7 +8,7 @@
 #define MALLOC_DELTA			 0
 #define HASHTAB_STARTING_SIZE		 128
 
-INTERNAL void double_hashtab_size(Hash * hash);
+INTERNAL void increase_hashtab_size(Hash * hash);
 INTERNAL void insert_key(Hash * hash, Int i);
 
 Hash * hash_new_with(cList *keys) {
@@ -25,12 +25,10 @@ Hash * hash_new_with(cList *keys) {
 	cnew->hashtab_size = cnew->hashtab_size * 2 + MALLOC_DELTA;
 
     /* Initialize chain entries and hash table. */
-    cnew->links = EMALLOC(Int, cnew->hashtab_size);
+    cnew->links   = EMALLOC(Int, cnew->hashtab_size);
     cnew->hashtab = EMALLOC(Int, cnew->hashtab_size);
-    for (i = 0; i < cnew->hashtab_size; i++) {
-	cnew->links[i] = -1;
-	cnew->hashtab[i] = -1;
-    }
+    memset(cnew->links,   -1, sizeof(Long)*cnew->hashtab_size);
+    memset(cnew->hashtab, -1, sizeof(Long)*cnew->hashtab_size);
 
     /* Insert the keys into the hash table, eliminating duplicates. */
     i = j = 0;
@@ -93,7 +91,7 @@ Hash * hash_add(Hash * hash, cData * key) {
 
     /* Check if we should resize the hash table. */
     if (hash->keys->len > hash->hashtab_size)
-	double_hashtab_size(hash);
+	increase_hashtab_size(hash);
     else
 	insert_key(hash, hash->keys->len - 1);
     return hash;
@@ -119,7 +117,7 @@ Int hash_find(Hash * hash, cData *key) {
     return F_FAILURE;
 }
 
-INTERNAL void double_hashtab_size(Hash * hash)
+INTERNAL void increase_hashtab_size(Hash * hash)
 {
     Int i;
 
@@ -129,10 +127,8 @@ INTERNAL void double_hashtab_size(Hash * hash)
         hash->hashtab_size = hash->hashtab_size * 2 + MALLOC_DELTA;
     hash->links = EREALLOC(hash->links, Int, hash->hashtab_size);
     hash->hashtab = EREALLOC(hash->hashtab, Int, hash->hashtab_size);
-    for (i = 0; i < hash->hashtab_size; i++) {
-	hash->links[i] = -1;
-	hash->hashtab[i] = -1;
-    }
+    memset(hash->links,   -1, sizeof(Long)*hash->hashtab_size);
+    memset(hash->hashtab, -1, sizeof(Long)*hash->hashtab_size);
     for (i = 0; i < hash->keys->len; i++)
 	insert_key(hash, i);
 }

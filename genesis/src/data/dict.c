@@ -11,7 +11,7 @@
 
 INTERNAL void insert_key(cDict *dict, Int i);
 INTERNAL Int search(cDict *dict, cData *key);
-INTERNAL void double_hashtab_size(cDict *dict);
+INTERNAL void increase_hashtab_size(cDict *dict);
 
 cDict *dict_new(cList *keys, cList *values)
 {
@@ -31,10 +31,8 @@ cDict *dict_new(cList *keys, cList *values)
     /* Initialize chain entries and hash table. */
     cnew->links = EMALLOC(Int, cnew->hashtab_size);
     cnew->hashtab = EMALLOC(Int, cnew->hashtab_size);
-    for (i = 0; i < cnew->hashtab_size; i++) {
-	cnew->links[i] = -1;
-	cnew->hashtab[i] = -1;
-    }
+    memset(cnew->links,   -1, sizeof(Long)*cnew->hashtab_size);
+    memset(cnew->hashtab, -1, sizeof(Long)*cnew->hashtab_size);
 
     /* Insert the keys into the hash table, eliminating duplicates. */
     i = j = 0;
@@ -144,7 +142,7 @@ cDict *dict_add(cDict *dict, cData *key, cData *value)
 
     /* Check if we should resize the hash table. */
     if (dict->keys->len > dict->hashtab_size)
-	double_hashtab_size(dict);
+	increase_hashtab_size(dict);
     else
 	insert_key(dict, dict->keys->len - 1);
     return dict;
@@ -302,7 +300,7 @@ Int dict_size(cDict *dict)
     return list_length(dict->keys);
 }
 
-INTERNAL void double_hashtab_size(cDict *dict)
+INTERNAL void increase_hashtab_size(cDict *dict)
 {
     Int i;
 
@@ -312,10 +310,8 @@ INTERNAL void double_hashtab_size(cDict *dict)
         dict->hashtab_size = dict->hashtab_size * 2 + MALLOC_DELTA;
     dict->links = EREALLOC(dict->links, Int, dict->hashtab_size);
     dict->hashtab = EREALLOC(dict->hashtab, Int, dict->hashtab_size);
-    for (i = 0; i < dict->hashtab_size; i++) {
-	dict->links[i] = -1;
-	dict->hashtab[i] = -1;
-    }
+    memset(dict->links,   -1, sizeof(Long)*dict->hashtab_size);
+    memset(dict->hashtab, -1, sizeof(Long)*dict->hashtab_size);
     for (i = 0; i < dict->keys->len; i++)
 	insert_key(dict, i);
 }
@@ -355,7 +351,7 @@ cDict *dict_union (cDict *d1, cDict *d2) {
 
         /* Check if we should resize the hash table. */
         if (d1->keys->len > d1->hashtab_size)
-            double_hashtab_size(d1);
+            increase_hashtab_size(d1);
         else
             insert_key(d1, d1->keys->len - 1);
     }

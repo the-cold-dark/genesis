@@ -18,22 +18,20 @@ StringTab *string_tab_new_with_size(Long size)
     StringTab *new_tab;
     Long i;
 
-    new_tab = (StringTab*)EMALLOC(StringTab, 1);
+    new_tab           = (StringTab*)EMALLOC(StringTab, 1);
     new_tab->tab_size = size;
-    new_tab->tab_num = 0;
+    new_tab->tab_num  = 0;
+    new_tab->tab      = EMALLOC(StringTabEntry, new_tab->tab_size);
+    new_tab->hashtab  = EMALLOC(Long, new_tab->tab_size);
+    new_tab->blanks   = 0;
 
-    new_tab->tab = EMALLOC(StringTabEntry, new_tab->tab_size);
-    new_tab->hashtab = EMALLOC(Long, new_tab->tab_size);
+    memset(new_tab->tab,      0, sizeof(StringTabEntry)*new_tab->tab_size);
+    memset(new_tab->hashtab, -1, sizeof(Long) * new_tab->tab_size);
 
-    memset(new_tab->tab, 0, sizeof(StringTabEntry)*new_tab->tab_size);
-
-    for (i = 0; i < new_tab->tab_size; i++) {
+    for (i = 0; i < new_tab->tab_size; i++)
 	new_tab->tab[i].next = i + 1;
-	new_tab->hashtab[i] = -1;
-    }
-    new_tab->tab[new_tab->tab_size - 1].next = -1;
 
-    new_tab->blanks = 0;
+    new_tab->tab[new_tab->tab_size - 1].next = -1;
 
     return new_tab;
 }
@@ -87,7 +85,11 @@ INTERNAL Ident string_tab_from_hash(StringTab *tab, uLong hval, cStr * str) {
     if (tab->blanks == -1) {
 
 	/* Allocate new space for table. */
-	new_size = tab->tab_size * 2 + MALLOC_DELTA;
+	if (tab->tab_size > 4096)
+	    new_size = tab->tab_size + 4096;
+	else
+	    new_size = tab->tab_size * 2 + MALLOC_DELTA;
+
 	tab->tab = EREALLOC(tab->tab, StringTabEntry, new_size);
 	tab->hashtab = EREALLOC(tab->hashtab, Long, new_size);
 
@@ -100,8 +102,7 @@ INTERNAL Ident string_tab_from_hash(StringTab *tab, uLong hval, cStr * str) {
 	tab->blanks = tab->tab_size;
 
 	/* Reset hash table. */
-	for (ind = 0; ind < new_size; ind++)
-	    tab->hashtab[ind] = -1;
+	memset(tab->hashtab, -1, sizeof(Long) * new_size);
 
 	ind = tab->tab_size;
 	tab->tab_size = new_size;

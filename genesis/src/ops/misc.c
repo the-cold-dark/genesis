@@ -6,7 +6,9 @@
 
 #include <time.h>
 #include <string.h>
+#ifdef __UNIX__
 #include <sys/time.h>    /* for mtime() */
+#endif
 
 #include "operators.h"
 #include "execute.h"

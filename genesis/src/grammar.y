@@ -179,6 +179,9 @@ argdecl	: /* nothing */			{ $$ = arguments(NULL, NULL); }
 	| ARG idlist ';'		{ $$ = arguments($2, NULL); }
 	| ARG idlist ',' '[' IDENT ']' ';'
 					{ $$ = arguments($2, $5); }
+	| ARG '@' IDENT ';'		{ $$ = arguments(NULL, $3); }
+	| ARG idlist ',' '@' IDENT  ';'
+					{ $$ = arguments($2, $5); }
 	;
 
 vars	: /* nothing */			{ $$ = NULL; }

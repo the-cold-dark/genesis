@@ -7,13 +7,13 @@
 // in YACC
 */
 
+#define TEXTDB_C
 #define DEBUG_TEXTDB 0
 
 #include "defs.h"
 
 #include <string.h>
 #include <ctype.h>
-#include <unistd.h>
 #include "cdc_db.h"
 #include "cdc_pcode.h"
 #include "util.h"
@@ -34,6 +34,7 @@ typedef struct idref_s {
 } idref_t;
 
 /* globals, because its easier this way */
+Int        use_natives;
 Long       line_count;
 Long       method_start;
 Obj * cur_obj;
@@ -56,14 +57,14 @@ extern Bool print_invalid;
 
 #define DIE(__s) { \
         printf("\rLine %ld: ERROR: %s\n", (long) line_count, __s); \
-        shutdown(); \
+        shutdown_coldcc(); \
     }
 
 #define DIEf(__fmt, __arg) { \
         printf("\rLine %ld: ERROR: ", (long) line_count); \
         printf(__fmt, __arg); \
         fputc('\n', stdout); \
-        shutdown(); \
+        shutdown_coldcc(); \
     }
 
 /* Dancer: This is more portable than the pointer arithmetic
@@ -111,9 +112,13 @@ void blank_and_print_obj(char * what, Obj * obj);
 // ------------------------------------------------------------------------
 // make this do more eventually
 */
-INTERNAL void shutdown(void) {
+#if 0
+INTERNAL void shutdown_coldcc(void) {
     exit(1);
 }
+#endif
+
+extern void shutdown_coldcc(void);
 
 typedef struct holder_s holder_t;
 
@@ -249,7 +254,7 @@ INTERNAL void remember_native(Method * method) {
         fformat(stdout,
             "\rLine %l: ERROR: %O.%s() overrides existing native definition.\n",
             line_count, nh->objnum, ident_name(nh->native));
-        shutdown();
+        shutdown_coldcc();
     }
 
     nh = (nh_t *) malloc(sizeof(nh_t));
@@ -1253,7 +1258,7 @@ void compile_cdc_file(FILE * fp) {
         } else if (strnccmp(s, "//", 2)) {
             WARN(("parse error, unknown directive."));
             ERRf("\"%s\"\n", s);
-            shutdown();
+            shutdown_coldcc();
         }
 
         string_discard(str);

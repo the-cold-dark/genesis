@@ -1,0 +1,50 @@
+/* src/include/config.h.  Generated automatically by configure.  */
+/* Full copyright information is available in the file ../doc/CREDITS */
+
+#ifndef cdc_config_h
+#define cdc_config_h
+
+#VMAJOR#
+#VMINOR#
+#VPATCH#
+
+#define HAVE_STRFTIME 1
+#define HAVE_VPRINTF 1
+#define pid_t int
+#define RETSIGTYPE void
+#define STDC_HEADERS 1
+#define BYTEORDER 1234
+
+#define SIZEOF_CHAR 1
+#define SIZEOF_SHORT 2
+#define SIZEOF_INT 4
+#define SIZEOF_LONG 4
+#define SIZEOF_LLONG 8
+#define SIZEOF_FLOAT 4
+#define SIZEOF_DOUBLE 8
+#define SIZEOF_LDOUBLE 12
+
+#define HAVE_MEMMOVE 1
+#define HAVE_MKDIR 1
+#define HAVE_SELECT 1
+#define HAVE_SOCKET 1
+#define HAVE_STRCHR 1
+#define HAVE_STRCSPN 1
+#define HAVE_STRERROR 1
+#define HAVE_STRSTR 1
+#define HAVE_FCNTL_H 1
+
+#define RESTRICTIVE_FILES 1
+
+#define SYSTEM_TYPE "i386-unknown-win32"
+
+#define sys_win32
+#define vendor_unknown
+#define cpu_i386
+
+#ifndef __Win32__
+#  define __Win32__
+#  include <windows.h>
+#endif
+
+#endif

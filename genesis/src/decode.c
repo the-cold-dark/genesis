@@ -437,10 +437,9 @@ cList *decompile(Method *method, Obj *object, Int increment, Int parens)
 		str = string_add_chars(str, ", ", 2);
 	}
 	if (method->rest != -1) {
-	    str = string_addc(str, '[');
+	    str = string_addc(str, '@');
 	    s = ident_name(object_get_ident(object, method->rest));
 	    str = string_add_chars(str, s, strlen(s));
-	    str = string_addc(str, ']');
 	}
 	str = string_addc(str, ';');
 	output = add_and_discard_string(output, str);

@@ -4,7 +4,9 @@
 
 #include "defs.h"
 
+#ifdef __UNIX__
 #include <sys/param.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -59,11 +61,11 @@ INTERNAL Bool backup_file(char * file) {
     strcat(dest, ".bak/");
     strcat(dest, file);
 
-    from_fd = open(source, O_RDONLY, 0);
+    from_fd = open(source, O_RDONLY | O_BINARY, 0);
     if (from_fd == F_FAILURE)
         x_THROW(source)
 
-    to_fd = open(dest, (O_WRONLY|O_TRUNC|O_CREAT), (S_IRUSR|S_IWUSR));
+    to_fd = open(dest, (O_WRONLY|O_TRUNC|O_CREAT|O_BINARY), (S_IRUSR|S_IWUSR));
     if (to_fd == F_FAILURE)
         x_THROW(dest)
 

@@ -22,6 +22,9 @@ OPSDIR=$(SRCDIR)/ops
 DATADIR=$(SRCDIR)/data
 
 VERSION=@VERSION@
+VMAJOR=@VMAJOR@
+VMINOR=@VMINOR@
+VPATCH=@VPATCH@
 
 DATA_O     = data/data.o data/buffer.o data/dict.o data/ident.o\
              data/list.o data/object.o data/string.o
@@ -53,12 +56,6 @@ CONTROL = control
 EXES = $(COMPILER) $(DRIVER)
 
 all: $(GRAMMAR_O) include/parse.h Data Modules Ops $(EXES)
-
-win32:
-	make scrub
-	$(YACC) $(YFLAGS) grammar.y
-	mv -f y.tab.c grammar.c
-	mv -f y.tab.h include/parse.h
 
 Data:
 	@echo "data objects..."
@@ -148,4 +145,18 @@ include/parse.h:
 reconfig: scrub config
 config:
 	@cd ../; configure
+
+win32: Win32
+
+Win32:
+	@echo "cleaning heirarchy..."
+	@make scrub 2>&1 > /dev/null
+	@echo "creating config file..."
+	@sed -e "s/#VMAJOR#/#define VERSION_MAJOR $(VMAJOR)/;\
+                s/#VMINOR#/#define VERSION_MINOR $(VMINOR)/;\
+                s/#VPATCH#/#define VERSION_PATCH $(VPATCH)/" include/config.h.win32 > include/config.h
+	@echo "generating parser source..."
+	@$(YACC) $(YFLAGS) grammar.y
+	@mv -f y.tab.c grammar.c
+	@mv -f y.tab.h include/parse.h
 

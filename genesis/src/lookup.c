@@ -7,9 +7,15 @@
 #include "defs.h"
 
 #include <sys/types.h>
+#ifdef __UNIX__
 #include <sys/file.h>
+#endif
 #include <sys/stat.h>
+#ifdef __UNIX__
 #include <ndbm.h>
+#else
+#include "ndbm.h"
+#endif
 #include <fcntl.h>
 #include <string.h>
 #include "cdc_db.h"
@@ -45,9 +51,9 @@ void lookup_open(char *name, Int cnew) {
     Int i;
 
     if (cnew)
-	dbp = dbm_open(name, O_TRUNC | O_RDWR | O_CREAT, READ_WRITE);
+	dbp = dbm_open(name, O_TRUNC | O_RDWR | O_CREAT | O_BINARY, READ_WRITE);
     else
-	dbp = dbm_open(name, O_RDWR, READ_WRITE);
+	dbp = dbm_open(name, O_RDWR | O_BINARY, READ_WRITE);
     if (!dbp)
 	fail_to_start("Cannot open dbm database file.");
 
@@ -68,7 +74,7 @@ void lookup_sync(void) {
     /* Only way to do this with ndbm is close and re-open. */
     sync_name_cache();
     dbm_close(dbp);
-    dbp = dbm_open(buf, O_RDWR | O_CREAT, READ_WRITE);
+    dbp = dbm_open(buf, O_RDWR | O_CREAT | O_BINARY, READ_WRITE);
     if (!dbp)
 	panic("Cannot reopen dbm database file.");
 }

@@ -39,7 +39,7 @@ INTERNAL void   usage(char * name);
 INTERNAL FILE * find_text_db(void);
 INTERNAL void   compile_db(Int type);
 
-INTERNAL void   shutdown(void) {
+void   shutdown_coldcc(void) {
     cache_sync();
     db_close();
     flush_output();
@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     }
 
     fputs("Closing binary database...", stderr);
-    shutdown();
+    shutdown_coldcc();
 
     /* make compilers happy; we never reach this */
     return 0;

@@ -9,6 +9,7 @@
 #include "defs.h"
 
 #include <sys/types.h>
+#ifdef __UNIX__
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -16,6 +17,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#endif
 #include <fcntl.h>
 #include "net.h"
 #include "util.h"
@@ -28,14 +30,14 @@ static int addr_size = sizeof(sockin);	/* Size of sockin. */
 Long server_failure_reason;
 
 void init_net(void) {
-#ifdef WIN32
+#ifdef __Win32__
     WSADATA wsa;
 
     WSAStartup(0x0101, &wsa);
 #endif
 }
 void uninit_net(void) {
-#ifdef WIN32
+#ifdef __Win32__
     WSACleanup();
 #endif
 }
@@ -332,7 +334,7 @@ Long non_blocking_connect(char *addr, Int port, Int *socket_return)
 	return socket_id;
 
     /* Set the socket non-blocking. */
-#ifdef WIN32
+#ifdef __Win32__
     result = 1;
     ioctlsocket(fd, FIONBIO, &result);
 #else
@@ -381,7 +383,7 @@ Long udp_connect(char *addr, Int port, Int *socket_return)
 	return socket_id;
 
     /* Set the socket non-blocking. */
-#ifdef WIN32
+#ifdef __Win32__
     result = 1;
     ioctlsocket(fd, FIONBIO, &result);
 #else
@@ -452,8 +454,8 @@ cStr *ip(char *chaddr)
    register struct hostent *hp;
 
    addr = inet_addr(chaddr);
-#ifdef WIN32
-   if (addr == NADDR_NONE) {
+#ifdef __Win32__
+   if (addr == INADDR_NONE) {
 #else
    if (addr == F_FAILURE) {
 #endif

@@ -8,10 +8,18 @@
 
 #include "cdc_db.h"
 #include <time.h>
+#ifdef __UNIX__
 #include <sys/time.h>    /* for mtime(), getrusage() */
 #include <sys/resource.h>      /* getrusage()  25-Jan-95 BJG */
+#endif
 #include "util.h"
 #include "net.h"
+
+#ifdef __Win32__
+#define FTIME _lstrftime
+#else
+#define FTIME strftime
+#endif
 
 NATIVE_METHOD(strftime) {
     char        s[LINE];
@@ -21,8 +29,20 @@ NATIVE_METHOD(strftime) {
 
     INIT_1_OR_2_ARGS(STRING, INTEGER);
 
+#ifdef __BORLANDC__
+    if (argc == 2) {
+        if (INT2 < 18000) {
+            THROW((type_id,
+         "Borland's time util is broken, and requires time values above 18000"))
+        }
+        tt = (time_t) INT2;
+    } else {
+        tt = time(NULL);
+    }
+#else
     tt = ((argc == 2) ? (time_t) INT2 : time(NULL));
     t  = localtime(&tt);
+#endif
  
     fmt = string_chars(STR1);
 
@@ -31,7 +51,7 @@ NATIVE_METHOD(strftime) {
     if (fmt[strlen(fmt)] == '%')
         fmt[strlen(fmt)] = (char) NULL;
 
-    if (strftime(s, LINE, fmt, t) == (size_t) 0)
+    if (FTIME(s, LINE, fmt, t) == (size_t) 0)
        THROW((range_id,"Format results in a string longer than 80 characters."))
 
     CLEAN_RETURN_STRING(string_from_chars(s, strlen(s)));

@@ -175,19 +175,19 @@ static long regsize;        /* Code size. */
 /*
  * Forward declarations for regcomp()'s friends.
  */
-INTERNAL char *reg();
-INTERNAL char *regbranch();
-INTERNAL char *regpiece();
-INTERNAL char *regatom();
-INTERNAL char *regnode();
-INTERNAL char *regnext();
-INTERNAL void regc();
-INTERNAL void reginsert();
-INTERNAL void regtail();
-INTERNAL void regoptail();
+INTERNAL char *reg(int , int *);
+INTERNAL char *regbranch(int *);
+INTERNAL char *regpiece(int *);
+INTERNAL char *regatom(int *);
+INTERNAL char *regnode(char);
+INTERNAL char *regnext(register char *);
+INTERNAL void regc(char);
+INTERNAL void reginsert(char , char *);
+INTERNAL void regtail(char *, char *);
+INTERNAL void regoptail(char *, char *);
 
 #ifdef STRCSPN
-INTERNAL int strcspn();
+INTERNAL int strcspn(char *s1, char *s2);
 #endif
 
 /*
@@ -221,7 +221,7 @@ regexp * regcomp(char * exp) {
     regnpar = 1;
     regsize = 0L;
     regcode = &regdummy;
-    regc(MAGIC);
+    regc((char) MAGIC);
     if (reg(0, &flags) == NULL)
         return(NULL);
 
@@ -238,7 +238,7 @@ regexp * regcomp(char * exp) {
     regparse = exp;
     regnpar = 1;
     regcode = r->program;
-    regc(MAGIC);
+    regc((char)MAGIC);
     if (reg(0, &flags) == NULL)
         return(NULL);
 
@@ -358,10 +358,7 @@ INTERNAL char * reg(int paren, int *flagp) {
  *
  * Implements the concatenation operator.
  */
-INTERNAL char *
-regbranch(flagp)
-int *flagp;
-{
+INTERNAL char * regbranch(int *flagp) {
     register char *ret;
     register char *chain;
     register char *latest;
@@ -397,10 +394,7 @@ int *flagp;
  * It might seem that this node could be dispensed with entirely, but the
  * endmarker role is not redundant.
  */
-INTERNAL char *
-regpiece(flagp)
-int *flagp;
-{
+INTERNAL char * regpiece(int *flagp) {
     register char *ret;
     register char op;
     register char *next;
@@ -461,10 +455,7 @@ int *flagp;
  * faster to run.  Backslashed characters are exceptions, each becoming a
  * separate node; the code is simpler that way and it's not worth fixing.
  */
-INTERNAL char *
-regatom(flagp)
-int *flagp;
-{
+INTERNAL char * regatom(int *flagp) {
     register char *ret;
     int flags;
 
@@ -570,10 +561,7 @@ int *flagp;
 /*
  - regnode - emit a node
  */
-INTERNAL char *            /* Location. */
-regnode(op)
-char op;
-{
+INTERNAL char * regnode(char op) {
     register char *ret;
     register char *ptr;
 
@@ -595,10 +583,7 @@ char op;
 /*
  - regc - emit (if appropriate) a byte of code
  */
-INTERNAL void
-regc(b)
-char b;
-{
+INTERNAL void regc(char b) {
     if (regcode != &regdummy)
         *regcode++ = b;
     else
@@ -610,11 +595,7 @@ char b;
  *
  * Means relocating the operand.
  */
-INTERNAL void
-reginsert(op, opnd)
-char op;
-char *opnd;
-{
+INTERNAL void reginsert(char op, char *opnd) {
     register char *src;
     register char *dst;
     register char *place;
@@ -639,11 +620,7 @@ char *opnd;
 /*
  - regtail - set the next-pointer at the end of a node chain
  */
-INTERNAL void
-regtail(p, val)
-char *p;
-char *val;
-{
+INTERNAL void regtail(char *p, char *val) {
     register char *scan;
     register char *temp;
     register int offset;
@@ -671,11 +648,7 @@ char *val;
 /*
  - regoptail - regtail on operand of first argument; nop if operandless
  */
-INTERNAL void
-regoptail(p, val)
-char *p;
-char *val;
-{
+INTERNAL void regoptail(char *p, char *val) {
     /* "Operandless" and "op != BRANCH" are synonymous in practice. */
     if (p == NULL || p == &regdummy || OP(p) != BRANCH)
         return;
@@ -697,9 +670,9 @@ static char **regendp;        /* Ditto for endp. */
 /*
  * Forwards.
  */
-INTERNAL int regtry();
+INTERNAL int regtry(regexp *, char *);
 INTERNAL int regmatch();
-INTERNAL int regrepeat();
+INTERNAL int regrepeat(char *);
 
 #ifdef DEBUG
 int regnarrate = 0;
@@ -710,12 +683,7 @@ INTERNAL char *regprop();
 /*
  - regexec - match a regexp against a string
  */
-int
-regexec(prog, string, case_flag)
-register regexp *prog;
-register char *string;
-int case_flag;
-{
+int regexec(register regexp *prog, register char *string, int case_flag) {
     register char *s;
 
     case_matters = case_flag;
@@ -774,11 +742,7 @@ int case_flag;
 /*
  - regtry - try match at specific point
  */
-INTERNAL int            /* 0 failure, 1 success */
-regtry(prog, string)
-regexp *prog;
-char *string;
-{
+INTERNAL int regtry(regexp *prog, char *string) {
     register int i;
     register char **sp;
     register char **ep;
@@ -811,8 +775,7 @@ char *string;
  * need to know whether the rest of the match failed) by a loop instead of
  * by recursion.
  */
-INTERNAL int            /* 0 failure, 1 success */
-regmatch(char * prog) {
+INTERNAL int regmatch(char * prog) {
     register char * scan;    /* Current node. */
     char * next;        /* Next node. */
     /* extern char *strchr(); */
@@ -997,10 +960,7 @@ regmatch(char * prog) {
 /*
  - regrepeat - repeatedly match something simple, report how many
  */
-static int
-regrepeat(p)
-char *p;
-{
+INTERNAL int regrepeat(char *p) {
     register int count = 0;
     register char *scan;
     register char *opnd;
@@ -1043,10 +1003,7 @@ char *p;
 /*
  - regnext - dig the "next" pointer out of a node
  */
-static char *
-regnext(p)
-register char *p;
-{
+INTERNAL char * regnext(register char *p) {
     register int offset;
 
     if (p == &regdummy)
@@ -1069,10 +1026,7 @@ INTERNAL char *regprop();
 /*
  - regdump - dump a regexp onto stdout in vaguely comprehensible form
  */
-void
-regdump(r)
-regexp *r;
-{
+void regdump(regexp *r) {
     register char *s;
     register char op = EXACTLY;    /* Arbitrary non-END op. */
     register char *next;
@@ -1113,10 +1067,7 @@ regexp *r;
 /*
  - regprop - printable representation of opcode
  */
-static char *
-regprop(op)
-char *op;
-{
+static char * regprop(char *op) {
     register char *p;
     static char buf[50];
 
@@ -1205,11 +1156,7 @@ char *op;
  * of characters not from s2
  */
 
-static int
-strcspn(s1, s2)
-char *s1;
-char *s2;
-{
+INTERNAL int strcspn(char *s1, char *s2) {
     register char *scan1;
     register char *scan2;
     register int count;

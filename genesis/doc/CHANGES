@@ -6,6 +6,14 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-23 [4-Feb-97] Miro, Brandon, Jon Lambert
+      * Wrapped up Win32 support in the source (Jon Lambert)
+      * Fixed bug in task cancelling (Miro)
+      * Fixed minor bug in split() (if last element was blank, and "b"
+        flag was given, it still wouldn't show up) (Brandon)
+      * Standardized arg ... [more]; format to follow scatter assignments,
+        will accept both formats but decompile as @more now. (Miro)
+      * fixed a bug in join() (Brandon)
 1.0-22 [15-Jan-97] Brian, Miro, Brandon
       * fixed corruption bug in scatter assignments causing crashes (Miro)
       * fixed leak in scatter assignment (Miro)

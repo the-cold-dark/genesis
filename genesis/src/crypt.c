@@ -126,7 +126,7 @@ Int match_crypted(cStr * encrypted, cStr * possible) {
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $Id: crypt.c,v 1.12 1998/06/27 20:22:14 braddr Exp $
+ * $Id: crypt.c,v 1.13 1998/06/27 20:24:15 braddr Exp $
  *
  ***
  *** This license somewhat applies to shs_crypt() as its based off PHK's
@@ -135,12 +135,7 @@ Int match_crypted(cStr * encrypted, cStr * possible) {
  *
  */
 
-void
-to64(s, v, n)
-        char *s;
-        unsigned long v;
-        int n;
-{
+void to64(char *s, unsigned long v, int n) {
         while (--n >= 0) {
                 *s++ = ascii64[v&0x3f];
                 v >>= 6;

@@ -9,11 +9,11 @@
 
 #define NATIVE_MODULE "$buffer"
 
+#define VEIL_C
+
 #include "veil.h"
 
 module_t veil_module = {init_veil, uninit_veil};
-
-extern Ident pabort_id, pclose_id, popen_id;
 
 #define VEIL_P_PUSH      1
 #define VEIL_P_ABORT     2

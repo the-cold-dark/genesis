@@ -4,7 +4,11 @@
 #include "defs.h"
 #include "cdc_pcode.h"
 
+#ifdef VEIL_C
 Ident pabort_id, pclose_id, popen_id;
+#else
+extern Ident pabort_id, pclose_id, popen_id;
+#endif
 
 void init_veil(Int argc, char ** argv);
 void uninit_veil(void);

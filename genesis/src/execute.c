@@ -41,6 +41,7 @@ Long tick;
 #define DEBUG_VM DISABLED
 #define DEBUG_EXECUTE DISABLED
 
+void clear_debug(void);
 cData debug;
 
 VMState *suspended = NULL, *preempted = NULL, *vmstore = NULL;
@@ -165,8 +166,6 @@ void restore_vm(VMState *vm) {
 // ---------------------------------------------------------------
 */
 void task_delete(VMState *list, VMState *elem) {
-    if (list != suspended)
-        list = list->next;
     while (list && (list->next != elem))
         list = list->next;
     if (list)
@@ -377,6 +376,28 @@ void task_suspend(void) {
     init_execute();
     cur_frame = NULL;
 }
+
+/*
+// ---------------------------------------------------------------
+// Nothing calls this function - it's here as a VM debug utility
+*/
+#if DISABLED
+void show_queues(void) {
+    VMState * v;
+
+    fputs("preempted:", errfile);
+    for (v=preempted; v; v=v->next)
+        fprintf(errfile, "%x ", v);
+    fputs("\nsuspended:", errfile);
+    for (v=suspended; v; v=v->next)
+        fprintf(errfile, "%x ", v);
+    fputs("\nvmstore:", errfile);
+    for (v=vmstore; v; v=v->next)
+        fprintf(errfile, "%x ", v);
+    fputs("\n\n", errfile);
+    fflush(errfile);
+}
+#endif
 
 /*
 // ---------------------------------------------------------------

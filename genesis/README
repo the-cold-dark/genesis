@@ -3,7 +3,7 @@
     http://www.cold.org/support/
 
 ------------------------------------------------------------------------
-INSTALL/COMPILATION
+INSTALL/COMPILATION IN UNIX
 
 To compile simply type 'make'.
 
@@ -12,6 +12,33 @@ other locations.  Generally you should copy 'coldcc' and 'genesis' to
 your world directory (wherever it may be).
 
 The directory 'bin' contains a few useful scripts.
+
+NOTE: Because SunOS 4.1.x is not POSIX compliant nor even ANSI complaint
+      there are certain problems that will arise in running Genesis on
+      that type of system.  Unfortunately, they are serious problems
+      which cause unstability in Genesis.  We suggest upgrading to
+      a modern operating system.  NetBSD will likely run on your same
+      hardware, and is free.
+
+------------------------------------------------------------------------
+INSTALL/COMPILATION IN WIN32
+
+You will need an ndbm implementation in Win32.  You can get GNU's ndbm
+implementation (gdbm) to cover this role.
+
+You must first have access to a unix system, with either bison or yacc.
+Login to the unix system, untar the source, run configure, after it is
+finished change directory to the 'src' directory and type 'make Win32'.
+After this is finished tar (or zip) the resulting source tree and move
+it to a Win32 platform.  You will need to edit src/include/defs.h and
+change it so the __Win32__ definition is ENABLED (__UNIX__ will be by
+default).  From there compile it within your favorite compiler.  You
+may need to setup a project.  I'm not sure any Win32 make program will
+have the same syntax as unix make, unless you have GNU make.
+
+Basically, the source is compilable in Win32.  However, getting it to
+a compiler and sequencing the compiler to link everything correctly is
+up to you.
 
 ------------------------------------------------------------------------
 RELEASE INFORMATION

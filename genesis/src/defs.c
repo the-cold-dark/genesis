@@ -2,7 +2,7 @@
 // Full copyright information is available in the file ../doc/CREDITS
 */
 
-#define _defs_
+#define DEFS_C
 
 #include <sys/types.h>
 #include <time.h>

@@ -2,66 +2,80 @@
 // Full copyright information is available in the file ../doc/CREDITS
 */
 
+#define SIG_C
+
 #include "defs.h"
 
 #include <signal.h>
 #include <sys/types.h>
+#ifdef __UNIX__
 #include <sys/wait.h>
+#endif
 #include "execute.h"      /* task() */
 #include "sig.h"
 
-void catch_SIGCHLD(int sig);
 void catch_SIGFPE(int sig);
+#ifdef __UNIX__
+void catch_SIGCHLD(int sig);
 void catch_SIGPIPE(int sig);
+#endif
 
 void uninit_sig(void) {
     signal(SIGFPE,  SIG_DFL);
     signal(SIGILL,  SIG_DFL);
-    signal(SIGQUIT, SIG_DFL);
     signal(SIGINT,  SIG_DFL);
-    signal(SIGHUP,  SIG_DFL);
     signal(SIGTERM, SIG_DFL);
     signal(SIGUSR1, SIG_DFL);
     signal(SIGUSR2, SIG_DFL);
+#ifdef __UNIX__
+    signal(SIGQUIT, SIG_DFL);
+    signal(SIGHUP,  SIG_DFL);
     signal(SIGCHLD, SIG_DFL);
     signal(SIGPIPE, SIG_DFL);
+#endif
 }
 
 void init_sig(void) {
     caught_fpe = 0;
     signal(SIGILL,  catch_signal);
-    signal(SIGQUIT, catch_signal);
     signal(SIGINT,  catch_signal);
-    signal(SIGHUP,  catch_signal);
     signal(SIGTERM, catch_signal);
     signal(SIGUSR1, catch_signal);
     signal(SIGUSR2, catch_signal);
     signal(SIGFPE,  catch_SIGFPE);
+#ifdef __UNIX__
+    signal(SIGQUIT, catch_signal);
+    signal(SIGHUP,  catch_signal);
     signal(SIGPIPE, catch_SIGPIPE);
     signal(SIGCHLD, catch_SIGCHLD);
+#endif
 }
 
+#ifdef __UNIX__
 void catch_SIGPIPE(int sig) {
     signal(SIGPIPE,  catch_SIGPIPE);
-}
-
-void catch_SIGFPE(int sig) {
-    caught_fpe++;
-    signal(SIGFPE,  catch_SIGFPE);
 }
 
 void catch_SIGCHLD(int sig) {
     waitpid(-1, NULL, WNOHANG);
     signal(SIGCHLD, catch_SIGCHLD);
 }
+#endif
+
+void catch_SIGFPE(int sig) {
+    caught_fpe++;
+    signal(SIGFPE,  catch_SIGFPE);
+}
 
 char *sig_name(int sig) {
     switch(sig) {
         case SIGILL:  return "ILL";
-        case SIGQUIT: return "QUIT";
         case SIGSEGV: return "SEGV";
         case SIGINT:  return "INT";
+#ifdef __UNIX__
+        case SIGQUIT: return "QUIT";
         case SIGHUP:  return "HUP";
+#endif
         case SIGTERM: return "TERM";
         case SIGUSR1: return "USR1";
         case SIGUSR2: return "USR2";
@@ -86,10 +100,12 @@ void catch_signal(int sig) {
 
     /* figure out what to do */
     switch(sig) {
+#ifdef __UNIX__
         case SIGHUP:
             atomic = NO;
             handle_connection_output();
             flush_files();
+#endif
         case SIGUSR2:
             /* let the db do what it wants from here */
             break;

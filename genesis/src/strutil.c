@@ -1062,7 +1062,7 @@ cList * strsplit(cStr * str, cStr * reg, Int flags) {
 
         x = rx->startp[0] - p;
 
-        if (x || flags & RF_BLANKS) {
+        if (x || (flags & RF_BLANKS)) {
             d.u.str = string_from_chars(p, x);
             list = list_add(list, &d);
             string_discard(d.u.str);
@@ -1071,7 +1071,7 @@ cList * strsplit(cStr * str, cStr * reg, Int flags) {
         p = rx->endp[0];
     } while (p && regexec(rx, p, flags & RF_SENSITIVE));
 
-    if ((x = (s + len) - p)) {
+    if ((x = (s + len) - p) || (flags & RF_BLANKS)) {
         d.u.str = string_from_chars(p, x);
         list = list_add(list, &d);
         string_discard(d.u.str);

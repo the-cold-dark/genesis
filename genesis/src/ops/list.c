@@ -222,7 +222,7 @@ COLDC_FUNC(join) {
             string_discard(sep);
     }
 
-    pop(2);
+    pop(argc);
     push_string(str);
     string_discard(str);
 }

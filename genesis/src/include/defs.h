@@ -10,24 +10,6 @@
 
 /*
 // ---------------------------------------------------------------------
-// Compiling in Win32 (Windows 95 / NT) or UNIX (of any type)
-//
-// Set ENABLED/DISABLED appropriately
-*/
-#if DISABLED
-#  ifndef __Win32__
-#    define __Win32__
-#  endif
-#endif
-
-#if ENABLED
-#  ifndef __UNIX__
-#    define __UNIX__
-#  endif
-#endif
-
-/*
-// ---------------------------------------------------------------------
 // This will reduce how much your database bloats, however it will
 // be slower as it searches the whole database for free blocks.
 // For now this is an option to reduce the amount of bloat occuring,
@@ -129,6 +111,12 @@
 
 /*
 // ---------------------------------------------------------------------
+// Maximum depth of method calls.
+*/
+#define MAX_CALL_DEPTH             128
+
+/*
+// ---------------------------------------------------------------------
 // size of name cache, this number is total magic--although primes make
 // for better magic, lower for less memory usage but more lookups to
 // disk; raise for vise-versa, other primes:
@@ -159,23 +147,23 @@
 #include "config.h"
 
 #ifndef CAT
-#  ifdef __BORLANDC__
-#    undef  _CAT
-#    define _CAT(x)         x
-#    define CAT(a,b)        _CAT(a)_CAT(b)
+#  ifdef __WATCOMC__
+#    define _CAT(a,b)     a ## b
+#    define CAT(a,b)      _CAT(a,b)
 #  else
-#    ifdef __WATCOMC__
-#      define _CAT(a,b)     a ## b
-#      define CAT(a,b)      _CAT(a,b)
-#    else
-#      define CAT(a,b)      a ## b
-#    endif
+#    define CAT(a,b)      a ## b
 #  endif
 #endif
 
 #define INV_OBJNUM        -1
 #define SYSTEM_OBJNUM     0
 #define ROOT_OBJNUM       1
+
+#ifdef USE_VFORK
+#define FORK_PROCESS vfork
+#else
+#define FORK_PROCESS fork
+#endif
 
 #ifndef HAVE_STRERROR
 extern char *sys_errlist[];
@@ -304,7 +292,6 @@ typedef bool              Bool;
 #endif
 
 /* basic sizes */
-#define WORD   32
 #define LINE   80
 #define BUF    256
 #define BLOCK  512
@@ -350,6 +337,11 @@ typedef bool              Bool;
 
 #define SERVER_NAME "Genesis (the ColdX driver)"
 
+/* incase it doesn't exist */
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+
 /*
 // --------------------------------------------------------------------
 // standard includes
@@ -359,7 +351,7 @@ typedef bool              Bool;
 #include <stdlib.h>
 #include <stdio.h>
 
-#ifdef __UNIX__
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
@@ -384,6 +376,7 @@ typedef bool              Bool;
 // --------------------------------------------------------------------
 */
 
+#ifdef DEFS_C
 jmp_buf main_jmp;
 
 char * c_dir_binary;
@@ -409,18 +402,47 @@ Int cache_depth;
 
 void init_defs(void);
 
-/*
-// ---------------------------------------------------------------------
-// Maximum depth of method calls.
-*/
-#define MAX_CALL_DEPTH             128
-
 /* limits configurable with 'config()' */
 Int  limit_datasize;
 Int  limit_fork;
 Int  limit_calldepth;
 Int  limit_recursion;
 Int  limit_objswap;
+
+#else
+extern jmp_buf main_jmp;
+
+extern char * c_dir_binary;
+extern char * c_dir_textdump;
+extern char * c_dir_bin;
+extern char * c_dir_root;
+extern char * c_logfile;
+extern char * c_errfile;
+extern char * c_runfile;
+
+extern FILE * logfile;
+extern FILE * errfile;
+extern cStr * str_tzname;
+extern cStr * str_hostname;
+
+extern Int  c_interactive;
+extern Bool running;
+extern Bool atomic;
+extern Int  heartbeat_freq;
+
+extern Int cache_width;
+extern Int cache_depth;
+
+extern void init_defs(void); 
+
+/* limits configurable with 'config()' */
+extern Int  limit_datasize;
+extern Int  limit_fork;
+extern Int  limit_calldepth;
+extern Int  limit_recursion;
+extern Int  limit_objswap;
+
+#endif
 
 #endif
 

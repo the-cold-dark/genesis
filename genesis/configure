@@ -1019,10 +1019,10 @@ EOF
 
 fi
 
-for ac_hdr in fcntl.h sys/file.h sys/time.h unistd.h
+for ac_hdr in fcntl.h sys/file.h sys/time.h unistd.h vfork.h
 do
 ac_safe=`echo "$ac_hdr" | tr './\055' '___'`
-echo $ac_n "  Checking for $ac_hdr""... $ac_c" 1>&6
+echo $ac_n "  Checking for <$ac_hdr>""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1055,6 +1055,49 @@ else
 fi
 done
 
+ac_safe=`echo "ndbm.h" | tr './\055' '___'`
+echo $ac_n "  Checking for <ndbm.h>""... $ac_c" 1>&6
+if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 1641 "configure"
+#include "confdefs.h"
+#include <ndbm.h>
+EOF
+eval "$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+ac_err=`grep -v '^ *+' conftest.out`
+if test -z "$ac_err"; then
+  rm -rf conftest*
+  eval "ac_cv_header_$ac_safe=yes"
+else
+  echo "$ac_err" >&5
+  rm -rf conftest*
+  eval "ac_cv_header_$ac_safe=no"
+fi
+rm -f conftest*
+fi
+if eval "test \"`echo '$ac_cv_header_'$ac_safe`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
+  cat >> confdefs.h <<\EOF
+#define HAVE_NDBM_H 1
+EOF
+
+else
+  cat <<END
+NO!
+
+** ERROR: unable to find any ndbm implementation.  This package is required.
+** ERROR: You can get gdbm (a free dbm package) from:
+** ERROR:
+** ERROR:       ftp://prep.ai.mit.edu/pub/gnu/
+** ERROR:
+** ERROR: Install it and make sure the final library is in your search path.
+END
+  exit
+fi
+
+#########################################################
 echo $ac_n "  Checking for sys_siglist declaration in signal.h or unistd.h""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_decl_sys_siglist'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -1334,7 +1377,7 @@ EOF
 
 
 
-echo $ac_n "  Checking whether struct tm is in sys/time.h or time.h""... $ac_c" 1>&6
+echo $ac_n "  Checking whether struct tm is in <sys/time.h> or <time.h>""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_struct_tm'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1463,38 +1506,6 @@ fi
 EOF
 
   fi
-fi
-
-ac_safe=`echo "vfork.h" | tr './\055' '___'`
-echo $ac_n "  Checking for vfork.h""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  cat > conftest.$ac_ext <<EOF
-#line 1641 "configure"
-#include "confdefs.h"
-#include <vfork.h>
-EOF
-eval "$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
-ac_err=`grep -v '^ *+' conftest.out`
-if test -z "$ac_err"; then
-  rm -rf conftest*
-  eval "ac_cv_header_$ac_safe=yes"
-else
-  echo "$ac_err" >&5
-  rm -rf conftest*
-  eval "ac_cv_header_$ac_safe=no"
-fi
-rm -f conftest*
-fi
-if eval "test \"`echo '$ac_cv_header_'$ac_safe`\" = yes"; then
-  echo "$ac_t""yes" 1>&6
-  cat >> confdefs.h <<\EOF
-#define HAVE_VFORK_H 1
-EOF
-
-else
-  echo "$ac_t""no" 1>&6
 fi
 
 # lib -lnsl (Solaris)
@@ -1639,6 +1650,7 @@ fi
 ## check for a dbm library to use..
 ## -lgdbm has priority over -lndbm
 #
+have_dbm=no
 echo $ac_n "  Checking for -lgdbm""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_lib_gdbm'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -1669,16 +1681,16 @@ fi
 if eval "test \"`echo '$ac_cv_lib_'gdbm`\" = yes"; then
   echo "$ac_t""yes" 1>&6
   LIBS="-lgdbm $LIBS"
-else
+else 
   echo "$ac_t""no" 1>&6
 
-echo $ac_n "  Checking for -lndbm""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_lib_ndbm'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  ac_save_LIBS="$LIBS"
-LIBS="-lndbm $LIBS"
-cat > conftest.$ac_ext <<EOF
+  echo $ac_n "  Checking for -lndbm""... $ac_c" 1>&6
+  if eval "test \"`echo '$''{'ac_cv_lib_ndbm'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    ac_save_LIBS="$LIBS"
+    LIBS="-lndbm $LIBS"
+    cat > conftest.$ac_ext <<EOF
 #line 1793 "configure"
 #include "confdefs.h"
 
@@ -1687,33 +1699,32 @@ int t() {
 dbm_open()
 ; return 0; }
 EOF
-if eval $ac_link; then
-  rm -rf conftest*
-  eval "ac_cv_lib_ndbm=yes"
-else
-  rm -rf conftest*
-  eval "ac_cv_lib_ndbm=no"
-fi
-rm -f conftest*
-LIBS="$ac_save_LIBS"
-
-fi
-
-  if eval "test \"`echo '$ac_cv_lib_'ndbm`\" = yes"; then
-    echo "$ac_t""yes" 1>&6
-    if [ $SYS = "hp-hpux" ]; then
-        cat <<END
-** WARNING: the ndbm library in HPUX has been known to be dysfunctional,
-** it is suggested you get the gdbm library from:
-**
-**    ftp://prep.ai.mit.edu/pub/gnu/
-**
-** and use it instead (reconfigure)
-END
+    if eval $ac_link; then
+      rm -rf conftest*
+      eval "ac_cv_lib_ndbm=yes"
+    else
+      rm -rf conftest*
+      eval "ac_cv_lib_ndbm=no"
     fi
-    LIBS="-lndbm $LIBS"
-  else
-    echo "$ac_t""no" 1>&6
+    rm -f conftest*
+    LIBS="$ac_save_LIBS"
+
+    if eval "test \"`echo '$ac_cv_lib_'ndbm`\" = yes"; then
+      echo "$ac_t""yes" 1>&6
+      if [ $SYS = "hp-hpux" ]; then
+          cat <<END
+** WARNING: the ndbm library in HPUX has been known to be dysfunctional,
+** WARNING: it is suggested you get the gdbm library from:
+** WARNING:
+** WARNING:    ftp://prep.ai.mit.edu/pub/gnu/
+** WARNING:
+** WARNING: and use it instead (reconfigure)
+END
+      fi
+      LIBS="-lndbm $LIBS"
+    else
+      echo "$ac_t""no" 1>&6
+    fi
   fi
 fi
 
@@ -2599,9 +2610,9 @@ s%@LINT@%$LINT%g
 s%@YACC@%$YACC%g
 s%@CPP@%$CPP%g
 s%@VERSION@%$VERSION%g
-s%@VMAJOR@%$VERSION_MAJOR%g
-s%@VMINOR@%$VERSION_MINOR%g
-s%@VPATCH@%$VERSION_PATCH%g
+s%@VMAJOR@%$VMAJOR%g
+s%@VMINOR@%$VMINOR%g
+s%@VPATCH@%$VPATCH%g
 
 CEOF
 EOF
@@ -2753,7 +2764,7 @@ cat >> $CONFIG_STATUS <<\EOF
   echo "#define sys_${SYS}" >> conftest.h
   echo "#define vendor_${VENDOR}" >> conftest.h
   echo "#define cpu_${CPU}" >> conftest.h
-  echo "#define HOSTNAME $hostname" >> conftest.h
+  echo "#define HOSTNAME $HOSTNAME" >> conftest.h
   echo "#endif" >> conftest.h
   rm -f $ac_file
   mv conftest.h $ac_file

@@ -76,6 +76,12 @@ void * emalloc(size_t size) {
     ptr = malloc(size);
     if (!ptr)
         panic("emalloc(%lX) failed.", size);
+
+    /* most unix systems already do this, no reason being redundant */
+#ifdef __Win32__
+    memset(ptr, 0, size);
+#endif
+
     return ptr;
 }
 

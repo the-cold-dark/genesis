@@ -134,3 +134,8 @@
 #undef SYSTEM_TYPE
 
 #undef USE_OS_CRYPT
+
+#ifndef __UNIX__
+#  define __UNIX__
+#endif
+

@@ -16,10 +16,18 @@
 
 #include "defs.h"
 
+#ifdef __Win32__
+#define STDIN_FILENO (fileno(stdin))
+#define STDOUT_FILENO (fileno(stdout))
+#define STDERR_FILENO (fileno(stderr))
+#endif
+
 #include <string.h>
 #include <limits.h>
 #include <sys/types.h>
+#ifdef __UNIX__
 #include <sys/wait.h>
+#endif
 #include <sys/stat.h>
 #include <dirent.h>  /* func_files() */
 #include <fcntl.h>
@@ -372,7 +380,7 @@ COLDC_FUNC(frename) {
     Int           err;
     filec_t     * file = NULL;
 
-    INIT_1_OR_2_ARGS(ANY_TYPE, STRING);
+    INIT_2_ARGS(ANY_TYPE, STRING);
 
     if (args[0].type != STRING) {
         GET_FILE_CONTROLLER(file)
@@ -402,7 +410,7 @@ COLDC_FUNC(frename) {
         return;
     }
 
-    pop(argc);
+    pop(2);
     push_int(1);
 }
 
@@ -629,12 +637,40 @@ COLDC_FUNC(execute) {
 
     pop(num_args);
 
-    /* Fork off a process. */
-#ifdef USE_VFORK
-    pid = vfork();
+#ifdef __Win32__
+
+#ifndef CREATE_PROCESS
+    write_err("EXEC: No forking in Win32 (yet)");
+    /* for now this will not work - JAL */
+    status = -1;
+
 #else
-    pid = fork();
+
+    fSuccess = CreateProcess((LPTSTR)fname, (LPTSTR)argv,
+                   (LPSECURITY_ATTRIBUTES)NULL, (LPSECURITY_ATTRIBUTES)NULL,
+                   (BOOL)TRUE,(DWORD)0, NULL, NULL, (LPSTARTUPINFO)&SI,
+                   (LPPROCESS_INFORMATION)&pi);
+    /* parent waits for child */
+    if (fSuccess) {
+        hProcess = pi.hProcess;    hThread = pi.hThread;
+        dw = WaitForSingleObject(hProcess, INFINITE);
+        /* if we saw success ... */
+        if (dw != 0xFFFFFFFF) {
+                /* pick up an exit code for the process */
+                fExit = GetExitCodeProcess(hProcess, &dwExitCode);
+        }
+        /* close the child process and thread object handles */
+        CloseHandle(hThread);    CloseHandle(hProcess);
+        printf("COMPLETED!\n");
+    } else
+        printf("Failed to CreateProcess\n");
+
 #endif
+
+#else
+
+    /* Fork off a process. */
+    pid = FORK_PROCESS();
     if (pid == 0) {
         /* Pipe stdin and stdout to /dev/null, keep stderr. */
         fd = open("/dev/null", O_RDWR);
@@ -658,6 +694,8 @@ COLDC_FUNC(execute) {
         write_err("EXEC: Failed to fork: %s.", strerror(GETERR()));
         status = -1;
     }
+
+#endif
 
     /* Free the argument list. */
     for (i = 0; i < argc; i++)

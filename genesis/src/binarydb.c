@@ -10,12 +10,14 @@
 
 #include "defs.h"
 
+#ifdef __UNIX__
 #include <sys/param.h>
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "cdc_db.h"
 #include "util.h"
@@ -102,9 +104,9 @@ void init_binary_db(void) {
     struct stat   statbuf;
     FILE        * fp;
     char          buf[LINE],
-                  v_major[WORD],
-                  v_minor[WORD],
-                  v_patch[WORD],
+                  v_major[LINE],
+                  v_minor[LINE],
+                  v_patch[LINE],
                   magicmod[LINE],
                   fdb_clean[LINE],
                   fdb_objects[LINE],
@@ -129,9 +131,9 @@ void init_binary_db(void) {
 
     fp = fopen(fdb_clean, "rb");
     if (fp) {
-        if (fgets(v_major, WORD, fp) && atoi(v_major)==VERSION_MAJOR) {
-          if (fgets(v_minor, WORD, fp) && atoi(v_minor)==VERSION_MINOR) {
-            if (fgets(v_patch, WORD, fp) && atoi(v_patch)==VERSION_PATCH) {
+        if (fgets(v_major, LINE, fp) && atoi(v_major)==VERSION_MAJOR) {
+          if (fgets(v_minor, LINE, fp) && atoi(v_minor)==VERSION_MINOR) {
+            if (fgets(v_patch, LINE, fp) && atoi(v_patch)==VERSION_PATCH) {
               if (fgets(magicmod, LINE, fp)&&atol(magicmod)==MAGIC_MODNUMBER) {
                   fgets(buf, LINE, fp);
                   cur_search = atoi(buf);
@@ -184,7 +186,7 @@ void init_new_db(void) {
     DBFILE(fdb_index,   "index");
 
     open_db_directory();
-    open_db_objects("w+");
+    open_db_objects("wb+");
     lookup_open(fdb_index, 1);
     init_bitmaps();
     sync_index();
@@ -602,7 +604,7 @@ void finish_backup(void) {
     
     strcpy(buf, c_dir_binary);
     strcat(buf, ".bak/.clean");
-    fp = open_scratch_file(buf, "w");
+    fp = open_scratch_file(buf, "wb");
     if (!fp)
         panic("Cannot create file 'clean'.");
     fprintf(fp, "%d\n%d\n%d\n%li\n%li\n",
@@ -619,7 +621,7 @@ static void db_is_clean(void) {
 	return;
 
     /* Create 'clean' file. */
-    fp = open_scratch_file(c_clean_file, "w");
+    fp = open_scratch_file(c_clean_file, "wb");
     if (!fp)
 	panic("Cannot create file 'clean'.");
     fprintf(fp, "%d\n%d\n%d\n%li\n%li\n",

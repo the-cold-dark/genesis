@@ -5,7 +5,7 @@
 #ifndef cdc_lookup_h
 #define cdc_lookup_h
 
-/* incase it doesnt do its own checking */
+/* this just makes sure we don't include it twice */
 #ifndef did_sys_types
 #define did_sys_types
 #include <sys/types.h>

@@ -10,7 +10,9 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef __UNIX__
 #include <sys/time.h>
+#endif
 #include <ctype.h>
 #include <time.h>
 #include "cdc_pcode.h"
@@ -275,19 +277,17 @@ INTERNAL void initialize(Int argc, char **argv) {
         errfile = stderr;
     }
 
+#ifdef __UNIX__
     /* fork ? */
     if (dofork) {
-#ifdef USE_VFORK
-        pid = vfork();
-#else
-        pid = fork();
-#endif
+        pid = FORK_PROCESS();
         if (pid != 0) { /* parent */
             if (pid == -1)
                 fprintf(stderr,"genesis: unable to fork: %s\n",strerror(GETERR()));
             exit(0);
         }
     }
+#endif
 
     /* print the PID */
     if ((fp = fopen(c_runfile, "wb")) != NULL) {

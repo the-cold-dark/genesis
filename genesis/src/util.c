@@ -11,7 +11,6 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <stdarg.h>
 #include <fcntl.h>
 #include "util.h"
@@ -296,7 +295,7 @@ cStr * format(char *fmt, ...) {
 char * timestamp (char * str) {
     time_t      t;
     struct tm * tms;
-    static char tstr[WORD];
+    static char tstr[LINE];
     char      * s;
     char      * months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
                             "Aug", "Sep", "Oct", "Nov", "Dec"};
@@ -471,7 +470,11 @@ void init_scratch_file(void) {
 }
 
 INTERNAL void claim_fd(Int i) {
+#ifdef __Win32__
+    reserve_fds[i] = open("null_file", O_WRONLY | O_CREAT);
+#else
     reserve_fds[i] = open("/dev/null", O_WRONLY);
+#endif
     if (reserve_fds[i] == -1)
 	panic("Couldn't reset reserved fd.");
 }

@@ -6,7 +6,7 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $Id: malloc.c,v 1.19 1998/06/27 20:22:18 braddr Exp $
+ * $Id: malloc.c,v 1.20 1998/06/27 20:24:23 braddr Exp $
  *
  */
 
@@ -48,7 +48,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <memory.h>
 #include <errno.h>
 

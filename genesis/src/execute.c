@@ -548,7 +548,7 @@ cList * task_stack(void) {
     for (f = cur_frame; f; f = f->caller_frame) {
 
         d.u.list = list_new(5);
-        list = list_empty_spaces(d.u.list, 4);
+        list = list_empty_spaces(d.u.list, 5);
 
         list[0].type = OBJNUM;
         list[0].u.objnum = f->object->objnum;

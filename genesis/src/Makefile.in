@@ -33,7 +33,7 @@ VRELEASE=@VRELEASE@
 INSTALL=@INSTALL@
 
 DATA_O     = data/data.o data/buffer.o data/dict.o data/ident.o\
-             data/list.o data/object.o data/string.o \
+             data/list.o data/object.o data/string.o data/string_tab.o\
 	     data/handled_frob.o data/quickhash.o
 GRAMMAR_O  = grammar.o
 DB_O       = cache.o binarydb.o dbpack.o decode.o lookup.o

@@ -91,7 +91,7 @@ typedef int (*ciSzData)(cData*);
 typedef int (*ciCmpData)(cData*, cData*);
 typedef void (*ciDupData)(cData*, cData*);
 typedef void (*ciDisData)(cData*);
-typedef cStr *(*ciStrData)(cStr*, cData*, Bool);
+typedef cStr *(*ciStrData)(cStr*, cData*, int);
 
 typedef struct cInstance {
     char *name;

@@ -457,7 +457,7 @@ void cache_cleanup(void) {
 */
 
 cList * cache_info(int level) {
-    int     x, y;
+    int     x;
     Obj   * obj;
     cList * out;
     cList * list;
@@ -494,7 +494,7 @@ cList * cache_info(int level) {
              }
         }
         d[x].type = STRING;
-        d[x].u.val = str;
+        d[x].u.str = str;
     }
 
     return out;

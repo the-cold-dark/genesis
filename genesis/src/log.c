@@ -10,6 +10,7 @@
 #include <stdarg.h>
 #include "cache.h"
 #include "util.h"
+#include "sig.h"
 
 void panic(char * s, ...) {
     va_list vargs;

@@ -2395,14 +2395,19 @@ cat <<END
 # the primary number to be concerned with is WIDTH, as the DEPTH is only
 # used when collisions occur.  For better distribution, the WIDTH size
 # should be a prime number.  If you want low memory usage (about 4MB in
-# unix) a cache size of 32x10 is suggested, increase as you desire.
+# unix) a cache size of 31x10 is suggested, increase as you desire.
 # Keep in mind this is ONLY active objects in your database, namely those
 # which are currently in use.
+#
+# You can use GNU's bc command with the file etc/primes.b to generate a list
+# of prime numbers in the range you are interested in, by typing:
+#
+#    bc etc/primes.p
 #
 
 END
 
-CACHE_WIDTH=64
+CACHE_WIDTH=61
 CACHE_DEPTH=10
 
 loop=yes

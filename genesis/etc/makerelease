@@ -1,0 +1,35 @@
+#!/bin/sh
+
+last=`cat etc/version`
+lmajor=`echo $last | sed 's:\..*::'`
+lminor=`echo $last | sed 's:[0-9][0-9]*\.::;s:p[0-9][0-9]*-.*$::'`
+lpatch=`echo $last | sed 's:.*p::;s:-.*$::'`
+lrelease=`echo $last | sed 's:.*-::'`
+
+lpatch=`expr $lpatch + 1`
+echo "Previous Release: $last"
+echo ""
+
+while [ 1 ]; do
+    echo -n "New Release [$lmajor.${lminor}p$lpatch-$lrelease] "
+    read next
+
+    if [ -z "$next" ]; then
+        next="$lmajor.${lminor}p$lpatch-$lrelease"
+        break
+    else
+        echo "Use '$next' as the next release? [yes] "
+        read yesno
+        if [ -z "$yesno" -o "$yesno" = "y" -o "$yesno" = "yes" ]; then
+            break
+        fi
+    fi
+done
+
+rel="Genesis-$next"
+echo $next > etc/version
+
+cd ..
+mv $lrelease $rel
+tar -cf "${rel}.tar" $rel
+gzip -9 "${rel}.tar"

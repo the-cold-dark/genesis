@@ -42,7 +42,7 @@ for ($x=0; $x <= $#args; $x++) {
     if (/^-m(.*)/) {
         ## ohh, a special magic number!
         $rest = $1;
-        if ($rest) {
+        if (length($rest)) {
             $magic = $rest;
         } else {
             $x++;

@@ -404,10 +404,8 @@ cStr *data_add_literal_to_str(cStr *str, cData *data, int flags) {
 
               if (!obj || obj->objname == -1) {
                   onum = data->u.objnum;
-                  if (!obj && data->u.objnum > 0 && (flags & DF_INV_OBJNUMS)) {
+                  if (!obj && data->u.objnum > 0 && (flags & DF_INV_OBJNUMS))
                       onum = -onum;
-                      data->u.objnum = onum;
-                  }
                   s = long_to_ascii(onum, nbuf);
                   pre = '#';
               } else {

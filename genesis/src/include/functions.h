@@ -145,6 +145,7 @@ COLDC_FUNC(strcmp);
 COLDC_FUNC(strfmt);
 COLDC_FUNC(dblog);
 COLDC_FUNC(backup);
+COLDC_FUNC(sync);
 COLDC_FUNC(shutdown);
 COLDC_FUNC(set_heartbeat);
 COLDC_FUNC(cache_info);

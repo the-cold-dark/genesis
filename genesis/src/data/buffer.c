@@ -1,4 +1,4 @@
-/*
+/* -*- -*-
 // Full copyright information is available in the file ../doc/CREDITS
 //
 // Routines for ColdC buffer manipulation.
@@ -8,15 +8,17 @@
 
 #include <ctype.h>
 #include "util.h"
+#include "macros.h"
 
-#define BUFALLOC(len)		(cBuf *)emalloc(sizeof(cBuf) + (len) - 1)
-#define BUFREALLOC(buf, len)	(cBuf *)erealloc(buf, sizeof(cBuf) + (len) - 1)
+#define BUFFER_OVERHEAD     (sizeof(cBuf))
 
-cBuf *buffer_new(Int len) {
+cBuf *buffer_new(Int size_needed) {
     cBuf *buf;
 
-    buf = BUFALLOC(len);
-    buf->len = len;
+    size_needed = ROUND_UP(size_needed + BUFFER_OVERHEAD, BUFFER_DATA_INCREMENT);
+    buf = (cBuf*)emalloc(size_needed);
+    buf->len = 0;
+    buf->size = size_needed - BUFFER_OVERHEAD;
     buf->refs = 1;
     return buf;
 }
@@ -35,10 +37,18 @@ void buffer_discard(cBuf *buf) {
 cBuf *buffer_append(cBuf *buf1, cBuf *buf2) {
     if (!buf2->len)
 	return buf1;
-    buf1 = buffer_prep(buf1);
-    buf1 = BUFREALLOC(buf1, buf1->len + buf2->len);
+    buf1 = buffer_prep(buf1, buf1->len + buf2->len);
     MEMCPY(buf1->s + buf1->len, buf2->s, buf2->len);
     buf1->len += buf2->len;
+    return buf1;
+}
+
+cBuf * buffer_append_uchars(cBuf * buf1, uChar * new, Int new_len) {
+    if (!new_len)
+        return buf1;
+    buf1 = buffer_prep(buf1, buf1->len + new_len);
+    MEMCPY(buf1->s + buf1->len, new, new_len);
+    buf1->len += new_len;
     return buf1;
 }
 
@@ -49,24 +59,28 @@ Int buffer_retrieve(cBuf *buf, Int pos) {
 cBuf *buffer_replace(cBuf *buf, Int pos, uInt c) {
     if (buf->s[pos] == c)
 	return buf;
-    buf = buffer_prep(buf);
+    buf = buffer_prep(buf, buf->len);
     buf->s[pos] = OCTET_VALUE(c);
     return buf;
 }
 
 cBuf *buffer_add(cBuf *buf, uInt c) {
-    buf = buffer_prep(buf);
-    buf = BUFREALLOC(buf, buf->len + 1);
+    buf = buffer_prep(buf, buf->len + 1);
     buf->s[buf->len] = OCTET_VALUE(c);
     buf->len++;
     return buf;
 }
 
 cBuf *buffer_resize(cBuf *buf, Int len) {
+    /* This is currently only called to shrink the buffer. */
+    /* Calling it to enlarge the buffer could be dangerous, as
+       as it leaves some uninitialized memory in the buffer */
+
     if (len == buf->len)
 	return buf;
-    buf = buffer_prep(buf);
-    buf = BUFREALLOC(buf, len);
+    buf = buffer_prep(buf, len);
+    buf = (cBuf*)erealloc(buf, len + BUFFER_OVERHEAD);
+    buf->size = len;
     buf->len = len;
     return buf;
 }
@@ -188,6 +202,7 @@ cList *buf_to_strings(cBuf *buf, cBuf *sep)
     /* Add the remainder characters to the list as a buffer. */
     end = buffer_new(buf->s + buf->len - string_start);
     MEMCPY(end->s, string_start, buf->s + buf->len - string_start);
+    end->len = buf->s + buf->len - string_start;
     d.type = BUFFER;
     d.u.buffer = end;
     result = list_add(result, &d);
@@ -198,14 +213,16 @@ cList *buf_to_strings(cBuf *buf, cBuf *sep)
 
 cBuf *buffer_from_string(cStr * string) {
     cBuf * buf;
-    Int      new;
+    Int    new, str_len;
 
-    buf = buffer_new(string_length(string));
+    str_len = string_length(string);
+    buf = buffer_new(str_len);
+    buf->len = str_len;
     new = parse_strcpy((char *) buf->s,
                        string_chars(string),
-                       string_length(string));
+                       str_len);
 
-    if (string_length(string) - new)
+    if (str_len - new)
         buf = buffer_resize(buf, new);
 
     return buf;
@@ -227,6 +244,7 @@ cBuf *buffer_from_strings(cList * string_list, cBuf * sep) {
 
     /* Make a buffer and copy the strings into it. */
     buf = buffer_new(len);
+    buf->len = len;
     pos = 0;
     for (i = 0; i < num_strings; i++) {
         s = (unsigned char *) string_chars(string_data[i].u.str);
@@ -255,17 +273,25 @@ cBuf * buffer_subrange(cBuf * buf, Int start, Int len) {
     return cnew;
 }
 
-cBuf *buffer_prep(cBuf *buf) {
+cBuf *buffer_prep(cBuf *buf, Int new_size) {
     cBuf *cnew;
 
-    if (buf->refs == 1)
-	return buf;
-
-    /* Make a new buffer with the same contents as the old one. */
-    buf->refs--;
-    cnew = buffer_new(buf->len);
-    MEMCPY(cnew->s, buf->s, buf->len);
-    return cnew;
+    if (buf->refs != 1) {
+        /* Make a new buffer with the same contents as the old one. */
+        buf->refs--;
+        cnew = buffer_new(new_size);
+        MEMCPY(cnew->s, buf->s, buf->len);
+        cnew->len = buf->len;
+        return cnew;
+    } else if (buf->size < new_size) {
+        /* Resize the buffer */
+        new_size = ROUND_UP(new_size + BUFFER_OVERHEAD, BUFFER_DATA_INCREMENT);
+        buf = (cBuf*)erealloc(buf, new_size);
+        buf->size = new_size - BUFFER_OVERHEAD;
+        return buf;
+    } else {
+        return buf;
+    }
 }
 
 INTERNAL

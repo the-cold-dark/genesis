@@ -461,7 +461,7 @@ Int check_free_blocks(Int blocks_needed, Int b)
     return count == blocks_needed;
 }
 
-Int db_put(Obj *obj, Long objnum)
+Int db_put(Obj *obj, Long objnum, Long *sizewritten)
 {
     off_t old_offset, new_offset;
     Int old_size, new_size = size_object(obj), tmp1, tmp2;
@@ -494,16 +494,20 @@ Int db_put(Obj *obj, Long objnum)
 	new_offset = BLOCK_OFFSET(db_alloc(new_size));
     }
 
-    if (!lookup_store_objnum(objnum, new_offset, new_size))
+    if (!lookup_store_objnum(objnum, new_offset, new_size)) {
+        if (sizewritten) *sizewritten = 0;
 	return 0;
+    }
 
     if (fseek(database_file, new_offset, SEEK_SET)) {
 	write_err("ERROR: Seek failed for %l.", objnum);
+        if (sizewritten) *sizewritten = 0;
 	return 0;
     }
 
     pack_object(obj, database_file);
     fflush(database_file);
+    if (sizewritten) *sizewritten = new_size;
 
     return 1;
 }

@@ -96,6 +96,18 @@ INTERNAL Bool backup_file(char * file) {
     return rval;
 }
 
+void func_sync(void) {
+    /* Accept no arguments. */
+    if (!func_init_0())
+        return;
+
+    /* sync the db */
+    cache_sync();
+
+    /* return '1' */
+    push_int(1);
+}
+
 void func_backup(void) {
     char            buf[BUF];
     struct stat     statbuf;
@@ -218,31 +230,23 @@ COLDC_FUNC(config) {
         return;
 
     if (argc == 1) {
-        if (SYM1 == datasize_id)
-            rval = limit_datasize;
-        else if (SYM1 == forkdepth_id)
-            rval = limit_fork;
-        else if (SYM1 == calldepth_id)
-            rval = limit_calldepth;
-        else if (SYM1 == recursion_id)
-            rval = limit_recursion;
-        else if (SYM1 == objswap_id)
-            rval = limit_objswap;
-        else
-            THROW((type_id, "Invalid configuration name."))
+	if (SYM1 == datasize_id)	rval = limit_datasize;
+	else if (SYM1 == forkdepth_id)	rval = limit_fork;
+	else if (SYM1 == calldepth_id)	rval = limit_calldepth;
+	else if (SYM1 == recursion_id)	rval = limit_recursion;
+	else if (SYM1 == objswap_id)	rval = limit_objswap;
+	else if (SYM1 == cachelog_id)	rval = cache_log_flag;
+	else
+	    THROW((type_id, "Invalid configuration name."))
     } else {
-        if (SYM1 == datasize_id)
-            rval = limit_datasize = INT2;
-        else if (SYM1 == forkdepth_id)
-            rval = limit_fork = INT2;
-        else if (SYM1 == calldepth_id)
-            rval = limit_calldepth = INT2;
-        else if (SYM1 == recursion_id)
-            rval = limit_recursion = INT2;
-        else if (SYM1 == objswap_id)
-            rval = limit_objswap = INT2;
-        else
-            THROW((type_id, "Invalid configuration name."))
+	if (SYM1 == datasize_id)	rval = limit_datasize  = INT2;
+	else if (SYM1 == forkdepth_id)	rval = limit_fork      = INT2;
+	else if (SYM1 == calldepth_id)	rval = limit_calldepth = INT2;
+	else if (SYM1 == recursion_id)	rval = limit_recursion = INT2;
+	else if (SYM1 == objswap_id)	rval = limit_objswap   = INT2;
+	else if (SYM1 == cachelog_id)	rval = cache_log_flag  = INT2;
+	else
+	    THROW((type_id, "Invalid configuration name."))
     }
 
     pop(argc);
@@ -261,4 +265,3 @@ COLDC_FUNC(cache_info) {
     push_list(list);
     list_discard(list);
 }
-

@@ -44,6 +44,9 @@ Ident breadth_id, depth_id, full_id, partial_id;
 Ident datasize_id, forkdepth_id, calldepth_id, recursion_id, objswap_id;     
 Ident left_id, right_id, both_id;
 
+/* config options */
+Ident cachelog_id;
+
 void init_ident(void)
 {
     Long i;
@@ -136,6 +139,8 @@ void init_ident(void)
     recursion_id = ident_get("recursion");
     objswap_id = ident_get("objswap");
     calldepth_id = ident_get("calldepth");
+
+    cachelog_id = ident_get("cachelog");
 
     left_id = ident_get("left");
     right_id = ident_get("right");

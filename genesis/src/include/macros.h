@@ -22,6 +22,17 @@
 # define RETURN_FALSE return
 #endif
 
+
+/*
+ * // -----------------------------------------------------------------------
+ * // common defines for rounding 'a' up to the nearest multiple of 'm'
+ * // -----------------------------------------------------------------------
+ * */
+
+#define ROUND_UP(a, m)		(((a) - 1) + (m) - (((a) - 1) % (m)))
+#define BUFFER_DATA_INCREMENT	512
+
+
 /*
 // -----------------------------------------------------------------------
 // common defines in both functions and natives

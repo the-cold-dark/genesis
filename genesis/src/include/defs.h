@@ -445,6 +445,9 @@ Int  limit_calldepth;
 Int  limit_recursion;
 Int  limit_objswap;
 
+/* driver config parameters accessable through config() */
+Int  cache_log_flag;
+
 #else
 extern jmp_buf main_jmp;
 
@@ -479,6 +482,9 @@ extern Int  limit_fork;
 extern Int  limit_calldepth;
 extern Int  limit_recursion;
 extern Int  limit_objswap;
+
+/* driver config parameters accessable through config() */
+extern Int  cache_log_flag;
 
 #endif
 

@@ -154,6 +154,12 @@ COLDC_FUNC(pad) {
     if (num_args == 3) {
 	filler = string_chars(args[2].u.str);
 	filler_len = string_length(args[2].u.str);
+	if (!filler_len)
+	{   
+	    cthrow(range_id, "Empty string as padding is invalid.");
+	    return;
+	}  
+
     } else {
 	filler = " ";
 	filler_len = 1;

@@ -13,6 +13,8 @@
 #include "log.h"
 #include "quickhash.h"
 
+static void method_cache_invalidate(cObjnum objnum);
+
 /*
 // -----------------------------------------------------------------
 //
@@ -145,9 +147,24 @@ void object_destroy(Obj *object) {
     cList *children;
     cData *d, cthis;
     Obj *kid;
+    Long   has_methods = 0, i = 0;
 
-    /* Invalidate the method cache. */
-    cur_stamp++;
+    do {
+        if (object->methods.tab[i].m) {
+            has_methods = 1;
+	}
+        i++;
+    } while (!has_methods && (i < object->methods.size));
+
+    /*
+     * Invalidate the method cache if object is not a method-less leaf object,
+     * otherwise, invalidate just the entries for the dead object.
+     */
+    if ((list_length(object->children) != 0) || (has_methods)) {
+        cur_stamp++;
+    } else {
+        method_cache_invalidate(object->objnum);
+    }
 
     /* remove the object name, if it has one */
     object_del_objname(object);
@@ -781,15 +798,16 @@ static Var *object_find_var(Obj *object, Long cclass, Long name)
    a result of a message to teh child hanbdled by the parent
    (whew.) added 5/7/1995 Jeffrey P. kesselman */
 Method *object_find_method(Long objnum, Long name, Bool is_frob) {
-    Search_params params;
-    Obj *object;
-    Method *method, *local_method;
-    cList *parents;
-    cData *d;
+    Search_params   params;
+    Obj           * object;
+    Method        * method, *local_method;
+    cList         * parents;
+    cData         * d;
+    Bool            method_cache_hit;
 
     /* Look for cached value. */
-    method = method_cache_check(objnum, name, -1, is_frob);
-    if (method)
+    method_cache_hit = method_cache_check(objnum, name, -1, is_frob, &method);
+    if (method_cache_hit)
 	return method;
 
     object = cache_retrieve(objnum);
@@ -832,8 +850,7 @@ Method *object_find_method(Long objnum, Long name, Bool is_frob) {
 	}
     }
 
-    if (method)
-	method_cache_set(objnum, name, -1, method->object->objnum, is_frob);
+    method_cache_set(objnum, name, -1, (method ? method->object->objnum : -2), is_frob, (method ? FALSE : TRUE));
     return method;
 }
 
@@ -847,10 +864,11 @@ Method *object_find_next_method(Long objnum, Long name, Long after, Bool is_frob
     cList *parents;
     cData *d;
     Long parent;
+    Bool method_cache_hit;
 
     /* Check cache. */
-    method = method_cache_check(objnum, name, after, is_frob);
-    if (method)
+    method_cache_hit = method_cache_check(objnum, name, after, is_frob, &method);
+    if (method_cache_hit)
 	return method;
 
     object = cache_retrieve(objnum);
@@ -879,8 +897,7 @@ Method *object_find_next_method(Long objnum, Long name, Long after, Bool is_frob
 	END_SEARCH();
     }
 
-    if (method)
-	method_cache_set(objnum, name, after, method->object->objnum, is_frob);
+    method_cache_set(objnum, name, after, (method ? method->object->objnum : -2), is_frob, (method ? FALSE : TRUE));
     return method;
 }
 
@@ -972,7 +989,7 @@ Method *object_find_method_local(Obj *object, Long name, Bool is_frob)
     return NULL;
 }
 
-static Method *method_cache_check(Long objnum, Long name, Long after, Bool is_frob)
+static Bool method_cache_check(Long objnum, Long name, Long after, Bool is_frob, Method **method)
 {
     Obj *object;
     Int i;
@@ -981,14 +998,21 @@ static Method *method_cache_check(Long objnum, Long name, Long after, Bool is_fr
     if (method_cache[i].stamp == cur_stamp && method_cache[i].objnum == objnum &&
 	method_cache[i].name == name && method_cache[i].after == after &&
 	method_cache[i].loc != -1 && method_cache[i].is_frob==is_frob) {
-	object = cache_retrieve(method_cache[i].loc);
-	return object_find_method_local(object, name, is_frob);
+        if (!method_cache[i].failed) {
+            object = cache_retrieve(method_cache[i].loc);
+            *method = object_find_method_local(object, name, is_frob);
+            return TRUE;
+        } else {
+            *method = NULL;
+            return TRUE;
+        }
     } else {
-	return NULL;
+	*method = NULL;
+	return FALSE;
     }
 }
 
-static void method_cache_set(Long objnum, Long name, Long after, Long loc, Bool is_frob)
+static void method_cache_set(Long objnum, Long name, Long after, Long loc, Bool is_frob, Bool failed)
 {
     Int i;
 
@@ -1003,7 +1027,24 @@ static void method_cache_set(Long objnum, Long name, Long after, Long loc, Bool 
     method_cache[i].after = after;
     method_cache[i].loc = loc;
     method_cache[i].is_frob=(is_frob == FROB_RETRY) ? FROB_NO : is_frob;
+    method_cache[i].failed = failed;
 }
+
+static void method_cache_invalidate(cObjnum objnum) {
+    Int i;
+
+    /*
+     * Invalidate cache entries by decrementing the stamp.
+     * Don't set it to 0, that way method_cache_set() can handle
+     * the ident_discard() properly
+     */
+    for (i = 0; i < METHOD_CACHE_SIZE; i++) {
+        if (method_cache[i].objnum == objnum) {
+            method_cache[i].stamp--;
+        }
+    }
+}
+
 
 /* this makes me rather wary, hope it works ... */
 /* we will know native methods have changed names because the name will
@@ -1027,6 +1068,7 @@ void object_add_method(Obj *object, Long name, Method *method) {
     Int ind, hval;
 
     /* Invalidate the method cache. */
+    /* NOTE:  is there a better way to invalidate this? */
     cur_stamp++;
 
     /* Delete the method if it previous existed, calling this on a
@@ -1085,9 +1127,6 @@ void object_add_method(Obj *object, Long name, Method *method) {
 Int object_del_method(Obj *object, Long name) {
     Int *indp, ind;
 
-    /* Invalidate the method cache. */
-    cur_stamp++;
-
     /* This is the index-thread equivalent of double pointers in a standard
      * linked list.  We traverse the list using pointers to the ->next element
      * of the method pointers. */
@@ -1113,6 +1152,9 @@ Int object_del_method(Obj *object, Long name) {
 	    object->methods.blanks = ind;
 
 	    object->dirty = 1;
+
+            /* Invalidate the method cache. */
+            cur_stamp++;
 
 	    /* Return one, meaning the method was successfully deleted. */
 	    return 1;
@@ -1162,9 +1204,18 @@ Int object_set_method_access(Obj * object, Long name, Int access) {
     method = object_find_method_local(object, name, FROB_ANY);
     if (method == NULL)
         return -1;
+    if (method->m_access == access) {
+        /* yay, we don't have to do anything, let's go home. */
+        return access;
+    }
+    if ((method->m_access == MS_FROB) || (access == MS_FROB)) {
+        /*
+	 * only invalidate when changing access to or from 'frob' access.
+         */
+        cur_stamp++;
+    }
     method->m_access = access;
     object->dirty = 1;
-    cur_stamp++; /* to invalidate cached frob/!frob defaults */
     return access;
 }
 

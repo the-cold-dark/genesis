@@ -615,7 +615,9 @@ char * data_from_literal(cData *d, char *s) {
 	}
 
 	/* Make a buffer from the numbers. */
-	buf = buffer_new(list_length(bytes));
+	i = list_length(bytes);
+	buf = buffer_new(i);
+	buf->len = i;
 	i = 0;
 	for (p = list_first(bytes); p; p = list_next(bytes, p))
 	    buf->s[i++] = p->u.val;

@@ -711,6 +711,7 @@ void unpack_data(cData *data, FILE *fp)
 	  data->u.buffer = buffer_new(len);
 	  for (i = 0; i < len; i++)
 	      data->u.buffer->s[i] = read_long(fp);
+	  data->u.buffer->len = len;
 	  break;
       }
       default: {

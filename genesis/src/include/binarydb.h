@@ -22,7 +22,7 @@
 void   init_binary_db(void);
 void   init_new_db(void);
 Int    db_get(Obj * object, Long name);
-Int    db_put(Obj * object, Long name);
+Int    db_put(Obj * object, Long name, Long *obj_size);
 Int    db_check(Long name);
 Int    db_del(Long name);
 char * db_traverse_first(void);

@@ -43,6 +43,7 @@ void init_cache(void) {
     Obj *obj;
     Int	i, j;
 
+    cache_log_flag = 0;
     active = EMALLOC(Obj, cache_width);
     inactive = EMALLOC(Obj, cache_width);
 
@@ -78,6 +79,7 @@ void init_cache(void) {
 Obj * cache_get_holder(Long objnum) {
     Int ind = objnum % cache_width;
     Obj *obj;
+    Long obj_size;
 
     if (inactive[ind].next != &inactive[ind]) {
 	/* Use the object at the tail of the inactive list. */
@@ -86,8 +88,10 @@ Obj * cache_get_holder(Long objnum) {
 	/* Check if we need to swap anything out. */
 	if (obj->objnum != INV_OBJNUM) {
 	    if (obj->dirty) {
-		if (!db_put(obj, obj->objnum))
+		if (!db_put(obj, obj->objnum, &obj_size))
 		    panic("Could not store an object.");
+                if (cache_log_flag & CACHE_LOG_OVERFLOW)
+		    write_err("cache_get_holder: wrote object %s (size: %d bytes)", ident_name(obj->objname), obj_size);
 	    }
 	    object_free(obj);
 	}
@@ -303,24 +307,31 @@ Int cache_check(Long objnum) {
 void cache_sync(void) {
     Int i;
     Obj *obj;
+    Long obj_size;
 
     /* Traverse all the active and inactive chains. */
+    if (cache_log_flag & CACHE_LOG_SYNC)
+        write_err("cache_sync: start of sync");
     for (i = 0; i < cache_width; i++) {
 	/* Check active chain. */
 	for (obj = active[i].next; obj != &active[i]; obj = obj->next) {
 	    if (obj->dirty) {
-                if (!db_put(obj, obj->objnum))
+                if (!db_put(obj, obj->objnum, &obj_size))
 		    panic("Could not store an object.");
 		obj->dirty = 0;
+                if (cache_log_flag & CACHE_LOG_SYNC)
+		    write_err("cache_sync: wrote active object %s (size: %d bytes)", ident_name(obj->objname), obj_size);
 	    }
 	}
 
 	/* Check inactive chain. */
 	for (obj = inactive[i].next; obj != &inactive[i]; obj = obj->next) {
 	    if (obj->objnum != INV_OBJNUM && obj->dirty) {
-                if (!db_put(obj, obj->objnum))
+                if (!db_put(obj, obj->objnum, &obj_size))
 		    panic("Could not store an object.");
 		obj->dirty = 0;
+                if (cache_log_flag & CACHE_LOG_SYNC)
+		    write_err("cache_sync: wrote inactive object %s (size: %d bytes)", ident_name(obj->objname), obj_size);
 	    }
 	}
     }
@@ -409,7 +420,8 @@ void cache_sanity_check(void) {
 #ifdef CLEAN_CACHE
 void cache_cleanup(void) {
     Obj * obj;
-    Int        i;
+    Int   i;
+    Long  obj_size;
 
     for (i = 0; i < cache_width; i++) {
         for (obj = inactive[i].next; obj != &inactive[i]; obj = obj->next) {
@@ -417,9 +429,11 @@ void cache_cleanup(void) {
             if (obj->ucounter > 0)
                 continue;
             if (obj->objnum != INV_OBJNUM && obj->dirty) {
-                if (!db_put(obj, obj->objnum))
+                if (!db_put(obj, obj->objnum, &obj_size))
                     panic("Could not store an object.");
                 obj->dirty = 0;
+		if (cache_log_flag & CACHE_LOG_CLEANUP)
+		    write_err("cache_cleanup: wrote object %s (size: %d bytes)", ident_name(obj->objname), obj_size);
             }
             if(obj->objnum != INV_OBJNUM) {
 #if DEBUG_CACHE

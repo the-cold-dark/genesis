@@ -200,6 +200,7 @@ struct {
     cObjnum objnum;
     Ident name;
     Bool is_frob;
+    Bool failed;
     cObjnum after;
     cObjnum loc;
 } method_cache[METHOD_CACHE_SIZE];
@@ -211,8 +212,8 @@ static void    object_update_parents(Obj *object,
 static Int     object_has_ancestor_aux(Long objnum, Long ancestor);
 static Var    *object_create_var(Obj *object, Long cclass, Long name);
 static Var    *object_find_var(Obj *object, Long cclass, Long name);
-static Method * method_cache_check(Long objnum, Long name, Long after, Bool is_frob);
-static void    method_cache_set(Long objnum, Long name, Long after, Long loc, Bool is_frob);
+static Bool    method_cache_check(Long objnum, Long name, Long after, Bool is_frob, Method **method);
+static void    method_cache_set(Long objnum, Long name, Long after, Long loc, Bool is_frob, Bool failed);
 static void    search_object(Long objnum, Search_params *params);
 static void    method_delete_code_refs(Method * method);
 

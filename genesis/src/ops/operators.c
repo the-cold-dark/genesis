@@ -940,6 +940,7 @@ void op_buffer(void) {
     buf = buffer_new(len);
     for (i = 0; i < len; i++)
 	buf->s[i] = ((uLong) stack[start + i].u.val) % (1 << 8);
+    buf->len=len;
     stack_pos = start;
     push_buffer(buf);
     buffer_discard(buf);

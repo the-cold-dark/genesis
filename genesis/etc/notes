@@ -10,7 +10,15 @@ Help can be found through the web site, or on the mailing list
       http://www.cold.org/info/lists
 
 RELEASE INFORMATION:
-1.1.9  [1-Oct-100]
+1.1.9+ [6-Jan-2001]
+      * cleanup config() and add a new 'cachelog parameter (Brad)
+      * add logging of objece name and size at all db_put()'s (Brad)
+      * add pre-allocation to cBuf's (Brad)
+      * add sync() builtin to allow cache_sync without backup (Brad)
+      * fix pad to disallow 0 length pad string (Bruce)
+      * method cache fixes: don't flush cache in as many
+        cases, and also cache negative method lookups (Bruce)
+1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)
       * misc cleanup (Generic Bob)
       * removed dnsserv (Brandon)

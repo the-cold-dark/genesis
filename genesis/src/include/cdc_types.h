@@ -42,6 +42,7 @@ struct cStr {
 
 struct cBuf {
     Int len;
+    Int size;
     Int refs;
     uChar s[1];
 };

@@ -189,6 +189,7 @@ NATIVE_METHOD(from_veil_pkts) {
     INIT_1_ARG(LIST);
 
     header = buffer_new(HEADER_SIZE);
+    header->len = HEADER_SIZE;
 
     out = buffer_new(0);
     packets = LIST1;

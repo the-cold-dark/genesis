@@ -20,7 +20,7 @@ RELEASE INFORMATION:
         cases, and also cache negative method lookups (Bruce)
       * added a test for the above pad() bug, as well as
         some other missing tests. (Bruce)
-      * added bufsub() (Bruce)
+      * added bufsub() and $buffer.bufsub() (Bruce)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

@@ -24,10 +24,13 @@ RELEASE INFORMATION:
       * Change task_stack() to let it obtain the stack for any
         given frame and to generate either line numbers or 
         opcode index values. (Bruce)
-      * Add log_task_stack() callable from C. (Bruce)
+      * Add log_task_stack() and log_all_task_stacks() callable
+        from C. (Bruce)
       * Re-enable AC_INLINE check in configure (Bruce)
       * cleanup cache.c to have a dirty list and reduce overhead of
         cache holder array (Brad)
+      * Add linefeed to panic() message. (Bruce)
+      * panic() now tries to call log_all_task_stacks(). (Bruce)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

@@ -514,7 +514,7 @@ INTERNAL cBuf * pack_strings(cBuf *buf, Obj *obj)
 INTERNAL void unpack_strings(cBuf *buf, Long *buf_pos, Obj *obj)
 {
     Int i;
-    Long size, last_blank = -1;
+    Long size;
 
     size = read_long(buf, buf_pos);
     if (size != -1) {

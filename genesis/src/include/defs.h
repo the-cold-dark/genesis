@@ -377,7 +377,6 @@ typedef bool              Bool;
 #define ANY_TYPE 0
 
 /* personal preference stuff */
-#define forever for (;;)
 #define INTERNAL static
 
 #define SERVER_NAME "Genesis (the Cold driver)"

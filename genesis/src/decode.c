@@ -686,7 +686,7 @@ static Expr_list *decompile_case_values(Int *pos_ptr, Int *end_ret)
     }
 
     /* Loop until we hit the last case opcode for this case. */
-    forever {
+    for (;;) {
 	/* Get any expressions preceding the case opcode. */
 	exprs = decompile_expressions(&pos);
 

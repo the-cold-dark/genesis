@@ -217,7 +217,7 @@ cStr * vformat(char * fmt, va_list arg) {
 
     buf = string_new(0);
 
-    forever {
+    for (;;) {
 
 	/* Find % or end of string. */
 	p = strchr(fmt, '%');

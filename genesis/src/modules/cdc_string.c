@@ -559,7 +559,7 @@ NATIVE_METHOD(dbquote_explode) {
     out = list_new(0);
     d.type = STRING;
 
-    forever {
+    for (;;) {
         while (*s && *s == ' ') s++;
         
         p = strchr(s, quote);

@@ -632,7 +632,7 @@ INTERNAL void regtail(char *p, char *val) {
 
     /* Find last node. */
     scan = p;
-    forever {
+    for (;;) {
         temp = regnext(scan);
         if (temp == NULL)
             break;

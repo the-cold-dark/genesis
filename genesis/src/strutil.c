@@ -793,7 +793,7 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
     /* better more than less and having to resize */
     out = string_new(string_length(str) * 2);
 
-    forever {
+    for (;;) {
         s = strchr(fmt, '%');
 
         if (s == (char) NULL || *s == (char) NULL) {

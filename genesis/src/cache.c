@@ -532,7 +532,7 @@ void cache_sync(void) {
 #endif
 	    while (obj) {
 #ifndef USE_DIRTY_LIST
-		if (obj->objnum != INV_OBJNUM) {
+		if (obj->objnum != INV_OBJNUM && obj->dirty) {
 #endif
 	            if (obj->dead) {
 		        if (cache_log_flag & CACHE_LOG_DEAD_WRITE)

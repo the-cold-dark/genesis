@@ -13,6 +13,7 @@ COLDC_FUNC(bufidx);
 COLDC_FUNC(bufgraft);
 COLDC_FUNC(buf_replace);
 COLDC_FUNC(subbuf);
+COLDC_FUNC(bufsub);
 COLDC_FUNC(buf_to_str);
 COLDC_FUNC(buf_to_strings);
 COLDC_FUNC(str_to_buf);

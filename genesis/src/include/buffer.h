@@ -20,6 +20,7 @@ cBuf  * buffer_from_strings(cList *string_list, cBuf *sep);
 cBuf  * buffer_subrange(cBuf *buf, Int start, Int len);
 cBuf  * buffer_prep(cBuf *buf, Int new_size);
 int     buffer_index(cBuf * buf, uChar * ss, int slen, int origin);
+cBuf  * buffer_bufsub(cBuf * buf, cBuf * old, cBuf * new);
 
 #define buffer_len(__b) (__b->len)
 

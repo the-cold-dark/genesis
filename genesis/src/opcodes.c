@@ -315,6 +315,7 @@ static Op_info op_info[] = {
     { F_STRINGS_TO_BUF,   "strings_to_buf",  func_strings_to_buf },
     { F_STR_TO_BUF,       "str_to_buf",      func_str_to_buf },
     { F_SUBBUF,           "subbuf",          func_subbuf },
+    { F_BUFSUB,           "bufsub",          func_bufsub },
     { F_BUFGRAFT,         "bufgraft",        func_bufgraft },
 };
 

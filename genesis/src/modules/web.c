@@ -31,6 +31,9 @@
 
 module_t web_module = {YES, init_web, YES, uninit_web};
 
+#define DONT_ESCAPE	"$-_.+!*'(),:@&=~"
+#define DONT_ESCAPE_LEN	16
+
 /* we pre-define this for speed */
 char * dec_2_hex[] = {
    (char) NULL, (char) NULL, (char) NULL, (char) NULL, (char) NULL,
@@ -106,17 +109,38 @@ cStr * decode(cStr * str) {
     return str;
 }
 
-cStr * encode(cStr * in) {
+cStr * encode_full(cStr * in) {
     register char * s = string_chars(in);
     cStr          * str = string_new(string_length(in));
 
     for (;*s != (char) NULL; s++) {
-        if ((int) *s == 32)
+        if (*s == ' ')
             str = string_addc(str, '+');
-        else if ((int) *s > 32 && (int) *s < 127) {
-            if (((int) *s >= 48 && (int) *s <= 57) ||
-                ((int) *s >= 65 && (int) *s <= 90) ||
-                ((int) *s >= 97 && (int) *s <= 122))
+        else if (*s > ' ' && *s <= '~') {
+            if ((*s >= '0' && *s <= '9') ||
+                (*s >= 'A' && *s <= 'Z') ||
+                (*s >= 'a' && *s <= 'z'))
+                str = string_addc(str, *s);
+            else
+                str = string_add_chars(str, tohex(*s), 3);
+        }
+    }
+
+    return str;
+}
+
+cStr * encode_partial(cStr * in) {
+    register char * s = string_chars(in);
+    cStr          * str = string_new(string_length(in));
+
+    for (;*s != (char) NULL; s++) {
+        if (*s == ' ')
+            str = string_addc(str, '+');
+        else if (*s > ' ' && *s <= '~') {
+            if ((*s >= '0' && *s <= '9') ||
+                (*s >= 'A' && *s <= 'Z') ||
+                (*s >= 'a' && *s <= 'z') ||
+                memchr(DONT_ESCAPE, *s, DONT_ESCAPE_LEN) != NULL)
                 str = string_addc(str, *s);
             else
                 str = string_add_chars(str, tohex(*s), 3);
@@ -176,9 +200,13 @@ NATIVE_METHOD(decode) {
 NATIVE_METHOD(encode) {
     cStr * str;
 
-    INIT_1_ARG(STRING);
+    INIT_1_OR_2_ARGS(STRING, SYMBOL);
 
-    str = encode(STR1);
+    if (argc == 2 && SYM2 == partial_id) {
+        str = encode_partial(STR1);
+    } else {
+        str = encode_full(STR1);
+    }
 
     CLEAN_RETURN_STRING(str);
 }

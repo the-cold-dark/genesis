@@ -835,7 +835,7 @@ INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
         if (*s == '=') {
             s++;
             NEXT_WORD(s);
-            data_from_literal(&d, s);
+            s = data_from_literal(&d, s);
             if (d.type == -1) {
                 if (print_warn) {
                     printf("\rLine %ld: WARNING: invalid data for variable ", (long) line_count);
@@ -849,6 +849,12 @@ INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
                     printf(",%s:\nLine %ld: WARNING: data: %s\nLine %ld: WARNING: Defaulting value to ZERO ('0').\n",
                            ident_name(var), (long) line_count, strchop(s, 50), (long) line_count);
                 }
+            }
+            if (*s && *s != ';')
+                NEXT_WORD(s);
+            if (*s && *s != ';') {
+                ERR("DATA is not terminated correctly:");
+                DIEf("=> %s\n", s);
             }
         }
 

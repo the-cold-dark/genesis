@@ -24,7 +24,7 @@ extern Ident noover_id, sync_id, locked_id, native_id, forked_id, atomic_id;
 extern Ident fpe_id, inf_id, preaddr_id, pretype_id;
 
 extern Ident SEEK_SET_id, SEEK_CUR_id, SEEK_END_id;
-extern Ident breadth_id, depth_id;
+extern Ident breadth_id, depth_id, full_id, partial_id;
 
 /* limit idents */
 extern Ident datasize_id, forkdepth_id, calldepth_id, recursion_id, objswap_id;

@@ -6,6 +6,19 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-37 [18-Sep-97] Brandon
+      * added 'partial or 'full option to $http.encode(), default
+        is 'full, if 'partial is given it will only encode what
+        is required for the path part of an HTTP URL (Brandon)
+      * fixed fflush(): was erroring when it shouldn't be (Brandon)
+      * fixed an ordering problem when .disconnect() was called, after
+        a lot of urging by Jeff Kesselman ;b (Brandon)
+      * fixed a bug in native .ip() -- wasn't referencing right var (Brandon)
+      * added explicit close in errfile and logfile, if needed (Brandon)
+      * coldcc will now whine in some cases where data isn't formatted
+        correctly, with a var definition (Brandon)
+      * depth search of ancestors on $root was returning [] not [$root]
+      * buf_to_str*() was removing '\t' instead of translating it to a space
 1.0-36 [10-Jul-97] Brandon
       * fixed bug which was saying #0 ($sys) was invalid (Brandon)
 1.0-35 [09-Jul-97] Brandon

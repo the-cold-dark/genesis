@@ -827,7 +827,7 @@ static Expr_list *decompile_expressions_bounded(Int *pos_ptr, Int expr_end)
 	    break;
 
           case FLOAT:
-            stack = expr_list(float_expr(*((float*)(&the_opcodes[pos+1]))), stack);
+            stack = expr_list(float_expr(*((Float*)(&the_opcodes[pos+1]))), stack);
             pos += 2;
             break;
 

@@ -360,6 +360,12 @@ typedef bool              Bool;
 // --------------------------------------------------------------------
 */
 
+#if 0
+#if defined(__UNIX__) && !defined(USG)
+#include <sys/param.h>
+#endif
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 

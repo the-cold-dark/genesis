@@ -38,7 +38,7 @@ Ident public_id, protected_id, private_id, root_id, driver_id, fpe_id, inf_id,
       noover_id, sync_id, locked_id, native_id, forked_id, atomic_id;
 
 Ident SEEK_SET_id, SEEK_CUR_id, SEEK_END_id, preaddr_id, pretype_id;
-Ident breadth_id, depth_id;
+Ident breadth_id, depth_id, full_id, partial_id;
 
 /* limits */
 Ident datasize_id, forkdepth_id, calldepth_id, recursion_id, objswap_id;     
@@ -142,6 +142,8 @@ void init_ident(void)
     both_id = ident_get("both");
     breadth_id = ident_get("breadth");
     depth_id = ident_get("depth");
+    full_id = ident_get("full");
+    partial_id = ident_get("partial");
 }
 
 INTERNAL Ident ident_from_hash(uLong hval, char * s, int len) {

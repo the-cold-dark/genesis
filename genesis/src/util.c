@@ -130,7 +130,7 @@ char *long_to_ascii(Long num, Number_buf nbuf) {
 #endif
 }
 
-char * float_to_ascii(float num, Number_buf nbuf) {
+char * float_to_ascii(Float num, Number_buf nbuf) {
     int i;
     sprintf (nbuf, "%g", num);
     for (i=0; nbuf[i]; i++)

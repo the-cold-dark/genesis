@@ -121,7 +121,7 @@ COLDC_FUNC(toint) {
 }
 
 COLDC_FUNC(tofloat) {
-      float val = 0;
+      Float val = 0;
   
       INIT_1_ARG(ANY_TYPE);
   
@@ -129,11 +129,11 @@ COLDC_FUNC(tofloat) {
           case STRING:
               val = atof(string_chars(args[0].u.str)); break;
           case INTEGER:
-              val = (float) args[0].u.val; break;
+              val = (Float) args[0].u.val; break;
           case FLOAT:
               return;
           case OBJNUM:
-              val = (float) args[0].u.objnum; break;
+              val = (Float) args[0].u.objnum; break;
           default:
               cthrow(type_id,
                 "The first argument (%D) is not a number, objnum or string.",

@@ -16,6 +16,11 @@ be found in doc/TODO.
 ------------------------------------------------------------------------
 INSTALL/COMPILATION IN UNIX
 
+If you do not have an ANSI/ISO C compiler, give up or get GCC.  Genesis
+is compliant to ANSI/ISO standards, but if your compiler does not (such
+as the SunOS 4.1.x compiler) it may compile, but you will have serious
+instability problems.
+
 To compile simply type 'make'.
 
 Installation is undefined as people generally move the binaries to
@@ -27,13 +32,6 @@ The directory 'bin' contains a few useful scripts.
 Full installation instructions can be found at:
 
       http://www.cold.org/Software/Genesis/
-
-NOTE: Because SunOS 4.1.x is not POSIX compliant nor even ANSI complaint
-      there are certain problems that will arise in running Genesis on
-      that type of system.  Unfortunately, they are serious problems
-      which cause unstability in Genesis.  We suggest upgrading to
-      a modern operating system.  NetBSD will likely run on your same
-      hardware, and is free.
 
 ------------------------------------------------------------------------
 INSTALL/COMPILATION IN WIN32

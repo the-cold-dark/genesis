@@ -99,6 +99,8 @@ cStr * buf_to_string(cBuf * buf) {
         for (q = string_start; q < p; q++) {
             if (ISPRINT(*q))
                 *s++ = *q;
+            else if (*q == '\t')
+                *s++ = ' ';
         }
         *s = 0;
         str->len = s - str->s;
@@ -114,6 +116,8 @@ cStr * buf_to_string(cBuf * buf) {
         for (q = string_start; len--; q++) {
             if (ISPRINT(*q))
                 *s++ = *q;
+            else if (*q == '\t')
+                *s++ = ' ';
         }
         *s = (char) NULL;
         str->len = s - str->s;
@@ -168,6 +172,8 @@ cList *buf_to_strings(cBuf *buf, cBuf *sep)
         for (q = string_start; q < p; q++) {
             if (ISPRINT(*q))
                 *s++ = *q;
+            else if (*q == '\t')
+                *s++ = ' ';
         }
         *s = (char) NULL;
         str->len = s - str->s;

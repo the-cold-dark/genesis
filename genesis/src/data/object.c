@@ -243,19 +243,23 @@ INTERNAL Hash * object_ancestors_depth_aux(Long objnum, Hash * h) {
 cList * object_ancestors_depth(Long objnum) {
     Hash   * h;
     cList  * list;
-
-    h = hash_new(0);
+    cData    d;
 
     /* short circut root */
-    if (objnum != ROOT_OBJNUM) {
+    if (objnum == ROOT_OBJNUM) {
+        list = list_new(1);
+        d.type = OBJNUM;
+        d.u.objnum = ROOT_OBJNUM;
+        return list_add(list, &d);
+    } else {
+        h = hash_new(0);
         START_SEARCH();
         h = object_ancestors_depth_aux(objnum, h);
         END_SEARCH();
+        list = list_dup(h->keys);
+        hash_discard(h);
+        return list_reverse(list);
     }
-
-    list = list_dup(h->keys);
-    hash_discard(h);
-    return list_reverse(list);
 }
 
 cList * object_ancestors_breadth(Long objnum) {

@@ -27,7 +27,7 @@ uLong hash_string_nocase(cStr * str);
 void       init_util(void);
 Long       atoln(char *s, Int n);
 char     * long_to_ascii(Long num, Number_buf nbuf);
-char     * float_to_ascii(float num, Number_buf nbuf);
+char     * float_to_ascii(Float num, Number_buf nbuf);
 Int        strccmp(char *s1, char *s2);
 Int        strnccmp(char *s1, char *s2, Int n);
 char     * strcchr(char *s, Int c);

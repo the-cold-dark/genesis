@@ -1241,8 +1241,8 @@ Int call_method(cObjnum objnum,     /* the object */
 
     /* Start the new frame. */
     if (method->native == -1) {
-        sender = (cur_frame) ? cur_frame->object->objnum : NOT_AN_IDENT;
-        caller = (cur_frame) ? cur_frame->method->object->objnum : NOT_AN_IDENT;
+        sender = (cur_frame) ? cur_frame->object->objnum : INV_OBJNUM;
+        caller = (cur_frame) ? cur_frame->method->object->objnum : INV_OBJNUM;
         user   = (cur_frame) ? cur_frame->user : INV_OBJNUM;
         if (method->m_flags & MF_FORK)
             result = fork_method(obj, method, sender, caller, user,

@@ -124,6 +124,10 @@ int main(int argc, char **argv) {
     db_close();
     flush_output();
     close_files();
+    if (errfile)
+        fclose(errfile);
+    if (logfile)
+        fclose(logfile);
 
     return 0;
 }

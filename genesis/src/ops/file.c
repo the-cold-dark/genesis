@@ -418,7 +418,7 @@ COLDC_FUNC(fflush) {
 
     GET_FILE_CONTROLLER(file)
 
-    if (fflush(file->fp) == NO) {
+    if (fflush(file->fp) == EOF) {
         cthrow(file_id, strerror(GETERR()));
         return;
     }

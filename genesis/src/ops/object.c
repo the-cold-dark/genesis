@@ -914,7 +914,7 @@ INTERNAL cList * add_op_arg(cList * out, Int type, Long op, Method * method) {
             break;
         case FLOAT:
             d.type = FLOAT;
-            d.u.fval = *((float*)(&op));
+            d.u.fval = *((Float*)(&op));
             break;
         case T_ERROR:
             d.type = T_ERROR;

@@ -372,10 +372,10 @@ INTERNAL Conn * connection_add(Int fd, Long objnum) {
 // --------------------------------------------------------------------
 */
 INTERNAL void connection_discard(Conn *conn) {
-    Obj * obj;
+    Obj    * obj;
+    cObjnum  objnum;
 
-    /* Notify connection object that the connection is gone. */
-    task(conn->objnum, disconnect_id, 0);
+    objnum = conn->objnum;
 
     /* reset the conn variable on the object */
     obj = cache_retrieve(conn->objnum);
@@ -388,6 +388,9 @@ INTERNAL void connection_discard(Conn *conn) {
     SOCK_CLOSE(conn->fd);
     buffer_discard(conn->write_buf);
     efree(conn);
+
+    /* Notify connection object that the connection is gone */
+    task(objnum, disconnect_id, 0);
 }
 
 /*

@@ -35,10 +35,10 @@ extern cObjnum get_object_name(Ident id);
 Int data_cmp(cData *d1, cData *d2) {
     if (d1->type == FLOAT && d2->type == INTEGER) {
         d2->type = FLOAT;
-        d2->u.fval = (float) d2->u.val;
+        d2->u.fval = (Float) d2->u.val;
     } else if (d1->type == INTEGER && d2->type == FLOAT) {
         d1->type = FLOAT;
-        d1->u.fval = (float) d1->u.val;
+        d1->u.fval = (Float) d1->u.val;
     }
 
     if (d1->type != d2->type) {
@@ -51,7 +51,7 @@ Int data_cmp(cData *d1, cData *d2) {
 	return d1->u.val - d2->u.val;
 
       case FLOAT: {
-        float t=d1->u.fval - d2->u.fval;
+        Float t=d1->u.fval - d2->u.fval;
         return (t>0 ? 1 : (t==0 ? 0 : -1));
       }
 

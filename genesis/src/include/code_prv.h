@@ -88,7 +88,7 @@ struct expr {
     Int lineno;
     union {
 	Long num, objnum;
-        float fnum;
+        Float fnum;
 	char *name, *symbol, *error, *str;
 	Expr *expr;
 	Expr_list *args;

@@ -30,3 +30,4 @@ RELEASE INFORMATION:
         float (Bruce)
       * Fixed files() to check for NULL after opendir() and fixed a
         memory leak (Brandon)
+      * Fixed bug in match_begin() (Brandon)

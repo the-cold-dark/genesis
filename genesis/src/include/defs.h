@@ -415,6 +415,7 @@ FILE * logfile;
 FILE * errfile;
 cStr * str_tzname;
 cStr * str_hostname;
+cStr * str_release;
 
 Int  c_interactive;
 Bool running;
@@ -448,6 +449,7 @@ extern FILE * logfile;
 extern FILE * errfile;
 extern cStr * str_tzname;
 extern cStr * str_hostname;
+extern cStr * str_release;
 
 extern Int  c_interactive;
 extern Bool running;

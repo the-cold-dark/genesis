@@ -1,13 +1,8 @@
 -----------------------
 Immediate:
 
-* add warning to coldcc when compiling -# and an object without a name is
-  encountered--perhaps add a name to it at that point?
-* add a flag to coldcc -d to remove invalid objects from any lists, etc (-v)
-  requires a special copy of data_add_literal_to_str() for textdb.c
-* change name $xxxx; to use cur_obj not create a new id.
 * fix coldcc so it will decompile even on a bad binarydb
-* force eval execution in coldcc to be atomic
+* force eval execution in coldcc to be atomic, or handle preempting
 * for x in (string) {..}
   Add string capabilities to others too (filter, etc)
 
@@ -15,12 +10,6 @@ Immediate:
 Bugs:
 
 * $dictionary.[add/del]_elem bad
-
------------------------
-Cleanup:
-
-* Implement a more efficient malloc for our specific uses, perhaps
-  build on top of phkmalloc.
 
 -----------------------
 Features:
@@ -34,10 +23,6 @@ Features:
   service, based of the machine's configuration (getservbyname()).
 
 * hack bind_native object renaming
-
-* make -p with coldcc interactive, when replacing existing methods somehow
-  decide if the method should be replace (perhaps keep EDITED comments?  Ugh)
-  We can timestamp core objects for last 'changed' dates.
 
 * get execute to use file i/o, so calling execute would be paramount
   to using fopen() on a file (shag code from apache CGI)

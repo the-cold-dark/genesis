@@ -188,9 +188,10 @@ static Op_info op_info[] = {
     /* Data/Conversion functions */
     { F_VALID,            "valid",                func_valid },
     { F_TYPE,             "type",                 func_type },
-    { F_CLASS,            "class",                func_class },
-    { F_VALUE,            "frob_value",           func_value },
-    { F_HANDLER,          "frob_handler",         func_handler },
+    { F_CLASS,            "class", /* devalued */ func_frob_class },
+    { F_FROB_CLASS,       "frob_class",           func_frob_class },
+    { F_VALUE,            "frob_value",           func_frob_value },
+    { F_HANDLER,          "frob_handler",         func_frob_handler },
     { F_TOINT,            "toint",                func_toint },
     { F_TOFLOAT,          "tofloat",              func_tofloat },
     { F_TOSTR,            "tostr",                func_tostr },

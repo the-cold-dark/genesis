@@ -6,6 +6,13 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-30 [26-Jun-97] Brandon
+      * fixed bug with [un]bind_port() and open_connection(): stack wasn't
+        cleaning up correctly (Brandon)
+      * fixed potential (but not likely unless we used C threads) SEGV
+        bug in object cache handling (Brandon)
+      * added frob_class() to devalue class(), class() still works
+        but frob_class() should be used in lieu..more standard (Brandon)
 1.0-29 [28-May-97] Brad, Brandon
       * fixed a memory leak in float parsing (Brad)
       * added -W flag to shutoff warnings in coldcc (Brandon)

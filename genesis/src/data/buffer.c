@@ -79,76 +79,6 @@ cBuf *buffer_resize(cBuf *buf, Int len) {
 
 #define VERIFY_SIZE(_STR_) \
 
-#if DISABLED
-/* new and improved */
-cStr * buf_to_string(cBuf * buf) {
-    cStr                   * str;
-    unsigned char          * end;
-    char                   * start;
-    register char          * s;
-    register unsigned char * cur;
-    int                      len,
-                             sub,
-                             size;
-
-    /* internally work on out->s -- dangerous but saves us from copying twice */
-    len = buf->len;
-    str = string_new(len);
-    size = str->size;
-    start = str->s;
-    end = cur = buf->s;
-    while (end + SEPLEN <= buf->s + buf->len) {
-        end = (unsigned char *) memchr(end, SEPCHAR, (buf->s + buf->len) - end);
-
-        if (!end)
-            break;
-
-        /* figure anticipated sublength (buf + "\n"), resize if needed */
-        sub = end - cur + 2;
-
-        if (sub > size - str->len) {
-            size = str->len + sub;
-            str = (cStr *) erealloc(str, sizeof(cStr) + (size * sizeof(char)));
-            str->size = size;
-        }
-
-        /* copy valid chars */
-        for (s = start; cur < end; cur++) {
-            if (ISPRINT(*cur))
-                *s++ = *cur;
-        }
-
-        *s++ = '\\';
-        *s++ = 'n';
-        *s = (char) NULL;  /* precaution */
-        str->len += s - start;
-
-        start = s;
-        cur = end = end + SEPLEN;
-    }
-
-    if ((sub = ((buf->s + buf->len) - cur))) {
-        sub += 2;
-        if (sub > size - str->len) {
-            size = str->len + sub;
-            str = (cStr *) erealloc(str, sizeof(cStr) + (size * sizeof(char)));
-            str->size = size;
-        }
-        end = &(buf->s[buf->len]);
-        for (s = start; cur < end; cur++) {
-            if (ISPRINT(*cur))
-                *s++ = *cur;
-        }
-        *s = (char) NULL;
-
-        str->len += (s - start);
-    }
-
-    return str;
-}
-#else
-/* VERY VERY INNEFFICIENT */
-
 cStr * buf_to_string(cBuf * buf) {
     cStr * str, * out;
     unsigned char * string_start, *p, *q;
@@ -197,7 +127,6 @@ cStr * buf_to_string(cBuf * buf) {
 
     return out;
 }
-#endif
 
 #undef SEPCHAR
 #undef SEPLEN

@@ -907,7 +907,7 @@ static void search_object(Long objnum, Search_params *params)
     /* Traverse the parents list backwards. */
     for (d = list_last(parents); d; d = list_prev(parents, d))
 	search_object(d->u.objnum, params);
-    list_discard(object->parents);
+    list_discard(parents);
 
     /* If the search is done, don't visit this object. */
     if (params->done)

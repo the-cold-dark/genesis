@@ -8,9 +8,12 @@
 # gives unlimited permission to copy, distribute and modify it.
 
 VERSION=`cat etc/version`
-VMAJOR=`echo $VERSION | sed 's:\..*::g'`
-VMINOR=`echo $VERSION | sed 's:[0-9][0-9]*\.::g;s:p[0-9][0-9]*::g'`
-VPATCH=`echo $VERSION | sed 's:.*p::g'`
+VMAJOR=`echo $VERSION | sed 's:\..*::'`
+VMINOR=`echo $VERSION | sed 's:[0-9][0-9]*\.::;s:p[0-9][0-9]*-.*$::'`
+VPATCH=`echo $VERSION | sed 's:.*p::;s:-.*$::'`
+VRELEASE=`echo $VERSION | sed 's:.*-::'`
+
+VERSION="${VMAJOR}.${VMINOR}p${VPATCH}-${VRELEASE}"
 
 # Defaults:
 ac_help=
@@ -244,6 +247,7 @@ cat > confdefs.h <<EOF
 #define VERSION_MAJOR $VMAJOR
 #define VERSION_MINOR $VMINOR
 #define VERSION_PATCH $VPATCH
+#define VERSION_RELEASE "$VRELEASE"
 EOF
 
 # A filename unique to this package, relative to the directory that
@@ -2661,6 +2665,7 @@ s%@VERSION@%$VERSION%g
 s%@VMAJOR@%$VMAJOR%g
 s%@VMINOR@%$VMINOR%g
 s%@VPATCH@%$VPATCH%g
+s%@VRELEASE@%"$VRELEASE"%g
 
 CEOF
 EOF

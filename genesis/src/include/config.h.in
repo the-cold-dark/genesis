@@ -6,6 +6,7 @@
 #undef VERSION_MAJOR
 #undef VERSION_MINOR
 #undef VERSION_PATCH
+#undef VERSION_RELEASE
 
 /* Define to empty if the keyword does not work.  */
 #undef const

@@ -51,6 +51,7 @@ void init_defs(void) {
 #endif
 
     str_hostname = string_new(0);
+    str_release = string_from_chars(VERSION_RELEASE, strlen(VERSION_RELEASE));
 }
 
 #undef INIT_VAR

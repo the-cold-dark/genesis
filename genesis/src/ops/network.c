@@ -63,10 +63,12 @@ void func_bind_port(void) {
 
     addr = (argc==2 ? string_chars(STR2) : (char *) NULL);
     port=INT1;
-    if ((port>=0) ? tcp_server(port, addr, cur_frame->object->objnum)
-	: udp_server(-port, addr, cur_frame->object->objnum))
+
+    if (((port >= 0) ? tcp_server(port, addr, cur_frame->object->objnum)
+	             : udp_server(-port, addr, cur_frame->object->objnum))) {
+        pop(argc);
 	push_int(1);
-    else if (server_failure_reason == address_id)
+    } else if (server_failure_reason == address_id)
         THROW((address_id, "Invalid bind address: %s", addr))
     else if (server_failure_reason == socket_id)
         THROW((socket_id, "Couldn't create server socket."))
@@ -99,8 +101,10 @@ void func_unbind_port(void) {
 
     if (!remove_server(args[0].u.val))
         THROW((servnf_id, "No server socket on port %d.", args[0].u.val))
-    else
+    else {
+        pop(1);
         push_int(1);
+    }
 }
 
 /*
@@ -126,7 +130,7 @@ void func_open_connection(void) {
         THROW((address_id, "Invalid address"))
     else if (r == socket_id)
         THROW((socket_id, "Couldn't create socket for connection"))
-    pop(3);
+    pop(argc);
     push_int(1);
 }
 

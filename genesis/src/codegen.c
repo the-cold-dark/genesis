@@ -1197,7 +1197,7 @@ static enum scatter_modes compile_assign (Expr *e, enum scatter_modes mode,
 	compile_variable_assign(e->u.expr->u.name);
 	return SM_REST;
     default:
-	compiler_error(e->lineno, "Parse error in scatter argument list.");
+	compiler_error(e->lineno, "Parse error in expression left of assignment.");
 	return SM_ERROR;
     }
 }

@@ -33,7 +33,7 @@ COLDC_FUNC(type) {
     push_symbol(data_type_id(type));
 }
 
-COLDC_FUNC(class) {
+COLDC_FUNC(frob_class) {
     Long cclass;
     Int type;
 
@@ -54,7 +54,7 @@ COLDC_FUNC(class) {
     push_objnum(cclass);
 }
 
-COLDC_FUNC(value) {
+COLDC_FUNC(frob_value) {
     Int type;
     cData d;
 
@@ -75,7 +75,7 @@ COLDC_FUNC(value) {
     args[0]=d;
 }
 
-COLDC_FUNC(handler) {
+COLDC_FUNC(frob_handler) {
     Int type;
     Ident handler;
 

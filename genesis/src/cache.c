@@ -155,7 +155,7 @@ inline void cache_dirty_object(Obj *obj)
     if ((cache_watch_object == obj->objnum) &&
         !(obj->dirty % cache_watch_count))
     {
-        write_err("Object %s dirtied at:", ident_name(obj->objname));
+        write_err("Object %s dirtied at:", obj->objname != -1 ? ident_name(obj->objname) : "not named");
 	log_current_task_stack(FALSE, write_err);
     }
 
@@ -274,7 +274,7 @@ Obj * cache_get_holder(Long objnum) {
 		}
                 if (cache_log_flag & CACHE_LOG_OVERFLOW)
 		    write_err("cache_get_holder: wrote object %s (size: %d bytes) (dirty: %d)",
-			      ident_name(obj->objname), obj_size, obj->dirty);
+			      obj->objname != -1 ? ident_name(obj->objname) : "not named", obj_size, obj->dirty);
 
                 obj->dirty = 0;
 #ifdef USE_DIRTY_LIST
@@ -378,7 +378,7 @@ Obj *cache_retrieve(Long objnum) {
     UNLOCK_BUCKET("cache_retrieve", ind)
     if (obj && cache_log_flag & CACHE_LOG_READ)
         write_err("cache_retrieve: read object %s (size: %d bytes)",
-                  ident_name(obj->objname), obj_size);
+                  obj->objname != -1 ? ident_name(obj->objname) : "not named", obj_size);
 #ifdef USE_PARENT_OBJS
     if (obj)
         object_load_parent_objs(obj);
@@ -544,7 +544,7 @@ void cache_sync(void) {
 		        }
                         if (cache_log_flag & CACHE_LOG_SYNC)
 		            write_err("cache_sync: wrote object %s (size: %d bytes) (dirty: %d)",
-			              ident_name(obj->objname), obj_size, obj->dirty);
+			              obj->objname != -1 ? ident_name(obj->objname) : "not named", obj_size, obj->dirty);
 	                obj->dirty = 0;
 	            }
 #ifndef USE_DIRTY_LIST
@@ -631,7 +631,7 @@ void *cache_cleaner_worker(void *dummy)
 		        }
 		        if (cache_log_flag & CACHE_LOG_SYNC)
 		            write_err("cache_cleaner_worker: wrote object %s (size: %d bytes) (dirty: %d)",
-			              ident_name(tobj->objname), obj_size, tobj->dirty);
+			              obj->objname != -1 ? ident_name(obj->objname) : "not named", obj_size, tobj->dirty);
 		        tobj->dirty = 0;
 		    }
 
@@ -752,7 +752,7 @@ void cache_cleanup(void) {
                     panic("Could not store an object.");
 		if (cache_log_flag & CACHE_LOG_CLEANUP)
 		    write_err("cache_cleanup: wrote object %s (size: %d bytes) (dirty: %d)",
-			      ident_name(obj->objname), obj_size, obj->dirty);
+			      obj->objname != -1 ? ident_name(obj->objname) : "not named", obj_size, obj->dirty);
                 obj->dirty = 0;
             }
             if(obj->objnum != INV_OBJNUM) {

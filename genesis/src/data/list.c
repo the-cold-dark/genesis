@@ -11,6 +11,8 @@
 #include "quickhash.h"
 #include "macros.h"
 
+static cList *generic_empty_list;
+
 /* Note that we number list elements [0..(len - 1)] internally, while the
  * user sees list elements as numbered [1..len]. */
 
@@ -42,8 +44,7 @@
 cList * list_prep(cList *list, Int start, Int len) {
     cList * cnew;
     Int      i,
-             resize,
-             size;
+             resize;
 
     /* Figure out if we need to resize the list or move its contents.  Moving
      * contents takes precedence. */
@@ -71,10 +72,12 @@ cList * list_prep(cList *list, Int start, Int len) {
         for (; list->len > len; list->len--)
             data_discard(&list->el[list->len - 1]);
         list->len = len;
-        size = len;
-        list = (cList *) erealloc(list,
-                                   sizeof(cList) + (size * sizeof(cData)));
-        list->size = size;
+        if (list->size > 4096)
+            list->size += 4096;
+        else
+            list->size = list->size * 2 + MALLOC_DELTA;
+        list = (cList *) erealloc(list, sizeof(cList) +
+                                        (list->size * sizeof(cData)));
         return list;
     }
 
@@ -89,15 +92,22 @@ cList * list_prep(cList *list, Int start, Int len) {
     }
 }
 
-
 cList *list_new(Int len) {
     cList * cnew;
+
+    if (len == 0 && generic_empty_list) {
+        return list_dup(generic_empty_list);
+    }
 
     cnew = (cList *) emalloc(sizeof(cList) + (len * sizeof(cData)));
     cnew->len = 0;
     cnew->start = 0;
     cnew->size = len;
     cnew->refs = 1;
+
+    if (len == 0 && !generic_empty_list)
+        generic_empty_list = list_dup(cnew);
+
     return cnew;
 }
 
@@ -284,8 +294,8 @@ cList *list_delete(cList *list, Int pos) {
     list->len--;
 
     /* list_prep needed here only if list has shrunk */
-    if (((list->len - list->start) * 4 < list->size)
-        && (list->size > STARTING_SIZE))
+    if (((list->len - list->start) * 4 < list->size) &&
+        (list->size > STARTING_SIZE))
         list = list_prep(list, list->start, list->len);
 
     return list;

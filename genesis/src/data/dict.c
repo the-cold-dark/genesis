@@ -13,14 +13,20 @@ static void insert_key(cDict *dict, Int i);
 static Int search(cDict *dict, cData *key);
 static void increase_hashtab_size(cDict *dict);
 
+static cDict *generic_empty_dict;
+
 cDict *dict_new(cList *keys, cList *values)
 {
     cDict *cnew;
-    Int i, j;
+    Int i, j, size;
+
+    if (generic_empty_dict && list_length(keys) == 0)
+        return dict_dup(generic_empty_dict);
 
     /* Construct a new dictionary. */
-    cnew = EMALLOC(cDict, 1);
-    cnew->keys = list_dup(keys);
+    cnew = tmalloc(sizeof(cDict));
+
+    cnew->keys   = list_dup(keys);
     cnew->values = list_dup(values);
 
     /* Calculate initial size of chain and hash table. */
@@ -33,10 +39,11 @@ cDict *dict_new(cList *keys, cList *values)
     }
 
     /* Initialize chain entries and hash table. */
-    cnew->links = EMALLOC(Int, cnew->hashtab_size);
-    cnew->hashtab = EMALLOC(Int, cnew->hashtab_size);
-    memset(cnew->links,   -1, sizeof(Long)*cnew->hashtab_size);
-    memset(cnew->hashtab, -1, sizeof(Long)*cnew->hashtab_size);
+    size = sizeof(Int) * cnew->hashtab_size;
+    cnew->links   = tmalloc(size);
+    cnew->hashtab = tmalloc(size);
+    memset(cnew->links,   -1, size);
+    memset(cnew->hashtab, -1, size);
 
     /* Insert the keys into the hash table, eliminating duplicates. */
     i = j = 0;
@@ -56,20 +63,26 @@ cDict *dict_new(cList *keys, cList *values)
     cnew->keys->len = cnew->values->len = j;
 
     cnew->refs = 1;
+
+    if (!generic_empty_dict && list_length(keys) == 0)
+        generic_empty_dict = dict_dup(cnew);
+
     return cnew;
 }
 
 cDict *dict_new_empty(void)
 {
-    cList *l1, *l2;
-    cDict *dict;
+    if (!generic_empty_dict) {
+        cList *l1, *l2;
 
-    l1 = list_new(0);
-    l2 = list_new(0);
-    dict = dict_new(l1, l2);
-    list_discard(l1);
-    list_discard(l2);
-    return dict;
+        l1 = list_new(0);
+        l2 = list_new(0);
+        generic_empty_dict = dict_new(l1, l2);
+        list_discard(l1);
+        list_discard(l2);
+    }
+
+    return dict_dup(generic_empty_dict);
 }
 
 cDict *dict_from_slices(cList *slices)
@@ -112,9 +125,9 @@ void dict_discard(cDict *dict)
     if (!dict->refs) {
 	list_discard(dict->keys);
 	list_discard(dict->values);
-	efree(dict->links);
-	efree(dict->hashtab);
-	efree(dict);
+	tfree(dict->links, sizeof(Int) * dict->hashtab_size);
+	tfree(dict->hashtab, sizeof(Int) * dict->hashtab_size);
+	tfree(dict, sizeof(cDict));
     }
 }
 
@@ -265,13 +278,13 @@ cDict *dict_prep(cDict *dict) {
 	return dict;
 
     /* Duplicate the old dictionary. */
-    cnew = EMALLOC(cDict, 1);
-    cnew->keys = list_dup(dict->keys);
-    cnew->values = list_dup(dict->values);
+    cnew = tmalloc(sizeof(cDict));
+    cnew->keys         = list_dup(dict->keys);
+    cnew->values       = list_dup(dict->values);
     cnew->hashtab_size = dict->hashtab_size;
-    cnew->links = EMALLOC(Int, cnew->hashtab_size);
-    MEMCPY(cnew->links, dict->links, cnew->hashtab_size);
-    cnew->hashtab = EMALLOC(Int, cnew->hashtab_size);
+    cnew->links        = tmalloc(sizeof(Int) * cnew->hashtab_size);
+    cnew->hashtab      = tmalloc(sizeof(Int) * cnew->hashtab_size);
+    MEMCPY(cnew->links,   dict->links,   cnew->hashtab_size);
     MEMCPY(cnew->hashtab, dict->hashtab, cnew->hashtab_size);
     dict->refs--;
     cnew->refs = 1;
@@ -306,16 +319,18 @@ Int dict_size(cDict *dict)
 
 static void increase_hashtab_size(cDict *dict)
 {
-    Int i;
+    Int i, newsize, oldsize = sizeof(Int) * dict->hashtab_size;
 
     if (dict->hashtab_size > 4096)
 	dict->hashtab_size += 4096;
     else
         dict->hashtab_size = dict->hashtab_size * 2 + MALLOC_DELTA;
-    dict->links = EREALLOC(dict->links, Int, dict->hashtab_size);
-    dict->hashtab = EREALLOC(dict->hashtab, Int, dict->hashtab_size);
-    memset(dict->links,   -1, sizeof(Long)*dict->hashtab_size);
-    memset(dict->hashtab, -1, sizeof(Long)*dict->hashtab_size);
+
+    newsize = sizeof(Int) * dict->hashtab_size;
+    dict->links   = trealloc(dict->links,   oldsize, newsize);
+    dict->hashtab = trealloc(dict->hashtab, oldsize, newsize);
+    memset(dict->links,   -1, newsize);
+    memset(dict->hashtab, -1, newsize);
     for (i = 0; i < dict->keys->len; i++)
 	insert_key(dict, i);
 }

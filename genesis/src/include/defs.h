@@ -8,6 +8,8 @@
 #define DISABLED 0
 #define ENABLED  1
 
+#include "config.h"
+
 /*
 // ---------------------------------------------------------------------
 // If running in BUILDING_COLDCC mode, turn off some options that slow
@@ -170,7 +172,6 @@
 */
 
 /* core behaviour defines, set by configure */
-#include "config.h"
 
 #ifndef CAT
 #  ifdef __WATCOMC__

@@ -15,7 +15,6 @@ New to do items:
    * fix the coldcc object-redefinition assumption
    * once the basics work, look at areas that can no totally
      avoid cache_retrieve/discard
- * fix the cleaner thread to use a cond wait instead of sleep
 
 Merge candidates from the 1.2 branch:
  * Added performance metrics gathering code to the object, method

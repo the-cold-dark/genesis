@@ -471,7 +471,7 @@ COLDC_FUNC(strgraft) {
         new = string_new(string_length(s1) + string_length(s2));
         new = string_add_chars(new, string_chars(s1), pos);
         new = string_add(new, s2);
-        new =string_add_chars(new,string_chars(s1)+pos,string_length(s1)-pos+1);
+        new =string_add_chars(new,string_chars(s1)+pos,string_length(s1) - pos);
         push_string(new);
         string_discard(new);
     }

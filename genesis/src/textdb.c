@@ -175,7 +175,7 @@ INTERNAL Int add_objname(char * str, Long objnum, Int skip_lookup) {
         lookup_store_name(id, objnum);
 
         holder->objnum = objnum;
-        holder->str = string_from_chars(ident_name(id), strlen(ident_name(id)));
+        holder->str = string_dup(ident_name_str(id));
         holder->next = holders;
         holders = holder;
     } else {
@@ -290,6 +290,48 @@ INTERNAL void remember_native(Method * method) {
 }
 
 INTERNAL void frob_n_print_errstr(char * err, char * name, cObjnum objnum);
+
+Int find_native_method(Long object, Long method_name) {
+    Ident      oname;
+    Ident      mname;
+    native_t * native;
+    Int x;
+
+    for (x = 0; x < NATIVE_LAST; x++) {
+        native = &natives[x];
+
+        if ((strlen(native->bindobj) == 0) || (strlen(native->name) == 0))
+            continue;
+
+        if (native->bindobj_ident == NOT_AN_IDENT) {
+            if (strlen(native->bindobj) == 0)
+                continue;
+            oname = ident_get(native->bindobj);
+            if (oname == NOT_AN_IDENT)
+                continue;
+            native->bindobj_ident = oname;
+        } else
+            oname = native->bindobj_ident;
+
+        if (native->name_ident == NOT_AN_IDENT) {
+            if (strlen(native->name) == 0)
+                continue;
+            mname = ident_get(native->name);
+            if (mname == NOT_AN_IDENT)
+                continue;
+            native->name_ident = mname;
+        }
+            mname = native->name_ident;
+
+        if (oname != object)
+            continue;
+
+        if (mname ==  method_name)
+            return x;
+    }
+
+    return -1;
+}
 
 void verify_native_methods(void) {
     Ident      mname;
@@ -555,7 +597,8 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
         idref_t parent;
         char     par_str[BUF];
         Int      len,
-                 more = TRUE;
+                 more = TRUE,
+                 slen;
 
         /* step past ':' and skip whitespace */
         s++;
@@ -566,9 +609,10 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
             p = strchr(s, ',');
             if (p == NULL) {
                 /* we may be at the end of the line.. */
-                if (s[strlen(s) - 1] != ';')
+                slen = strlen(s);
+                if (s[slen - 1] != ';')
                     DIE("Parse Error, unterminated directive.")
-                s[strlen(s) - 1] = (char) NULL;
+                s[slen - 1] = (char) NULL;
                 strcpy(par_str, s);
                 len = strlen(par_str);
                 more = FALSE;
@@ -807,6 +851,7 @@ INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
     Long       definer, var;
     idref_t    name;
     Obj      * def;
+    Int        slen;
 
     if (*s == '#' || *s == '$') {
         s += get_idref(s, &name, ISOBJ);
@@ -845,8 +890,11 @@ INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
     }
 
     /* strip trailing spaces and semi colons */
-    while (s[strlen(s) - 1] == ';' || isspace(s[strlen(s) - 1]))
-        s[strlen(s) - 1] = (char) NULL;
+    slen = strlen(s);
+    while (s[slen - 1] == ';' || isspace(s[slen - 1])) {
+        s[slen - 1] = (char) NULL;
+        slen = strlen(s);
+    }
 
     s += get_idref(s, &name, NOOBJ);
 
@@ -1105,8 +1153,15 @@ INTERNAL void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
 
     object_add_method(obj, name, method);
 
-    if (method->m_flags & MF_NATIVE)
+    if (method->m_flags & MF_NATIVE) {
+        Int x;
+
+        x = find_native_method(obj->objname, name);
+        if (x != -1)
+            method->native = x;
+
         remember_native(method);
+    }
 
     method_discard(method);
 

@@ -141,7 +141,7 @@ foreach $mod (@mods) {
         $defo =~ tr/[a-z]/[A-Z]/;
         if ($func !~ /^native_/) { $func = "native_$func"; }
         print DEF "#define NATIVE_${defo}_${def} $defn\n";
-        $buf = sprintf("    {%-15s %-20s %s},\n",
+        $buf = sprintf("    {%-15s NOT_AN_IDENT, %-20s NOT_AN_IDENT, %s},\n",
                 "\"$obj\",", "\"$name\",", "$func");
         $struct .= $buf;
         $defn++;

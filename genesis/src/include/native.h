@@ -14,7 +14,9 @@
 /* we need num_args defined here so we can drop it into the method def */
 typedef struct native_s {
     char     * bindobj;
+    Ident      bindobj_ident;
     char     * name;
+    Ident      name_ident;
     Int       (*func)(Int stack_start, Int arg_start);
 } native_t;
 

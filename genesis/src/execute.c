@@ -560,7 +560,7 @@ cList * task_stack(Frame * frame_to_trace, Bool calculate_line_numbers) {
         if (calculate_line_numbers)
             list[3].u.val = line_number(f->method, f->pc - 1);
         else
-            list[3].u.val = f->pc - 1;
+            list[3].u.val = 0;
         list[4].type = INTEGER;
         list[4].u.val = (Long) f->pc;
 
@@ -569,6 +569,52 @@ cList * task_stack(Frame * frame_to_trace, Bool calculate_line_numbers) {
     }
 
     return r;
+}
+
+void log_task_stack(Long taskid, cList * stack, void (logroutine)(char*,...))
+{
+    cData * frame,
+          * sender,
+          * caller,
+          * method,
+          * lineno,
+          * opcode;
+    char  * sender_name,
+          * caller_name,
+          * method_name;
+    Obj   * sender_obj,
+          * caller_obj;
+    Int     lineno_val,
+            opcode_val;
+
+    (logroutine)("Stack trace for task %l:", taskid);
+
+    for (frame = list_first(stack); frame; frame = list_next(stack, frame)) {
+        sender = list_elem(frame->u.list, 0);
+	caller = list_elem(frame->u.list, 1);
+	method = list_elem(frame->u.list, 2);
+	lineno = list_elem(frame->u.list, 3);
+	opcode = list_elem(frame->u.list, 4);
+
+        sender_obj = cache_retrieve(sender->u.objnum);
+        sender_name = ident_name(sender_obj->objname);
+        cache_discard(sender_obj);
+
+        caller_obj = cache_retrieve(caller->u.objnum);
+	caller_name = ident_name(caller_obj->objname);
+	cache_discard(caller_obj);
+
+	method_name = ident_name(method->u.symbol);
+
+        lineno_val = lineno->u.val;
+        opcode_val = opcode->u.val;
+
+	(logroutine)("  $%s<$%s>.%s(): line: %d opcode: %d", 
+                     sender_name, caller_name, method_name,
+                     lineno_val, opcode_val);
+    }
+
+    (logroutine)("---");
 }
 
 /*

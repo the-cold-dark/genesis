@@ -18,3 +18,4 @@ RELEASE INFORMATION:
       * Network I/O made non-blocking for incoming connections (Bruce,
         Brad, Colin)
       * bufidx() had an array bounds read problem. (Brad)
+      * Fixed bug in strgraft() (Bruce)

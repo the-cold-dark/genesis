@@ -248,8 +248,10 @@ Obj * cache_get_holder(Long objnum) {
 	if (obj->objnum != INV_OBJNUM) {
 	    LOCK_BUCKET("cache_get_holder", ind)
 	    if (obj->dirty) {
-		if (!db_put(obj, obj->objnum, &obj_size))
+		if (!db_put(obj, obj->objnum, &obj_size)) {
+		    UNLOCK_BUCKET("cache_get_holder", ind)
 		    panic("Could not store an object.");
+		}
                 if (cache_log_flag & CACHE_LOG_OVERFLOW)
 		    write_err("cache_get_holder: wrote object %s (size: %d bytes) (dirty: %d)",
 			      ident_name(obj->objname), obj_size, obj->dirty);
@@ -486,8 +488,10 @@ void cache_sync(void) {
 		if (cache_log_flag & CACHE_LOG_DEAD_WRITE)
 		    write_err("cache_sync: skipping dead object");
 	    } else {
-                if (!db_put(obj, obj->objnum, &obj_size))
+                if (!db_put(obj, obj->objnum, &obj_size)) {
+		    UNLOCK_BUCKET("cache_sync", i)
 		    panic("Could not store an object.");
+		}
                 if (cache_log_flag & CACHE_LOG_SYNC)
 		    write_err("cache_sync: wrote object %s (size: %d bytes) (dirty: %d)",
 			      ident_name(obj->objname), obj_size, obj->dirty);
@@ -538,8 +542,10 @@ void *cache_cleaner_worker(void *dummy)
 		    if (cache_log_flag & CACHE_LOG_DEAD_WRITE)
 		        write_err("cache_cleaner_worker: skipping dead object");
 		} else {
-		    if (!db_put(tobj, tobj->objnum, &obj_size))
+		    if (!db_put(tobj, tobj->objnum, &obj_size)) {
+			UNLOCK_BUCKET("cache_cleaner_worker", cache_bucket)
 		        panic("Could not store an object.");
+		    }
 		    if (cache_log_flag & CACHE_LOG_SYNC)
 		        write_err("cache_cleaner_worker: wrote object %s (size: %d bytes) (dirty: %d)",
 			          ident_name(tobj->objname), obj_size, tobj->dirty);

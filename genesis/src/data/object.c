@@ -22,7 +22,9 @@ Int ancestor_cache_sets = 0;
 Int ancestor_cache_misses = 0;
 Int ancestor_cache_collisions = 0;
 Int ancestor_cache_invalidates = 0;
+#ifdef USE_CACHE_HISTORY
 cList * ancestor_cache_history = NULL;
+#endif
 
 Int method_cache_hits = 0;
 Int method_cache_sets = 0;
@@ -30,7 +32,9 @@ Int method_cache_misses = 0;
 Int method_cache_partials = 0;
 Int method_cache_collisions = 0;
 Int method_cache_invalidates = 0;
+#ifdef USE_CACHE_HISTORY
 cList * method_cache_history = NULL;
+#endif
 
 cList * ancestor_cache_info()
 {
@@ -67,6 +71,7 @@ cList * ancestor_cache_info()
 
 static inline void ancestor_cache_invalidate()
 {
+#ifdef USE_CACHE_HISTORY
     cList * entry;
     cData   list_entry;
 
@@ -89,6 +94,7 @@ static inline void ancestor_cache_invalidate()
         ancestor_cache_history = sublist;
         list_discard(oldlist);
     }
+#endif
 
     ancestor_cache_invalidates++;
     ancestor_cache_hits = 0;
@@ -157,9 +163,7 @@ Obj * object_new(Long objnum, cList * parents) {
     cnew->methods.tab[METHOD_STARTING_SIZE - 1].next = -1;
 
     /* Initialize string table. */
-    cnew->strings = EMALLOC(String_entry, STRING_STARTING_SIZE);
-    cnew->strings_size = STRING_STARTING_SIZE;
-    cnew->num_strings = 0;
+    cnew->strings = string_tab_new();
 
     /* Initialize identifier table. */
     cnew->idents = EMALLOC(Ident_entry, IDENTS_STARTING_SIZE);
@@ -221,10 +225,7 @@ void object_free(Obj *object) {
     efree(object->methods.hashtab);
 
     /* Discard strings. */
-    for (i = 0; i < object->num_strings; i++) {
-	if (object->strings[i].str)
-	    string_discard(object->strings[i].str);
-    }
+    string_tab_free(object->strings);
     efree(object->strings);
 
     /* Discard identifiers. */
@@ -613,57 +614,22 @@ Int object_change_parents(Obj *object, cList *parents)
 
 Int object_add_string(Obj *object, cStr *str)
 {
-    Int i, blank = -1;
-
     /* Get the object dirty now, so we can return with a clean conscience. */
     cache_dirty_object(object);
 
-    /* Look for blanks while checking for an equivalent string. */
-    for (i = 0; i < object->num_strings; i++) {
-	if (!object->strings[i].str) {
-	    blank = i;
-	} else if (string_cmp(str, object->strings[i].str) == 0) {
-	    object->strings[i].refs++;
-	    return i;
-	}
-    }
-
-    /* Fill in a blank if we found one. */
-    if (blank != -1) {
-	object->strings[blank].str = string_dup(str);
-	object->strings[blank].refs = 1;
-	return blank;
-    }
-
-    /* Check to see if we have to enlarge the table. */
-    if (i >= object->strings_size) {
-	object->strings_size = object->strings_size * 2 + MALLOC_DELTA;
-	object->strings = EREALLOC(object->strings, String_entry,
-				   object->strings_size);
-    }
-
-    /* Add the string to the end of the table. */
-    object->strings[i].str = string_dup(str);
-    object->strings[i].refs = 1;
-    object->num_strings++;
-
-    return i;
+    return string_tab_get_string(object->strings, str);
 }
 
 void object_discard_string(Obj *object, Int ind)
 {
     cache_dirty_object(object);
 
-    object->strings[ind].refs--;
-    if (!object->strings[ind].refs) {
-	string_discard(object->strings[ind].str);
-	object->strings[ind].str = NULL;
-    }
+    string_tab_discard(object->strings, ind);
 }
 
 cStr *object_get_string(Obj *object, Int ind)
 {
-    return object->strings[ind].str;
+    return string_tab_name_str(object->strings, ind);
 }
 
 Int object_add_ident(Obj *object, char *ident)
@@ -1275,6 +1241,9 @@ cList * method_cache_info() {
 }
 
 static void method_cache_invalidate(cObjnum objnum) {
+#ifdef BUILDING_COLDCC
+    method_cache_invalidate_all();
+#else
     uLong i;
 
     /*
@@ -1299,16 +1268,13 @@ static void method_cache_invalidate(cObjnum objnum) {
         write_err("Method cache partially invalidated for obj #%l", objnum);
         log_current_task_stack(FALSE, write_err);
     }
+#endif
 }
 
 static void method_cache_invalidate_all() {
+#ifdef USE_CACHE_HISTORY
     cList * entry;
     cData   list_entry;
-
-    if (log_method_cache) {
-        write_err("Method cache entirely invalidated:");
-        log_current_task_stack(FALSE, write_err);
-    }
 
     entry = method_cache_info();
 
@@ -1329,7 +1295,12 @@ static void method_cache_invalidate_all() {
         method_cache_history = sublist;
         list_discard(oldlist);
     }
+#endif
 
+    if (log_method_cache) {
+        write_err("Method cache entirely invalidated:");
+        log_current_task_stack(FALSE, write_err);
+    }
 
     method_cache_invalidates++;
     method_cache_hits = 0;

@@ -20,6 +20,7 @@
 #include "textdb.h"
 #include "moddef.h"
 #include "quickhash.h"
+#include "cache.h"
 
 /*
 // ------------------------------------------------------------------------
@@ -49,6 +50,7 @@ extern Bool print_warn;
         printf("\rLine %ld: ", (long) line_count); \
         printf(__s, __x); \
         fputc('\n', stdout); \
+	fflush(stdout); \
     }
 
 #define WARN(_printf_) { \
@@ -56,11 +58,13 @@ extern Bool print_warn;
             printf("\rLine %ld: WARNING: ", (long) line_count); \
             printf _printf_; \
             fputc('\n', stdout); \
+	    fflush(stdout); \
         } \
     }
 
 #define DIE(__s) { \
         printf("\rLine %ld: ERROR: %s\n", (long) line_count, __s); \
+	fflush(stdout); \
         shutdown_coldcc(); \
     }
 
@@ -68,6 +72,7 @@ extern Bool print_warn;
         printf("\rLine %ld: ERROR: ", (long) line_count); \
         printf(__fmt, __arg); \
         fputc('\n', stdout); \
+	fflush(stdout); \
         shutdown_coldcc(); \
     }
 
@@ -202,8 +207,12 @@ INTERNAL void cleanup_holders(void) {
     holder_t * holder = holders,
              * old = NULL;
     Long       objnum;
+#if 0
     Obj      * obj;
+#endif
     Ident      id;
+    off_t      offset;
+    Int        size;
 
     while (holder != NULL) {
         id = ident_get(string_chars(holder->str));
@@ -216,6 +225,7 @@ INTERNAL void cleanup_holders(void) {
                printf("\rWARNING: Name $%s is no longer bound to object #%d.\n",
                       ident_name(id), (int) objnum);
         } else {
+#if 0
             obj = cache_retrieve(holder->objnum);
             if (obj) {
                 if (obj->objname == NOT_AN_IDENT) {
@@ -223,7 +233,10 @@ INTERNAL void cleanup_holders(void) {
                     obj->objname = ident_dup(id);
 		}
                 cache_discard(obj);
-            } else {
+	    } else {
+#else
+            if (!lookup_retrieve_objnum(objnum, &offset, &size)) {
+#endif
                 if (print_warn)
                     printf("\rWARNING: Object $%s (#%d) was never defined.\n",
                            ident_name(id), (int) objnum);
@@ -604,6 +617,7 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
                 WARN(("old: attempt to destroy $sys ignored."));
             } else {
                 ERRf("old: destroying object %s.", obj_str);
+		cache_dirty_object(target);
                 target->dead = 1;
                 cache_discard(target);
                 target = NULL;
@@ -621,8 +635,14 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
             /* $root and $sys should ALWAYS exist */
             target = cache_retrieve(objnum);
         } else {
+	    // XXX: this code makes a bad assumption that is no longer universally true
+	    //      if target is a parent with children in the cache, its refcount won't
+	    //      be 1 and so the discard won't actually get rid of the object and the
+	    //      object_new is going to cause problems because it assumes that the
+	    //      objnum doesn't exist.
             if ((target = cache_retrieve(objnum))) {
                 WARN(("new: destroying existing object %s.", obj_str));
+		cache_dirty_object(target);
                 target->dead = 1;
                 cache_discard(target);
                 target = NULL;
@@ -861,6 +881,7 @@ INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
                     }
                     printf(",%s:\nLine %ld: WARNING: data: %s\nLine %ld: WARNING: Defaulting value to ZERO ('0').\n",
                            ident_name(var), (long) line_count, strchop(s, 50), (long) line_count);
+	            fflush(stdout);
                 }
             }
             if (*s && *s != ';')
@@ -1100,14 +1121,14 @@ INTERNAL void frob_n_print_errstr(char * err, char * name, cObjnum objnum) {
         err += 2;
     }
 
-    str = format("\rLine %l: [line %d in %O.%s()]: %s\n",
+    str = format("\rLine %l: [line %d in %O.%s()]: %s",
                  method_start + line,
                  line,
                  objnum,
                  name,
                  err);
 
-    fputs(str->s, stderr);
+    write_err("%s", str->s);
 
     string_discard(str);
 }
@@ -1172,7 +1193,7 @@ void compile_cdc_file(FILE * fp) {
              * s;
     Obj      * obj,
              * root;
-    Long       filesize = 0, filepos = 0;
+    Long       filesize = 0;
     struct stat statbuf;
 
     fstat(fileno(fp), &statbuf);
@@ -1313,11 +1334,12 @@ void compile_cdc_file(FILE * fp) {
     cache_discard(root);
     verify_native_methods();
 
-    fputs("\rCleaning up name holders...", stdout);
+    fputs("\r", stdout);
     fflush(stdout);
+    write_err("Syncing binarydb...");
+    cache_sync();
+    write_err("Cleaning up name holders...");
     cleanup_holders();
-    fputs("done.\n", stdout);
-    fflush(stdout);
 }
 
 /*
@@ -1371,7 +1393,7 @@ Int text_dump(Bool objnames) {
 
     fp = open_scratch_file(buf, "w");
     if (!fp) {
-        fprintf(stderr, "\rUnable to open temporary file \"%s\".\n", buf);
+        write_err("Unable to open temporary file \"%s\".", buf);
         return 0;
     }
 
@@ -1394,12 +1416,14 @@ Int text_dump(Bool objnames) {
     }
 #endif
     if (rename(buf, c_dir_textdump) == F_FAILURE) {
-        fprintf(stderr, "\rUnable to rename \"%s\" to \"%s\":\n\t%s\n",
+        write_err("Unable to rename \"%s\" to \"%s\":\n\t%s",
                 buf, c_dir_textdump, strerror(GETERR()));
         return 0;
     }
 
-    fputc('\n', stdout);
+    fputc('\r', stdout);
+    fflush(stdout);
+    write_err("Done decompiling.");
     return 1;
 }
 #define is_system(__n) (__n == ROOT_OBJNUM || __n == SYSTEM_OBJNUM)
@@ -1638,12 +1662,14 @@ void blank_and_print_obj(char * what, Float percent_done, Obj * obj) {
     char * sn;
 
     /* white out what we just printed */
-    for (x=len; x; x--)
-        fputc('\b', stdout);
-    fputs("\b\b\b\b", stdout);
-    for (x=len; x; x--)
-        fputc(' ', stdout);
-    fputs("    \r", stdout);
+    if (len) {
+        for (x=len; x; x--)
+            fputc('\b', stdout);
+        fputs("\b\b\b\b", stdout);
+        for (x=len; x; x--)
+            fputc(' ', stdout);
+        fputs("    \r", stdout);
+    }
 
     /* let them know whats up now */
     fprintf(stdout, "%s(%.1f%%) ", what, percent_done);

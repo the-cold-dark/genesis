@@ -1,0 +1,35 @@
+Jenner created some pseudo code which may be used to implement ancestor
+cacheing for is_ancestor:
+
+typedef struct {
+    int a,b;
+    int result;
+} ancestor_cache;
+
+#define CACHE_SIZE 1257
+
+ancestor_cache c[CACHE_SIZE];
+
+int is_ancestor (object a, object b)
+{
+
+    int i;
+    int hash;
+    int res;
+
+    if (a==b) return 1;
+    hash=(a*1293112123+b*1723812128)%CACHE_SIZE;
+    if (c[hash].a==a && c[hash].b=b) return c[hash].result;
+    res=0;
+    for i in parents(b) {
+        if (is_ancestor(a,i)) {
+            res=1;
+            break;
+        }
+    }
+    c[hash].a=a;
+    c[hash].b=b;
+    c[hash].result=res;
+    return res;
+}
+

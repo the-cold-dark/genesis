@@ -1,0 +1,12 @@
+Optimization/Cleanup:
+    * overridable methods: change searching to take the first method
+      found.  Do the check for !overridable methods at the time the method
+      is set as !overridable, do not allow methods to be set as overridable
+      if they are overriden on descendants.  Do not allow methods to be
+      added if an ancestor defines it as !overridable.
+    * file ops should use the builtin file descriptor functions
+    * sanity checks are still not done, do them.
+
+Changes:
+    * Native methods
+

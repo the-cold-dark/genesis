@@ -59,6 +59,8 @@ void init_defs(void) {
 
     ancestor_cache_history = list_new(0);
     method_cache_history = list_new(0);
+
+    cache_history_size = 50;
 }
 
 #undef INIT_VAR

@@ -47,6 +47,18 @@ static inline void ancestor_cache_invalidate()
 
     ancestor_cache_history = list_add(ancestor_cache_history, &list_entry);
 
+    if (list_length(ancestor_cache_history) >= cache_history_size) {
+        cList * sublist, * oldlist;
+        Int start;
+
+        start = list_length(ancestor_cache_history) - cache_history_size;
+        sublist = list_sublist(list_dup(ancestor_cache_history), start,
+                               cache_history_size);
+        oldlist = ancestor_cache_history;
+        ancestor_cache_history = sublist;
+        list_discard(oldlist);
+    }
+
     ancestor_cache_invalidates++;
     ancestor_cache_hits = 0;
     ancestor_cache_misses = 0;
@@ -1185,6 +1197,19 @@ static void method_cache_invalidate_all() {
 
     method_cache_history = list_add(method_cache_history, &list_entry);
 
+    if (list_length(method_cache_history) >= cache_history_size) {
+        cList * sublist, * oldlist;
+        Int start;
+
+        start = list_length(method_cache_history) - cache_history_size;
+        sublist = list_sublist(list_dup(method_cache_history), start,
+                               cache_history_size);
+        oldlist = method_cache_history;
+        method_cache_history = sublist;
+        list_discard(oldlist);
+    }
+
+
     method_cache_invalidates++;
     method_cache_hits = 0;
     method_cache_misses = 0;
@@ -1343,6 +1368,11 @@ Int object_set_method_flags(Obj * object, Long name, Int flags) {
         return -1;
 
     cache_dirty_object(object);
+
+    if ((!(method->m_flags & MF_NOOVER) && (flags & MF_NOOVER)) ||
+        ((method->m_flags & MF_NOOVER) && !(flags & MF_NOOVER))) {
+        method_cache_invalidate_all();
+    }
 
     method->m_flags = flags;
     return flags;

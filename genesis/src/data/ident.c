@@ -46,7 +46,7 @@ Ident left_id, right_id, both_id;
 
 /* config options */
 Ident cachelog_id, cachewatch_id, cachewatchcount_id;
-Ident log_malloc_size_id, log_method_cache_id;
+Ident log_malloc_size_id, log_method_cache_id, cache_history_size_id;
 
 /* cache stats options */
 Ident ancestor_cache_id, method_cache_id, name_cache_id, object_cache_id;
@@ -150,6 +150,7 @@ void init_ident(void)
 
     log_malloc_size_id = ident_get("log_malloc_size");
     log_method_cache_id = ident_get("log_method_cache");
+    cache_history_size_id = ident_get("cache_history_size");
 
     ancestor_cache_id = ident_get("ancestor_cache");
     method_cache_id = ident_get("method_cache");

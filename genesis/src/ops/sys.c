@@ -258,6 +258,7 @@ COLDC_FUNC(config) {
 	else if (SYM1 == cachewatchcount_id)	rval = cache_watch_count;
         else if (SYM1 == log_malloc_size_id)    rval = log_malloc_size;
         else if (SYM1 == log_method_cache_id)   rval = log_method_cache;
+	else if (SYM1 == cache_history_size_id) rval = cache_history_size;
 	else
 	    THROW((type_id, "Invalid configuration name."))
     } else {
@@ -271,6 +272,7 @@ COLDC_FUNC(config) {
 	else if (SYM1 == cachewatchcount_id)	rval = cache_watch_count = INT2;
         else if (SYM1 == log_malloc_size_id)    rval = log_malloc_size = INT2;
         else if (SYM1 == log_method_cache_id)   rval = log_method_cache = INT2;
+	else if (SYM1 == cache_history_size_id) rval = cache_history_size = INT2;
 	else
 	    THROW((type_id, "Invalid configuration name."))
     }
@@ -294,21 +296,45 @@ COLDC_FUNC(cache_info) {
 
 COLDC_FUNC(cache_stats) {
     cData * args;
-    cList * list;
-    cData * val;
+    cList * list, * entry;
+    cData * val, list_entry;
 
     if (!func_init_1(&args, SYMBOL))
         return;
 
     if (SYM1 == ancestor_cache_id) {
-        list = ancestor_cache_history;
+        list = list_dup(ancestor_cache_history);
+        entry = list_new(3);
+        val = list_empty_spaces(entry, 3);
+        val[0].type = INTEGER;
+        val[0].u.val = ancestor_cache_invalidates;
+        val[1].type = INTEGER;
+        val[1].u.val = ancestor_cache_hits;
+        val[2].type = INTEGER;
+        val[2].u.val = ancestor_cache_misses;
+        list_entry.type = LIST;
+        list_entry.u.list = entry;
+	list = list_add(list, &list_entry);
     } else if (SYM1 == method_cache_id) {
-        list = method_cache_history;
+        list = list_dup(method_cache_history);
+        entry = list_new(4);
+        val = list_empty_spaces(entry, 4);
+        val[0].type = INTEGER;
+        val[0].u.val = method_cache_invalidates;
+        val[1].type = INTEGER;
+        val[1].u.val = method_cache_hits;
+        val[2].type = INTEGER;
+        val[2].u.val = method_cache_misses;
+        val[3].type = INTEGER;
+        val[3].u.val = method_cache_partials;
+	list_entry.type = LIST;
+	list_entry.u.list = entry;
+        list = list_add(list, &list_entry);
     } else if (SYM1 == name_cache_id) {
         list = list_new(2);
         val = list_empty_spaces(list, 2);
-	val[0].type = INTEGER;
-	val[0].u.val = name_cache_hits;
+        val[0].type = INTEGER;
+        val[0].u.val = name_cache_hits;
         val[1].type = INTEGER;
         val[1].u.val = name_cache_misses;
     } else if (SYM1 == object_cache_id) {
@@ -319,4 +345,5 @@ COLDC_FUNC(cache_stats) {
 
     pop(1);
     push_list(list);
+    list_discard(list);
 }

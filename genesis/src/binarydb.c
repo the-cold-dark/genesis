@@ -131,8 +131,8 @@ void verify_clean(void) {
     char * s;
     FILE * fp;
 
-    v_major[0] = v_minor[0] = v_patch[0] =
-     magicmod[0] = system[0] = search[0] = (char) NULL;
+    v_major[0] = v_minor[0] = v_patch[0] = magicmod[0] =
+        system[0] = search[0] = (char) NULL;
 
     if ((fp = fopen(c_clean_file, "rb"))) {
         fgets(system, LINE, fp);
@@ -168,20 +168,20 @@ void verify_clean(void) {
     }
 
     if (isdirty) {
-        fprintf(stderr, "** Binary database \"%s\" is incompatible, systems:\n\
-** it:   <%s> %d.%d-%d (module key %li)\n\
-** this: <%s> %d.%d-%d (module key %li)\n",
-        c_dir_binary, system, atoi(v_major), atoi(v_minor), atoi(v_patch),
-        atol(magicmod), SYSTEM_TYPE, VERSION_MAJOR, VERSION_MINOR,
-        VERSION_PATCH, (long) MAGIC_MODNUMBER);
+        fprintf(stderr, "** Binary database \"%s\" is incompatible, systems:\n"
+                        "** it:   <%s> %d.%d-%d (module key %li)\n"
+                        "** this: <%s> %d.%d-%d (module key %li)\n",
+                c_dir_binary, system, atoi(v_major), atoi(v_minor),
+		atoi(v_patch), atol(magicmod), SYSTEM_TYPE, VERSION_MAJOR,
+		VERSION_MINOR, VERSION_PATCH, (long) MAGIC_MODNUMBER);
         FAIL("Unable to load database \"%s\": incompatible.\n");
     }
 }
 
 void init_binary_db(void) {
     struct stat   statbuf;
-    char          fdb_objects[LINE],
-                  fdb_index[LINE];
+    char          fdb_objects[BUF],
+                  fdb_index[BUF];
     off_t         offset;
     Int           size;
     Long          objnum;
@@ -219,8 +219,8 @@ void init_binary_db(void) {
 
 void init_new_db(void) {
     struct stat   statbuf;
-    char          fdb_objects[LINE],
-                  fdb_index[LINE];
+    char          fdb_objects[BUF],
+                  fdb_index[BUF];
     off_t         offset;
     Int           size;
     Long          objnum;
@@ -237,13 +237,36 @@ void init_new_db(void) {
     db_is_clean();
 }
 
+static void display_bitmap()
+{
+    Int i=0, j=0;
+    char line[80];
+    static char *hex="0123456789ABCDEF";
+
+    memset(line, 0, sizeof(line));
+    while (i < (bitmap_blocks/8))
+    {
+	line[j++] = hex[(bitmap[i] & 0xF0) >> 4];
+	line[j++] = hex[bitmap[i] & 0x0F];
+	i++;
+	if (!(i%4))
+	    line[j++] = ' ';
+	if (!(i%16))
+	{
+	    line[j++] = 0;
+	    write_err("%s", line);
+	    j = 0;
+	    memset(line, 0, sizeof(line));
+	}
+    }
+}
+
 /* Grow the bitmap to given size. */
 static void grow_bitmap(Int new_blocks)
 {
     new_blocks = ROUND_UP(new_blocks, 8);
     bitmap = EREALLOC(bitmap, char, (new_blocks / 8) + 1);
-    memset(&bitmap[bitmap_blocks / 8], 0,
-	   (new_blocks / 8) - (bitmap_blocks / 8));
+    memset(&bitmap[bitmap_blocks / 8], 0, (new_blocks / 8) - (bitmap_blocks / 8));
     bitmap_blocks = new_blocks;
 }
 
@@ -406,11 +429,11 @@ static Int db_alloc(Int size)
 	    if (b >= bitmap_blocks) {
 		/* time to wrap around if we still haven't */
 		if (!over_the_top) {
-		    b=0;
-		    over_the_top=1;
+		    b = 0;
+		    over_the_top = 1;
 		    break;
 		} else {
-		    grow_bitmap(b + DB_BITBLOCK);
+		    grow_bitmap(b + ROUND_UP(blocks_needed-count, DB_BITBLOCK));
                 }
             }
 	}
@@ -432,6 +455,8 @@ Int db_get(Obj *object, Long objnum)
 {
     off_t offset;
     Int size;
+    cBuf *buf;
+    Long buf_pos;
 
     /* Get the object location for the objnum. */
     if (!lookup_retrieve_objnum(objnum, &offset, &size))
@@ -441,7 +466,13 @@ Int db_get(Obj *object, Long objnum)
     if (fseek(database_file, offset, SEEK_SET))
 	return 0;
 
-    unpack_object(object, database_file);
+    buf = buffer_new(size);
+    buf->len = size;
+    fread(buf->s, sizeof(uChar), size, database_file);
+    buf_pos = 0;
+    unpack_object(buf, &buf_pos, object);
+    free(buf);
+
     return 1;
 }
 
@@ -463,11 +494,16 @@ Int check_free_blocks(Int blocks_needed, Int b)
 
 Int db_put(Obj *obj, Long objnum, Long *sizewritten)
 {
+    cBuf *buf;
     off_t old_offset, new_offset;
-    Int old_size, new_size = size_object(obj), tmp1, tmp2;
+    Int old_size, new_size, tmp1, tmp2;
 
     db_is_dirty();
     if (lookup_retrieve_objnum(objnum, &old_offset, &old_size)) {
+        buf = buffer_new(old_size);
+        buf = pack_object(buf, obj);
+	new_size = buf->len;
+
 	if ((tmp1=NEEDED(new_size, BLOCK_SIZE)) > (tmp2=NEEDED(old_size, BLOCK_SIZE))) {
 	    /* check for the possible realloc */
 	    if (check_free_blocks(tmp1 - tmp2, LOGICAL_BLOCK(old_offset)+tmp2)) {
@@ -491,21 +527,27 @@ Int db_put(Obj *obj, Long objnum, Long *sizewritten)
 	    new_offset = old_offset;
 	}
     } else {
+	buf = buffer_new(0);
+	buf = pack_object(buf, obj);
+	new_size = buf->len;
 	new_offset = BLOCK_OFFSET(db_alloc(new_size));
     }
 
     if (!lookup_store_objnum(objnum, new_offset, new_size)) {
+	buffer_discard(buf);
         if (sizewritten) *sizewritten = 0;
 	return 0;
     }
 
     if (fseek(database_file, new_offset, SEEK_SET)) {
+	buffer_discard(buf);
 	write_err("ERROR: Seek failed for %l.", objnum);
         if (sizewritten) *sizewritten = 0;
 	return 0;
     }
 
-    pack_object(obj, database_file);
+    fwrite(buf->s, sizeof(uChar), new_size, database_file);
+    buffer_discard(buf);
     fflush(database_file);
     if (sizewritten) *sizewritten = new_size;
 

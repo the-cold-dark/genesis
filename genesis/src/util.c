@@ -320,12 +320,13 @@ char * timestamp (char * str) {
 
     time(&t);
     tms = localtime(&t);
-    sprintf(s, "%d %3s %2d %d:%.2d",
+    sprintf(s, "%2d %3s %2d %2d:%02d:%02d",
             tms->tm_mday,
             months[tms->tm_mon],
             tms->tm_year + 1900,
             tms->tm_hour,
-            tms->tm_min);
+            tms->tm_min,
+	    tms->tm_sec);
 
     return s;
 }

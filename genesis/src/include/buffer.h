@@ -21,6 +21,8 @@ cBuf  * buffer_subrange(cBuf *buf, Int start, Int len);
 cBuf  * buffer_prep(cBuf *buf, Int new_size);
 int     buffer_index(cBuf * buf, uChar * ss, int slen, int origin);
 cBuf  * buffer_bufsub(cBuf * buf, cBuf * old, cBuf * new);
+cBuf  * buffer_append_uchars(cBuf * buf1, uChar * new, Int new_len);
+cBuf  * buffer_append_uchars_single_ref(cBuf * buf1, uChar * new, Int new_len);
 
 #define buffer_len(__b) (__b->len)
 

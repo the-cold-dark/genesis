@@ -769,6 +769,9 @@ INTERNAL void handle_namecmd(char * line, char * s, Int new) {
 // ------------------------------------------------------------------------
 */
 INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
+    static cObjnum last_definer = INV_OBJNUM;
+    static Int rc_check;
+
     cData      d;
     char     * p = s;
     Long       definer, var;
@@ -779,7 +782,12 @@ INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
         s += get_idref(s, &name, ISOBJ);
         definer = parse_to_objnum(name);
 
-        if (!cache_check(definer)) {
+	if (last_definer != definer) {
+	    rc_check = cache_check(definer);
+	    last_definer = definer;
+	}
+
+	if (!rc_check) {
             WARN(("Ignoring object variable with invalid parent:"));
             if (strlen(line) > 55) {
                 line[50] = line[51] = line[52] = '.';
@@ -788,7 +796,8 @@ INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
             WARN(("\"%s\"", line));
             return;
         }
-        if (!object_has_ancestor(cur_obj->objnum, definer)) {
+
+	if (!object_has_ancestor(cur_obj->objnum, definer)) {
             WARN(("Ignoring object variable with no ancestor:"));
             if (strlen(line) > 55) {
                 line[50] = line[51] = line[52] = '.';

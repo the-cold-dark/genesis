@@ -64,37 +64,38 @@ cStr *string_dup(cStr *str) {
     return str;
 }
 
-void string_pack(cStr *str, FILE *fp) {
+cBuf *string_pack(cBuf *buf, cStr *str) {
     if (str) {
-	write_long(str->len, fp);
-	fwrite(str->s + str->start, sizeof(char), str->len, fp);
+        buf = write_long(buf, str->len);
+        buf = buffer_append_uchars_single_ref(buf, (uChar *)(str->s + str->start), str->len);
     } else {
-	write_long(-1, fp);
+        buf = write_long(buf, -1);
     }
+    return buf;
 }
 
-cStr *string_unpack(FILE *fp) {
+cStr *string_unpack(cBuf *buf, Long *buf_pos) {
     cStr *str;
     Int len;
-    Int result;
 
-    len = read_long(fp);
+    len = read_long(buf, buf_pos);
     if (len == -1) {
-      /*fprintf(stderr, "string_unpack: NULL @%d\n", ftell(fp));*/
-      return NULL;
+        /*fprintf(stderr, "string_unpack: NULL @%d\n", ftell(fp));*/
+        return NULL;
     }
     str = string_new(len);
     str->len = len;
-    result = fread(str->s, sizeof(char), len, fp);
+    MEMCPY(str->s, &(buf->s[*buf_pos]), len);
+    (*buf_pos) += len;
     str->s[len] = 0;
     return str;
 }
 
 Int string_packed_size(cStr *str) {
     if (str)
-	return size_long(str->len) + str->len * sizeof(char);
+        return size_long(str->len) + str->len * sizeof(char);
     else
-	return size_long(-1);
+        return size_long(-1);
 }
 
 Int string_cmp(cStr *str1, cStr *str2) {

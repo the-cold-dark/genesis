@@ -14,22 +14,23 @@
 
 INSTANCE_PROTOTYPES(handled);
 
-void pack_handled (cData *d, FILE *fp)
+cBuf *pack_handled (cBuf *buf, cData *d)
 {
     HandledFrob *h = HANDLED_FROB(d);
 
-    write_long (h->cclass, fp);
-    pack_data (&h->rep, fp);
-    write_ident(h->handler, fp);
+    buf = write_long (buf, h->cclass);
+    buf = pack_data  (buf, &h->rep);
+    buf = write_ident(buf, h->handler);
+    return buf;
 }
 
-void unpack_handled (cData *d, FILE *fp)
+void unpack_handled (cBuf *buf, Long *buf_pos, cData *d)
 {
     HandledFrob *h=TMALLOC(HandledFrob, 1);
 
-    h->cclass = read_long(fp);
-    unpack_data (&h->rep, fp);
-    h->handler = read_ident(fp);
+    h->cclass = read_long(buf, buf_pos);
+    unpack_data (buf, buf_pos, &h->rep);
+    h->handler = read_ident(buf, buf_pos);
     d->u.instance = (void*) h;
 }
 

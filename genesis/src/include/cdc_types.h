@@ -87,18 +87,19 @@ struct cFrob {
 };
 
 
-typedef void (*ciDbData)(cData*, FILE*);
-typedef int (*ciSzData)(cData*);
-typedef int (*ciCmpData)(cData*, cData*);
-typedef void (*ciDupData)(cData*, cData*);
-typedef void (*ciDisData)(cData*);
-typedef cStr *(*ciStrData)(cStr*, cData*, int);
+typedef cBuf * (*ciWrData) (cBuf*, cData*);
+typedef void   (*ciRdData) (cBuf*, Long*, cData*);
+typedef int    (*ciSzData) (cData*);
+typedef int    (*ciCmpData)(cData*, cData*);
+typedef void   (*ciDupData)(cData*, cData*);
+typedef void   (*ciDisData)(cData*);
+typedef cStr * (*ciStrData)(cStr*, cData*, int);
 
 typedef struct cInstance {
     char *name;
     Ident id_name;
-    ciDbData pack;
-    ciDbData unpack;
+    ciWrData pack;
+    ciRdData unpack;
     ciSzData size;
     ciCmpData compare;
     ciSzData hash;

@@ -346,8 +346,8 @@
 */
 
 #define INSTANCE_PROTOTYPES(_class_) \
-    void CAT(pack_,_class_) (cData*, FILE*); \
-    void CAT(unpack_,_class_) (cData*, FILE*); \
+    cBuf * CAT(pack_,_class_) (cBuf*, cData*); \
+    void CAT(unpack_,_class_) (cBuf*, Long*, cData*); \
     int CAT(size_,_class_) (cData*); \
     int CAT(compare_,_class_) (cData*, cData*); \
     int CAT(hash_,_class_) (cData*); \

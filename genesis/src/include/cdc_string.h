@@ -12,9 +12,11 @@ cStr * string_empty(Int size);
 cStr * string_from_chars(char * s, Int len);
 cStr * string_of_char(Int c, Int len);
 cStr * string_dup(cStr * str);
-void   string_pack(cStr * str, FILE * fp);
-cStr * string_unpack(FILE * fp);
-Int    string_packed_size(cStr * str);
+
+cBuf * string_pack(cBuf *buf, cStr *str);
+cStr * string_unpack(cBuf *buf, Long *buf_pos);
+Int    string_packed_size(cStr *str);
+
 Int    string_cmp(cStr * str1, cStr * str2);
 cStr * string_add(cStr * str1, cStr * str2);
 cStr * string_add_chars(cStr * str, char * s, Int len);

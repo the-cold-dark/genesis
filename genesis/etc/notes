@@ -50,8 +50,14 @@ RELEASE INFORMATION:
       * Add calling_method() patch. (Allen Noe)
       * Make method_bytecode() output info on jumps. (Allen Noe)
       * Makefile fix, putting textdb.c into EVERYTHING_O (Jeff Dubrule)
+      * Change binarydb/dbpack routines to read/write entire object at
+        once going through a cBuf. (Brad)
+      * Fix db_alloc to call grow_bitmap once when expanding to fit an
+        object that's > the size of the standard increment (Brad)
       * Add ancestor caching to speed up has_ancestor() and coldcc.
         (Bruce, Brad)
+      * Added a cache_check cache in handle_varcmd (Brad)
+      * Minor code cleanups in binarydb.c (Brad)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

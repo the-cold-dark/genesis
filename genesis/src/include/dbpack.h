@@ -5,25 +5,20 @@
 #ifndef cdc_dbpack_h
 #define cdc_dbpack_h
 
-void pack_object(Obj * obj, FILE * fp);
-void unpack_object(Obj * obj, FILE * fp);
+cBuf * pack_object (cBuf * buf, Obj * obj);
+cBuf * pack_data   (cBuf * buf, cData * data);
+cBuf * write_ident (cBuf * buf, Long id);
+cBuf * write_long  (cBuf * buf, Long n);
+
+void unpack_object (cBuf * buf, Long * buf_pos, Obj * obj);
+void unpack_data   (cBuf * buf, Long * buf_pos, cData * data);
+Long read_ident    (cBuf * buf, Long * buf_pos);
+Long read_long     (cBuf * buf, Long * buf_pos);
+
 Int  size_object(Obj * obj);
-
-void pack_data(cData *data, FILE *fp);
-void unpack_data(cData *data, FILE *fp);
 Int  size_data(cData *data);
-
-Long read_ident(FILE *fp);
-void write_ident(Long id, FILE *fp);
-Int  size_ident(Long id);
-
-void write_long(Long n, FILE * fp);
-Long read_long(FILE * fp);
+Long size_ident(Long id);
 Int  size_long(Long n);
-
-void  write_float(Float n, FILE * fp);
-Float read_float(FILE * fp);
-Int   size_float(Float n);
 
 #endif
 

@@ -43,6 +43,21 @@ cBuf *buffer_append(cBuf *buf1, cBuf *buf2) {
     return buf1;
 }
 
+cBuf * buffer_append_uchars_single_ref(cBuf * buf, uChar * new, Int new_len) {
+    Int new_size = buf->len + new_len;
+    
+    if (buf->size < new_size) {
+        /* Resize the buffer */
+        new_size = ROUND_UP(new_size + BUFFER_OVERHEAD, BUFFER_DATA_INCREMENT);
+        buf = (cBuf*)erealloc(buf, new_size);
+        buf->size = new_size - BUFFER_OVERHEAD;
+    }
+
+    MEMCPY(buf->s + buf->len, new, new_len);
+    buf->len += new_len;
+    return buf;
+}
+
 cBuf * buffer_append_uchars(cBuf * buf1, uChar * new, Int new_len) {
     if (!new_len)
         return buf1;
@@ -292,11 +307,11 @@ cBuf * buffer_bufsub(cBuf * buf, cBuf * old, cBuf * new) {
     while ((p <= buf->len) &&
            (q = buffer_index(buf, old->s, lo, p)) &&
 	   (q != -1)) {
-        cnew = buffer_append_uchars(cnew, buf->s + p - 1, q - p);
-        cnew = buffer_append_uchars(cnew, new->s, ln);
+        cnew = buffer_append_uchars_single_ref(cnew, buf->s + p - 1, q - p);
+        cnew = buffer_append_uchars_single_ref(cnew, new->s, ln);
         p = q + lo;
     }
-    cnew = buffer_append_uchars(cnew, buf->s + p - 1, lb - p + 1);
+    cnew = buffer_append_uchars_single_ref(cnew, buf->s + p - 1, lb - p + 1);
 
     buffer_discard(buf);
     buffer_discard(old);

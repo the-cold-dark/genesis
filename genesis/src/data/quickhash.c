@@ -123,7 +123,10 @@ INTERNAL void double_hashtab_size(Hash * hash)
 {
     Int i;
 
-    hash->hashtab_size = hash->hashtab_size * 2 + MALLOC_DELTA;
+    if (hash->hashtab_size > 4096)
+	hash->hashtab_size += 4096;
+    else
+        hash->hashtab_size = hash->hashtab_size * 2 + MALLOC_DELTA;
     hash->links = EREALLOC(hash->links, Int, hash->hashtab_size);
     hash->hashtab = EREALLOC(hash->hashtab, Int, hash->hashtab_size);
     for (i = 0; i < hash->hashtab_size; i++) {

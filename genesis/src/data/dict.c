@@ -306,7 +306,10 @@ INTERNAL void double_hashtab_size(cDict *dict)
 {
     Int i;
 
-    dict->hashtab_size = dict->hashtab_size * 2 + MALLOC_DELTA;
+    if (dict->hashtab_size > 4096)
+	dict->hashtab_size += 4096;
+    else
+        dict->hashtab_size = dict->hashtab_size * 2 + MALLOC_DELTA;
     dict->links = EREALLOC(dict->links, Int, dict->hashtab_size);
     dict->hashtab = EREALLOC(dict->hashtab, Int, dict->hashtab_size);
     for (i = 0; i < dict->hashtab_size; i++) {

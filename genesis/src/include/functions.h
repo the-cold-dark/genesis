@@ -108,6 +108,7 @@ COLDC_FUNC(method_access);
 COLDC_FUNC(set_method_access);
 COLDC_FUNC(method_info);
 COLDC_FUNC(methods);
+COLDC_FUNC(has_method);
 COLDC_FUNC(find_method);
 COLDC_FUNC(find_next_method);
 COLDC_FUNC(list_method);

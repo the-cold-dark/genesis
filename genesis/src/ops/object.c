@@ -505,6 +505,25 @@ COLDC_FUNC(methods) {
     list_discard(methods);
 }
 
+COLDC_FUNC(has_method) {
+    cData  * args;
+    Method * method;
+    Int      result;
+
+    if (!func_init_1(&args, SYMBOL))
+        return;
+
+    result = 1;
+
+    method = object_find_method(cur_frame->object->objnum, SYM1, FROB_ANY);
+    if (!method) {
+        result = 0;
+    }
+
+    pop(1);
+    push_int(result);
+}
+
 COLDC_FUNC(find_method) {
     cData   * args;
     Method * m, * m2;

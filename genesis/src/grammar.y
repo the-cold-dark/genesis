@@ -159,7 +159,7 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %token F_ATOMIC F_METHOD_INFO F_ENCODE F_DECODE F_SIN F_EXP F_LOG F_COS
 %token F_TAN F_SQRT F_ASIN F_ACOS F_ATAN F_POW F_ATAN2 F_CONFIG F_ROUND
 %token F_FLUSH OP_HANDLED_FROB F_VALUE F_HANDLER F_SYNC F_CALLING_METHOD
-%token F_EXPLODE_QUOTED
+%token F_EXPLODE_QUOTED F_HAS_METHOD
 
 /* Reserved for future use. */
 /*%token FORK*/

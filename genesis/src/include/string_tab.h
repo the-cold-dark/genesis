@@ -27,6 +27,7 @@ StringTab * string_tab_new_with_size(Long size);
 void        string_tab_fixup_hashtab(StringTab *tab, Long num);
 void        string_tab_free(StringTab *tab);
 Ident       string_tab_get(StringTab *tab, char *s);
+Ident       string_tab_get_length(StringTab *tab, char *s, Int len);
 Ident       string_tab_get_string(StringTab *tab, cStr * str);
 void        string_tab_discard(StringTab *tab, Ident id);
 Ident       string_tab_dup(StringTab *tab, Ident id);

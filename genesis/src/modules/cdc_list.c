@@ -466,5 +466,5 @@ NATIVE_METHOD(sorted_delete) {
 }
 
 NATIVE_METHOD(sorted_validate) {
-
+    return 1;
 }

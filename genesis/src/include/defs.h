@@ -8,6 +8,9 @@
 #define DISABLED 0
 #define ENABLED  1
 
+#define _FILE_OFFSET_BITS 64
+#define _LARGEFILE_SOURCE
+
 #include "config.h"
 
 /*
@@ -15,6 +18,9 @@
 // If running in BUILDING_COLDCC mode, turn off some options that slow
 // down the build
 */
+
+#undef ONLY_PARSE_TEXTDB
+
 #ifdef BUILDING_COLDCC
 #undef USE_CLEANER_THREAD
 #undef USE_DIRTY_LIST

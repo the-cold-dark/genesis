@@ -92,6 +92,24 @@ RELEASE INFORMATION:
         search ancestry.  That's why it exists. (Bruce)
       * Added defines_var checking to coldcc to catch dead variables that
         are no longer defined on the ancestor. (Bruce)
+        DISABLED: Bruce indicated performance issues (Brad)
+      * don't save all of obj->string_tab's data, some can easily be
+        rebuilt during unpack (Brad)
+      * don't save an empty obj->method table (Bruce)
+      * for dicts over 64 keys don't save all the infrastructure, just
+        save the key and value lists and rebuild at unpack time (Bruce, Brad)
+      * Add a define to build coldcc in parse only mode (Brad)
+      * Fix a bunch of places where we didn't handle offsets into the
+        binary file properly so that we can now build and run with LFS
+        enabled.  Still needs configure work to auto-detect the right build
+        flags (Brad)
+      * Changed find_function to binary search for builtin functions during
+        method compile (Brad)
+      * Many textdb.c efficiency issues cleaned up: string copying reduced,
+        idref_t passed by reference instead of value everywhere, keep track
+        of idref_t->len to avoid strlen() calls (Brad)
+      * Change data_from_literal to prealloc lists for 10 elements (Brad)
+      * Rewrote string_parse to only do one pass over the string (Brad)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

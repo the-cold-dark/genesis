@@ -207,6 +207,7 @@ extern Int     object_get_method_flags(Obj * object, Ident name);
 extern Int     object_get_method_access(Obj * object, Ident name);
 extern Int     object_set_method_flags(Obj * object, Ident name, Int flags);
 extern Int     object_set_method_access(Obj * object, Ident name, Int access);
+extern Bool    object_has_methods(Obj *object);
 #ifdef USE_PARENT_OBJS
 extern void    object_load_parent_objs(Obj * obj);
 #endif

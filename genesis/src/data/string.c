@@ -200,9 +200,10 @@ void string_discard(cStr *str) {
 
 cStr * string_parse(char **sptr) {
     cStr * str;
-    char *p, *s, *start = *sptr;
-
-    start++;
+    char * p;
+    char * s;
+#if 0
+    char * start = *sptr;
 
     /* compress escaped, trust me, it works this time (BJG) */
     for (p=s=start; *p && *p != '"'; p++, s++) {
@@ -211,11 +212,56 @@ cStr * string_parse(char **sptr) {
         *s = *p;
     }
 
+#ifndef ONLY_PARSE_TEXTDB
     /* make it into a string */
     str = string_from_chars(start, s - start);
+#endif
 
     /* push *sptr to its new position */
     *sptr = *p ? p+1 : p;
+#else
+    Int len;
+
+#ifndef ONLY_PARSE_TEXTDB
+    str = string_new(0);
+#endif
+
+    s = *sptr;
+    while (s && *s && *s != '"') /* search until end of string or closing " */
+    {   
+        p = strpbrk(s, "\"\\"); /* search for escape char or closing " */
+        if (p)
+        {
+#ifndef ONLY_PARSE_TEXTDB
+            str = string_add_chars(str, s, p-s);
+#endif
+            /* if its the escape char, look at the next to see if its */
+            /* really escaping anything.  ColdC escaping isn't just like C */
+            if (*p == '\\')
+            {
+                if (*(p+1) && (*(p+1) == '"' || *(p+1) == '\\'))
+                    p++;
+#ifndef ONLY_PARSE_TEXTDB
+                str = string_addc(str, *p);
+#endif
+                p++;
+            }
+            s = p;
+        }
+        else 
+        {    
+            /* This should never occur, since the string should always be    */
+            /* terminated by a ".  So, add everything left and setup to end  */
+            /* the loop */
+            len = strlen(s);
+#ifndef ONLY_PARSE_TEXTDB
+            str = string_add_chars(str, s, len);
+#endif
+            s += len;
+        }
+    }
+    *sptr = *s ? s+1 : s;
+#endif
 
     /* give them the string */
     return str;

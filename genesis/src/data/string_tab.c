@@ -74,7 +74,9 @@ static Ident string_tab_from_hash(StringTab *tab, uLong hval, cStr * str) {
     /* Look for an existing identifier. */
     ind = tab->hashtab[hval % tab->tab_size];
     while (ind != -1) {
-	if (tab->tab[ind].hash == hval && strcmp(string_chars(tab->tab[ind].str), string_chars(str)) == 0) {
+	if (tab->tab[ind].hash == hval &&
+            tab->tab[ind].str->len == str->len &&
+            strcmp(string_chars(tab->tab[ind].str), string_chars(str)) == 0) {
 	    tab->tab[ind].refs++;
 	    return ind;
 	}
@@ -123,11 +125,16 @@ static Ident string_tab_from_hash(StringTab *tab, uLong hval, cStr * str) {
 }
 
 Ident string_tab_get(StringTab *tab, char *s) {
+    return string_tab_get_length(tab, s, strlen(s));
+}
+
+Ident string_tab_get_length(StringTab *tab, char *s, Int len)
+{
     uLong hval = hash_nullchar(s);
     Int ind;
     cStr *str;
 
-    str = string_from_chars(s, strlen(s));
+    str = string_from_chars(s, len);
     ind = string_tab_from_hash(tab, hval, str);
     string_discard(str);
     return ind;

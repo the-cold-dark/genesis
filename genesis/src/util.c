@@ -104,6 +104,12 @@ Long atoln(char *s, Int n) {
     return val;
 }
 
+char *long_long_to_ascii(long long num, Number_buf nbuf) {
+    *nbuf++ = (char) 0;
+    sprintf(nbuf, "%lld", num);
+    return nbuf;
+}
+
 char *long_to_ascii(Long num, Number_buf nbuf) {
 #if DISABLED /* why?? */
     char *p = &nbuf[NUMBER_BUF_SIZE - 1];
@@ -389,10 +395,9 @@ cStr *fgetstring(FILE *fp) {
             p[len - 2] = (char) NULL;
             line->len = len - 2;
             return line;
-        } else if (p[len - 1] == '\n') {
-#else
-        if (p[len - 1] == '\n') {
+        } else
 #endif
+        if (p[len - 1] == '\n') {
             p[len - 1] = (char) NULL;
             line->len = len - 1;
             return line;
@@ -409,10 +414,9 @@ cStr *fgetstring(FILE *fp) {
 	        if ((len >= 2) && (buf[len - 2] == '\r')) {
 	            line = string_add_chars(line, buf, len - 2);
 		    return line;
-                } else if (buf[len - 1] == '\n') {
-#else
-        	if (buf[len - 1] == '\n') {
+                } else
 #endif
+        	if (buf[len - 1] == '\n') {
         	    line = string_add_chars(line, buf, len-1);
         	    return line;
         	} else {
@@ -469,7 +473,9 @@ Ident parse_ident(char **sptr) {
 
     str = string_from_chars(*sptr, s - *sptr);
 
+#ifndef ONLY_PARSE_TEXTDB
     id = ident_get(string_chars(str));
+#endif
     string_discard(str);
 
     *sptr = s;

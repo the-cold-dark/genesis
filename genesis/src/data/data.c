@@ -580,6 +580,7 @@ char * data_from_literal(cData *d, char *s) {
  	}
 	return s;
     } else if (*s == '"') {
+        s++;
 	d->type = STRING;
 	d->u.str = string_parse(&s);
 	return s;
@@ -590,27 +591,34 @@ char * data_from_literal(cData *d, char *s) {
         s++;
 
         name = parse_ident(&s);
+#ifndef ONLY_PARSE_TEXTDB
         objnum = get_object_name(name);
 	ident_discard(name);
+#endif
 
 	d->type = OBJNUM;
 	d->u.objnum = objnum;
-
 	return s;
     } else if (*s == '[') {
+#ifndef ONLY_PARSE_TEXTDB
 	cList *list;
 
-	list = list_new(0);
+	list = list_new(10);
+#endif
 	s++;
 	while (*s && *s != ']') {
 	    s = data_from_literal(d, s);
 	    if (d->type == -1) {
+#ifndef ONLY_PARSE_TEXTDB
 		list_discard(list);
+#endif
 		d->type = -1;
 		return s;
 	    }
+#ifndef ONLY_PARSE_TEXTDB
 	    list = list_add(list, d);
 	    data_discard(d);
+#endif
 	    while (isspace(*s))
 		s++;
 	    if (*s == ',')
@@ -619,7 +627,9 @@ char * data_from_literal(cData *d, char *s) {
 		s++;
 	}
 	d->type = LIST;
+#ifndef ONLY_PARSE_TEXTDB
 	d->u.list = list;
+#endif
 	return (*s) ? s + 1 : s;
     } else if (*s == '#' && s[1] == '[') {
 	cData assocs;
@@ -627,18 +637,22 @@ char * data_from_literal(cData *d, char *s) {
 	/* Get associations. */
 	s = data_from_literal(&assocs, s + 1);
 	if (assocs.type != LIST) {
+#ifndef ONLY_PARSE_TEXTDB
 	    if (assocs.type != -1)
 		data_discard(&assocs);
+#endif
 	    d->type = -1;
 	    return s;
 	}
 
 	/* Make a dict from the associations. */
 	d->type = DICT;
+#ifndef ONLY_PARSE_TEXTDB
 	d->u.dict = dict_from_slices(assocs.u.list);
 	data_discard(&assocs);
 	if (!d->u.dict)
 	    d->type = -1;
+#endif
 	return s;
     } else if (*s == '#') {
         s++;
@@ -654,10 +668,13 @@ char * data_from_literal(cData *d, char *s) {
 	/* Get the contents of the buffer. */
 	s = data_from_literal(&byte_data, s + 1);
 	if (byte_data.type != LIST) {
+#ifndef ONLY_PARSE_TEXTDB
 	    if (byte_data.type != -1)
 		data_discard(&byte_data);
+#endif
 	    return s;
 	}
+#ifndef ONLY_PARSE_TEXTDB
 	bytes = byte_data.u.list;
 
 	/* Verify that the bytes are numbers. */
@@ -677,6 +694,7 @@ char * data_from_literal(cData *d, char *s) {
 	    buf->s[i++] = p->u.val;
 
 	data_discard(&byte_data);
+#endif
 	d->type = BUFFER;
 	d->u.buffer = buf;
 	return s;
@@ -717,25 +735,33 @@ char * data_from_literal(cData *d, char *s) {
 		    s++;
 		s = data_from_literal(&chandler, s);
 		if (chandler.type != SYMBOL) {
-		    data_discard(&crep);
 		    d->type = -1;
+#ifndef ONLY_PARSE_TEXTDB
+		    data_discard(&crep);
 		    if (chandler.type != -1)
 			data_discard(&chandler);
+#endif
 		    return (*s) ? s + 1 : s;
 		}
 		d->type = (Int) HANDLED_FROB_TYPE;
+#ifndef ONLY_PARSE_TEXTDB
 		d->u.instance = (void*)TMALLOC(HandledFrob, 1);
 		HANDLED_FROB(d)->cclass = cclass.u.objnum;
 		HANDLED_FROB(d)->rep = crep;
 		HANDLED_FROB(d)->handler = chandler.u.symbol;
+#endif
 		return (*s) ? s + 1 : s;
 	    }
  	    d->type = FROB;
+#ifndef ONLY_PARSE_TEXTDB
 	    d->u.frob = TMALLOC(cFrob, 1);
 	    d->u.frob->cclass = cclass.u.objnum;
 	    d->u.frob->rep = crep;
+#endif
 	} else if (cclass.type != -1) {
+#ifndef ONLY_PARSE_TEXTDB
 	    data_discard(&cclass);
+#endif
 	}
 	return (*s) ? s + 1 : s;
     } else {

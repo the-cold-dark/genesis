@@ -33,6 +33,7 @@
 typedef struct idref_s {
     Long objnum;            /* objnum if its an objnum */
     char str[BUF];         /* string name */
+    Int  len;
     Int  err;
 } idref_t;
 
@@ -207,7 +208,7 @@ static void cleanup_holders(void) {
     while (holder != NULL) {
         key.u.objnum = holder->objnum;
         if (hash_find(dump_hash, &key) == F_FAILURE) {
-            id = ident_get(string_chars(holder->str));
+            id = ident_get_string(holder->str);
             if (!lookup_retrieve_name(id, &objnum)) {
                 if (print_warn)
                     printf("\rWARNING: Name $%s for object #%d disapppeared.\n",
@@ -241,6 +242,7 @@ static void cleanup_holders(void) {
     }
 }
 
+#ifndef ONLY_PARSE_TEXTDB
 /* only call with a method which declars a MF_NATIVE flag */
 /* holders are redundant, but it lets us keep track of methods defined
    native, but which are not */
@@ -472,6 +474,7 @@ static void verify_native_methods(void) {
         free(nh);
     }
 }
+#endif
 
 /*
 // ------------------------------------------------------------------------
@@ -481,28 +484,25 @@ static void verify_native_methods(void) {
 #define ISOBJ 1
 
 static Int get_idref(char * sp, idref_t * id, Int isobj) {
-    char         str[BUF], * p;
-    register Int x;
-    char         * end;
+    Int    x;
+    char * end;
 
     id->objnum = INV_OBJNUM;
-    strcpy(id->str, "");
+    id->str[0] = 0;
+    id->len    = 0;
 
-    if (!*sp) {
+    if (!sp[0]) {
         id->err = 1;
         return 0;
     }
 
-    id->err    = 0;
-
-    p = sp;
+    id->err = 0;
 
     /* special case objnums, drop out of need be */
-    if (isobj && *p == '#') {
-        p++;
-        if (isdigit(*p) || (*p == '-' && isdigit(*(p+1)))) {
-            id->objnum = strtol(p, &end, 10);
-            return (end - p)+1;
+    if (isobj && sp[0] == '#') {
+        if (isdigit(sp[1]) || (sp[1] == '-' && isdigit(sp[2]))) {
+            id->objnum = strtol(&sp[1], &end, 10);
+            return (end - sp);
         } else {
             DIEf("Invalid objnum \"%s\".", sp)
         }
@@ -510,47 +510,51 @@ static Int get_idref(char * sp, idref_t * id, Int isobj) {
 
     /* get just the symbol */
     for (x = 0;
-         *p != (char) NULL && (isalnum(*p) || *p == '_' || *p == '$');
-         x++, p++);
+         sp[x] != (char) NULL && (isalnum(sp[x]) || sp[x] == '_' || sp[x] == '$');
+         x++);
 
-    strncpy(str, sp, x);
-    p = str;
-    str[x] = (char) NULL;
-
-    if (*p == '$') {
+    if (sp[0] == '$') {
         if (!isobj)
-            DIEf("Invalid symbol '%s.", str)
-        p++;
+            DIEf("Invalid symbol '%s.", sp)
+        strncpy(id->str, &sp[1], x-1);
+        id->str[x-1] = 0;
+        id->len = x-1;
     }
-
-    strcpy(id->str, p);
+    else
+    {
+        strncpy(id->str, sp, x);
+        id->str[x] = 0;
+        id->len = x;
+    }
 
     return x;
 }
 
+#ifndef ONLY_PARSE_TEXTDB
 /*
 // ------------------------------------------------------------------------
 */
-static Long parse_to_objnum(idref_t ref) {
+static Long parse_to_objnum(idref_t *ref) {
     Long id,
          objnum = 0;
     Int  result;
 
-    if (ref.str[0] != (char) NULL) {
-        if (!strncmp(ref.str, "root", 4) && strlen(ref.str) == 4)
+    if (ref->str[0] != (char) NULL) {
+        if (!strncmp(ref->str, "root", 4) && ref->len == 4)
             return 1;
-        else if (!strncmp(ref.str, "sys", 3) && strlen(ref.str) == 3)
+        else if (!strncmp(ref->str, "sys", 3) && ref->len == 3)
             return 0;
 
-        id = ident_get(ref.str);
+        id = ident_get_length(ref->str, ref->len);
         result = lookup_retrieve_name(id, &objnum);
         ident_discard(id);
 
         return (result) ? objnum : INV_OBJNUM;
     }
 
-    return ref.objnum;
+    return ref->objnum;
 }
+#endif
 
 /*
 // ------------------------------------------------------------------------
@@ -560,10 +564,12 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
     idref_t   obj;
     char    * p = (char) NULL,
               obj_str[BUF];
+#ifndef ONLY_PARSE_TEXTDB
     Obj     * target = NULL;
     cList   * parents = list_new(1); /* will always have a least one parent */
     Long      objnum;
     cData     d;
+#endif
 
     /* grab what should be the object number or name */
     p = strchr(s, ':');
@@ -611,7 +617,8 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
                 len = p - s;
             }
             get_idref(par_str, &parent, ISOBJ);
-            objnum = parse_to_objnum(parent);
+#ifndef ONLY_PARSE_TEXTDB
+            objnum = parse_to_objnum(&parent);
             if (VALID_OBJECT(objnum)) {
                 d.type = OBJNUM;
                 d.u.objnum = objnum;
@@ -624,6 +631,7 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
                 }
                 WARN(("For object \"%s\".", obj_str));
             }
+#endif
 
             /* skip the last word, ',' and whitespace */
             if (more) {
@@ -633,7 +641,8 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
         }
     }
 
-    objnum = parse_to_objnum(obj);
+#ifndef ONLY_PARSE_TEXTDB
+    objnum = parse_to_objnum(&obj);
 
     if (new == N_OLD) {
         if (objnum < 0) {
@@ -715,19 +724,26 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
     list_discard(parents);
 
     return target;
+#else
+    return NULL;
+#endif
 }
 
 /*
 // ------------------------------------------------------------------------
 */
 static void handle_parcmd(char * s, Int new) {
-    cData     d;
-    char     * p = NULL,
-               obj_str[BUF];
-    Obj * target = NULL;
+#ifndef ONLY_PARSE_TEXTDB
+    cData      d;
+    char       obj_str[BUF];
     Long       objnum;
-    cList   * parents;
-    Int        num, len;
+    Obj      * target = NULL;
+    Int        num;
+    cList    * parents;
+#endif
+
+    char     * p = NULL;
+    Int        len;
     idref_t    id;
 
     /* parse the reference */
@@ -737,7 +753,8 @@ static void handle_parcmd(char * s, Int new) {
     if (*p != ';' || !len)
         DIEf("Invalid object definition \"%s\".", s);
 
-    objnum = parse_to_objnum(id);
+#ifndef ONLY_PARSE_TEXTDB
+    objnum = parse_to_objnum(&id);
 
     if (objnum == ROOT_OBJNUM)
         DIE("Attempt to change $root's parents.");
@@ -770,6 +787,7 @@ static void handle_parcmd(char * s, Int new) {
                 WARN(("newparent: Oops, something went wrong..."));
         }
     }
+#endif
 }
 
 /*
@@ -778,8 +796,10 @@ static void handle_parcmd(char * s, Int new) {
 static void handle_namecmd(char * line, char * s, Int new) {
     char       name[BUF];
     char     * p;
+#ifndef ONLY_PARSE_TEXTDB
     Long       num, other;
     Ident      id;
+#endif
 
     /* bump if they have a '$' in the name */
     if (*s == '$')
@@ -793,6 +813,7 @@ static void handle_namecmd(char * line, char * s, Int new) {
     /* copy the name */
     COPY(name, s, p);
 
+#ifndef ONLY_PARSE_TEXTDB
     /* see if it exists */
     id = ident_get(name);
     if (lookup_retrieve_name(id, &other)) {
@@ -800,7 +821,6 @@ static void handle_namecmd(char * line, char * s, Int new) {
         WARN(("objname $%s is already bound to objnum #%li",name,(long) other));
         return;
     }
-
     ident_discard(id);
 
     /* lets see if there is a objnum association, or if we should pick one */
@@ -826,27 +846,31 @@ static void handle_namecmd(char * line, char * s, Int new) {
     }
 
     add_objname(name, num, TRUE);
+#endif
 }
 
 /*
 // ------------------------------------------------------------------------
 */
 static void handle_varcmd(char * line, char * s, Int new, Int access) {
+#ifndef ONLY_PARSE_TEXTDB
     static cObjnum last_definer = INV_OBJNUM;
     static Int rc_check;
 
-    cData      d;
-    char     * p = s;
     Long       definer, var;
-    idref_t    name;
     Obj      * def;
-    Int        slen;
     Bool       result;
     char     * var_name;
+#endif
+    Int        slen;
+    cData      d;
+    char     * p = s;
+    idref_t    name;
 
     if (*s == '#' || *s == '$') {
         s += get_idref(s, &name, ISOBJ);
-        definer = parse_to_objnum(name);
+#ifndef ONLY_PARSE_TEXTDB
+        definer = parse_to_objnum(&name);
 
 	if (last_definer != definer) {
 	    rc_check = cache_check(definer);
@@ -878,13 +902,16 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
         if (!cur_obj)
             DIE("var: attempt to define object variable without defining object.");
         definer = cur_obj->objnum;
+#else
+        NEXT_WORD(s)
+#endif
     }
 
     /* strip trailing spaces and semi colons */
-    slen = strlen(s);
-    while (s[slen - 1] == ';' || isspace(s[slen - 1])) {
-        s[slen - 1] = (char) NULL;
-        slen = strlen(s);
+    slen = strlen(s) - 1;
+    while (slen >= 0 && (s[slen] == ';' || isspace(s[slen]))) {
+        s[slen] = (char) NULL;
+        --slen;
     }
 
     s += get_idref(s, &name, NOOBJ);
@@ -892,9 +919,12 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
     if (name.str[0] == (char) NULL)
         DIEf("Invalid variable name \"%s\"", p);
 
+#ifndef ONLY_PARSE_TEXTDB
     var = ident_get(name.str);
+#endif
 
     if (new == N_OLD) {
+#ifndef ONLY_PARSE_TEXTDB
         def = cache_retrieve(definer);
 
         if (!def)
@@ -903,6 +933,7 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
         /* axe the variable */
         object_delete_var(cur_obj, def, var);
         cache_discard(def);
+#endif
     } else {
         d.type = -2;
 
@@ -916,6 +947,7 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
             s++;
             NEXT_WORD(s);
             s = data_from_literal(&d, s);
+#ifndef ONLY_PARSE_TEXTDB
             if (d.type == -1) {
                 if (print_warn) {
                     printf("\rLine %ld: WARNING: invalid data for variable ", (long) line_count);
@@ -931,6 +963,7 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
 	            fflush(stdout);
                 }
             }
+#endif
             if (*s && *s != ';')
                 NEXT_WORD(s);
             if (*s && *s != ';') {
@@ -939,6 +972,7 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
             }
         }
 
+#ifndef ONLY_PARSE_TEXTDB
         if (d.type < 0) {
             d.type = INTEGER;
             d.u.val = 0;
@@ -961,6 +995,7 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
                 printf(",%s no longer defined.\n", var_name);
             }
         }
+#endif
     }
 }
 
@@ -968,8 +1003,10 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
 // ------------------------------------------------------------------------
 */
 static void handle_evalcmd(FILE * fp, char * s, Int new, Int access) {
-    Long       name;
     Method * method;
+
+#ifndef ONLY_PARSE_TEXTDB
+    Long       name;
 
     /* set the name as 'coldcc_eval */
     name   = ident_get("coldcc_eval");
@@ -989,6 +1026,9 @@ static void handle_evalcmd(FILE * fp, char * s, Int new, Int access) {
     /* toss it */
     method_discard(method);
     ident_discard(name);
+#else
+    method = get_method(fp, cur_obj, NULL);
+#endif
 }
 
 /*
@@ -1017,8 +1057,10 @@ static Int get_method_name(char * s, idref_t * id) {
 static void handle_bind_nativecmd(FILE * fp, char * s) {
     idref_t    nat;
     idref_t    meth;
+#ifndef ONLY_PARSE_TEXTDB
     Ident      inat, imeth;
     nh_t     * n = (nh_t *) NULL;
+#endif
 
     s += get_method_name(s, &nat);
 
@@ -1028,7 +1070,8 @@ static void handle_bind_nativecmd(FILE * fp, char * s) {
     NEXT_WORD(s);
 
     s += get_method_name(s, &meth);
-    
+   
+#ifndef ONLY_PARSE_TEXTDB
     if (nat.str[0] == (char) NULL || meth.str[0] == (char) NULL)
         DIE("Invalid method name in bind_native directive.\n")
 
@@ -1050,12 +1093,15 @@ static void handle_bind_nativecmd(FILE * fp, char * s) {
 
     ident_discard(inat);
     ident_discard(imeth);
+#endif
 }
 
 static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
     char     * p = NULL;
+#ifndef ONLY_PARSE_TEXTDB
     cObjnum   definer;
     Ident      name;
+#endif
     idref_t    id = {INV_OBJNUM, "", 0};
     Method * method;
     Obj * obj;
@@ -1068,8 +1114,9 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
         if (id.err)
             DIE("Invalid object \"$\"")
 
+#ifndef ONLY_PARSE_TEXTDB
         /* parse the parent.. */
-        definer = parse_to_objnum(id);
+        definer = parse_to_objnum(&id);
 
         /* make sure it exists, and not just as a name */
         if (!cache_check(definer))
@@ -1078,6 +1125,7 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
         if (!cur_obj)
             DIE("attempt to define method without defining object.");
         definer = cur_obj->objnum;
+#endif
     }
 
     s += get_method_name(s, &id);
@@ -1085,7 +1133,9 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
     if (id.str[0] == (char) NULL)
         DIE("No method name.");
 
+#ifndef ONLY_PARSE_TEXTDB
     name = ident_get(id.str);
+#endif
 
     /* see if any flags are set */
     if ((p = strchr(s, ':')) != NULL) {
@@ -1132,12 +1182,15 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
             DIE("Un-terminted method definition.")
     }
 
+#ifndef ONLY_PARSE_TEXTDB
     obj = cache_retrieve(definer);
 
     if (!obj)
         DIE("Abnormal disappearance of object.");
+#endif
 
     if (*p != ';') {
+#ifndef ONLY_PARSE_TEXTDB
         /* get the method */
         method = get_method(fp, obj, ident_name(name));
     } else {
@@ -1149,8 +1202,12 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
         list_discard(code);
         if (errors != NULL)
             list_discard(errors);
+#else
+        method = get_method(fp, obj, NULL);
+#endif
     }
 
+#ifndef ONLY_PARSE_TEXTDB
     if (!method)
         DIE("Method definition failed");
 
@@ -1174,8 +1231,10 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
     /* free up the remaining resources */
     ident_discard(name);
     cache_discard(obj);
+#endif
 }
 
+#ifndef ONLY_PARSE_TEXTDB
 /*
 // ------------------------------------------------------------------------
 */
@@ -1201,17 +1260,20 @@ static void frob_n_print_errstr(char * err, char * name, cObjnum objnum) {
 
     string_discard(str);
 }
+#endif
 
 static Method * get_method(FILE * fp, Obj * obj, char * name) {
     Method * method;
-    cList   * code,
-             * errors;
-    cStr * line;
-    cData     d;
-    Int        i;
+    cStr   * line;
+#ifndef ONLY_PARSE_TEXTDB
+    cList  * code;
+    cList  * errors;
+    cData    d;
+    Int      i;
 
     code = list_new(0);
     d.type = STRING;
+#endif
 
     /* used in printing method errs */
     method_start = line_count;
@@ -1221,6 +1283,7 @@ static Method * get_method(FILE * fp, Obj * obj, char * name) {
         /* hack for determining the end of a method */
         if (line->len == 2 && line->s[0] == '}' && line->s[1] == ';') {
             string_discard(line);
+#ifndef ONLY_PARSE_TEXTDB
             method = compile(obj, code, &errors);
             list_discard(code);
 
@@ -1229,13 +1292,15 @@ static Method * get_method(FILE * fp, Obj * obj, char * name) {
                 frob_n_print_errstr(errors->el[i].u.str->s, name, obj->objnum);
 
             list_discard(errors);
+#endif
 
             /* return the method, null or not */
             return method;
         }
-
+#ifndef ONLY_PARSE_TEXTDB
         d.u.str = line;
         code = list_add(code, &d);
+#endif
         string_discard(line);
     }
 
@@ -1260,18 +1325,22 @@ void compile_cdc_file(FILE * fp) {
              * str = NULL;
     char     * p,
              * s;
-    Obj      * obj,
-             * root;
-    Long       filesize = 0;
+    Obj      * obj;
+#ifndef ONLY_PARSE_TEXTDB
+    Obj      * root;
+#endif
+    off_t      filesize = 0;
     struct stat statbuf;
 
     fstat(fileno(fp), &statbuf);
     filesize = statbuf.st_size;
-    dump_hash = hash_new(0);
 
     /* start at line 0 */
     line_count = 0;
+#ifndef ONLY_PARSE_TEXTDB
     root = cur_obj = cache_retrieve(ROOT_OBJNUM);
+    dump_hash = hash_new(0);
+#endif
 
     /* use fgetstring because it'll expand until we have the whole line */
     while ((line = fgetstring(fp)) && running) {
@@ -1364,7 +1433,7 @@ void compile_cdc_file(FILE * fp) {
                 if (cur_obj != NULL)
                     cache_discard(cur_obj);
                 if (print_objs)
-                    blank_and_print_obj("Compiling ", (100.0 * ftell(fp)) / filesize, obj);
+                    blank_and_print_obj("Compiling ", (100.0 * ftello(fp)) / filesize, obj);
                 cur_obj = obj;
             }
         } else if (MATCH(s, "parent", 6)) {
@@ -1401,15 +1470,19 @@ void compile_cdc_file(FILE * fp) {
         str = NULL;
     }
 
+#ifndef ONLY_PARSE_TEXTDB
     cache_discard(root);
     verify_native_methods();
+#endif
 
     fputs("\r", stdout);
     fflush(stdout);
+#ifndef ONLY_PARSE_TEXTDB
     write_err("Syncing binarydb...");
     cache_sync();
     write_err("Cleaning up name holders...");
     cleanup_holders();
+#endif
 }
 
 /*
@@ -1729,14 +1802,13 @@ void blank_and_print_obj(char * what, Float percent_done, Obj * obj) {
     if (len) {
         for (x=len; x; x--)
             fputc('\b', stdout);
-        fputs("\b\b\b\b", stdout);
         for (x=len; x; x--)
             fputc(' ', stdout);
-        fputs("    \r", stdout);
+        fputc('\r', stdout);
     }
 
     /* let them know whats up now */
-    fprintf(stdout, "%s(%.1f%%) ", what, percent_done);
+    len = fprintf(stdout, "%s(%.1f%%) ", what, percent_done);
     if (obj->objname == NOT_AN_IDENT) {
         sn = long_to_ascii(obj->objnum, nbuf);
         fputc('#', stdout);
@@ -1750,7 +1822,7 @@ void blank_and_print_obj(char * what, Float percent_done, Obj * obj) {
     /* flush */
     fflush(stdout);
 
-    len = strlen(sn);
+    len += strlen(sn) + 4;
 }
 
 /* the idea is to do this on strings that may be VERY large */
@@ -1759,7 +1831,7 @@ char * strchop(char * str, Int len) {
     register int x;
     for (x=0; x < len; x++) {
         if (str[x] == (char) NULL)
-            return (char) NULL;
+            return str;
     }
     /* null terminate it and put an elipse in */
     str[x] = (char) NULL;

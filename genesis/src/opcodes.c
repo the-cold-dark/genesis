@@ -9,7 +9,7 @@
 #include "functions.h"
 #include "util.h"
 
-#define FDEF(_def_, _str_, _name_)  { _def_, _str_, CAT(func_, _name_) },       
+#define FDEF(_def_, _str_, _name_)  { _def_, _str_, CAT(func_, _name_) }
 
 #define NUM_OPERATORS (sizeof(op_info) / sizeof(*op_info))
 
@@ -118,216 +118,188 @@ static Op_info op_info[] = {
     { SCATTER_START,    "SCATTER_START",   op_scatter_start },
     { SCATTER_END,      "SCATTER_END",     0},
 
-    /* Object variable functions */
-    FDEF(F_ADD_VAR,       "add_var",   add_var)
-    FDEF(F_DEL_VAR,       "del_var",   del_var)
-    FDEF(F_SET_VAR,       "set_var",   set_var)
-    FDEF(F_GET_VAR,       "get_var",   get_var)
-    FDEF(F_INHERITED_VAR, "inherited_var", inherited_var)
-    FDEF(F_DEFAULT_VAR,   "default_var", default_var)
-    FDEF(F_CLEAR_VAR,     "clear_var", clear_var)
-    FDEF(F_VARIABLES,     "variables", variables)
-
-    /* debugger */
-    FDEF(F_DEBUG_CALLERS, "debug_callers", debug_callers)
-    FDEF(F_CALL_TRACE,    "call_trace",    call_trace)
-
-    /* Object method functions */
-    FDEF(F_LIST_METHOD,       "list_method",       list_method)
-    FDEF(F_ADD_METHOD,        "add_method",        add_method)
-    FDEF(F_DEL_METHOD,        "del_method",        del_method)
-    FDEF(F_METHOD_BYTECODE,   "method_bytecode",   method_bytecode)
-    FDEF(F_RENAME_METHOD,     "rename_method",     rename_method)
-    FDEF(F_SET_METHOD_FLAGS,  "set_method_flags",  set_method_flags)
-    FDEF(F_SET_METHOD_ACCESS, "set_method_access", set_method_access)
-    FDEF(F_METHOD_INFO,       "method_info",       method_info)
-    FDEF(F_METHOD_FLAGS,      "method_flags",      method_flags)
-    FDEF(F_METHOD_ACCESS,     "method_access",     method_access)
-    FDEF(F_METHODS,           "methods",           methods)
-    FDEF(F_HAS_METHOD,        "has_method",        has_method)
-    FDEF(F_FIND_METHOD,       "find_method",       find_method)
-    FDEF(F_FIND_NEXT_METHOD,  "find_next_method",  find_next_method)
-
-    /* Object functions */
-    FDEF(F_PARENTS,      "parents",      parents)
-    FDEF(F_CHILDREN,     "children",     children)
-    FDEF(F_ANCESTORS,    "ancestors",    ancestors)
-    FDEF(F_HAS_ANCESTOR, "has_ancestor", has_ancestor)
-    FDEF(F_SIZE,         "size",         size)
-    FDEF(F_CREATE,       "create",       create)
-    FDEF(F_CHPARENTS,    "chparents",    chparents)
-    FDEF(F_DESTROY,      "destroy",      destroy)
-    FDEF(F_SET_OBJNAME,  "set_objname",  set_objname)
-    FDEF(F_DEL_OBJNAME,  "del_objname",  del_objname)
-    FDEF(F_OBJNAME,      "objname",      objname)
-    FDEF(F_OBJNUM,       "objnum",       objnum)
-    FDEF(F_LOOKUP,       "lookup",       lookup)
-    FDEF(F_DATA,         "data",         data)
-
-    /* System functions */
-    { F_DBLOG,             "dblog",               func_dblog },
-    { F_BACKUP,            "backup",              func_backup },
-    { F_SYNC,              "sync",                func_sync },
-    { F_SHUTDOWN,          "shutdown",            func_shutdown },
-    { F_SET_HEARTBEAT,     "set_heartbeat",       func_set_heartbeat },
-    { F_CACHE_INFO,        "cache_info",          func_cache_info },
-    { F_CACHE_STATS,       "cache_stats",         func_cache_stats },
-
-    /* Task/Frame functions */
-    { F_TICK,             "tick",                 func_tick },
-    { F_RESUME,           "resume",               func_resume },
-    { F_SUSPEND,          "suspend",              func_suspend },
-    { F_TASKS,            "tasks",                func_tasks },
-    { F_TASK_INFO,        "task_info",            func_task_info },
-    { F_TASK_ID,          "task_id",              func_task_id },
-    { F_CANCEL,           "cancel",               func_cancel },
-    { F_PAUSE,            "pause",                func_pause },
-    { F_REFRESH,          "refresh",              func_refresh },
-    { F_TICKS_LEFT,       "ticks_left",           func_ticks_left },
-    { F_CALLING_METHOD,   "calling_method",       func_calling_method },
-    { F_METHODOP,         "method",               func_method },
-    { F_THIS,             "this",                 func_this },
-    { F_DEFINER,          "definer",              func_definer },
-    { F_SENDER,           "sender",               func_sender },
-    { F_CALLER,           "caller",               func_caller },
-    { F_STACK,            "stack",                func_stack },
-    { F_ATOMIC,           "atomic",               func_atomic },
-    { F_USER,             "user",                 func_user },
-    { F_SET_USER,         "set_user",             func_set_user },
-
-    /* Data/Conversion functions */
-    { F_VALID,            "valid",                func_valid },
-    { F_TYPE,             "type",                 func_type },
-    { F_CLASS,            "class", /* devalued */ func_frob_class },
-    { F_FROB_CLASS,       "frob_class",           func_frob_class },
-    { F_VALUE,            "frob_value",           func_frob_value },
-    { F_HANDLER,          "frob_handler",         func_frob_handler },
-    { F_TOINT,            "toint",                func_toint },
-    { F_TOFLOAT,          "tofloat",              func_tofloat },
-    { F_TOSTR,            "tostr",                func_tostr },
-    { F_TOLITERAL,        "toliteral",            func_toliteral },
-    { F_FROMLITERAL,      "fromliteral",          func_fromliteral },
-    { F_TOOBJNUM,         "toobjnum",             func_toobjnum },
-    { F_TOSYM,            "tosym",                func_tosym },
-    { F_TOERR,            "toerr",                func_toerr },
-
-    /* Exception functions */
-    { F_ERROR_FUNC,       "error",                func_error },
-    { F_ERROR_MESSAGE,    "error_message",        func_error_message },
-    { F_ERROR_DATA,       "error_data",           func_error_data },
-    { F_TRACEBACK,        "traceback",            func_traceback },
-    { F_THROW,            "throw",                func_throw },
-    { F_RETHROW,          "rethrow",              func_rethrow },
-
-    /* Network control functions */
-    { F_REASSIGN_CONNECTION,"reassign_connection",func_reassign_connection },
-    { F_BIND_PORT,        "bind_port",            func_bind_port },
-    { F_UNBIND_PORT,      "unbind_port",          func_unbind_port },
-    { F_OPEN_CONNECTION,  "open_connection",      func_open_connection },
-    { F_CLOSE_CONNECTION, "close_connection",     func_close_connection },
-    { F_CWRITE,           "cwrite",               func_cwrite },
-    { F_CWRITEF,          "cwritef",              func_cwritef },
-    { F_CONNECTION,       "connection",           func_connection },
-
-    /* File control functions */
-    { F_EXECUTE,          "execute",              func_execute },
-    { F_FSTAT,          "fstat",                func_fstat },
-    { F_FREAD,          "fread",                func_fread },
-    { F_FCHMOD,         "fchmod",               func_fchmod },
-    { F_FMKDIR,         "fmkdir",               func_fmkdir },
-    { F_FRMDIR,         "frmdir",               func_frmdir },
-    { F_FILES,          "files",                func_files },
-    { F_FREMOVE,        "fremove",              func_fremove },
-    { F_FRENAME,        "frename",              func_frename },
-    { F_FOPEN,          "fopen",                func_fopen },
-    { F_FCLOSE,         "fclose",               func_fclose },
-    { F_FSEEK,          "fseek",                func_fseek },
-    { F_FEOF,           "feof",                 func_feof },
-    { F_FWRITE,         "fwrite",               func_fwrite },
-    { F_FILE,           "file",                 func_file },
-    { F_FFLUSH,         "fflush",               func_fflush },
-
-    /* Miscellaneous functions */
-    { F_FLUSH,  "anticipate_assignment",     func_anticipate_assignment},
-    { F_LOCALTIME,        "localtime",       func_localtime },
-    { F_TIME,             "time",            func_time },
-    { F_MTIME,            "mtime",           func_mtime },
-    { F_CTIME,            "ctime",           func_ctime },
-    { F_BIND_FUNCTION,    "bind_function",   func_bind_function },
-    { F_UNBIND_FUNCTION,  "unbind_function", func_unbind_function },
-    { F_CONFIG,           "config",          func_config },
-    { F_RANDOM,           "random",          func_random },
-    { F_MIN,            "min",               func_min },
-    { F_MAX,            "max",               func_max },
-    { F_ABS,            "abs",               func_abs },
-    { F_SIN,            "sin",               func_sin },
-    { F_EXP,            "exp",               func_exp },
-    { F_LOG,            "log",               func_log },
-    { F_COS,            "cos",               func_cos },
-    { F_TAN,            "tan",               func_tan },
-    { F_SQRT,           "sqrt",              func_sqrt },
-    { F_ASIN,           "asin",              func_asin },
-    { F_ACOS,           "acos",              func_acos },
-    { F_ATAN,           "atan",              func_atan },
-    { F_POW,            "pow",               func_pow },
-    { F_ATAN2,          "atan2",             func_atan2 },
-    { F_ROUND,          "round",             func_round },
-
-    /* Operations on strings (stringop.c). */
-    { F_STRFMT,           "strfmt",          func_strfmt },
-    { F_STRLEN,           "strlen",          func_strlen },
-    { F_SUBSTR,           "substr",          func_substr },
-    { F_EXPLODE,          "explode",         func_explode },
-    { F_STRSUB,           "strsub",          func_strsub },
-    { F_PAD,              "pad",             func_pad },
-    { F_MATCH_BEGIN,      "match_begin",     func_match_begin },
-    { F_MATCH_TEMPLATE,   "match_template",  func_match_template },
-    { F_MATCH_PATTERN,    "match_pattern",   func_match_pattern },
-    { F_MATCH_REGEXP,     "match_regexp",    func_match_regexp },
-    { F_REGEXP,           "regexp",          func_regexp },
-    { F_SPLIT,            "split",           func_split },
-    { F_EXPLODE_QUOTED,   "explode_quoted",  func_explode_quoted },
-    { F_CRYPT,            "crypt",           func_crypt },
-    { F_MATCH_CRYPTED,    "match_crypted",   func_match_crypted },
-    { F_UPPERCASE,        "uppercase",       func_uppercase },
-    { F_LOWERCASE,        "lowercase",       func_lowercase },
-    { F_STRCMP,           "strcmp",          func_strcmp },
-    { F_STRSED,           "strsed",          func_strsed },
-    { F_STRGRAFT,         "strgraft",        func_strgraft },
-    { F_STRIDX,           "stridx",          func_stridx },
-
-    /* List manipulation (listop.c). */
-    { F_LISTLEN,          "listlen",         func_listlen },
-    { F_SUBLIST,          "sublist",         func_sublist },
-    { F_INSERT,           "insert",          func_insert },
-    { F_REPLACE,          "replace",         func_replace },
-    { F_DELETE,           "delete",          func_delete },
-    { F_SETADD,           "setadd",          func_setadd },
-    { F_SETREMOVE,        "setremove",       func_setremove },
-    { F_UNION,            "union",           func_union },
-    { F_LISTGRAFT,        "listgraft",       func_listgraft },
-    { F_JOIN,             "join",            func_join },
-    { F_LISTIDX,          "listidx",         func_listidx },
-
-    /* Dictionary manipulation (dictop.c). */
-    { F_DICT_VALUES,      "dict_values",     func_dict_values },
-    { F_DICT_KEYS,        "dict_keys",       func_dict_keys },
-    { F_DICT_ADD,         "dict_add",        func_dict_add },
-    { F_DICT_DEL,         "dict_del",        func_dict_del },
-    { F_DICT_CONTAINS,    "dict_contains",   func_dict_contains },
-    { F_DICT_UNION,       "dict_union",      func_dict_union },
-
-    /* Buffer manipulation (bufferop.c). */
-    { F_BUFLEN,           "buflen",          func_buflen },
-    { F_BUFIDX,           "bufidx",          func_bufidx },
-    { F_BUF_REPLACE,      "buf_replace",     func_buf_replace },
-    { F_BUF_TO_STRINGS,   "buf_to_strings",  func_buf_to_strings },
-    { F_BUF_TO_STR,       "buf_to_str",      func_buf_to_str },
-    { F_STRINGS_TO_BUF,   "strings_to_buf",  func_strings_to_buf },
-    { F_STR_TO_BUF,       "str_to_buf",      func_str_to_buf },
-    { F_SUBBUF,           "subbuf",          func_subbuf },
-    { F_BUFSUB,           "bufsub",          func_bufsub },
-    { F_BUFGRAFT,         "bufgraft",        func_bufgraft },
+    /* Object variable functions, MUST be in alpha order */
+    FDEF(F_ABS,                   "abs",                   abs),
+    FDEF(F_ACOS,                  "acos",                  acos),
+    FDEF(F_ADD_METHOD,            "add_method",            add_method),
+    FDEF(F_ADD_VAR,               "add_var",               add_var),
+    FDEF(F_ANCESTORS,             "ancestors",             ancestors),
+    FDEF(F_ANTICIPATE_ASSIGNMENT, "anticipate_assignment", anticipate_assignment),
+    FDEF(F_ASIN,                  "asin",                  asin),
+    FDEF(F_ATAN,                  "atan",                  atan),
+    FDEF(F_ATAN2,                 "atan2",                 atan2),
+    FDEF(F_ATOMIC,                "atomic",                atomic),
+    FDEF(F_BACKUP,                "backup",                backup),
+    FDEF(F_BIND_FUNCTION,         "bind_function",         bind_function),
+    FDEF(F_BIND_PORT,             "bind_port",             bind_port),
+    FDEF(F_BUF_REPLACE,           "buf_replace",           buf_replace),
+    FDEF(F_BUF_TO_STR,            "buf_to_str",            buf_to_str),
+    FDEF(F_BUF_TO_STRINGS,        "buf_to_strings",        buf_to_strings),
+    FDEF(F_BUFGRAFT,              "bufgraft",              bufgraft),
+    FDEF(F_BUFIDX,                "bufidx",                bufidx),
+    FDEF(F_BUFLEN,                "buflen",                buflen),
+    FDEF(F_BUFSUB,                "bufsub",                bufsub),
+    FDEF(F_CACHE_INFO,            "cache_info",            cache_info),
+    FDEF(F_CACHE_STATS,           "cache_stats",           cache_stats),
+    FDEF(F_CALL_TRACE,            "call_trace",            call_trace),
+    FDEF(F_CALLER,                "caller",                caller),
+    FDEF(F_CALLING_METHOD,        "calling_method",        calling_method),
+    FDEF(F_CANCEL,                "cancel",                cancel),
+    FDEF(F_CHILDREN,              "children",              children),
+    FDEF(F_CHPARENTS,             "chparents",             chparents),
+    FDEF(F_CLASS,                 "class",                 frob_class),   /* devalued, see frob_class */
+    FDEF(F_CLEAR_VAR,             "clear_var",             clear_var),
+    FDEF(F_CLOSE_CONNECTION,      "close_connection",      close_connection),
+    FDEF(F_CONFIG,                "config",                config),
+    FDEF(F_CONNECTION,            "connection",            connection),
+    FDEF(F_COS,                   "cos",                   cos),
+    FDEF(F_CREATE,                "create",                create),
+    FDEF(F_CRYPT,                 "crypt",                 crypt),
+    FDEF(F_CTIME,                 "ctime",                 ctime),
+    FDEF(F_CWRITE,                "cwrite",                cwrite),
+    FDEF(F_CWRITEF,               "cwritef",               cwritef),
+    FDEF(F_DATA,                  "data",                  data),
+    FDEF(F_DBLOG,                 "dblog",                 dblog),
+    FDEF(F_DEBUG_CALLERS,         "debug_callers",         debug_callers),
+    FDEF(F_DEFAULT_VAR,           "default_var",           default_var),
+    FDEF(F_DEFINER,               "definer",               definer),
+    FDEF(F_DEL_METHOD,            "del_method",            del_method),
+    FDEF(F_DEL_OBJNAME,           "del_objname",           del_objname),
+    FDEF(F_DEL_VAR,               "del_var",               del_var),
+    FDEF(F_DELETE,                "delete",                delete),
+    FDEF(F_DESTROY,               "destroy",               destroy),
+    FDEF(F_DICT_ADD,              "dict_add",              dict_add),
+    FDEF(F_DICT_CONTAINS,         "dict_contains",         dict_contains),
+    FDEF(F_DICT_DEL,              "dict_del",              dict_del),
+    FDEF(F_DICT_KEYS,             "dict_keys",             dict_keys),
+    FDEF(F_DICT_UNION,            "dict_union",            dict_union),
+    FDEF(F_DICT_VALUES,           "dict_values",           dict_values),
+    FDEF(F_ERROR_FUNC,            "error",                 error),
+    FDEF(F_ERROR_DATA,            "error_data",            error_data),
+    FDEF(F_ERROR_MESSAGE,         "error_message",         error_message),
+    FDEF(F_EXECUTE,               "execute",               execute),
+    FDEF(F_EXP,                   "exp",                   exp),
+    FDEF(F_EXPLODE,               "explode",               explode),
+    FDEF(F_EXPLODE_QUOTED,        "explode_quoted",        explode_quoted),
+    FDEF(F_FCHMOD,                "fchmod",                fchmod),
+    FDEF(F_FCLOSE,                "fclose",                fclose),
+    FDEF(F_FEOF,                  "feof",                  feof),
+    FDEF(F_FFLUSH,                "fflush",                fflush),
+    FDEF(F_FILE,                  "file",                  file),
+    FDEF(F_FILES,                 "files",                 files),
+    FDEF(F_FIND_METHOD,           "find_method",           find_method),
+    FDEF(F_FIND_NEXT_METHOD,      "find_next_method",      find_next_method),
+    FDEF(F_FMKDIR,                "fmkdir",                fmkdir),
+    FDEF(F_FOPEN,                 "fopen",                 fopen),
+    FDEF(F_FREAD,                 "fread",                 fread),
+    FDEF(F_FREMOVE,               "fremove",               fremove),
+    FDEF(F_FRENAME,               "frename",               frename),
+    FDEF(F_FRMDIR,                "frmdir",                frmdir),
+    FDEF(F_FROB_CLASS,            "frob_class",            frob_class),
+    FDEF(F_FROB_HANDLER,          "frob_handler",          frob_handler),
+    FDEF(F_FROB_VALUE,            "frob_value",            frob_value),
+    FDEF(F_FROMLITERAL,           "fromliteral",           fromliteral),
+    FDEF(F_FSEEK,                 "fseek",                 fseek),
+    FDEF(F_FSTAT,                 "fstat",                 fstat),
+    FDEF(F_FWRITE,                "fwrite",                fwrite),
+    FDEF(F_GET_VAR,               "get_var",               get_var),
+    FDEF(F_HAS_ANCESTOR,          "has_ancestor",          has_ancestor),
+    FDEF(F_HAS_METHOD,            "has_method",            has_method),
+    FDEF(F_INHERITED_VAR,         "inherited_var",         inherited_var),
+    FDEF(F_INSERT,                "insert",                insert),
+    FDEF(F_JOIN,                  "join",                  join),
+    FDEF(F_LIST_METHOD,           "list_method",           list_method),
+    FDEF(F_LISTGRAFT,             "listgraft",             listgraft),
+    FDEF(F_LISTIDX,               "listidx",               listidx),
+    FDEF(F_LISTLEN,               "listlen",               listlen),
+    FDEF(F_LOCALTIME,             "localtime",             localtime),
+    FDEF(F_LOG,                   "log",                   log),
+    FDEF(F_LOOKUP,                "lookup",                lookup),
+    FDEF(F_LOWERCASE,             "lowercase",             lowercase),
+    FDEF(F_MATCH_BEGIN,           "match_begin",           match_begin),
+    FDEF(F_MATCH_CRYPTED,         "match_crypted",         match_crypted),
+    FDEF(F_MATCH_PATTERN,         "match_pattern",         match_pattern),
+    FDEF(F_MATCH_REGEXP,          "match_regexp",          match_regexp),
+    FDEF(F_MATCH_TEMPLATE,        "match_template",        match_template),
+    FDEF(F_MAX,                   "max",                   max),
+    FDEF(F_METHODOP,              "method",                method),
+    FDEF(F_METHOD_ACCESS,         "method_access",         method_access),
+    FDEF(F_METHOD_BYTECODE,       "method_bytecode",       method_bytecode),
+    FDEF(F_METHOD_FLAGS,          "method_flags",          method_flags),
+    FDEF(F_METHOD_INFO,           "method_info",           method_info),
+    FDEF(F_METHODS,               "methods",               methods),
+    FDEF(F_MIN,                   "min",                   min),
+    FDEF(F_MTIME,                 "mtime",                 mtime),
+    FDEF(F_OBJNAME,               "objname",               objname),
+    FDEF(F_OBJNUM,                "objnum",                objnum),
+    FDEF(F_OPEN_CONNECTION,       "open_connection",       open_connection),
+    FDEF(F_PAD,                   "pad",                   pad),
+    FDEF(F_PARENTS,               "parents",               parents),
+    FDEF(F_PAUSE,                 "pause",                 pause),
+    FDEF(F_POW,                   "pow",                   pow),
+    FDEF(F_RANDOM,                "random",                random),
+    FDEF(F_REASSIGN_CONNECTION,   "reassign_connection",   reassign_connection),
+    FDEF(F_REFRESH,               "refresh",               refresh),
+    FDEF(F_REGEXP,                "regexp",                regexp),
+    FDEF(F_RENAME_METHOD,         "rename_method",         rename_method),
+    FDEF(F_REPLACE,               "replace",               replace),
+    FDEF(F_RESUME,                "resume",                resume),
+    FDEF(F_RETHROW,               "rethrow",               rethrow),
+    FDEF(F_ROUND,                 "round",                 round),
+    FDEF(F_SENDER,                "sender",                sender),
+    FDEF(F_SET_HEARTBEAT,         "set_heartbeat",         set_heartbeat),
+    FDEF(F_SET_METHOD_ACCESS,     "set_method_access",     set_method_access),
+    FDEF(F_SET_METHOD_FLAGS,      "set_method_flags",      set_method_flags),
+    FDEF(F_SET_OBJNAME,           "set_objname",           set_objname),
+    FDEF(F_SET_USER,              "set_user",              set_user),
+    FDEF(F_SET_VAR,               "set_var",               set_var),
+    FDEF(F_SETADD,                "setadd",                setadd),
+    FDEF(F_SETREMOVE,             "setremove",             setremove),
+    FDEF(F_SHUTDOWN,              "shutdown",              shutdown),
+    FDEF(F_SIN,                   "sin",                   sin),
+    FDEF(F_SIZE,                  "size",                  size),
+    FDEF(F_SPLIT,                 "split",                 split),
+    FDEF(F_SQRT,                  "sqrt",                  sqrt),
+    FDEF(F_STACK,                 "stack",                 stack),
+    FDEF(F_STR_TO_BUF,            "str_to_buf",            str_to_buf),
+    FDEF(F_STRCMP,                "strcmp",                strcmp),
+    FDEF(F_STRFMT,                "strfmt",                strfmt),
+    FDEF(F_STRGRAFT,              "strgraft",              strgraft),
+    FDEF(F_STRIDX,                "stridx",                stridx),
+    FDEF(F_STRINGS_TO_BUF,        "strings_to_buf",        strings_to_buf),
+    FDEF(F_STRLEN,                "strlen",                strlen),
+    FDEF(F_STRSED,                "strsed",                strsed),
+    FDEF(F_STRSUB,                "strsub",                strsub),
+    FDEF(F_SUBBUF,                "subbuf",                subbuf),
+    FDEF(F_SUBLIST,               "sublist",               sublist),
+    FDEF(F_SUBSTR,                "substr",                substr),
+    FDEF(F_SUSPEND,               "suspend",               suspend),
+    FDEF(F_SYNC,                  "sync",                  sync),
+    FDEF(F_TAN,                   "tan",                   tan),
+    FDEF(F_TASK_ID,               "task_id",               task_id),
+    FDEF(F_TASK_INFO,             "task_info",             task_info),
+    FDEF(F_TASKS,                 "tasks",                 tasks),
+    FDEF(F_THIS,                  "this",                  this),
+    FDEF(F_THROW,                 "throw",                 throw),
+    FDEF(F_TICK,                  "tick",                  tick),
+    FDEF(F_TICKS_LEFT,            "ticks_left",            ticks_left),
+    FDEF(F_TIME,                  "time",                  time),
+    FDEF(F_TOERR,                 "toerr",                 toerr),
+    FDEF(F_TOFLOAT,               "tofloat",               tofloat),
+    FDEF(F_TOINT,                 "toint",                 toint),
+    FDEF(F_TOLITERAL,             "toliteral",             toliteral),
+    FDEF(F_TOOBJNUM,              "toobjnum",              toobjnum),
+    FDEF(F_TOSTR,                 "tostr",                 tostr),
+    FDEF(F_TOSYM,                 "tosym",                 tosym),
+    FDEF(F_TRACEBACK,             "traceback",             traceback),
+    FDEF(F_TYPE,                  "type",                  type),
+    FDEF(F_UNBIND_FUNCTION,       "unbind_function",       unbind_function),
+    FDEF(F_UNBIND_PORT,           "unbind_port",           unbind_port),
+    FDEF(F_UNION,                 "union",                 union),
+    FDEF(F_UPPERCASE,             "uppercase",             uppercase),
+    FDEF(F_USER,                  "user",                  user),
+    FDEF(F_VALID,                 "valid",                 valid),
+    FDEF(F_VARIABLES,             "variables",             variables)
 };
 
 void init_op_table(void) {
@@ -349,13 +321,25 @@ void init_op_table(void) {
 }
 
 Int find_function(char *name) {
-    uInt i;
+    uInt start = first_function;
+    uInt end   = NUM_OPERATORS-1;
+    uInt middle = (end+start)/2;
 
-    for (i = first_function; i < NUM_OPERATORS; i++) {
-        if (strcmp(op_info[i].name, name) == 0)
-            return op_info[i].opcode;
+    int rc;
+
+    while ( start <= end &&
+            (rc = strcmp(name, op_info[middle].name)) != 0 )
+    {
+        if (rc < 0)
+            end = middle-1;
+        else
+            start = middle+1;
+        middle = (end+start)/2;
     }
 
-    return -1;
+    if (start <= end)
+        return op_info[middle].opcode;
+    else
+        return -1;
 }
 

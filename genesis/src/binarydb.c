@@ -72,7 +72,7 @@ static FILE *database_file = NULL;
 
 static char *dump_bitmap  = NULL;
 static Int   dump_blocks;
-static Int   last_dumped;
+static off_t last_dumped;
 
 static char *bitmap = NULL;
 static Int bitmap_blocks = 0;
@@ -347,17 +347,17 @@ static void dump_copy (off_t start, Int blocks)
 
     if (i == start+blocks) return;
 
-    if (fseek(database_file, BLOCK_OFFSET (start), SEEK_SET)) {
+    if (fseeko(database_file, BLOCK_OFFSET (start), SEEK_SET)) {
 	UNLOCK_DB("dump_copy")
-        panic("fseek(\"%s\") in copy: %s", database_file, strerror(errno));
+        panic("fseeko(\"%s\") in copy: %s", database_file, strerror(errno));
     }
 
     /* PORTABILITY WARNING : THIS FSEEK MAKES THE FILE LONGER IN SOME CASES.
        Checked on Solaris, should work on others. */
 
-    if (fseek(dump_db_file,  BLOCK_OFFSET (start), SEEK_SET)) {
+    if (fseeko(dump_db_file,  BLOCK_OFFSET (start), SEEK_SET)) {
 	UNLOCK_DB("dump_copy")
-        panic("fseek(\"%s\") in copy: %s", dump_db_file, strerror(errno));
+        panic("fseeko(\"%s\") in copy: %s", dump_db_file, strerror(errno));
     }
     for (i=0; i<blocks; i++) {
 	fread (buf, 1, BLOCK_SIZE, database_file);
@@ -365,8 +365,9 @@ static void dump_copy (off_t start, Int blocks)
 	dump_bitmap[(start+i) >> 3] &= ~(1 << ((start+i)&7));
     }
 #else
-    Int block = 0, dofseek = 1;
-    char buf[BLOCK_SIZE];
+    off_t block = 0;
+    Int   dofseek = 1;
+    char  buf[BLOCK_SIZE];
 
     block = start;
     blocks += start;
@@ -376,13 +377,13 @@ static void dump_copy (off_t start, Int blocks)
     while (block < blocks) {                                                                
         if ( (dump_bitmap[block >> 3] & (1 << (block & 7))) ) {
             if (dofseek) {
-                if (fseek(database_file, BLOCK_OFFSET (block), SEEK_SET)) {
+                if (fseeko(database_file, BLOCK_OFFSET (block), SEEK_SET)) {
                     UNLOCK_DB("dump_copy")
-                    panic("fseek(\"%s\"..): %s", database_file, strerror(errno));
+                    panic("fseeko(\"%s\"..): %s", database_file, strerror(errno));
                 }
-                if (fseek(dump_db_file,  BLOCK_OFFSET (block), SEEK_SET)) {
+                if (fseeko(dump_db_file,  BLOCK_OFFSET (block), SEEK_SET)) {
                     UNLOCK_DB("dump_copy")
-                    panic("fseek(\"%s\"..): %s", dump_db_file, strerror(errno));
+                    panic("fseeko(\"%s\"..): %s", dump_db_file, strerror(errno));
                 }
                 dofseek=0;
             }
@@ -439,13 +440,13 @@ Int simble_dump_some_blocks (Int maxblocks)
     while (maxblocks) {
 	if ( (dump_bitmap[last_dumped >> 3] & (1 << (last_dumped & 7))) ) {
 	    if (dofseek) {
-		if (fseek(database_file, BLOCK_OFFSET (last_dumped), SEEK_SET)) {
+		if (fseeko(database_file, BLOCK_OFFSET (last_dumped), SEEK_SET)) {
 		    UNLOCK_DB("simble_dump_some_blocks")
-                    panic("fseek(\"%s\"..): %s", database_file, strerror(errno));
+                    panic("fseeko(\"%s\"..): %s", database_file, strerror(errno));
 		}
-		if (fseek(dump_db_file,  BLOCK_OFFSET (last_dumped), SEEK_SET)) {
+		if (fseeko(dump_db_file,  BLOCK_OFFSET (last_dumped), SEEK_SET)) {
 		    UNLOCK_DB("simble_dump_some_blocks")
-                    panic("fseek(\"%s\"..): %s", dump_db_file, strerror(errno));
+                    panic("fseeko(\"%s\"..): %s", dump_db_file, strerror(errno));
 		}
 		dofseek=0;
 	    }
@@ -570,7 +571,7 @@ Int simble_get(Obj *object, cObjnum objnum, Long *sizeread)
     LOCK_DB("simble_get")
 
     /* seek to location */
-    if (fseek(database_file, offset, SEEK_SET)) {
+    if (fseeko(database_file, offset, SEEK_SET)) {
 	UNLOCK_DB("simble_get")
 	return 0;
     }
@@ -634,7 +635,7 @@ Int simble_put(Obj *obj, cObjnum objnum, Long *sizewritten)
 		new_offset = old_offset;
 	    } else {
 		simble_unmark(LOGICAL_BLOCK(old_offset), old_size);
-		new_offset = BLOCK_OFFSET(simble_alloc(new_size));
+		new_offset = BLOCK_OFFSET((off_t)simble_alloc(new_size));
 	    }
         } else {
 	    if (dump_db_file)
@@ -656,7 +657,7 @@ Int simble_put(Obj *obj, cObjnum objnum, Long *sizewritten)
         LOCK_DB("simble_put")
         simble_flag_as_dirty();
 
-	new_offset = BLOCK_OFFSET(simble_alloc(new_size));
+	new_offset = BLOCK_OFFSET((off_t)simble_alloc(new_size));
     }
 
     /* Don't store it if it hasn't changed! */
@@ -670,7 +671,7 @@ Int simble_put(Obj *obj, cObjnum objnum, Long *sizewritten)
         }
     }
 
-    if (fseek(database_file, new_offset, SEEK_SET)) {
+    if (fseeko(database_file, new_offset, SEEK_SET)) {
 	UNLOCK_DB("simble_put")
 	buffer_discard(buf);
 	write_err("ERROR: Seek failed for %l.", objnum);
@@ -720,7 +721,7 @@ Int simble_del(cObjnum objnum)
     simble_unmark(LOGICAL_BLOCK(offset), size);
 
     /* Mark object dead in file */
-    if (fseek(database_file, offset, SEEK_SET)) {
+    if (fseeko(database_file, offset, SEEK_SET)) {
 	write_err("ERROR: Failed to seek to object %l.", objnum);
 
         UNLOCK_DB("simble_del")

@@ -323,7 +323,7 @@ void object_destroy(Obj *object) {
 /*
 // -----------------------------------------------------------------
 */
-INTERNAL void object_update_parents(Obj * object,
+static void object_update_parents(Obj * object,
 				    cList *(*list_op)(cList *, cData *))
 {
     Obj * p;
@@ -351,7 +351,7 @@ INTERNAL void object_update_parents(Obj * object,
 // -----------------------------------------------------------------
 */
 
-INTERNAL Hash * object_ancestors_depth_aux(Long objnum, Hash * h) {
+static Hash * object_ancestors_depth_aux(Long objnum, Hash * h) {
     Obj    * obj;
     cData  * d;
     cData    this;

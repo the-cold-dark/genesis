@@ -48,7 +48,7 @@ void func_dblog(void) {
         return 0; \
     }
 
-INTERNAL Bool backup_file(char * file) {
+static Bool backup_file(char * file) {
     static char buf[MAXBSIZE];
     Bool rval = TRUE;
     int from_fd, rcount, to_fd, wcount;

@@ -274,7 +274,7 @@ COLDC_FUNC(rename_method) {
         list = list_add(list, &d); \
     }
 
-INTERNAL cList * list_method_flags(Int flags) {
+static cList * list_method_flags(Int flags) {
     cList * list;
     cData d;
 
@@ -936,7 +936,7 @@ COLDC_FUNC(objnum) {
     push_int(cur_frame->object->objnum);
 }
 
-INTERNAL cList * add_op_arg(cList * out, Int type, Long op, Method * method) {
+static cList * add_op_arg(cList * out, Int type, Long op, Method * method) {
     Obj * obj = method->object;
     cData d;
 

@@ -285,7 +285,7 @@ COLDC_FUNC(random) {
 }
 
 /* which is 1 for max, -1 for min. */
-INTERNAL void find_extreme(Int which) {
+static void find_extreme(Int which) {
     Int arg_start, num_args, i, type;
     cData *args, *extreme, d;
 

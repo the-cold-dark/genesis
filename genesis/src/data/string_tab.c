@@ -68,7 +68,7 @@ void string_tab_fixup_hashtab(StringTab *tab, Long num)
     }
 }
 
-INTERNAL Ident string_tab_from_hash(StringTab *tab, uLong hval, cStr * str) {
+static Ident string_tab_from_hash(StringTab *tab, uLong hval, cStr * str) {
     Long ind, new_size;
 
     /* Look for an existing identifier. */

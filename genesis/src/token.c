@@ -12,8 +12,8 @@
 #define NUM_RESERVED_WORDS (sizeof(reserved_words) / sizeof(*reserved_words))
 #define SUBSCRIPT(c) ((c) & 0x7f)
 
-INTERNAL char *string_token(char *s, Int len, Int *token_len);
-INTERNAL char *identifier_token(char *s, Int len, Int *token_len);
+static char *string_token(char *s, Int len, Int *token_len);
+static char *identifier_token(char *s, Int len, Int *token_len);
 
 static cList *code;
 static Int cur_line, cur_pos;
@@ -361,7 +361,7 @@ Int cur_lineno(void)
     return cur_line + 1;
 }
 
-INTERNAL char * string_token(char * s, Int len, Int *token_len) {
+static char * string_token(char * s, Int len, Int *token_len) {
     Int count = 0, i;
     char *p, *q;
 
@@ -386,7 +386,7 @@ INTERNAL char * string_token(char * s, Int len, Int *token_len) {
 }
 
 /* Assumption: isalpha(*s) || *s == '_'. */
-INTERNAL char *identifier_token(char *s, Int len, Int *token_len)
+static char *identifier_token(char *s, Int len, Int *token_len)
 {
     Int count = 1, i;
     char *p;

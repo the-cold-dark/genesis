@@ -13,16 +13,16 @@
 #include "cache.h"
 #include "net.h"
 
-INTERNAL void connection_read(Conn *conn);
-INTERNAL void connection_write(Conn *conn);
-INTERNAL Conn *connection_add(Int fd, Long objnum);
-INTERNAL void connection_discard(Conn *conn);
-INTERNAL void pend_discard(pending_t *pend);
-INTERNAL void server_discard(server_t *serv);
+static void connection_read(Conn *conn);
+static void connection_write(Conn *conn);
+static Conn *connection_add(Int fd, Long objnum);
+static void connection_discard(Conn *conn);
+static void pend_discard(pending_t *pend);
+static void server_discard(server_t *serv);
 
-INTERNAL Conn * connections;  /* List of client connections. */
-INTERNAL server_t     * servers;      /* List of server sockets. */
-INTERNAL pending_t    * pendings;     /* List of pending connections. */
+static Conn * connections;  /* List of client connections. */
+static server_t     * servers;      /* List of server sockets. */
+static pending_t    * pendings;     /* List of pending connections. */
 
 /*
 // --------------------------------------------------------------------
@@ -296,7 +296,7 @@ Int remove_server(Int port) {
 */
 /* rewrote to reduce buffer copies, by reading from the socket into a
    pre-allocated static buffer that we re-use.  -Brandon */
-INTERNAL void connection_read(Conn *conn) {
+static void connection_read(Conn *conn) {
     Int len;
     cData d;
 
@@ -337,7 +337,7 @@ INTERNAL void connection_read(Conn *conn) {
 /*
 // --------------------------------------------------------------------
 */
-INTERNAL void connection_write(Conn *conn) {
+static void connection_write(Conn *conn) {
     cBuf *buf = conn->write_buf;
     Int r;
 
@@ -359,7 +359,7 @@ INTERNAL void connection_write(Conn *conn) {
 /*
 // --------------------------------------------------------------------
 */
-INTERNAL Conn * connection_add(Int fd, Long objnum) {
+static Conn * connection_add(Int fd, Long objnum) {
     Conn * conn;
 
     /* clear old connections to this objnum */
@@ -385,7 +385,7 @@ INTERNAL Conn * connection_add(Int fd, Long objnum) {
 /*
 // --------------------------------------------------------------------
 */
-INTERNAL void connection_discard(Conn *conn) {
+static void connection_discard(Conn *conn) {
     Obj    * obj;
     cObjnum  objnum;
 
@@ -410,14 +410,14 @@ INTERNAL void connection_discard(Conn *conn) {
 /*
 // --------------------------------------------------------------------
 */
-INTERNAL void pend_discard(pending_t *pend) {
+static void pend_discard(pending_t *pend) {
     efree(pend);
 }
 
 /*
 // --------------------------------------------------------------------
 */
-INTERNAL void server_discard(server_t *serv) {
+static void server_discard(server_t *serv) {
     SOCK_CLOSE(serv->server_socket);
     string_discard(serv->addr);
     efree(serv);

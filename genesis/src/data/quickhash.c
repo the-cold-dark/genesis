@@ -8,8 +8,8 @@
 #define MALLOC_DELTA			 0
 #define HASHTAB_STARTING_SIZE		 128
 
-INTERNAL void increase_hashtab_size(Hash * hash);
-INTERNAL void insert_key(Hash * hash, Int i);
+static void increase_hashtab_size(Hash * hash);
+static void insert_key(Hash * hash, Int i);
 
 Hash * hash_new_with(cList *keys) {
     Hash *cnew;
@@ -97,7 +97,7 @@ Hash * hash_add(Hash * hash, cData * key) {
     return hash;
 }
 
-INTERNAL void insert_key(Hash * hash, Int i) {
+static void insert_key(Hash * hash, Int i) {
     Int ind;
 
     ind = data_hash(&hash->keys->el[i]) % hash->hashtab_size;
@@ -117,7 +117,7 @@ Int hash_find(Hash * hash, cData *key) {
     return F_FAILURE;
 }
 
-INTERNAL void increase_hashtab_size(Hash * hash)
+static void increase_hashtab_size(Hash * hash)
 {
     Int i;
 

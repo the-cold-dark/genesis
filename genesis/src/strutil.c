@@ -137,7 +137,7 @@ cList * match_template(char *ctemplate, char *s) {
 
 /* Match a coupled wildcard as well as the next token, if there is one.  This
  * adds the fields that it matches. */
-INTERNAL char *match_coupled_wildcard(char *ctemplate, char *s) {
+static char *match_coupled_wildcard(char *ctemplate, char *s) {
     char *p, *q;
 
     /* Check for quoted text. */
@@ -178,7 +178,7 @@ INTERNAL char *match_coupled_wildcard(char *ctemplate, char *s) {
 
 /* Match a wildcard.  Also match the next token, if there is one.  This adds
  * the fields that it matches. */
-INTERNAL char * match_wildcard(char *ctemplate, char *s) {
+static char * match_wildcard(char *ctemplate, char *s) {
     char *p, *q, *r;
 
     /* If no token follows the wildcard, then the match succeeds. */
@@ -251,7 +251,7 @@ INTERNAL char * match_wildcard(char *ctemplate, char *s) {
 }
 
 /* Match a word pattern.  Do not add any fields. */
-INTERNAL char * match_word_pattern(char *ctemplate, char *s) {
+static char * match_word_pattern(char *ctemplate, char *s) {
     char *p = s;
     Int abbrev = 0;
 
@@ -303,7 +303,7 @@ INTERNAL char * match_word_pattern(char *ctemplate, char *s) {
 
 /* Add a field.  strip should be true if this is a field for a wildcard not at
  * the end of the template. */
-INTERNAL void add_field(char *start, char *end, Bool strip) {
+static void add_field(char *start, char *end, Bool strip) {
     if (field_pos >= field_size) {
 	field_size = field_size * 2 + MALLOC_DELTA;
 	fields = EREALLOC(fields, Field, field_size);

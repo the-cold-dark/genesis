@@ -63,7 +63,7 @@ void init_web(Int argc, char ** argv) {
 void uninit_web(void) {
 }
 
-INTERNAL char tochar(char h, char l) {
+static char tochar(char h, char l) {
      char p;
 
      h = (char) UCASE(h);

@@ -260,7 +260,7 @@ char *regerror(char *msg) {
 // index() and company
 */
 
-INTERNAL int str_rindexs(char * str, int len, char * sub, int slen, int origin){
+static int str_rindexs(char * str, int len, char * sub, int slen, int origin){
     register char * s;
 
     if (origin < slen)
@@ -284,7 +284,7 @@ INTERNAL int str_rindexs(char * str, int len, char * sub, int slen, int origin){
     return 0;
 }
 
-INTERNAL int str_rindexc(char * str, int len, char sub, int origin) {
+static int str_rindexc(char * str, int len, char sub, int origin) {
     register char * s;
         
     len -= origin;

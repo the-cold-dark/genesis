@@ -113,9 +113,9 @@ extern Bool print_warn;
 /*
 // ------------------------------------------------------------------------
 */
-INTERNAL Method * get_method(FILE * fp, Obj * obj, char * name);
+static Method * get_method(FILE * fp, Obj * obj, char * name);
 char * strchop(char * str, Int len);
-INTERNAL void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames);
+static void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames);
 void blank_and_print_obj(char * what, Float percent_done, Obj * obj);
 
 /*
@@ -123,7 +123,7 @@ void blank_and_print_obj(char * what, Float percent_done, Obj * obj);
 // make this do more eventually
 */
 #if 0
-INTERNAL void shutdown_coldcc(void) {
+static void shutdown_coldcc(void) {
     exit(1);
 }
 #endif
@@ -153,7 +153,7 @@ static holder_t * holders = NULL;
 
 nh_t * nhs = NULL;
 
-INTERNAL Int add_objname(char * str, Long objnum, Int skip_lookup) {
+static Int add_objname(char * str, Long objnum, Int skip_lookup) {
     Ident   id = ident_get(str);
     Obj   * obj = NULL;
     Long    num = INV_OBJNUM;
@@ -205,7 +205,7 @@ cObjnum get_object_name(Ident id) {
 }
 
 
-INTERNAL void cleanup_holders(void) {
+static void cleanup_holders(void) {
     holder_t * holder = holders,
              * old = NULL;
     Long       objnum;
@@ -255,7 +255,7 @@ INTERNAL void cleanup_holders(void) {
 /* only call with a method which declars a MF_NATIVE flag */
 /* holders are redundant, but it lets us keep track of methods defined
    native, but which are not */
-INTERNAL nh_t * find_defined_native_method(cObjnum objnum, Ident name) {
+static nh_t * find_defined_native_method(cObjnum objnum, Ident name) {
     nh_t * nhp;
 
     for (nhp = nhs; nhp != (nh_t *) NULL; nhp = nhp->next) {
@@ -268,7 +268,7 @@ INTERNAL nh_t * find_defined_native_method(cObjnum objnum, Ident name) {
     return (nh_t *) NULL;
 }
 
-INTERNAL void remember_native(Method * method) {
+static void remember_native(Method * method) {
     nh_t  * nh;
 
     nh = find_defined_native_method(method->object->objnum, method->name);
@@ -289,7 +289,7 @@ INTERNAL void remember_native(Method * method) {
     nh->method = NOT_AN_IDENT;
 }
 
-INTERNAL void frob_n_print_errstr(char * err, char * name, cObjnum objnum);
+static void frob_n_print_errstr(char * err, char * name, cObjnum objnum);
 
 Int find_native_method(Long object, Long method_name) {
     Ident      oname;
@@ -491,7 +491,7 @@ void verify_native_methods(void) {
 #define NOOBJ 0
 #define ISOBJ 1
 
-INTERNAL Int get_idref(char * sp, idref_t * id, Int isobj) {
+static Int get_idref(char * sp, idref_t * id, Int isobj) {
     char         str[BUF], * p;
     register Int x;
     char         * end;
@@ -542,7 +542,7 @@ INTERNAL Int get_idref(char * sp, idref_t * id, Int isobj) {
 /*
 // ------------------------------------------------------------------------
 */
-INTERNAL Long parse_to_objnum(idref_t ref) {
+static Long parse_to_objnum(idref_t ref) {
     Long id,
          objnum = 0;
     Int  result;
@@ -567,7 +567,7 @@ INTERNAL Long parse_to_objnum(idref_t ref) {
 // ------------------------------------------------------------------------
 */
 
-INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
+static Obj * handle_objcmd(char * line, char * s, Int new) {
     idref_t   obj;
     char    * p = (char) NULL,
               obj_str[BUF];
@@ -731,7 +731,7 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
 /*
 // ------------------------------------------------------------------------
 */
-INTERNAL void handle_parcmd(char * s, Int new) {
+static void handle_parcmd(char * s, Int new) {
     cData     d;
     char     * p = NULL,
                obj_str[BUF];
@@ -786,7 +786,7 @@ INTERNAL void handle_parcmd(char * s, Int new) {
 /*
 // ------------------------------------------------------------------------
 */
-INTERNAL void handle_namecmd(char * line, char * s, Int new) {
+static void handle_namecmd(char * line, char * s, Int new) {
     char       name[BUF];
     char     * p;
     Long       num, other;
@@ -842,7 +842,7 @@ INTERNAL void handle_namecmd(char * line, char * s, Int new) {
 /*
 // ------------------------------------------------------------------------
 */
-INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
+static void handle_varcmd(char * line, char * s, Int new, Int access) {
     static cObjnum last_definer = INV_OBJNUM;
     static Int rc_check;
 
@@ -961,7 +961,7 @@ INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
 /*
 // ------------------------------------------------------------------------
 */
-INTERNAL void handle_evalcmd(FILE * fp, char * s, Int new, Int access) {
+static void handle_evalcmd(FILE * fp, char * s, Int new, Int access) {
     Long       name;
     Method * method;
 
@@ -988,7 +988,7 @@ INTERNAL void handle_evalcmd(FILE * fp, char * s, Int new, Int access) {
 /*
 // ------------------------------------------------------------------------
 */
-INTERNAL Int get_method_name(char * s, idref_t * id) {
+static Int get_method_name(char * s, idref_t * id) {
     Int    count = 0, x;
     char * p;
 
@@ -1008,7 +1008,7 @@ INTERNAL Int get_method_name(char * s, idref_t * id) {
     return count;
 }
 
-INTERNAL void handle_bind_nativecmd(FILE * fp, char * s) {
+static void handle_bind_nativecmd(FILE * fp, char * s) {
     idref_t    nat;
     idref_t    meth;
     Ident      inat, imeth;
@@ -1046,7 +1046,7 @@ INTERNAL void handle_bind_nativecmd(FILE * fp, char * s) {
     ident_discard(imeth);
 }
 
-INTERNAL void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
+static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
     char     * p = NULL;
     cObjnum   definer;
     Ident      name;
@@ -1173,7 +1173,7 @@ INTERNAL void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
 /*
 // ------------------------------------------------------------------------
 */
-INTERNAL void frob_n_print_errstr(char * err, char * name, cObjnum objnum) {
+static void frob_n_print_errstr(char * err, char * name, cObjnum objnum) {
     Int        line = 0;
     cStr * str;
 
@@ -1196,7 +1196,7 @@ INTERNAL void frob_n_print_errstr(char * err, char * name, cObjnum objnum) {
     string_discard(str);
 }
 
-INTERNAL Method * get_method(FILE * fp, Obj * obj, char * name) {
+static Method * get_method(FILE * fp, Obj * obj, char * name) {
     Method * method;
     cList   * code,
              * errors;
@@ -1412,7 +1412,7 @@ void compile_cdc_file(FILE * fp) {
 */
 Int last_length; /* used in doing fancy formatting */
 void dump_object(Long objnum, FILE *fp, Bool objnames);
-INTERNAL char * method_definition(Method * m);
+static char * method_definition(Method * m);
 
 #define PRINT_OBJNAME(__obj, __fp) { \
         fputc('$', __fp); \
@@ -1422,7 +1422,7 @@ INTERNAL char * method_definition(Method * m);
         fprintf(__fp, "#%li", (long) __num); \
     }
 
-INTERNAL void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames) {
+static void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames) {
     Bool cachepull = FALSE;
 
     if (objnames) {
@@ -1668,7 +1668,7 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
         } \
     }
 
-INTERNAL char * method_definition(Method * m) {
+static char * method_definition(Method * m) {
     static char   buf[255];
     static char   flags[50];
     char        * s;

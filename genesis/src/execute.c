@@ -18,16 +18,16 @@
 
 extern Bool running;
 
-INTERNAL void execute(void);
-INTERNAL void out_of_ticks_error(void);
-INTERNAL void start_error(Ident error, cStr *explanation, cData *arg,
+static void execute(void);
+static void out_of_ticks_error(void);
+static void start_error(Ident error, cStr *explanation, cData *arg,
                           Traceback_info * location);
-INTERNAL Traceback_info * traceback_add(Traceback_info * traceback,
+static Traceback_info * traceback_add(Traceback_info * traceback,
                                         Ident error);
-INTERNAL void fill_in_method_info(Traceback_info *d);
+static void fill_in_method_info(Traceback_info *d);
 
-INTERNAL Frame *frame_store = NULL;
-INTERNAL Int frame_depth;
+static Frame *frame_store = NULL;
+static Int frame_depth;
 cStr *numargs_str;
 
 Frame *cur_frame, *suspend_frame;
@@ -1041,7 +1041,7 @@ void dump_execute_profile(void) {
 #define MAX_NUM 2147483647
 #endif
 
-INTERNAL void execute(void) {
+static void execute(void) {
     Int opcode;
 
     while (cur_frame) {
@@ -1127,7 +1127,7 @@ void anticipate_assignment(void) {
 */
 
 #if DISABLED
-INTERNAL void
+static void
 call_native_method(Method * method,
                    Int        stack_start,
                    Int        arg_start,
@@ -1605,7 +1605,7 @@ void func_type_error(char *which, cData *wrong, char *required)
     cthrow(type_id, "The %s argument (%D) is not %s.", which, wrong, required);
 }
 
-INTERNAL Bool is_critical (void) {
+static Bool is_critical (void) {
     if (cur_frame
 	&& cur_frame->specifiers
 	&& cur_frame->specifiers->type==CRITICAL)
@@ -1639,7 +1639,7 @@ void cthrow(Ident error, char *fmt, ...)
 	string_discard(str);
 }
 
-INTERNAL Traceback_info *traceback_info_new() {
+static Traceback_info *traceback_info_new() {
     Traceback_info *new;
 
     new = (Traceback_info *) emalloc(sizeof(Traceback_info));
@@ -1648,7 +1648,7 @@ INTERNAL Traceback_info *traceback_info_new() {
     return new;
 }
 
-INTERNAL Traceback_info *traceback_info_add(Traceback_info *now,
+static Traceback_info *traceback_info_add(Traceback_info *now,
                                             Traceback_info *new) {
     Traceback_info *current;
 
@@ -1693,7 +1693,7 @@ Traceback_info *traceback_info_dup(Traceback_info *info) {
     return new;
 }
 
-INTERNAL void traceback_info_discard(Traceback_info *info) {
+static void traceback_info_discard(Traceback_info *info) {
     if (info->next != NULL) {
         traceback_info_discard(info->next);
         info->next = NULL;
@@ -1764,7 +1764,7 @@ void user_error(Ident error, cStr *explanation, cData *arg)
     method_discard(method);
 }
 
-INTERNAL void out_of_ticks_error(void)
+static void out_of_ticks_error(void)
 {
     static cStr     * explanation;
     Traceback_info  * location;
@@ -1790,7 +1790,7 @@ INTERNAL void out_of_ticks_error(void)
     method_discard(method);
 }
 
-INTERNAL void start_error(Ident error, cStr *explanation, cData *arg,
+static void start_error(Ident error, cStr *explanation, cData *arg,
                           Traceback_info * location)
 {
     Traceback_info *traceback;
@@ -1950,7 +1950,7 @@ void propagate_error(Traceback_info * traceback, Ident error,
                     explanation, arg);
 }
 
-INTERNAL Traceback_info * traceback_add(Traceback_info * traceback, Ident error)
+static Traceback_info * traceback_add(Traceback_info * traceback, Ident error)
 {
     Traceback_info * frame;
 
@@ -1997,7 +1997,7 @@ void pop_handler_info(void)
     efree(old);
 }
 
-INTERNAL void fill_in_method_info(Traceback_info *d)
+static void fill_in_method_info(Traceback_info *d)
 {
     Ident method_name;
 

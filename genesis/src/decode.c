@@ -33,42 +33,42 @@ struct context {
     Context *enclosure;
 };
 
-INTERNAL Int count_lines(Int start, Int end, unsigned *flags);
-INTERNAL Stmt_list *decompile_stmt_list(Int start, Int end);
-INTERNAL Stmt *decompile_stmt(Int *pos_ptr);
-INTERNAL Stmt *decompile_body(Int start, Int end);
-INTERNAL Stmt *decompile_until(Int *start, Int marker);
-INTERNAL Stmt *body_from_stmt_list(Stmt_list *stmts);
-INTERNAL Case_list *decompile_cases(Int start, Int end);
-INTERNAL Case_entry *decompile_case(Int *pos_ptr, Int switch_end);
-INTERNAL Expr_list *decompile_case_values(Int *pos_ptr, Int *end_ret);
-INTERNAL Id_list *make_error_id_list(Int which);
-INTERNAL Expr_list *decompile_expressions(Int *pos_ptr);
-INTERNAL Expr_list *decompile_expressions_bounded(Int *pos_ptr, Int end);
-INTERNAL cList *unparse_stmt_list(cList *output, Stmt_list *stmts, Int indent);
-INTERNAL cList *unparse_stmt(cList *output, Stmt *stmt, Int indent, Stmt *last);
-INTERNAL Int is_complex_if_else_stmt(Stmt *stmt);
-INTERNAL Int is_complex_type(Int type);
-INTERNAL cList *unparse_body(cList *output, Stmt *body, cStr *str, Int indent);
-INTERNAL cList *unparse_cases(cList *output, Case_list *cases, Int indent);
-INTERNAL cList *unparse_case(cList *output, Case_entry *case_entry, Int indent);
-INTERNAL cStr *unparse_expr(cStr *str, Expr *expr, Int paren);
-INTERNAL Int is_this(Expr *expr);
-INTERNAL cStr *unparse_args(cStr *str, Expr_list *args);
-INTERNAL cStr *unparse_expr_prec(cStr *str, Expr *expr, Int caller_type,
+static Int count_lines(Int start, Int end, unsigned *flags);
+static Stmt_list *decompile_stmt_list(Int start, Int end);
+static Stmt *decompile_stmt(Int *pos_ptr);
+static Stmt *decompile_body(Int start, Int end);
+static Stmt *decompile_until(Int *start, Int marker);
+static Stmt *body_from_stmt_list(Stmt_list *stmts);
+static Case_list *decompile_cases(Int start, Int end);
+static Case_entry *decompile_case(Int *pos_ptr, Int switch_end);
+static Expr_list *decompile_case_values(Int *pos_ptr, Int *end_ret);
+static Id_list *make_error_id_list(Int which);
+static Expr_list *decompile_expressions(Int *pos_ptr);
+static Expr_list *decompile_expressions_bounded(Int *pos_ptr, Int end);
+static cList *unparse_stmt_list(cList *output, Stmt_list *stmts, Int indent);
+static cList *unparse_stmt(cList *output, Stmt *stmt, Int indent, Stmt *last);
+static Int is_complex_if_else_stmt(Stmt *stmt);
+static Int is_complex_type(Int type);
+static cList *unparse_body(cList *output, Stmt *body, cStr *str, Int indent);
+static cList *unparse_cases(cList *output, Case_list *cases, Int indent);
+static cList *unparse_case(cList *output, Case_entry *case_entry, Int indent);
+static cStr *unparse_expr(cStr *str, Expr *expr, Int paren);
+static Int is_this(Expr *expr);
+static cStr *unparse_args(cStr *str, Expr_list *args);
+static cStr *unparse_expr_prec(cStr *str, Expr *expr, Int caller_type,
 				 Int assoc);
-INTERNAL cStr *unparse_complex_expr(cStr *str, Expr *expr, Int caller_type,
+static cStr *unparse_complex_expr(cStr *str, Expr *expr, Int caller_type,
 				  Int assoc);
-INTERNAL Int prec_level(Int opcode);
-INTERNAL char *binary_token(Int opcode);
-INTERNAL cList *add_and_discard_string(cList *output, cStr *str);
-INTERNAL char *varname(Int ind);
+static Int prec_level(Int opcode);
+static char *binary_token(Int opcode);
+static cList *add_and_discard_string(cList *output, cStr *str);
+static char *varname(Int ind);
 
 /* These globals get set at the start and are never modified. */
-INTERNAL Obj *the_object;
-INTERNAL Method *the_method;
-INTERNAL Long *the_opcodes;
-INTERNAL Int the_increment;
+static Obj *the_object;
+static Method *the_method;
+static Long *the_opcodes;
+static Int the_increment;
 
 static struct {
     Int opcode;
@@ -144,7 +144,7 @@ Int line_number(Method *method, Int pc) {
     return count + count_lines(0, pc, &flags);
 }
 
-INTERNAL Int count_lines(Int start, Int end, unsigned *flags)
+static Int count_lines(Int start, Int end, unsigned *flags)
 {
     Int count=0, last=-1, next, complex_catch=0, with_start=0;
 

@@ -39,10 +39,10 @@ Bool   print_warn = YES;
 #define EXISTING_DB  0
 
 /* function prototypes */
-INTERNAL void   initialize(Int argc, char **argv);
-INTERNAL void   usage(char * name);
-INTERNAL FILE * find_text_db(void);
-INTERNAL void   compile_db(Int type);
+static void   initialize(Int argc, char **argv);
+static void   usage(char * name);
+static FILE * find_text_db(void);
+static void   compile_db(Int type);
 
 void   shutdown_coldcc(void) {
     running = NO;
@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
 /*
 // --------------------------------------------------------------------
 */
-INTERNAL void compile_db(Int newdb) {
+static void compile_db(Int newdb) {
     FILE       * fp;
 
     /* create a new db, this will blast old dbs */
@@ -131,7 +131,7 @@ INTERNAL void compile_db(Int newdb) {
 // Will output to global name "output", set by options
 */
 
-INTERNAL FILE * find_text_db(void) {
+static FILE * find_text_db(void) {
     FILE        * fp = NULL;
 
     if (strccmp(c_dir_textdump, "stdin") == 0) {
@@ -208,7 +208,7 @@ void print_natives(void) {
         strcpy(var, name); \
     }
 
-INTERNAL void initialize(Int argc, char **argv) {
+static void initialize(Int argc, char **argv) {
     Bool   opt_bool = NO;
     char * name = NULL,
          * opt = NULL,

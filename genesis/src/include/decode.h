@@ -18,7 +18,7 @@ cList * decompile(Method * method,
 
 #ifdef _DECODE_C_
 
-INTERNAL int format_flags;
+static int format_flags;
 #define FULL_PARENS() (format_flags & FMT_FULL_PARENS)
 #define FULL_BRACES() (format_flags & FMT_FULL_BRACES)
 

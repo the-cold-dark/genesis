@@ -9,9 +9,9 @@
 #define MALLOC_DELTA			 0
 #define HASHTAB_STARTING_SIZE		 8
 
-INTERNAL void insert_key(cDict *dict, Int i);
-INTERNAL Int search(cDict *dict, cData *key);
-INTERNAL void increase_hashtab_size(cDict *dict);
+static void insert_key(cDict *dict, Int i);
+static Int search(cDict *dict, cData *key);
+static void increase_hashtab_size(cDict *dict);
 
 cDict *dict_new(cList *keys, cList *values)
 {
@@ -274,7 +274,7 @@ cDict *dict_prep(cDict *dict) {
     return cnew;
 }
 
-INTERNAL void insert_key(cDict *dict, Int i)
+static void insert_key(cDict *dict, Int i)
 {
     Int ind;
 
@@ -283,7 +283,7 @@ INTERNAL void insert_key(cDict *dict, Int i)
     dict->hashtab[ind] = i;
 }
 
-INTERNAL Int search(cDict *dict, cData *key) {
+static Int search(cDict *dict, cData *key) {
     Int ind, i;
 
     ind = data_hash(key) % dict->hashtab_size;
@@ -300,7 +300,7 @@ Int dict_size(cDict *dict)
     return list_length(dict->keys);
 }
 
-INTERNAL void increase_hashtab_size(cDict *dict)
+static void increase_hashtab_size(cDict *dict)
 {
     Int i;
 

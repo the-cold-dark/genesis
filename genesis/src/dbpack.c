@@ -158,7 +158,7 @@ Long size_ident(Long id)
     return size_long(len) + (len * sizeof(Char));
 }
 
-INTERNAL cBuf * pack_list(cBuf *buf, cList *list)
+static cBuf * pack_list(cBuf *buf, cList *list)
 {
     cData *d;
 
@@ -169,7 +169,7 @@ INTERNAL cBuf * pack_list(cBuf *buf, cList *list)
     return buf;
 }
 
-INTERNAL cList *unpack_list(cBuf *buf, Long *buf_pos)
+static cList *unpack_list(cBuf *buf, Long *buf_pos)
 {
     Int len, i;
     cList *list;
@@ -183,7 +183,7 @@ INTERNAL cList *unpack_list(cBuf *buf, Long *buf_pos)
     return list;
 }
 
-INTERNAL Int size_list(cList *list)
+static Int size_list(cList *list)
 {
     cData *d;
     Int size = 0;
@@ -194,7 +194,7 @@ INTERNAL Int size_list(cList *list)
     return size;
 }
 
-INTERNAL cBuf * pack_dict(cBuf *buf, cDict *dict)
+static cBuf * pack_dict(cBuf *buf, cDict *dict)
 {
     Int i;
 
@@ -208,7 +208,7 @@ INTERNAL cBuf * pack_dict(cBuf *buf, cDict *dict)
     return buf;
 }
 
-INTERNAL cDict *unpack_dict(cBuf *buf, Long *buf_pos)
+static cDict *unpack_dict(cBuf *buf, Long *buf_pos)
 {
     cDict *dict;
     Int i;
@@ -227,7 +227,7 @@ INTERNAL cDict *unpack_dict(cBuf *buf, Long *buf_pos)
     return dict;
 }
 
-INTERNAL Int size_dict(cDict *dict)
+static Int size_dict(cDict *dict)
 {
     Int size = 0, i;
 
@@ -241,7 +241,7 @@ INTERNAL Int size_dict(cDict *dict)
     return size;
 }
 
-INTERNAL cBuf * pack_vars(cBuf *buf, Obj *obj)
+static cBuf * pack_vars(cBuf *buf, Obj *obj)
 {
     Int i;
 
@@ -262,7 +262,7 @@ INTERNAL cBuf * pack_vars(cBuf *buf, Obj *obj)
     return buf;
 }
 
-INTERNAL void unpack_vars(cBuf *buf, Long *buf_pos, Obj *obj)
+static void unpack_vars(cBuf *buf, Long *buf_pos, Obj *obj)
 {
     Int i;
 
@@ -284,7 +284,7 @@ INTERNAL void unpack_vars(cBuf *buf, Long *buf_pos, Obj *obj)
 
 }
 
-INTERNAL Int size_vars(Obj *obj)
+static Int size_vars(Obj *obj)
 {
     Int size = 0, i;
 
@@ -306,7 +306,7 @@ INTERNAL Int size_vars(Obj *obj)
     return size;
 }
 
-INTERNAL cBuf * pack_method(cBuf *buf, Method *method)
+static cBuf * pack_method(cBuf *buf, Method *method)
 {
     Int i, j;
 
@@ -340,7 +340,7 @@ INTERNAL cBuf * pack_method(cBuf *buf, Method *method)
     return buf;
 }
 
-INTERNAL Method *unpack_method(cBuf *buf, Long *buf_pos)
+static Method *unpack_method(cBuf *buf, Long *buf_pos)
 {
     Int     i, j, n;
     Method *method;
@@ -396,7 +396,7 @@ INTERNAL Method *unpack_method(cBuf *buf, Long *buf_pos)
     return method;
 }
 
-INTERNAL Int size_method(Method *method)
+static Int size_method(Method *method)
 {
     Int size = 0, i, j;
 
@@ -430,7 +430,7 @@ INTERNAL Int size_method(Method *method)
     return size;
 }
 
-INTERNAL cBuf * pack_methods(cBuf *buf, Obj *obj)
+static cBuf * pack_methods(cBuf *buf, Obj *obj)
 {
     Int i;
 
@@ -450,7 +450,7 @@ INTERNAL cBuf * pack_methods(cBuf *buf, Obj *obj)
     return buf;
 }
 
-INTERNAL void unpack_methods(cBuf *buf, Long *buf_pos, Obj *obj)
+static void unpack_methods(cBuf *buf, Long *buf_pos, Obj *obj)
 {
     Int i;
 
@@ -469,7 +469,7 @@ INTERNAL void unpack_methods(cBuf *buf, Long *buf_pos, Obj *obj)
     }
 }
 
-INTERNAL Int size_methods(Obj *obj)
+static Int size_methods(Obj *obj)
 {
     Int size = 0, i;
 
@@ -488,7 +488,7 @@ INTERNAL Int size_methods(Obj *obj)
     return size;
 }
 
-INTERNAL cBuf * pack_strings(cBuf *buf, Obj *obj)
+static cBuf * pack_strings(cBuf *buf, Obj *obj)
 {
     Int i;
 
@@ -511,7 +511,7 @@ INTERNAL cBuf * pack_strings(cBuf *buf, Obj *obj)
     return buf;
 }
 
-INTERNAL void unpack_strings(cBuf *buf, Long *buf_pos, Obj *obj)
+static void unpack_strings(cBuf *buf, Long *buf_pos, Obj *obj)
 {
     Int i;
     Long size;
@@ -535,7 +535,7 @@ INTERNAL void unpack_strings(cBuf *buf, Long *buf_pos, Obj *obj)
     }
 }
 
-INTERNAL Int size_strings(Obj *obj)
+static Int size_strings(Obj *obj)
 {
     Int size = 0, i;
 
@@ -559,7 +559,7 @@ INTERNAL Int size_strings(Obj *obj)
     return size;
 }
 
-INTERNAL cBuf * pack_idents(cBuf *buf, Obj *obj)
+static cBuf * pack_idents(cBuf *buf, Obj *obj)
 {
     Int i;
 
@@ -576,7 +576,7 @@ INTERNAL cBuf * pack_idents(cBuf *buf, Obj *obj)
     return buf;
 }
 
-INTERNAL void unpack_idents(cBuf *buf, Long *buf_pos, Obj *obj)
+static void unpack_idents(cBuf *buf, Long *buf_pos, Obj *obj)
 {
     Int i;
 
@@ -590,7 +590,7 @@ INTERNAL void unpack_idents(cBuf *buf, Long *buf_pos, Obj *obj)
     }
 }
 
-INTERNAL Int size_idents(Obj *obj)
+static Int size_idents(Obj *obj)
 {
     Int size = 0, i;
 

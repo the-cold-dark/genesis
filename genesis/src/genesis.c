@@ -32,8 +32,8 @@ extern pthread_t cleaner;
 #include "net.h"
 #include "sig.h"
 
-INTERNAL void initialize(Int argc, char **argv);
-INTERNAL void main_loop(void);
+static void initialize(Int argc, char **argv);
+static void main_loop(void);
 
 #ifdef __UNIX__
 uid_t uid;
@@ -61,7 +61,7 @@ void unlink_runningfile(void) {
 // --------------------------------------------------------------------
 */
 
-INTERNAL void prebind_port_with(char * str, char * name) {
+static void prebind_port_with(char * str, char * name) {
     int port;
     char * addr = NULL, * s = str;
     Bool tcp = YES;
@@ -187,7 +187,7 @@ void get_my_hostname(void) {
 // --------------------------------------------------------------------
 */
 
-INTERNAL void initialize(Int argc, char **argv) {
+static void initialize(Int argc, char **argv) {
     cList   * args;
     cStr     * str;
     cData     arg;
@@ -526,7 +526,7 @@ INTERNAL void initialize(Int argc, char **argv) {
 // use 'gettimeofday' since most OS's simply wrap time() around it
 */
 
-INTERNAL void main_loop(void) {
+static void main_loop(void) {
     register Int     seconds;
     register time_t  next, last;
 

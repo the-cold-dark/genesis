@@ -340,7 +340,7 @@ cBuf *buffer_prep(cBuf *buf, Int new_size) {
     }
 }
 
-INTERNAL
+static
 int buf_rindexs(uChar * buf, int len, uChar * sub, int slen, int origin){
     register uChar * s;
 
@@ -365,7 +365,7 @@ int buf_rindexs(uChar * buf, int len, uChar * sub, int slen, int origin){
     return 0;
 }
 
-INTERNAL int buf_rindexc(uChar * buf, int len, uChar sub, int origin) {
+static int buf_rindexc(uChar * buf, int len, uChar sub, int origin) {
     register uChar * s;
         
     len -= origin;

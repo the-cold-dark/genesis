@@ -26,7 +26,7 @@ int uppercase[NUM_CHARS];
 static Int  reserve_fds[MAX_SCRATCH];
 static Int  fds_used;
 
-INTERNAL void claim_fd(Int i);
+static void claim_fd(Int i);
 
 void init_util(void) {
     int i;
@@ -504,7 +504,7 @@ void init_scratch_file(void) {
 	claim_fd(i);
 }
 
-INTERNAL void claim_fd(Int i) {
+static void claim_fd(Int i) {
 #ifdef __Win32__
     reserve_fds[i] = open("null_file", O_WRONLY | O_CREAT, S_IREAD | S_IWRITE);
 #else

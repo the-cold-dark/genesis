@@ -59,16 +59,16 @@ pthread_mutex_t lookup_mutex;
 Int name_cache_hits = 0;
 Int name_cache_misses = 0;
 
-INTERNAL datum objnum_key(Long objnum, Number_buf nbuf);
-INTERNAL datum name_key(Long name);
-INTERNAL datum offset_size_value(off_t offset, Int size, Number_buf nbuf);
-INTERNAL void parse_offset_size_value(datum value, off_t *offset, Int *size);
-INTERNAL datum objnum_value(Long objnum, Number_buf nbuf);
-INTERNAL void sync_name_cache(void);
-INTERNAL Int store_name(Long name, Long objnum);
-INTERNAL Int get_name(Long name, Long *objnum);
+static datum objnum_key(Long objnum, Number_buf nbuf);
+static datum name_key(Long name);
+static datum offset_size_value(off_t offset, Int size, Number_buf nbuf);
+static void parse_offset_size_value(datum value, off_t *offset, Int *size);
+static datum objnum_value(Long objnum, Number_buf nbuf);
+static void sync_name_cache(void);
+static Int store_name(Long name, Long objnum);
+static Int get_name(Long name, Long *objnum);
 
-INTERNAL DBM *dbp;
+static DBM *dbp;
 
 struct name_cache_entry {
     Long name;
@@ -329,7 +329,7 @@ Long lookup_next_name(void)
 }
 #endif
 
-INTERNAL datum objnum_key(Long objnum, Number_buf nbuf)
+static datum objnum_key(Long objnum, Number_buf nbuf)
 {
     char *s;
     datum key;
@@ -348,7 +348,7 @@ INTERNAL datum objnum_key(Long objnum, Number_buf nbuf)
     return key;
 }
 
-INTERNAL datum offset_size_value(off_t offset, Int size, Number_buf nbuf)
+static datum offset_size_value(off_t offset, Int size, Number_buf nbuf)
 {
     char *s;
     Number_buf tmp_buf;
@@ -366,7 +366,7 @@ INTERNAL datum offset_size_value(off_t offset, Int size, Number_buf nbuf)
     return value;
 }
 
-INTERNAL void parse_offset_size_value(datum value, off_t *offset, Int *size)
+static void parse_offset_size_value(datum value, off_t *offset, Int *size)
 {
     char *p;
 
@@ -375,7 +375,7 @@ INTERNAL void parse_offset_size_value(datum value, off_t *offset, Int *size)
     *size = atol(p + 1);
 }
 
-INTERNAL datum name_key(Long name)
+static datum name_key(Long name)
 {
     datum key;
 
@@ -385,7 +385,7 @@ INTERNAL datum name_key(Long name)
     return key;
 }
 
-INTERNAL datum objnum_value(Long objnum, Number_buf nbuf)
+static datum objnum_value(Long objnum, Number_buf nbuf)
 {
     char *s;
     datum value;
@@ -396,7 +396,7 @@ INTERNAL datum objnum_value(Long objnum, Number_buf nbuf)
     return value;
 }
 
-INTERNAL void sync_name_cache(void)
+static void sync_name_cache(void)
 {
     Int i;
 
@@ -411,7 +411,7 @@ INTERNAL void sync_name_cache(void)
     }
 }
 
-INTERNAL Int store_name(Long name, Long objnum)
+static Int store_name(Long name, Long objnum)
 {
     datum key, value;
     Number_buf nbuf;
@@ -428,7 +428,7 @@ INTERNAL Int store_name(Long name, Long objnum)
     return 1;
 }
 
-INTERNAL Int get_name(Long name, Long *objnum)
+static Int get_name(Long name, Long *objnum)
 {
     datum key, value;
 

@@ -698,7 +698,7 @@ void op_start_args(void) {
     arg_pos++;
 }
 
-INTERNAL void handle_method_error(cObjnum objnum, Ident message) {
+static void handle_method_error(cObjnum objnum, Ident message) {
     cData d;
 
     d.type = OBJNUM;

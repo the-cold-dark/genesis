@@ -49,18 +49,18 @@ struct _offset_size {
     Int   size;
 };
 
-INTERNAL void objnum_keyvalue(Long objnum, char *buf, DBT *key);
-INTERNAL void name_key(Long name, DBT *key);
-INTERNAL void offset_size_value(off_t offset, Int size,
+static void objnum_keyvalue(Long objnum, char *buf, DBT *key);
+static void name_key(Long name, DBT *key);
+static void offset_size_value(off_t offset, Int size,
                                 _offset_size *os, DBT *value);
-INTERNAL void parse_offset_size_value(DBT *value, off_t *offset, Int *size);
-INTERNAL void sync_name_cache(void);
-INTERNAL Int store_name(Long name, Long objnum);
-INTERNAL Int get_name(Long name, Long *objnum);
+static void parse_offset_size_value(DBT *value, off_t *offset, Int *size);
+static void sync_name_cache(void);
+static Int store_name(Long name, Long objnum);
+static Int get_name(Long name, Long *objnum);
 
-INTERNAL DB *objnum_dbp;
-INTERNAL DB *name_dbp;
-INTERNAL DBC *dbc;
+static DB *objnum_dbp;
+static DB *name_dbp;
+static DBC *dbc;
 
 struct name_cache_entry {
     Long name;
@@ -377,7 +377,7 @@ Int lookup_remove_name(Long name)
     return 1;
 }
 
-INTERNAL void objnum_keyvalue(Long objnum, char *buf, DBT *key)
+static void objnum_keyvalue(Long objnum, char *buf, DBT *key)
 {
     memset(key, 0, sizeof(*key));
     memcpy(buf, (uChar*)(&objnum), sizeof(objnum));
@@ -385,7 +385,7 @@ INTERNAL void objnum_keyvalue(Long objnum, char *buf, DBT *key)
     key->size = sizeof(objnum);
 }
 
-INTERNAL void offset_size_value(off_t offset, Int size,
+static void offset_size_value(off_t offset, Int size,
                                 _offset_size *os, DBT *value)
 {
     memset(os, 0, sizeof(*os));
@@ -397,7 +397,7 @@ INTERNAL void offset_size_value(off_t offset, Int size,
     value->size = sizeof(*os);
 }
 
-INTERNAL void parse_offset_size_value(DBT *value, off_t *offset, Int *size)
+static void parse_offset_size_value(DBT *value, off_t *offset, Int *size)
 {
     _offset_size *os = (_offset_size*)value->data;
 
@@ -405,7 +405,7 @@ INTERNAL void parse_offset_size_value(DBT *value, off_t *offset, Int *size)
     *size = os->size;
 }
 
-INTERNAL void name_key(Long name, DBT *key)
+static void name_key(Long name, DBT *key)
 {
     int size;
     char* name_str = ident_name_size(name, &size);
@@ -416,7 +416,7 @@ INTERNAL void name_key(Long name, DBT *key)
     key->size = size + 1;
 }
 
-INTERNAL void sync_name_cache(void)
+static void sync_name_cache(void)
 {
     Int i;
 
@@ -431,7 +431,7 @@ INTERNAL void sync_name_cache(void)
     }
 }
 
-INTERNAL Int store_name(Long name, Long objnum)
+static Int store_name(Long name, Long objnum)
 {
     DBT key, value;
     char buf[SIZEOF_LONG];
@@ -450,7 +450,7 @@ INTERNAL Int store_name(Long name, Long objnum)
     return 1;
 }
 
-INTERNAL Int get_name(Long name, Long *objnum)
+static Int get_name(Long name, Long *objnum)
 {
     DBT key, value;
     int ret;

@@ -23,7 +23,7 @@
 #include "net.h"
 #include "util.h"
 
-INTERNAL SOCKET grab_port(Int port, char * addr, int socktype);
+static SOCKET grab_port(Int port, char * addr, int socktype);
 static Long translate_connect_error(Int error);
 
 static struct sockaddr_in sockin;	/* An internet address. */
@@ -178,7 +178,7 @@ Bool prebind_port(int port, char * addr, int tcp) {
     return YES;
 }
 
-INTERNAL int use_prebound(SOCKET * sock, int port, char * addr, int socktype) {
+static int use_prebound(SOCKET * sock, int port, char * addr, int socktype) {
     Prebind  * pb,
             ** pbp = &prebound;
 
@@ -212,7 +212,7 @@ INTERNAL int use_prebound(SOCKET * sock, int port, char * addr, int socktype) {
     return FALSE;
 }
 
-INTERNAL SOCKET grab_port(Int port, char * addr, int socktype) {
+static SOCKET grab_port(Int port, char * addr, int socktype) {
     int    one = 1;
     Int flags;
     SOCKET sock;

@@ -466,8 +466,7 @@ int list_index(cList * list, cData * search, int origin) {
                 return (d - start) + 1;
         }
     } else {
-        start += origin;
-        for (d = start; d < end; d++) {
+        for (d = start + origin; d < end; d++) {
             if (data_cmp(search, d) == 0)
                 return (d - start) + 1;
         }

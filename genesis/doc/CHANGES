@@ -8,6 +8,8 @@ contributors to that version.
 
 
 1.1.12 [5/7/2004]
+      * remove some improper win32 borland compiler logic (Jon Lambert)
+      * fix origin bug in listidx (Will Robertson) 
       * fix `[buffer1] in `[buffer2] where buffer2 is empty to return 0 (Brad)
       * overhaul the configure script for db header and library finding (Brad)
 

@@ -67,11 +67,10 @@
 /*
 // ---------------------------------------------------------------------
 // Clean objects out of the cache?  This gives you a smaller memory
-// imprint, but it may cause lag if your memory cache is too small
-// and you are demanding many objects constantly.  You may want to
-// expand the cache size
+// imprint, but it usually causes more work for the server as it will
+// be constantly removing and pulling objects in an dout of the cache.
 */
-#if ENABLED
+#if DISABLED
 #  define CLEAN_CACHE
 #endif
 

@@ -26,11 +26,11 @@ COLDC_FUNC(listgraft) {
                &args[1]);
         return;
     } else if (pos == 1) {
-        l2 = list_append(l2, l1);
         new = list_dup(l2);
+        new = list_append(new, l1);
     } else if (pos-1 == list_length(l1)) {
-        l1 = list_append(l1, l2);
         new = list_dup(l1);
+        new = list_append(new, l2);
     } else {
         new = list_new(list_length(l1) + list_length(l2));
         for (x=2, d1=list_first(l1); d1; d1=list_next(l1, d1), x++) {

@@ -26,24 +26,11 @@ module_t veil_module = {init_veil, uninit_veil};
 
 /*
 // 1 byte bitfield flags
-// 1 byte unused
 // 2 bytes channel id
-// 2 bytes unused
 // 2 bytes length
 */
 
-#define HEADER_SIZE    8
-
-#ifdef UNDEFINED
-/* using the standard way was causing unaligned accesses */
-typedef struct header_s {
-    unsigned char  flags;
-    unsigned char  u0;
-    unsigned short sid;
-    unsigned char  u1[2];
-    unsigned short len;
-} header_t;
-#endif
+#define HEADER_SIZE    5
 
 void init_veil(Int argc, char ** argv) {
     pabort_id = ident_get("abort");
@@ -61,7 +48,7 @@ void uninit_veil(void) {
 // -------------------------------------------------------------------
 // In ColdC we represent a VEIL packet as:
 //
-//       [1|0, 'abort|'close|'open, id, `[]]
+//       [1|0, 'abort|'close|'open|0, id, `[]]
 //
 // The first argument represents the push bit, and the end of a message.
 // id is an integer.
@@ -89,7 +76,7 @@ cList * buf_to_veil_packets(cBuf * buf) {
     cbuf = buf->s;
 
     forever {
-        /* 8 bytes will give us the header, we check length again after
+        /* 5 bytes will give us the header, we check length again after
            that, because the header gives us the data length */
         if (blen < HEADER_SIZE)
             break;
@@ -98,8 +85,8 @@ cList * buf_to_veil_packets(cBuf * buf) {
         flags = (Int) cbuf[0];
 
         /* get the Channel ID and data length */
-        channel = (Int) (((int) cbuf[2] * 256) + ((int) cbuf[3]));
-        length = (Int) (((int) cbuf[6] * 256) + ((int) cbuf[7]));
+        channel = (Int) (((int) cbuf[1] * 256) + ((int) cbuf[2]));
+        length = (Int) (((int) cbuf[3] * 256) + ((int) cbuf[4]));
 
         if (length > (blen - HEADER_SIZE))
             break;
@@ -191,19 +178,17 @@ NATIVE_METHOD(to_veil_pkts) {
 // sent to the packet, just make sure you do it right
 */
 NATIVE_METHOD(from_veil_pkts) {
-    cData        * d,
-                  * pa;
+    cData       * d,
+                * pa;
     cBuf        * out,
-                  * header;
-    cList        * p, * packets;
-    Int             len;
+                * header;
+    cList       * p,
+                * packets;
+    Int           len;
 
     INIT_1_ARG(LIST);
 
     header = buffer_new(HEADER_SIZE);
-    header->s[1] = (unsigned char) 0;
-    header->s[4] = (unsigned char) 0;
-    header->s[5] = (unsigned char) 0;
 
     out = buffer_new(0);
     packets = LIST1;
@@ -236,15 +221,15 @@ NATIVE_METHOD(from_veil_pkts) {
         if (!pa || pa->type != INTEGER)
             THROW((type_id, "Packet submitted in an invalid format"));
 
-        header->s[2] = (unsigned char) pa->u.val/256;
-        header->s[3] = (unsigned char) pa->u.val%256;
+        header->s[1] = (unsigned char) pa->u.val/256;
+        header->s[2] = (unsigned char) pa->u.val%256;
 
         pa = list_next(p, pa);
         if (!pa || pa->type != BUFFER)
             THROW((type_id, "Packet submitted in an invalid format"));
 
-        header->s[6] = (unsigned char) pa->u.buffer->len/256;
-        header->s[7] = (unsigned char) pa->u.buffer->len%256;
+        header->s[3] = (unsigned char) pa->u.buffer->len/256;
+        header->s[4] = (unsigned char) pa->u.buffer->len%256;
 
         len = out->len + header->len + pa->u.buffer->len - 2;
         out = (cBuf *) erealloc(out, sizeof(cBuf) + len);
@@ -257,46 +242,3 @@ NATIVE_METHOD(from_veil_pkts) {
     CLEAN_RETURN_BUFFER(out);
 }
 
-/*
-
-$veil:
-
-.close_channel(id, buffer)
-.abort_channel(id, buffer)
-.send_message(id, buffer)
-
-.parse_channel(buffer) -- ALWAYS CALL IN SYNC--keeps an internal buffer
-
-.parse_message(id, flag, buffer)
-
-Breakup buffer as needed, and send push bit.
-
-*/
-
-/*
-// -------------------------------------------------------------------
-// 
-// .open_channel(id, buffer)
-//
-// buffer may be fragmented across multiple packets, but will be sent
-// as one message.
-*/
-NATIVE_METHOD(veil_open_channel) {
-    cBuf  * buf;
-    cList * packets;
-
-    INIT_1_OR_2_ARGS(BUFFER, BUFFER);
-
-    if (argc == 1) {
-        buf = buffer_dup(_BUF(ARG1));
-    } else {
-        /* if they sent us a second argument, concatenate it on the end */
-        buf = buffer_append(buffer_dup(_BUF(ARG1)), _BUF(ARG2));
-    }
-
-    packets = buf_to_veil_packets(buf);
-
-    buffer_discard(buf);
-
-    CLEAN_RETURN_LIST(packets);
-}

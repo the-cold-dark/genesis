@@ -248,6 +248,8 @@ Int yylex(void)
 	    Float f=yylval.num;
 
             f = atof(string_chars(float_buf));
+            string_discard(float_buf);
+
 	    if (*s=='.') {
 	        Float muly=1;
 

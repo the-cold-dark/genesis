@@ -6,6 +6,15 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-29 [28-May-97] Brad, Brandon
+      * fixed a memory leak in float parsing (Brad)
+      * added -W flag to shutoff warnings in coldcc (Brandon)
+      * updated the VEIL module to function per new specs (Brandon)
+      * fixed minor problems in configure (Brandon)
+      * fixed leak in dict_union() (Brandon)
+      * fixed some method decompiling of things (parenthesis) (Brandon)
+      * fixed frame depth for paused/suspended tasks (Brandon)
+      * fixed listgraft() wierdness (Brad)
 1.0-28 [29-Apr-97] Brian, Miro, Brandon
       * fixed bug in inherit_var() (Brian)
       * fixed bug in bufidx() (Miro)

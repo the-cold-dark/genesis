@@ -40,6 +40,7 @@ Long       method_start;
 Obj * cur_obj;
 extern Bool print_objs;
 extern Bool print_invalid;
+extern Bool print_warn;
 
 #define ERR(__s)  (printf("\rLine %ld: %s\n", (long) line_count, __s))
 
@@ -50,9 +51,11 @@ extern Bool print_invalid;
     }
 
 #define WARN(_printf_) { \
-        printf("\rLine %ld: WARNING: ", (long) line_count); \
-        printf _printf_; \
-        fputc('\n', stdout); \
+        if (print_warn) { \
+            printf("\rLine %ld: WARNING: ", (long) line_count); \
+            printf _printf_; \
+            fputc('\n', stdout); \
+        } \
     }
 
 #define DIE(__s) { \
@@ -204,11 +207,13 @@ INTERNAL void cleanup_holders(void) {
     while (holder != NULL) {
         id = ident_get(string_chars(holder->str));
         if (!lookup_retrieve_name(id, &objnum)) {
-            printf("\rWARNING: Name $%s for object #%d disapppeared.\n",
-                   ident_name(id), (int) objnum);
+            if (print_warn)
+                printf("\rWARNING: Name $%s for object #%d disapppeared.\n",
+                       ident_name(id), (int) objnum);
         } else if (objnum != holder->objnum) {
-            printf("\rWARNING: Name $%s is no longer bound to object #%d.\n",
-                   ident_name(id), (int) objnum);
+            if (print_warn)
+               printf("\rWARNING: Name $%s is no longer bound to object #%d.\n",
+                      ident_name(id), (int) objnum);
         } else {
             obj = cache_retrieve(holder->objnum);
             if (obj) {
@@ -216,8 +221,9 @@ INTERNAL void cleanup_holders(void) {
                     obj->objname = ident_dup(id);
                 cache_discard(obj);
             } else {
-                printf("\rWARNING: Object $%s (#%d) was never defined.\n",
-                       ident_name(id), (int) objnum);
+                if (print_warn)
+                    printf("\rWARNING: Object $%s (#%d) was never defined.\n",
+                           ident_name(id), (int) objnum);
                 lookup_remove_name(id);
             }
         }
@@ -301,23 +307,26 @@ void verify_native_methods(void) {
   
         /* die? */
         if (objnum == INV_OBJNUM) {
-            printf("\rWARNING: Unable to find object for native $%s.%s()\n",
-                   native->bindobj, native->name);
+            if (print_warn)
+                printf("\rWARNING: Unable to find object for native $%s.%s()\n",
+                       native->bindobj, native->name);
             continue;
         }
 
         /* pull the object or die if we cant */
         obj = cache_retrieve(objnum);
         if (!obj) {
-            printf("\rWARNING: Unable to retrieve object #%li ($%s)\n",
-                   (long) objnum, native->bindobj);
+            if (print_warn)
+                printf("\rWARNING: Unable to retrieve object #%li ($%s)\n",
+                       (long) objnum, native->bindobj);
             continue;
         }
 
         /* is the name correct? */
         name = ident_get(native->name);
         if (name == NOT_AN_IDENT) {
-            fformat(stdout,
+            if (print_warn)
+                fformat(stdout,
                  "\rWARNING: Invalid name \"%s\" for native method on \"%O\"\n",
                    native->name, obj->objnum);
             cache_discard(obj);
@@ -362,7 +371,8 @@ void verify_native_methods(void) {
             if (!(method->m_flags & MF_NATIVE) &&
                  use_natives != FORCE_NATIVES)
             {
-                fformat(stdout, "\rWARNING: method definition %O.%s() overrides native method.\n", obj->objnum, ident_name(mname));
+                if (print_warn)
+                    fformat(stdout, "\rWARNING: method definition %O.%s() overrides native method.\n", obj->objnum, ident_name(mname));
             } else {
                 method->native = x;
                 method->m_flags |= MF_NATIVE;
@@ -398,6 +408,7 @@ void verify_native_methods(void) {
             /* remove the native array designator from the method,
                but not the native mask */
             cur_obj = cache_retrieve(objnum);
+            if (print_warn)
                 printf("\rWARNING: No native definition for method .%s()\n",
                        ident_name(name));
             if (cur_obj) {
@@ -821,16 +832,18 @@ INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
             NEXT_WORD(s);
             data_from_literal(&d, s);
             if (d.type == -1) {
-                printf("\rLine %ld: WARNING: invalid data for variable ", (long) line_count);
-                print_dbref(cur_obj, cur_obj->objnum, stdout, TRUE);
-                if (cur_obj->objnum!=definer && (def=cache_retrieve(definer))) {
-                    fputc('<', stdout);
-                    print_dbref(def, def->objnum, stdout, TRUE);
-                    fputc('>', stdout);
-                    cache_discard(def);
+                if (print_warn) {
+                    printf("\rLine %ld: WARNING: invalid data for variable ", (long) line_count);
+                    print_dbref(cur_obj, cur_obj->objnum, stdout, TRUE);
+                    if (cur_obj->objnum!=definer && (def=cache_retrieve(definer))) {
+                        fputc('<', stdout);
+                        print_dbref(def, def->objnum, stdout, TRUE);
+                        fputc('>', stdout);
+                        cache_discard(def);
+                    }
+                    printf(",%s:\nLine %ld: WARNING: data: %s\nLine %ld: WARNING: Defaulting value to ZERO ('0').\n",
+                           ident_name(var), (long) line_count, strchop(s, 50), (long) line_count);
                 }
-                printf(",%s:\nLine %ld: WARNING: data: %s\nLine %ld: WARNING: Defaulting value to ZERO ('0').\n",
-                       ident_name(var), (long) line_count, strchop(s, 50), (long) line_count);
             }
         }
 

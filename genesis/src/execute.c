@@ -1307,7 +1307,7 @@ PUSH_FUNC(objnum, OBJNUM,  cObjnum,   objnum, var)
 PUSH_FUNC(list,   LIST,    cList *,   list,   list_dup(var))
 PUSH_FUNC(dict,   DICT,    cDict *,   dict,   dict_dup(var))
 PUSH_FUNC(symbol, SYMBOL,  Ident,      symbol, ident_dup(var))
-PUSH_FUNC(error,  T_ERROR,   Ident,      error,  ident_dup(var))
+PUSH_FUNC(error,  T_ERROR, Ident,      error,  ident_dup(var))
 PUSH_FUNC(buffer, BUFFER,  cBuf *, buffer, buffer_dup(var))
 
 PUSH_NATIVE(int,    INTEGER, cNum,       val)
@@ -1317,7 +1317,7 @@ PUSH_NATIVE(objnum, OBJNUM,  cObjnum,   objnum)
 PUSH_NATIVE(list,   LIST,    cList *,   list)
 PUSH_NATIVE(dict,   DICT,    cDict *,   dict)
 PUSH_NATIVE(symbol, SYMBOL,  Ident,      symbol)
-PUSH_NATIVE(error,  T_ERROR,   Ident,      error)
+PUSH_NATIVE(error,  T_ERROR, Ident,      error)
 PUSH_NATIVE(buffer, BUFFER,  cBuf *, buffer)
 
 /*

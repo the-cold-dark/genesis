@@ -342,7 +342,7 @@ echo "- System configuration"
 
 echo $ac_n "  Getting hostname""... $ac_c" 1>&6
 hostname=`(hostname || uname -n) 2>/dev/null`
-if [ -x $hostname ]; then
+if [ -z "$hostname" ]; then
     if [ $host = NONE ]; then
         cat <<END
 ** UNABLE TO DETERMINE **
@@ -367,7 +367,7 @@ NONE)
   case $nonopt in
   NONE)
     host_alias=`$ac_config_guess`
-    if test -x $host_alias; then
+    if test -z "$host_alias"; then
         cat <<END
 UNABLE TO DETERMINE
 ** You can specify the system type with the argument --system=TYPE
@@ -635,7 +635,7 @@ if test -s conftest && (./conftest; exit) 2>/dev/null; then
         echo
         echo $ac_n "  What is the order of bytes in a long? [$order] $ac_c"
         read ans
-        if [ -x $ans ]; then
+        if [ -z "$ans" ]; then
             if [ -n $order ]; then
                 ac_cv_byteorder=$order
             else

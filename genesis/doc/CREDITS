@@ -1,36 +1,3 @@
-ColdMUD is copyright 1993, 1994 by Greg Hudson
-
-Genesis is authored by many people, and is Copyright 1994, 1995, 1996 by
-Brandon Gillespie, unless otherwise stated in an individual file.
-
-The following terms apply to all files associated with Genesis unless
-explicitly disclaimed in an individual file.
-
-The authors hereby grant permission to use, copy, modify, distribute, and
-license this software and its documentation for any purpose, provided that
-existing copyright notices are retained in all copies and that this notice
-is included verbatim in any distributions. No written agreement, license, or
-royalty fee is required for any of the authorized uses. Modifications to
-this software may be copyrighted by their authors and need not follow the
-licensing terms described here, provided that the new terms are clearly
-indicated on the first page of each file where they apply.
-
-IN NO EVENT SHALL THE AUTHORS OR DISTRIBUTORS BE LIABLE TO ANY PARTY FOR
-DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
-OF THE USE OF THIS SOFTWARE, ITS DOCUMENTATION, OR ANY DERIVATIVES THEREOF,
-EVEN IF THE AUTHORS HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-I.E. IF THIS SOFTWARE MAKES YOUR COMPUTER EAT YOUR HARD DRIVE, IT IS NOT OUR
-FAULT.
-
-THE AUTHORS AND DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. THIS SOFTWARE IS
-PROVIDED ON AN "AS IS" BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO
-OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR
-MODIFICATIONS.
-
-----------------------------------------------------------------------------
-
 Genesis
 
 Genesis is a derivitive work of ColdMUD. The concise history of it, from
@@ -54,16 +21,9 @@ Project maintains a server for development and distribution. Donations are
 regularly used in maintaining and improving the server. Hardware and
 monetary donations are both encouraged).
 
-Cold Project Primary Developers:
+Information on Cold Project Contributors can be found at:
 
-   Brandon Gillespie, Miroslav Silovic
-
-Cold Project Additional Contributors:
-
-   Dancer, Robert de Forest, Jeff Kesselman, Jon Lambert, Brian Buchanan
-   Brad Roberts, Ted Kanzinsky
-
-(See CHANGES file for more information)
+    http://www.cold.org/info/contrib.html
 
 ----------------------------------------------------------------------------
 

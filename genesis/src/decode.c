@@ -57,6 +57,8 @@ INTERNAL Int is_this(Expr *expr);
 INTERNAL cStr *unparse_args(cStr *str, Expr_list *args);
 INTERNAL cStr *unparse_expr_prec(cStr *str, Expr *expr, Int caller_type,
 				 Int assoc);
+INTERNAL cStr *unparse_complex_expr(cStr *str, Expr *expr, Int caller_type,
+				  Int assoc);
 INTERNAL Int prec_level(Int opcode);
 INTERNAL char *binary_token(Int opcode);
 INTERNAL cList *add_and_discard_string(cList *output, cStr *str);
@@ -1665,12 +1667,12 @@ static cStr *unparse_expr(cStr *str, Expr *expr, Int paren) {
       case FROB:
         /* $#$NOTE: frobs shouldn't have to have ()'s around them */
 	str = string_add_chars(str, "(<", 2);
-	str = unparse_expr(str, expr->u.frob.cclass, PAREN_ASSIGN);
+	str = unparse_complex_expr(str, expr->u.frob.cclass, FROB, 0);
 	str = string_add_chars(str, ", ", 2);
-	str = unparse_expr(str, expr->u.frob.rep, PAREN_ASSIGN);
+	str = unparse_complex_expr(str, expr->u.frob.rep, FROB, 0);
 	if (expr->u.frob.handler) {
 	    str = string_add_chars(str, ", ", 2);
-	    str = unparse_expr(str, expr->u.frob.handler, PAREN_ASSIGN);
+	    str = unparse_complex_expr(str, expr->u.frob.handler, FROB, 0);
 	}
 	return string_add_chars(str, ">)", 2);
 
@@ -1787,9 +1789,10 @@ static cStr *unparse_expr(cStr *str, Expr *expr, Int paren) {
       case CONDITIONAL:
 	str = unparse_expr_prec(str, expr->u.cond.cond, CONDITIONAL, 1);
 	str = string_add_chars(str, " ? ", 3);
-	str = unparse_expr(str, expr->u.cond.true, PAREN_ASSIGN);
+	str = unparse_expr_prec(str, expr->u.cond.true, CONDITIONAL, 1);
 	str = string_add_chars(str, " : ", 3);
-	return unparse_expr_prec(str, expr->u.cond.false, CONDITIONAL, 0);
+	str = unparse_expr_prec(str, expr->u.cond.false, CONDITIONAL, 1);
+	return str;
 
       case CRITICAL:
 	str = string_add_chars(str, "(| ", 3);
@@ -1862,6 +1865,20 @@ static cStr *unparse_expr_prec(cStr *str, Expr *expr, Int caller_type,
 	return string_addc(str, ')');
     } else {
 	return unparse_expr(str, expr, PAREN_ASSIGN);
+    }
+}
+
+static cStr *unparse_complex_expr(cStr *str, Expr *expr, Int caller_type,
+				  Int assoc)
+{
+    if (expr->type < DATA_END ||
+        expr->type == FUNCTION_CALL ||
+        expr->type == VAR) {
+	return unparse_expr(str, expr, PAREN_ASSIGN);
+    } else {
+	str = string_addc(str, '(');
+	str = unparse_expr(str, expr, PAREN_ASSIGN);
+	return string_addc(str, ')');
     }
 }
 

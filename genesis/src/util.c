@@ -193,7 +193,11 @@ Long random_number(Long n) {
     if (!n)
       return 0;
 
+#ifdef sys_sunos41
+    if (n <= 256)
+#else
     if (RAND_MAX >> 8 >= n)
+#endif
 	num >>= 8;
     return num % n;
 }

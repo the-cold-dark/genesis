@@ -72,7 +72,7 @@ void func_dict_contains(void) {
 
 void func_dict_union(void) {
     cData * args;
-    cDict * dict1, * dict2;
+    cDict * dict1, * dict2, *d;
 
     if (!func_init_2(&args, DICT, DICT))
         return;
@@ -81,6 +81,10 @@ void func_dict_union(void) {
     dict2 = dict_dup(DICT2);
     pop(2);
 
-    push_dict(dict_union(dict2, dict1));
+    /* dict_union will discard the dicts */
+    d = dict_union(dict2, dict1);
+
+    push_dict(d);
+    dict_discard(d);
 }
 

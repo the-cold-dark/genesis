@@ -64,9 +64,17 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 /* The following tokens are terminals for the parser. */
 
 %token  FIRST_TOKEN
+
+/* data */
 %token	<num>	INTEGER OBJNUM
 %token  <fnum>  FLOAT
-%token	<s>	COMMENT STRING SYMBOL OBJNAME IDENT T_ERROR
+%token	<s>	STRING SYMBOL OBJNAME T_ERROR
+%token          LIST DICT BUFFER FROB
+
+%token  DATA_END
+
+/* not data */
+%token  <s>     COMMENT IDENT
 %token		DISALLOW_OVERRIDES ARG VAR
 %token		IF FOR OP_IN UPTO WHILE SWITCH CASE DEFAULT
 %token		BREAK CONTINUE RETURN
@@ -114,6 +122,7 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 
 %token OP_MAP_RANGE OP_MAPHASH_RANGE OP_FILTER_RANGE OP_FIND_RANGE 
 
+%token FUNCTION_START
 %token F_DEBUG_CALLERS F_CALL_TRACE
 %token F_TYPE F_CLASS F_TOINT F_TOFLOAT F_TOSTR F_TOLITERAL F_FROMLITERAL
 %token F_TOOBJNUM F_TOSYM F_TOERR F_VALID F_STRFMT F_STRLEN F_STRIDX

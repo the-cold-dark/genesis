@@ -35,6 +35,7 @@ void func_reassign_connection(void) {
             return;
         } else if (find_connection(obj)) {
             cthrow(perm_id, "Object %O already has a connection.", obj->objnum);
+            cache_discard(obj);
             return;
         }
         c->objnum = obj->objnum;
@@ -179,14 +180,19 @@ void func_cwritef(void) {
 
     while (!feof(fp)) {
         r = fread(buf->s, sizeof(unsigned char), block, fp);
-        if (r != block && !feof(fp)) {
-            buffer_discard(buf);
-            close_scratch_file(fp);
-            cthrow(file_id, "Trouble reading file \"%s\": %s",
-                   str->s, strerror(GETERR()));
-            return;
-        }
-        tell(cur_frame->object, buf);
+        if (r != block) {
+            if (!feof(fp)) {
+                buffer_discard(buf);
+                close_scratch_file(fp);
+                cthrow(file_id, "Trouble reading file \"%s\": %s",
+                       str->s, strerror(GETERR()));
+                return;
+            } else {
+                buf->len = r;
+                tell(cur_frame->object, buf);
+            }
+        } else
+            tell(cur_frame->object, buf);
     }
 
     /* Discard the buffer and close the file. */

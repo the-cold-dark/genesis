@@ -12,6 +12,7 @@
 
 void catch_SIGCHLD(int sig);
 void catch_SIGFPE(int sig);
+void catch_SIGPIPE(int sig);
 
 void uninit_sig(void) {
     signal(SIGFPE,  SIG_DFL);
@@ -23,11 +24,11 @@ void uninit_sig(void) {
     signal(SIGUSR1, SIG_DFL);
     signal(SIGUSR2, SIG_DFL);
     signal(SIGCHLD, SIG_DFL);
+    signal(SIGPIPE, SIG_DFL);
 }
 
 void init_sig(void) {
     caught_fpe = 0;
-    signal(SIGFPE,  catch_SIGFPE);
     signal(SIGILL,  catch_signal);
     signal(SIGQUIT, catch_signal);
     signal(SIGINT,  catch_signal);
@@ -35,17 +36,22 @@ void init_sig(void) {
     signal(SIGTERM, catch_signal);
     signal(SIGUSR1, catch_signal);
     signal(SIGUSR2, catch_signal);
+    signal(SIGFPE,  catch_SIGFPE);
+    signal(SIGPIPE, catch_SIGPIPE);
     signal(SIGCHLD, catch_SIGCHLD);
+}
+
+void catch_SIGPIPE(int sig) {
+    signal(SIGPIPE,  catch_SIGPIPE);
 }
 
 void catch_SIGFPE(int sig) {
     caught_fpe++;
+    signal(SIGFPE,  catch_SIGFPE);
 }
 
 void catch_SIGCHLD(int sig) {
     waitpid(-1, NULL, WNOHANG);
-
-    /* reset the signal so we catch it again */
     signal(SIGCHLD, catch_SIGCHLD);
 }
 

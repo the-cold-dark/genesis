@@ -43,6 +43,7 @@ void func_localtime(void) {
     l = list_new(11);
     d = list_empty_spaces(l, 11);
 
+    /* Add one to certain elements to make them 1-x instead of 0-x */
     d[0].type=INTEGER;
     d[0].u.val = (cNum) t;
     d[1].type=INTEGER;
@@ -54,13 +55,13 @@ void func_localtime(void) {
     d[4].type=INTEGER;
     d[4].u.val = tms->tm_mday;
     d[5].type=INTEGER;
-    d[5].u.val = tms->tm_mon;
+    d[5].u.val = tms->tm_mon + 1;
     d[6].type=INTEGER;
     d[6].u.val = tms->tm_year;
     d[7].type=INTEGER;
-    d[7].u.val = tms->tm_wday;
+    d[7].u.val = tms->tm_wday + 1;
     d[8].type=INTEGER;
-    d[8].u.val = tms->tm_yday;
+    d[8].u.val = tms->tm_yday + 1;
     d[9].type=INTEGER;
     d[9].u.val = tms->tm_isdst;
     d[10].type = STRING;

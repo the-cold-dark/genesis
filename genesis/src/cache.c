@@ -405,6 +405,7 @@ void cache_sanity_check(void) {
 //
 */
 
+#ifdef CLEAN_CACHE
 void cache_cleanup(void) {
     Obj * obj;
     Int        i;
@@ -412,23 +413,8 @@ void cache_cleanup(void) {
     for (i = 0; i < cache_width; i++) {
         for (obj = inactive[i].next; obj != &inactive[i]; obj = obj->next) {
             obj->ucounter >>= 1;
-            if(obj->ucounter > 0) {
-#if DISABLED
-                if(obj->objnum == INV_OBJNUM)
-                    continue;
-
-                /* Attempt to pack fragmented object
-                   storage space by reallocating it */
-                objnum = obj->objnum;
-                if (obj->dirty && !db_put(obj, obj->objnum))
-                    panic("Could not store an object.");
-
-                object_free(obj);
-                if(!db_get(obj, objnum))
-                    obj->objnum = INV_OBJNUM;
-#endif
+            if (obj->ucounter > 0)
                 continue;
-            }
             if (obj->objnum != INV_OBJNUM && obj->dirty) {
                 if (!db_put(obj, obj->objnum))
                     panic("Could not store an object.");
@@ -446,5 +432,6 @@ void cache_cleanup(void) {
         }
     }
 }
+#endif
 
 #undef _cache_

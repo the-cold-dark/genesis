@@ -32,16 +32,21 @@ static struct {
     { "default",		DEFAULT },
     { "disallow_overrides",	DISALLOW_OVERRIDES },
     { "else",			ELSE },
+    { "filter",                 OP_FILTER },
+    { "find",                   OP_FIND },
     { "for",			FOR },
     { "fork",			FORK },
     { "handler",		HANDLER },
+    { "hash",                   OP_MAPHASH },
     { "if",			IF },
     { "in",			OP_IN },
+    { "map",                    OP_MAP },
     { "pass",			PASS },
     { "return",			RETURN },
     { "switch",			SWITCH },
     { "to",			TO },
     { "var",			VAR },
+    { "where",                  WHERE },
     { "while",			WHILE },
     { "with",			WITH },
 
@@ -194,10 +199,10 @@ Int yylex(void)
 	    return INTEGER;
 
 	{
-	    float f=yylval.num;
+	    Float f=yylval.num;
 
 	    if (*s=='.') {
-	        float muly=1;
+	        Float muly=1;
 
 	        s++, cur_pos++, len--;
 		while (len && isdigit(*s)) {

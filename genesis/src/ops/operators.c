@@ -64,6 +64,242 @@ void op_if(void) {
     pop(1);
 }
 
+void op_map(void) {
+    cData *returned;
+    cData *counter;
+    cData *domain;
+    cData *list;
+    Int var, len, cnt, op;
+    cList *pair;
+
+    returned = &stack[stack_pos - 1];
+    list = &stack[stack_pos - 2];
+    counter = &stack[stack_pos - 3];
+    domain = &stack[stack_pos - 4];
+    op = cur_frame->opcodes[cur_frame->pc - 1];
+    var = cur_frame->var_start + cur_frame->opcodes[cur_frame->pc + 1];
+
+    /* Make sure we're iterating over a list.  We know the counter is okay. */
+    if (domain->type != LIST && domain->type != DICT) {
+	cthrow(type_id, "Domain (%D) is not a list or dictionary.", domain);
+	return;
+    }
+
+    len = (domain->type == LIST) ? list_length(domain->u.list)
+				 : dict_size(domain->u.dict);
+
+    /* Prepare the mapping list in the first iteration */
+
+    if (list->type == INTEGER) {
+        if (op == OP_MAP || op == OP_FILTER) {
+	    list->type = LIST;
+	    list->u.list = list_new (len);
+        }
+	if (op == OP_MAPHASH) {
+	    list->type = LIST;
+	    list->u.list = list_new (2);
+	    list->u.list->el[0].type = LIST;
+	    list->u.list->el[0].u.list = list_new (len);
+	    list->u.list->el[1].type = LIST;
+	    list->u.list->el[1].u.list = list_new (len);
+	}
+    }
+
+    cnt = counter->u.val;
+
+    /* If counter is non-zero, there is a returned result from the
+       evaluation on top of the stack */
+
+    if (cnt)
+	switch (op) {
+	  case OP_MAP:
+	    list->u.list->len++;
+	    data_dup(list_last(list->u.list), returned);
+	    break;
+	  case OP_FILTER:
+	    if (data_true(returned)) {
+		list->u.list->len++;
+		data_dup(list_last(list->u.list), &stack[var]);
+	    }
+	    break;
+	  case OP_FIND:
+	    if (data_true(returned)) {
+		data_discard(domain);
+		data_dup(domain,counter);
+		pop(3);
+		cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+		return;
+	    }
+	    break;
+	  case OP_MAPHASH:
+            if (returned->type!=LIST || list_length(returned->u.list) != 2) {
+		cthrow(type_id, "Returned data (%D) is not a pair.", returned);
+		return;
+	    }
+	    list->u.list->el[0].u.list->len++;
+	    data_dup(list_last(list->u.list->el[0].u.list),
+		     list_elem(returned->u.list,0));
+	    list->u.list->el[1].u.list->len++;
+	    data_dup(list_last(list->u.list->el[1].u.list),
+		     list_elem(returned->u.list,1));
+        }
+
+    /* pop the returned value */
+
+    pop(1);
+
+    if (cnt >= len) {
+	/* We're finished; pop the domain and jump to the end. */
+
+	data_discard(domain);
+	switch (op) {
+	  case OP_MAP:
+	  case OP_FILTER:
+	    data_dup(domain,list);
+	    break;
+	  case OP_FIND:
+	    domain->type=INTEGER;
+	    domain->u.val=0;
+	    break;
+	  case OP_MAPHASH:
+	    domain->type=DICT;
+	    domain->u.dict=dict_new(list->u.list->el[0].u.list,
+				    list->u.list->el[1].u.list);
+	    break;
+	}
+	pop(2);
+	cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+	return;
+    }
+
+    counter->u.val++;
+
+    /* Replace the index variable with the next list element */
+    data_discard(&stack[var]);
+    if (domain->type == LIST) {
+	data_dup(&stack[var], list_elem(domain->u.list, cnt));
+    } else {
+	pair = dict_key_value_pair(domain->u.dict, cnt);
+	stack[var].type = LIST;
+	stack[var].u.list = pair;
+    }
+    cur_frame->pc += 2;
+}
+
+void op_map_range(void) {
+    cData *returned;
+    cData *counter;
+    cData *top;
+    cData *list;
+    Int var, op, cnt;
+
+    list = &stack[stack_pos - 2];
+    returned = &stack[stack_pos - 1];
+    counter = &stack[stack_pos - 4];
+    top = &stack[stack_pos - 3];
+    op = cur_frame->opcodes[cur_frame->pc - 1];
+    var = cur_frame->var_start + cur_frame->opcodes[cur_frame->pc + 1];
+
+    /* Make sure we have an integer range. */
+    if (counter->type != INTEGER || top->type != INTEGER) {
+	cthrow(type_id, "Range bounds (%D, %D) are not both integers.",
+	       counter, top);
+	return;
+    }
+
+    cnt = list->u.val; /* this way we know if we're in the first iteration */
+
+    /* Prepare the mapping list in the first iteration */
+
+    if (!cnt) {
+        if (op == OP_MAP_RANGE || op == OP_FILTER_RANGE) {
+	    Int len;
+
+	    len=top->u.val-counter->u.val+1;
+	    if (len<=0) len=1;
+	    list->type = LIST;
+	    list->u.list = list_new (len);
+        }
+	if (op == OP_MAPHASH_RANGE) {
+	    Int len;
+
+	    len=top->u.val-counter->u.val+1;
+	    if (len<=0) len=1;
+	    list->type = LIST;
+	    list->u.list = list_new (2);
+	    list->u.list->el[0].type = LIST;
+	    list->u.list->el[0].u.list = list_new (len);
+	    list->u.list->el[1].type = LIST;
+	    list->u.list->el[1].u.list = list_new (len);
+	}
+
+    }
+
+    if (cnt)
+	switch (op) {
+	  case OP_MAP_RANGE:
+	    list->u.list->len++;
+	    data_dup(list_last(list->u.list), returned);
+	    break;
+	  case OP_FILTER_RANGE:
+	    if (data_true(returned)) {
+		list->u.list->len++;
+		data_dup(list_last(list->u.list), &stack[var]);
+	    }
+	    break;
+	  case OP_FIND_RANGE:
+	    if (data_true(returned)) {
+	        counter->u.val--;
+		pop(3);
+		cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+		return;
+	    }
+	    break;
+	  case OP_MAPHASH_RANGE:
+	    if (returned->type!=LIST || list_length(returned->u.list) != 2) {
+		cthrow(type_id, "Returned data (%D) is not a pair.", returned);
+		return;
+	    }
+	    list->u.list->el[0].u.list->len++;
+	    data_dup(list_last(list->u.list->el[0].u.list),
+		     list_elem(returned->u.list,0));
+	    list->u.list->el[1].u.list->len++;
+	    data_dup(list_last(list->u.list->el[1].u.list),
+		     list_elem(returned->u.list,1));
+        }
+    else if (!list->u.val) list->u.val=1;
+
+    /* pop the returned value */
+
+    pop(1);
+
+    if (counter->u.val > top->u.val) {
+	/* We're finished; cleanup and bail. */
+	switch (op) {
+	  case OP_FILTER_RANGE:
+	  case OP_MAP_RANGE:
+	    data_dup(counter,list);
+	    break;
+	  case OP_FIND_RANGE:
+	    counter->u.val=0;
+	    break;
+	  case OP_MAPHASH_RANGE:
+	    counter->type=DICT;
+	    counter->u.dict=dict_new(list->u.list->el[0].u.list,
+				     list->u.list->el[1].u.list);
+	    break;
+	}
+	pop(2);
+	cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+	return;
+    }
+
+    data_discard(&stack[var]);
+    stack[var] = *counter;
+    counter->u.val++;
+    cur_frame->pc += 2;
+}
+
 void op_else(void) {
     cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
 }
@@ -781,7 +1017,7 @@ void op_splice(void) {
     cData *d;
 
     if (stack[stack_pos - 1].type != LIST) {
-	cthrow(type_id, "%D is not a list.", &stack[stack_pos - 1]);
+	cthrow(type_id, "splice: %D is not a list.", &stack[stack_pos - 1]);
 	return;
     }
     list = stack[stack_pos - 1].u.list;
@@ -1368,7 +1604,7 @@ void op_splice_add(void) {
 
     /* No need to check if d2 is a list, due to code generation. */
     if (d1->type != LIST) {
-	cthrow(type_id, "%D is not a list.", d1);
+	cthrow(type_id, "splice add: %D is not a list.", d1);
 	return;
     }
 

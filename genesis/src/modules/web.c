@@ -109,7 +109,7 @@ cStr * encode(char * s) {
     cStr * str = string_new(strlen(s) * 2); /* this gives us a buffer
                                                    to expand into */
 
-    for (;*s != NULL; s++) {
+    for (;*s != (char) NULL; s++) {
         if ((Int) *s == 32)
             str = string_addc(str, '+');
         else if ((Int) *s > 32 && (Int) *s < 127) {

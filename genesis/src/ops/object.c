@@ -149,11 +149,11 @@ COLDC_FUNC(clear_var) {
 
 COLDC_FUNC(add_method) {
     cData   * args,
-             * d;
-    Method * method;
+            * d;
+    Method  * method;
     cList   * code,
-             * errors;
-    Int        flags=-1, access=-1;
+            * errors;
+    Int       flags=-1, access=-1, native=-1;
 
     /* Accept a list of lines of code and a symbol for the name. */
     if (!func_init_2(&args, LIST, SYMBOL))
@@ -168,6 +168,7 @@ COLDC_FUNC(add_method) {
     if (method) {
         flags = method->m_flags;
         access = method->m_access;
+        native = method->native;
     }
 
     code = args[0].u.list;
@@ -187,6 +188,7 @@ COLDC_FUNC(add_method) {
             method->m_flags = flags;
         if (access != -1)
             method->m_access = access;
+        method->native = native;
 	object_add_method(cur_frame->object, args[1].u.symbol, method);
 	method_discard(method);
     }
@@ -862,7 +864,7 @@ INTERNAL cList * add_op_arg(cList * out, Int type, Long op, Obj * obj) {
     }
 
     out = list_add(out, &d);
-    data_discard(&d);
+    /* do not discard, we were not using duped data */
 
     return out;
 }
@@ -894,8 +896,9 @@ COLDC_FUNC(get_method) {
         opcode = ops[x];
         info = &op_table[opcode];
         d.type = SYMBOL;
-        d.u.symbol = ident_dup(info->symbol);
+        d.u.symbol = info->symbol;
         list = list_add(list, &d);
+        /* dont bother discarding, we didnt dup twice */
         x++;
 
         if (info->arg1) {

@@ -858,7 +858,7 @@ static void search_object(Long objnum, Search_params *params)
 }
 
 /* Look for a method on an object. */
-static Method *object_find_method_local(Obj *object, Long name)
+Method *object_find_method_local(Obj *object, Long name)
 {
     Int ind, method;
 

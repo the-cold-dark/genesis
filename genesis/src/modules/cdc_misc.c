@@ -29,7 +29,7 @@ NATIVE_METHOD(strftime) {
     /* some OS's are weird and do odd things when you end in %
        (accidentally or no) */
     if (fmt[strlen(fmt)] == '%')
-        fmt[strlen(fmt)] = NULL;
+        fmt[strlen(fmt)] = (char) NULL;
 
     if (strftime(s, LINE, fmt, t) == (size_t) 0)
        THROW((range_id,"Format results in a string longer than 80 characters."))

@@ -578,7 +578,7 @@ void finish_backup(void) {
         panic("Cannot create file 'clean'.");
     fprintf(fp, "%d\n%d\n%d\n%li\n%li\n",
                 VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH,
-                (long) MAGIC_MODNUMBER, cur_search);
+                (long) MAGIC_MODNUMBER, (long) cur_search);
     fputs(SYSTEM_TYPE, fp);
     close_scratch_file(fp);
 }
@@ -595,7 +595,7 @@ static void db_is_clean(void) {
 	panic("Cannot create file 'clean'.");
     fprintf(fp, "%d\n%d\n%d\n%li\n%li\n",
                 VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH,
-                (long) MAGIC_MODNUMBER, cur_search);
+                (long) MAGIC_MODNUMBER, (long) cur_search);
     fputs(SYSTEM_TYPE, fp);
     close_scratch_file(fp);
     db_clean = 1;
@@ -624,7 +624,7 @@ INTERNAL void _check_obj(Long objnum, cList * parents, char * name) {
 
     if (lookup_retrieve_name(id, &other)) {
         if (other != objnum)
-           printf("ACK: $%s is not bound to #%li!!, tweaking...\n",name,objnum);
+           printf("ACK: $%s is not bound to #%li!!, tweaking...\n",name,(long)objnum);
 
         if ((obj2 = cache_retrieve(other))) {
             object_del_objname(obj2);

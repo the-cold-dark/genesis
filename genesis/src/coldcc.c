@@ -26,6 +26,7 @@
 
 Int    c_nowrite = 1;
 Int    c_opt = OPT_COMP;
+Bool   print_objs = YES;
 
 #define NEW_DB       1
 #define EXISTING_DB  0
@@ -238,6 +239,9 @@ INTERNAL void initialize(Int argc, char **argv) {
                 case 'd':
                     c_opt = OPT_DECOMP;
                     break;
+                case 'o':
+                    print_objs = NO;
+                    break;
                 case 'p':
                     c_opt = OPT_PARTIAL;
                     break;
@@ -272,7 +276,6 @@ INTERNAL void initialize(Int argc, char **argv) {
                     argv += getarg(name,&buf, opt, argv,&argc,usage);
                     NEWFILE(c_dir_textdump, buf);
                     break;
-                case 'o':
                 case 'b':
                     argv += getarg(name,&buf, opt, argv, &argc, usage);
                     NEWFILE(c_dir_binary, buf);
@@ -325,10 +328,9 @@ Options:\n\n\
                         into database accordingly.  Can be used with -w\n\
                         for a ColdC code verification program.\n\
         -s WIDTHxDEPTH  Cache size, default 10x30\n\
-        -n              List native method configuration\n\n\
-Anticipated Options:\n\n\
-        -w              Compile for parse only, do not write output.\n\
-                        This option can only be used with partial compile.\n\
+        -n              List native method configuration\n\
+        -o              Do not print objects as they are compiled/decompiled\n\
+\n\
 \n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, name, c_dir_binary, c_dir_textdump);
 }
 

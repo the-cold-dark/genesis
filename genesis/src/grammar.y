@@ -58,7 +58,7 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %type	<case_list>	caselist cases
 %type	<expr>		expr sexpr rexpr
 %type	<expr_list>	args arglist cvals
-%type	<s>		for
+%type	<s>		for map find filter hash
 %type	<id_list>	vars idlist errors errlist
 
 /* The following tokens are terminals for the parser. */
@@ -95,6 +95,9 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %nonassoc LOWER_THAN_WITH
 %nonassoc WITH
 
+/* Mapping expressions */
+%token OP_MAP WHERE OP_FILTER OP_MAPHASH OP_FIND
+
 /* The parser does not use the following tokens.  I define them here so
  * that I can use them, along with the above tokens, as statement and
  * expression types for the code generator, and as opcodes for the
@@ -107,6 +110,8 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %token BINARY CONDITIONAL SPLICE NEG SPLICE_ADD POP START_ARGS ZERO ONE
 %token SET_LOCAL SET_OBJ_VAR GET_LOCAL GET_OBJ_VAR CATCH_END HANDLER_END
 %token CRITICAL CRITICAL_END PROPAGATE PROPAGATE_END JUMP
+
+%token OP_MAP_RANGE OP_MAPHASH_RANGE OP_FILTER_RANGE OP_FIND_RANGE 
 
 %token F_TYPE F_CLASS F_TOINT F_TOFLOAT F_TOSTR F_TOLITERAL
 %token F_TOOBJNUM F_TOSYM F_TOERR F_VALID F_STRFMT F_STRLEN
@@ -185,7 +190,7 @@ errors	: ANY				{ $$ = NULL; }
 	| errlist			{ $$ = $1; }
 	;
 
-errlist	: T_ERROR				{ $$ = id_list($1, NULL); }
+errlist	: T_ERROR			{ $$ = id_list($1, NULL); }
 	| errlist ',' T_ERROR		{ $$ = id_list($3, $1); }
 	;
 
@@ -285,6 +290,14 @@ expr	: INTEGER			{ $$ = integer_expr($1); }
 	| expr AND expr			{ $$ = and_expr($1, $3); }
 	| expr OR expr			{ $$ = or_expr($1, $3); }
 	| expr OP_COND_IF expr ':' expr	{ $$ = cond_expr($1, $3, $5); }
+	| map '(' expr ')' TO '(' expr ')'  { $$ = map_expr($3,$1,$7,OP_MAP); }
+        | map '[' expr UPTO expr ']' TO '(' expr ')'  { $$ = map_range_expr($3,$5,$1,$9,OP_MAP_RANGE); }
+	| hash '(' expr ')' TO '(' expr ')'  { $$ = map_expr($3,$1,$7,OP_MAPHASH); }
+        | hash '[' expr UPTO expr ']' TO '(' expr ')'  { $$ = map_range_expr($3,$5,$1,$9,OP_MAPHASH_RANGE); }
+	| find '(' expr ')' WHERE '(' expr ')' { $$ = map_expr($3,$1,$7,OP_FIND); }
+	| find '[' expr UPTO expr ']' WHERE '(' expr ')'  { $$ = map_range_expr($3,$5,$1,$9,OP_FIND_RANGE); }
+	| filter '(' expr ')' WHERE '(' expr ')' { $$ = map_expr($3,$1,$7,OP_FILTER); }
+	| filter '[' expr UPTO expr ']' WHERE '(' expr ')'  { $$ = map_range_expr($3,$5,$1,$9,OP_FILTER_RANGE); }
 	| expr OP_COND_IF expr OP_COND_OTHER_ELSE expr	{ $$ = cond_expr($1, $3, $5); }
 	| IDENT MULT_EQ expr		{ $$ = doeq_expr(MULT_EQ, $1, $3); }
 	| IDENT DIV_EQ expr		{ $$ = doeq_expr(DIV_EQ, $1, $3); }
@@ -294,6 +307,18 @@ expr	: INTEGER			{ $$ = integer_expr($1); }
 	| '(' expr ')'			{ $$ = $2; }
         | CRITLEFT expr CRITRIGHT       { $$ = critical_expr($2); }
 	| PROPLEFT expr PROPRIGHT	{ $$ = propagate_expr($2); }
+	;
+
+map     : OP_MAP IDENT OP_IN               { $$ = $2; }
+	;
+
+find    : OP_FIND IDENT OP_IN              { $$ = $2; }
+	;
+
+filter  : OP_FILTER IDENT OP_IN            { $$ = $2; }
+	;
+
+hash	: OP_MAPHASH IDENT OP_IN		{ $$ = $2; }
 	;
 
 sexpr	: expr				{ $$ = $1; }

@@ -257,7 +257,7 @@ Expr *integer_expr(Long num)
     return cnew;
 }
 
-Expr *float_expr(float fnum)
+Expr *float_expr(Float fnum)
 {
     Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
 
@@ -514,6 +514,31 @@ Expr *cond_expr(Expr *cond, Expr *true, Expr *false)
     cnew->u.cond.cond = cond;
     cnew->u.cond.true = true;
     cnew->u.cond.false = false;
+    return cnew;
+}
+
+Expr *map_expr(Expr *src, char *var, Expr *job, Int token)
+{
+    Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
+
+    cnew->type = token;
+    cnew->lineno = cur_lineno();
+    cnew->u.map.src = src;
+    cnew->u.map.var = var;
+    cnew->u.map.job = job;
+    return cnew;
+}
+
+Expr *map_range_expr(Expr *start, Expr *end, char *var, Expr *job, Int token)
+{
+    Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
+
+    cnew->type = token;
+    cnew->lineno = cur_lineno();
+    cnew->u.maprange.start = start;
+    cnew->u.maprange.end = end;
+    cnew->u.maprange.var = var;
+    cnew->u.maprange.job = job;
     return cnew;
 }
 
@@ -1367,6 +1392,93 @@ static void compile_expr(Expr *expr)
 	  compile_expr(expr->u.cond.false);
 
 	  /* Set end_dest to here. */
+	  set_jump_dest_here(end_dest);
+
+	  break;
+      }
+
+      case OP_MAPHASH:
+      case OP_FILTER:
+      case OP_FIND:
+      case OP_MAP: {
+	  Int n, begin_dest = new_jump_dest(), end_dest = new_jump_dest();
+
+	  /* Find the variable in the method's local variables. */
+	  n = find_local_var(expr->u.map.var);
+	  if (n == -1) {
+	      compiler_error(expr->lineno, "%s is not a local variable.",
+			     expr->u.map.var);
+	      break;
+	  }
+
+	  /* Compile the list expression, and code a ZERO opcode to push a zero
+	   * value onto the stack.  This will serve as the loop index. */
+	  compile_expr(expr->u.map.src);
+	  code(ZERO);
+
+	  /* a zero for the returned list */
+	  code(ZERO);
+
+	  /* another ZERO for the initial returned value */
+	  code(ZERO);
+
+	  /* Set begin_dest to here, and begin the loop with a FOR_LIST opcode,
+	   * with a jump argument pointing to the end of the loop. */
+	  set_jump_dest_here(begin_dest);
+	  code(expr->type);
+	  code(end_dest);
+	  code(n);
+
+	  /* Compile the loop body. */
+	  compile_expr(expr->u.map.job);
+
+	  /* Code an END opcode with a jump argument pointing to the beginning
+	   * of the loop, and set end_dest. */
+	  code(END);
+	  code(begin_dest);
+	  set_jump_dest_here(end_dest);
+
+	  break;
+      }
+
+      case OP_MAPHASH_RANGE:
+      case OP_FILTER_RANGE:
+      case OP_FIND_RANGE:
+      case OP_MAP_RANGE: {
+	  Int n, begin_dest = new_jump_dest(), end_dest = new_jump_dest();
+
+	  /* Find the variable in the method's local variables. */
+	  n = find_local_var(expr->u.maprange.var);
+	  if (n == -1) {
+	      compiler_error(expr->lineno, "%s is not a local variable.",
+			     expr->u.maprange.var);
+	      break;
+	  }
+
+	  /* compile the start and the end of the loop */ 
+	  compile_expr(expr->u.maprange.start);
+	  compile_expr(expr->u.maprange.end);
+
+	  /* ZERO for the range counter */
+	  code(ZERO);
+
+	  /* another ZERO for the initial returned value */
+	  code(ZERO);
+
+	  /* Set begin_dest to here, and begin the loop with a FOR_LIST opcode,
+	   * with a jump argument pointing to the end of the loop. */
+	  set_jump_dest_here(begin_dest);
+	  code(expr->type);
+	  code(end_dest);
+	  code(n);
+
+	  /* Compile the loop body. */
+	  compile_expr(expr->u.maprange.job);
+
+	  /* Code an END opcode with a jump argument pointing to the beginning
+	   * of the loop, and set end_dest. */
+	  code(END);
+	  code(begin_dest);
 	  set_jump_dest_here(end_dest);
 
 	  break;

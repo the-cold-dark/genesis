@@ -27,7 +27,7 @@
 typedef struct context Context;
 
 struct context {
-    short type;
+    Short type;
     Int end;
     Context *enclosure;
 };
@@ -116,7 +116,7 @@ static struct {
     { P_DECREMENT,	10 },
     { INCREMENT,	10 },
     { DECREMENT,	10 },
-    { CALL_METHOD,		11 },
+    { CALL_METHOD,	11 },
     { INDEX,		12 }
 };
 
@@ -919,6 +919,46 @@ static Expr_list *decompile_expressions_bounded(Int *pos_ptr, Int expr_end)
 	      break;
 	  }
 
+	  case OP_MAPHASH:
+	  case OP_FILTER:
+	  case OP_FIND:
+  	  case OP_MAP: {
+	      Expr_list *job;
+	      Int etype=the_opcodes[pos];
+
+	      end = the_opcodes[pos + 1];
+	      s = varname(the_opcodes[pos + 2]);
+	      pos+=3;
+	      job = decompile_expressions_bounded(&pos, end - 2);
+	      pos = end;
+	      /* delete the three ZEROs */
+	      stack = stack->next->next->next;
+	      stack->expr = map_expr(stack->expr, s, job->expr,etype);
+	      break;
+	  }
+
+	  case OP_MAPHASH_RANGE:
+	  case OP_FILTER_RANGE:
+	  case OP_FIND_RANGE:
+  	  case OP_MAP_RANGE: {
+	      Expr_list *job;
+	      Expr *start_expr, *end_expr;
+	      Int etype=the_opcodes[pos];
+
+	      end = the_opcodes[pos + 1];
+	      s = varname(the_opcodes[pos + 2]);
+	      pos+=3;
+	      job = decompile_expressions_bounded(&pos, end - 2);
+	      pos = end;
+	      /* delete the ZEROs */
+	      stack = stack->next->next;
+	      start_expr = stack->next->expr;
+	      end_expr = stack->expr;
+	      stack = stack->next;
+	      stack->expr = map_range_expr(start_expr, end_expr, s, job->expr,etype);
+	      break;
+	  }
+
 	  case CONDITIONAL: {
 	      Expr_list *true, *false;
 
@@ -1538,6 +1578,82 @@ static cStr *unparse_expr(cStr *str, Expr *expr, Int paren) {
 	str = unparse_expr_prec(str, expr->u.or.left, OR, 1);
 	str = string_add_chars(str, " || ", 4);
 	return unparse_expr_prec(str, expr->u.or.right, OR, 0);
+
+      case OP_MAPHASH:
+      case OP_FILTER:
+      case OP_FIND:
+      case OP_MAP: {
+	char *s1, *s2;
+
+	switch (expr->type) {
+	  case OP_MAP:
+	    s1="map ";
+	    s2=" to ";
+	    break;
+	  case OP_FIND:
+	    s1="find ";
+	    s2=" where ";
+	    break;
+	  case OP_FILTER:
+	    s1="filter ";
+	    s2=" where ";
+	    break;
+	default:
+	    s1="hash ";
+	    s2=" to ";
+        }
+	s = expr->u.map.var;
+	str = string_add_chars(str, s1, strlen(s1));
+	str = string_add_chars(str, s, strlen(s));
+	str = string_add_chars(str, " in ",4);
+        str = string_addc(str, '(');
+	str = unparse_expr(str, expr->u.map.src, PAREN_ASSIGN);
+        str = string_addc(str, ')');
+	str = string_add_chars(str, s2, strlen(s2));
+        str = string_addc(str, '(');
+	str = unparse_expr(str, expr->u.map.job, PAREN_ASSIGN);
+        str = string_addc(str, ')');
+	return str;
+      }
+
+      case OP_MAPHASH_RANGE:
+      case OP_FILTER_RANGE:
+      case OP_FIND_RANGE:
+      case OP_MAP_RANGE: {
+	char *s1, *s2;
+
+	switch (expr->type) {
+	  case OP_MAP_RANGE:
+	    s1="map ";
+	    s2=" to ";
+	    break;
+	  case OP_FIND_RANGE:
+	    s1="find ";
+	    s2=" where ";
+	    break;
+	  case OP_FILTER_RANGE:
+	    s1="filter ";
+	    s2=" where ";
+	    break;
+	  default:
+	    s1="hash ";
+	    s2=" to ";
+        }
+        s = expr->u.maprange.var;
+        str = string_add_chars(str, s1, strlen(s1));
+        str = string_add_chars(str, s, strlen(s));
+        str = string_add_chars(str, " in ",4);
+        str = string_addc(str, '['); 
+        str = unparse_expr(str, expr->u.maprange.start, PAREN_ASSIGN);
+	str = string_add_chars(str, " .. ",4);
+        str = unparse_expr(str, expr->u.maprange.end, PAREN_ASSIGN);
+        str = string_addc(str, ']');
+        str = string_add_chars(str, s2, strlen(s2));
+        str = string_addc(str, '('); 
+        str = unparse_expr(str, expr->u.maprange.job, PAREN_ASSIGN);
+        str = string_addc(str, ')');
+        return str;
+      }
 
       case CONDITIONAL:
 	str = unparse_expr_prec(str, expr->u.cond.cond, CONDITIONAL, 1);

@@ -23,7 +23,9 @@ void cache_sync(void);
 Obj *cache_first(void);
 Obj *cache_next(void);
 void cache_sanity_check(void);
+#ifdef CLEAN_CACHE
 void cache_cleanup(void);
+#endif
 
 #endif
 

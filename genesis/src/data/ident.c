@@ -7,9 +7,6 @@
 #include <string.h>
 #include "util.h"
 
-#define FWRITE(v, fp) fwrite(&v, sizeof(v), 1, fp)
-#define FREAD(v, fp) fread(&v, sizeof(v), 1, fp)
-
 /* We use MALLOC_DELTA to keep the table sizes at least 32 bytes below a power
  * of two, assuming an Int is four bytes. */
 /* HACKNOTE: BAD */

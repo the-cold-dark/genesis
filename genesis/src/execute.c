@@ -36,8 +36,8 @@ Int *arg_starts, arg_pos, arg_size;
 Long task_id;
 Long tick;
 
-#define DEBUG_VM 0
-#define DEBUG_EXECUTE 0
+#define DEBUG_VM DISABLED
+#define DEBUG_EXECUTE DISABLED
 
 VMState *suspended = NULL, *preempted = NULL, *vmstore = NULL;
 VMStack *stack_store = NULL, *holder_cache = NULL; 
@@ -431,8 +431,14 @@ void task(cObjnum objnum, Long name, Int num_args, ...) {
     ident_dup(name);
     if (call_method(objnum, name, 0, 0) == CALL_OK) {
         execute();
-        if (stack_pos != 0)
-            panic("Stack not empty after interpretation.");
+        if (stack_pos != 0) {
+            int x;
+            write_err("PANIC: Stack not empty after interpretation (%d):",
+                      stack_pos);
+            for (x=0; x <= stack_pos; x++)
+                write_err("PANIC:     stack[%d] => %D", x, &stack[x]);
+            panic("Attempting clean shutdown.");
+        }
         task_id++;
     } else {
         pop(stack_pos);
@@ -463,8 +469,13 @@ void task_method(Obj *obj, Method *method) {
 
     execute();
 
-    if (stack_pos != 0)
-        panic("Stack not empty after interpretation.");
+    if (stack_pos != 0) {
+        int x;
+        write_err("PANIC: Stack not empty after interpretation:");
+        for (x=0; x <= stack_pos; x++)
+            write_err("PANIC:     stack[%d] => %D", x, &stack[x]);
+        panic("Attempting clean shutdown.");
+    }
 }
 
 /*
@@ -701,7 +712,7 @@ INTERNAL void execute(void) {
                 ((cur_frame->method->name != NOT_AN_IDENT) ?
                     cur_frame->method->name :
                     opcode_id));
-            fflush(errfile);
+    /*        fflush(errfile); */
 #endif
 
             cur_frame->last_opcode = opcode;

@@ -66,6 +66,8 @@ Expr * doeq_expr(Int opcode, char * var, Expr * value);
 Expr * and_expr(Expr * left, Expr * right);
 Expr * or_expr(Expr * left, Expr * right);
 Expr * cond_expr(Expr * cond, Expr * true, Expr * false);
+Expr * map_expr(Expr *src, char *var, Expr *job, Int token);
+Expr * map_range_expr(Expr *start, Expr *end, char *var, Expr *job, Int token);
 Expr * critical_expr(Expr * expr);
 Expr * propagate_expr(Expr * expr);
 Expr * splice_expr(Expr * expr);

@@ -6,8 +6,8 @@
 
 #include "dict.h"
 
-#define MALLOC_DELTA			 5
-#define HASHTAB_STARTING_SIZE		(32 - MALLOC_DELTA)
+#define MALLOC_DELTA			 0
+#define HASHTAB_STARTING_SIZE		 8
 
 INTERNAL void insert_key(cDict *dict, Int i);
 INTERNAL Int search(cDict *dict, cData *key);

@@ -2088,14 +2088,11 @@ cat <<END
 
 END
 
-echo $ac_n "Use phk_malloc()? [yes] $ac_c"
+echo $ac_n "Use phk_malloc()? [no] $ac_c"
 
-read input
-if [ x$input != x"n" -a \
-     x$input != x"no" -a \
-     x$input != x"N" -a \
-     x$input != x"NO" ]
-then
+read input  
+
+if [ "$input" = y -o "$input" = yes -o "$input" = Y -o "$input" = YES ]; then
     MALLOC_O=malloc.o
 fi
 
@@ -2141,11 +2138,11 @@ if test "$ac_cv_prog_gcc" = yes; then
 END
     if test $ac_cv_prog_gcc_g = yes; then
         cat <<END
-#  -pedantic -Wall -O -ggdb  -- use this for driver development
+#  -ggdb -O -Wall -pedantic  -- use this for driver development
 END
     else
         cat <<END
-#  -pedantic -Wall -ggdb     -- use this for driver development
+#  -ggdb -Wall -pedantic     -- use this for driver development
 END
     fi
 else
@@ -2199,7 +2196,6 @@ if test -z "$PERL"; then
 #           ColdC Module (cdc):  $ac_cv_mod_cdc
 #           Veil Module (veil):  $ac_cv_mod_veil
 #           Web Module (web):    $ac_cv_mod_web
-#           SQL Module (sql):    $ac_cv_mod_sql
 
 !!
 !! configure was unable to find 'perl' in your PATH.  The programs which
@@ -2230,7 +2226,6 @@ else
 #           ColdC Module (cdc):  $ac_cv_mod_cdc
 #           Veil Module (veil):  $ac_cv_mod_veil
 #           Web Module (web):    $ac_cv_mod_web
-#           SQL Module (sql):    $ac_cv_mod_sql
 
 END
         echo $ac_n "Reconfigure Modules? [$query] $ac_c" 1>&6

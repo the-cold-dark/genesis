@@ -11,9 +11,9 @@
 #include "cache.h"
 #include "util.h"
 
-void panic(char *s, ...) {
-           va_list vargs;
-    static Bool    panic_state = NO;
+void panic(char * s, ...) {
+    va_list vargs;
+    static Bool panic_state = NO;
 
     va_start(vargs,s);
     fprintf(errfile, "[%s] %s: ", timestamp(NULL),
@@ -28,7 +28,6 @@ void panic(char *s, ...) {
 	cache_sync();
         fputs("Done\n", errfile);
     }
-
     exit(1);
 }
 

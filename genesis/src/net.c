@@ -274,7 +274,7 @@ cStr *hostname(char *chaddr)
 
    hp = gethostbyaddr((char *) &addr, 4, AF_INET);
    if (hp)
-     return string_from_chars(hp->h_name, strlen(hp->h_name));
+     return string_from_chars((char *) hp->h_name, strlen(hp->h_name));
    else
      return string_from_chars(chaddr, strlen(chaddr));
 }

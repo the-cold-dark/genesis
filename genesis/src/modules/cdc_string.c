@@ -89,7 +89,7 @@ NATIVE_METHOD(strsub) {
     replace = string_chars(STR3);
     replace_len = string_length(STR3);
 
-    if (*s == NULL || *search == NULL) {
+    if (*s == (char) NULL || *search == (char) NULL) {
         subbed = string_dup(STR1);
     } else {
         subbed = string_new(search_len);
@@ -201,8 +201,8 @@ NATIVE_METHOD(match_template) {
 
     INIT_2_ARGS(STRING, STRING);
 
-    ctemplate = string_chars(STR1);
-    str = string_chars(STR2);
+    str = string_chars(STR1);
+    ctemplate = string_chars(STR2);
 
     if ((fields = match_template(ctemplate, str))) {
         CLEAN_RETURN_LIST(fields);
@@ -219,8 +219,8 @@ NATIVE_METHOD(match_pattern) {
 
     INIT_2_ARGS(STRING, STRING)
 
-    pattern = string_chars(STR1);
-    str = string_chars(STR2);
+    str = string_chars(STR1);
+    pattern = string_chars(STR2);
 
     if ((fields = match_pattern(pattern, str))) {
         CLEAN_RETURN_LIST(list_reverse(fields));
@@ -231,7 +231,7 @@ NATIVE_METHOD(match_pattern) {
 
 NATIVE_METHOD(match_regexp) {
     cList * fields;
-    Bool     sensitive=NO;
+    Bool     sensitive=NO, error;
     DEF_args;
 
     switch (ARG_COUNT) {
@@ -242,18 +242,20 @@ NATIVE_METHOD(match_regexp) {
         default: THROW_NUM_ERROR(ARG_COUNT, "two or three")
     }
 
-    fields = match_regexp(STR1, string_chars(STR2), sensitive);
+    fields = match_regexp(STR2, string_chars(STR1), sensitive, &error);
 
     if (fields) {
         CLEAN_RETURN_LIST(fields);
     } else {
+        if (error == YES) /* we threw an error */
+            RETURN_FALSE;
         CLEAN_RETURN_INTEGER(0);
     }
 }
 
 NATIVE_METHOD(regexp) {
     cList * fields;
-    Bool     sensitive=NO;
+    Bool     sensitive=NO, error;
     DEF_args;
 
     switch (ARG_COUNT) {
@@ -264,11 +266,13 @@ NATIVE_METHOD(regexp) {
         default: THROW_NUM_ERROR(ARG_COUNT, "two or three")
     }
 
-    fields = regexp_matches(STR1, string_chars(STR2), sensitive);
+    fields = regexp_matches(STR2, string_chars(STR1), sensitive, &error);
     
     if (fields) {
         CLEAN_RETURN_LIST(fields);
     } else {
+        if (error == YES)
+            RETURN_FALSE;
         CLEAN_RETURN_INTEGER(0);
     }
 }
@@ -295,10 +299,7 @@ NATIVE_METHOD(strsed) {
         default: THROW_NUM_ERROR(ARG_COUNT, "three to five")
     }
 
-                 /* regexp *//* string *//* replace */
-    out = strsed(STR1, STR2, STR3, flags, mult);
-
-    if (!out)
+    if (!(out = strsed(STR2, STR1, STR3, flags, mult)))
         RETURN_FALSE;
 
     CLEAN_RETURN_STRING(out);

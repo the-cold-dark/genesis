@@ -8,8 +8,8 @@
 void     init_match(void);
 cList * match_template(char * ctemplate, char * s);
 cList * match_pattern(char * pattern, char * s);
-cList * match_regexp(cStr * reg, char * s, Bool sensitive);
-cList * regexp_matches(cStr * reg, char * s, Bool sensitive);
+cList * match_regexp(cStr * reg, char * s, Bool sensitive, Bool * error);
+cList * regexp_matches(cStr * reg, char * s, Bool sensitive, Bool * error);
 Int parse_regfunc_args(char * args);
 cStr * strsed(cStr * reg,      /* the regexp string */
                   cStr * ss,   /* the string to match against */

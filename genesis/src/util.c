@@ -106,7 +106,13 @@ char *long_to_ascii(Long num, Number_buf nbuf) {
 }
 
 char * float_to_ascii(float num, Number_buf nbuf) {
+    int i;
     sprintf (nbuf, "%g", num);
+    for (i=0; nbuf[i]; i++)
+      if (nbuf[i]=='.' || nbuf[i]=='e')
+           return nbuf;
+    nbuf[i]='.';
+    nbuf[i+1]='\0';
     return nbuf;
 }
 
@@ -174,6 +180,7 @@ char * crypt_string(char * key, char * salt) {
     if (!salt) {
 	rsalt[0] = random_number(95) + 32;
 	rsalt[1] = random_number(95) + 32;
+	rsalt[2] = (char) NULL;
 	salt = rsalt;
     }
 

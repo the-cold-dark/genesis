@@ -157,18 +157,24 @@ COLDC_FUNC(toobjnum) {
 COLDC_FUNC(tosym) {
     cData *args;
     Long sym;
+    char * s;
 
     /* Accept one string argument. */
     if (!func_init_1(&args, STRING))
 	return;
 
+    /* sometimes strings are not NULL terminated, make sure it is */
+    s = string_chars(STR1);
+    s[string_length(STR1)] = (char) NULL;
+
     /* this is wrong, we should check this everywhere, not just here,
        but at the moment everywhere assumes 'ident_get' returns a valid
        ident irregardless */
-    if (!is_valid_ident(string_chars(args[0].u.str)))
+    if (!is_valid_ident(s))
         THROW((symbol_id, "Symbol contains non-alphanumeric characters."))
 
-    sym = ident_get(string_chars(args[0].u.str));
+    sym = ident_get(s);
+
     pop(1);
     push_symbol(sym);
 }

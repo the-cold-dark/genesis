@@ -59,7 +59,6 @@ void func_dict_contains(void) {
 
 void func_dict_union(void) {
     cData * args;
-    Int      val;
     cDict * dict1, * dict2;
 
     if (!func_init_2(&args, DICT, DICT))

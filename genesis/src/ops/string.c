@@ -107,7 +107,7 @@ COLDC_FUNC(strsub) {
     replace = string_chars(args[2].u.str);
     replace_len = string_length(args[2].u.str);
 
-    if (*s == NULL || *search == NULL) {
+    if (*s == (char) NULL || *search == (char) NULL) {
         subbed = string_dup(args[0].u.str);
     } else {
         subbed = string_new(search_len);
@@ -183,10 +183,10 @@ COLDC_FUNC(match_begin) {
     if (!func_init_2_or_3(&args, &num_args, STRING, STRING, STRING))
 	return;
 
-    s = string_chars(args[0].u.str);
+    s = string_chars(STR1);
 
-    search = string_chars(args[1].u.str);
-    search_len = string_length(args[1].u.str);
+    search = string_chars(STR2);
+    search_len = string_length(STR2);
 
     if (num_args > 2) {
       sep = string_chars(args[2].u.str);
@@ -219,8 +219,8 @@ COLDC_FUNC(match_template) {
     if (!func_init_2(&args, STRING, STRING))
 	return;
 
-    ctemplate = string_chars(args[0].u.str);
-    str = string_chars(args[1].u.str);
+    str = string_chars(STR1);
+    ctemplate = string_chars(STR2);
 
     fields = match_template(ctemplate, str);
 
@@ -243,8 +243,8 @@ COLDC_FUNC(match_pattern) {
     if (!func_init_2(&args, STRING, STRING))
 	return;
 
-    pattern = string_chars(args[0].u.str);
-    str = string_chars(args[1].u.str);
+    str = string_chars(STR1);
+    pattern = string_chars(STR2);
 
     fields = match_pattern(pattern, str);
 
@@ -264,22 +264,25 @@ COLDC_FUNC(match_pattern) {
 COLDC_FUNC(match_regexp) {
     cData * args;
     cList * fields;
-    Int      argc,
-             sensitive;
+    Int     argc,
+            sensitive;
+    Bool    error;
 
     if (!func_init_2_or_3(&args, &argc, STRING, STRING, 0))
 	return;
 
     sensitive = (argc == 3) ? data_true(&args[2]) : 0;
 
-    fields = match_regexp(_STR(ARG1), string_chars(_STR(ARG2)), sensitive);
-
-    pop(argc);
+    fields = match_regexp(STR2, string_chars(STR1), sensitive, &error);
 
     if (fields) {
+        pop(argc);
         push_list(fields);
         list_discard(fields);
     } else {
+        if (error == YES) /* we actually threw an error */
+            return;
+        pop(argc);
         push_int(0);
     }
 }
@@ -289,19 +292,23 @@ COLDC_FUNC(regexp) {
     cList * fields;
     Int      argc,
              sensitive;
+    Bool     error;
 
     if (!func_init_2_or_3(&args, &argc, STRING, STRING, 0))
         return;
 
     sensitive = (argc == 3) ? data_true(&args[2]) : 0;
 
-    fields = regexp_matches(_STR(ARG1), string_chars(_STR(ARG2)), sensitive);
+    fields = regexp_matches(STR2, string_chars(STR1), sensitive, &error);
 
-    pop(argc);
     if (fields) {
+        pop(argc);
         push_list(fields);
         list_discard(fields);
     } else {
+        if (error == YES)
+            return;
+        pop(argc);
         push_int(0);
     }
 }
@@ -339,11 +346,8 @@ COLDC_FUNC(strsed) {
                 func_num_error(argc, "three to five");
                 return;
     }
-                 /* regexp *//* string *//* replace */
-    out = strsed(_STR(ARG1), _STR(ARG2), _STR(ARG3), flags, mult);
 
-    /* strsed() threw an error if out == NULL */
-    if (!out)
+    if (!(out = strsed(STR2, STR1, STR3, flags, mult)))
         return;
 
     pop(argc);

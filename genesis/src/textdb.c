@@ -37,31 +37,31 @@ typedef struct idref_s {
 Long       line_count;
 Long       method_start;
 Obj * cur_obj;
+extern Bool print_objs;
 
-#define LINECOUNT (printf("Line %ld: ", (long) line_count))
-
-#define ERR(__s)  (printf("Line %ld: %s\n", (long) line_count, __s))
+#define ERR(__s)  (printf("\rLine %ld: %s\n", (long) line_count, __s))
 
 #define ERRf(__s, __x) { \
-        printf("Line %ld: ", (long) line_count); \
+        printf("\rLine %ld: ", (long) line_count); \
         printf(__s, __x); \
-        fputc(10, logfile); \
+        fputc('\n', stdout); \
     }
 
-#define WARN(_printf_) \
-        printf("Line %ld: WARNING: ", (long) line_count); \
+#define WARN(_printf_) { \
+        printf("\rLine %ld: WARNING: ", (long) line_count); \
         printf _printf_; \
-        fputc(10, stdout)
+        fputc('\n', stdout); \
+    }
 
 #define DIE(__s) { \
-        printf("Line %ld: ERROR: %s\n", (long) line_count, __s); \
+        printf("\rLine %ld: ERROR: %s\n", (long) line_count, __s); \
         shutdown(); \
     }
 
 #define DIEf(__fmt, __arg) { \
-        printf("Line %ld: ERROR: ", (long) line_count); \
+        printf("\rLine %ld: ERROR: ", (long) line_count); \
         printf(__fmt, __arg); \
-        fputc(10, logfile); \
+        fputc('\n', stdout); \
         shutdown(); \
     }
 
@@ -76,12 +76,9 @@ Obj * cur_obj;
     }
 
 #define MATCH(__s, __t, __l) (!strnccmp(__s, __t, __l) && isspace(__s[__l]))
-#define NEXT_SPACE(__s) {for (; *__s && !isspace(*__s) && *__s != NULL; __s++);}
-#define NEXT_WORD(__s)  {for (; isspace(*__s) && *__s != NULL; __s++);}
+#define NEXT_SPACE(__s) {for (; *__s && !isspace(*__s) && *__s != (char) NULL; __s++);}
+#define NEXT_WORD(__s)  {for (; isspace(*__s) && *__s != (char) NULL; __s++);}
 
-/* this is here, rather than in data.c, because it would be lint for genesis */
-
-char * data_from_literal(cData *d, char *s);
 
 /*
 // ------------------------------------------------------------------------
@@ -104,6 +101,10 @@ char * data_from_literal(cData *d, char *s);
 // ------------------------------------------------------------------------
 */
 INTERNAL Method * get_method(FILE * fp, Obj * obj, char * name);
+char * strchop(char * str, Int len);
+INTERNAL void print_objname(Obj * obj, FILE * fp);
+char * data_from_literal(cData *d, char *s);
+void blank_and_print_obj(char * what, Obj * obj);
 
 /*
 // ------------------------------------------------------------------------
@@ -136,9 +137,9 @@ holder_t * holders = NULL;
 nh_t * nhs = NULL;
 
 INTERNAL Int add_objname(char * str, Long objnum) {
-    Ident      id = ident_get(str);
-    Obj * obj = cache_retrieve(objnum);
-    Long       num = INV_OBJNUM;
+    Ident   id = ident_get(str);
+    Obj   * obj = NULL;
+    Long    num = INV_OBJNUM;
 
     if (lookup_retrieve_name(id, &num) && num != objnum) {
         WARN(("Attempt to rebind existing objname $%s (#%li)",
@@ -150,6 +151,7 @@ INTERNAL Int add_objname(char * str, Long objnum) {
     /* the object doesn't exist yet, so lets add the name to the db,
        with the number, and keep it in a holder stack so we can set
        the name on the object after it is defined */
+    obj = cache_retrieve(objnum);
     if (!obj) {
         holder_t * holder = (holder_t *) malloc(sizeof(holder_t));
 
@@ -159,18 +161,14 @@ INTERNAL Int add_objname(char * str, Long objnum) {
         holder->str = string_from_chars(ident_name(id), strlen(ident_name(id)));
         holder->next = holders;
         holders = holder;
-
-#if DEBUG_TEXTDB
-        printf("DEBUG: Adding $%s => #%li\n", ident_name(id), holder->objnum);
-#endif
     } else {
         if (num == objnum)
             obj->objname = ident_dup(id);
         else
             object_set_objname(obj, id);
+        cache_discard(obj);
     }
 
-    cache_discard(obj);
     ident_discard(id);
 
     return 1;
@@ -180,43 +178,35 @@ INTERNAL void cleanup_holders(void) {
     holder_t * holder = holders,
              * old = NULL;
     Long       objnum;
-    Obj * obj;
+    Obj      * obj;
     Ident      id;
 
     while (holder != NULL) {
-        /* verify it is still ours */
         id = ident_get(string_chars(holder->str));
         if (!lookup_retrieve_name(id, &objnum)) {
-            printf("\nWARNING: Name $%s for object #%d disapppeared.",
+            printf("\rWARNING: Name $%s for object #%d disapppeared.\n",
                    ident_name(id), (int) objnum);
-            goto discard;
-        }
-        if (objnum != holder->objnum) {
-            printf("\nWARNING: Name $%s is no longer bound to object #%d.",
+        } else if (objnum != holder->objnum) {
+            printf("\rWARNING: Name $%s is no longer bound to object #%d.\n",
                    ident_name(id), (int) objnum);
-            goto discard;
-        }
-        obj = cache_retrieve(holder->objnum);
-        if (!obj) {
-            printf("\nWARNING: Object $%s (#%d) was never defined.",
-                   ident_name(id), (int) objnum);
-            lookup_remove_name(id);
-            goto discard;
+        } else {
+            obj = cache_retrieve(holder->objnum);
+            if (obj) {
+                if (obj->objname == NOT_AN_IDENT)
+                    obj->objname = ident_dup(id);
+                cache_discard(obj);
+            } else {
+                printf("\rWARNING: Object $%s (#%d) was never defined.\n",
+                       ident_name(id), (int) objnum);
+                lookup_remove_name(id);
+            }
         }
 
-        /* it has set the name correctly */
-        if (obj->objname != NOT_AN_IDENT)
-            goto discard;
-
-        obj->objname = ident_dup(id);
-
-        discard: {
-            string_discard(holder->str);
-            ident_discard(id);
-            old = holder;
-            holder = holder->next;
-            free(old);
-        }
+        string_discard(holder->str);
+        ident_discard(id);
+        old = holder;
+        holder = holder->next;
+        free(old);
     }
 }
 
@@ -242,8 +232,8 @@ INTERNAL void remember_native(Method * method) {
     nh = find_defined_native_method(method->object->objnum, method->name);
     if (nh != (nh_t *) NULL) {
         fformat(stdout,
-              "Line %l: ERROR: %O.%s() overrides existing native definition.\n",
-               line_count, nh->objnum, ident_name(nh->native));
+            "\rLine %l: ERROR: %O.%s() overrides existing native definition.\n",
+            line_count, nh->objnum, ident_name(nh->native));
         shutdown();
     }
 
@@ -262,11 +252,11 @@ INTERNAL void frob_n_print_errstr(char * err, char * name, cObjnum objnum);
 void verify_native_methods(void) {
     Ident      mname;
     Ident      name;
-    Obj * obj;
-    Method * method = NULL;
-    cObjnum   objnum;
-    cList   * errors;
-    cList   * code = list_new(0);
+    Obj      * obj;
+    Method   * method = NULL;
+    cObjnum    objnum;
+    cList    * errors;
+    cList    * code = list_new(0);
     native_t * native;
     register   Int x;
     nh_t     * nh = (nh_t *) NULL;
@@ -291,15 +281,15 @@ void verify_native_methods(void) {
   
         /* die? */
         if (objnum == INV_OBJNUM) {
-            printf("WARNING: Unable to find object for native $%s.%s()\n",
+            printf("\rWARNING: Unable to find object for native $%s.%s()\n",
                    native->bindobj, native->name);
             continue;
         }
 
         /* pull the object or die if we cant */
         obj = cache_retrieve(objnum);
-        if (obj == (Obj *) NULL) {
-            printf("WARNING: Unable to retrieve object #%li ($%s)\n",
+        if (!obj) {
+            printf("\rWARNING: Unable to retrieve object #%li ($%s)\n",
                    (long) objnum, native->bindobj);
             continue;
         }
@@ -308,7 +298,7 @@ void verify_native_methods(void) {
         name = ident_get(native->name);
         if (name == NOT_AN_IDENT) {
             fformat(stdout,
-                   "WARNING: Invalid name \"%s\" for native method on \"%O\"\n",
+                 "\rWARNING: Invalid name \"%s\" for native method on \"%O\"\n",
                    native->name, obj->objnum);
             cache_discard(obj);
             continue;
@@ -352,7 +342,7 @@ void verify_native_methods(void) {
             if (!(method->m_flags & MF_NATIVE) &&
                  use_natives != FORCE_NATIVES)
             {
-                fformat(stdout, "WARNING: method definition %O.%s() overrides native method.\n", obj->objnum, ident_name(mname));
+                fformat(stdout, "\rWARNING: method definition %O.%s() overrides native method.\n", obj->objnum, ident_name(mname));
             } else {
                 method->native = x;
                 method->m_flags |= MF_NATIVE;
@@ -385,16 +375,19 @@ void verify_native_methods(void) {
         if (nh->valid) {
             ident_discard(name);
         } else {
-#if 0
+            /* remove the native array designator from the method,
+               but not the native mask */
             cur_obj = cache_retrieve(objnum);
+                printf("\rWARNING: No native definition for method .%s()\n",
+                       ident_name(name));
             if (cur_obj) {
-                object_del_method(cur_obj, name);
+                method = object_find_method_local(cur_obj, name);
+                if (method) {
+                    method->native = -1;
+                    cur_obj->dirty = 1;
+                }
                 cache_discard(cur_obj);
             }
-#endif
-
-            printf("WARNING: No native definition for method .%s()\n",
-                   ident_name(name));
             ident_discard(name);
         }
 
@@ -427,7 +420,7 @@ INTERNAL Int get_idref(char * sp, idref_t * id, Int isobj) {
 
     /* get just the symbol */
     for (x = 0;
-         *p != NULL && (isalnum(*p) || *p == '_' || *p == '#' || *p == '$');
+         *p != (char) NULL && (isalnum(*p) || *p == '_' || *p == '#' || *p == '$');
          x++, p++);
 
     strncpy(str, sp, x);
@@ -437,7 +430,7 @@ INTERNAL Int get_idref(char * sp, idref_t * id, Int isobj) {
     if (*p == '#') {
         p++;
         if (isobj && isdigit(*p))
-            id->objnum = atol(p);
+            id->objnum = (Long) atol(p);
         else
             DIEf("Invalid object reference \"%s\".", str)
     } else {
@@ -461,7 +454,7 @@ INTERNAL Long parse_to_objnum(idref_t ref) {
          objnum = 0;
     Int  result;
 
-    if (ref.str[0] != NULL) {
+    if (ref.str[0] != (char) NULL) {
 
         if (!strncmp(ref.str, "root", 4) && strlen(ref.str) == 4)
             return 1;
@@ -483,12 +476,12 @@ INTERNAL Long parse_to_objnum(idref_t ref) {
 */
 
 INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
-    idref_t    obj;
-    char     * p = NULL,
-               obj_str[BUF];
-    Obj * target = NULL;
-    cList   * parents = list_new(0);
-    Long       objnum;
+    idref_t   obj;
+    char    * p = (char) NULL,
+              obj_str[BUF];
+    Obj     * target = NULL;
+    cList   * parents = list_new(1); /* will always have a least one parent */
+    Long      objnum;
     cData     d;
 
     /* grab what should be the object number or name */
@@ -519,13 +512,13 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
         NEXT_WORD(s);
 
         /* get each parent, look them up */
-        while ((more && *s != NULL)) {
+        while ((more && *s != (char) NULL)) {
             p = strchr(s, ',');
             if (p == NULL) {
                 /* we may be at the end of the line.. */
                 if (s[strlen(s) - 1] != ';')
                     DIE("Parse Error, unterminated directive.")
-                s[strlen(s) - 1] = NULL;
+                s[strlen(s) - 1] = (char) NULL;
                 strcpy(par_str, s);
                 len = strlen(par_str);
                 more = FALSE;
@@ -558,10 +551,11 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
     if (new == N_OLD) {
         if (objnum == INV_OBJNUM) {
             WARN(("old: Object \"%s\" does not exist.", obj_str));
+            list_discard(parents);
             return NULL;
         } else {
             target = cache_retrieve(objnum);
-            if (target == NULL) {
+            if (!target) {
                 WARN(("old: Unable to find object \"%s\".", obj_str));
             } else if (objnum == ROOT_OBJNUM) {
                 WARN(("old: attempt to destroy $root ignored."));
@@ -571,6 +565,7 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
                 ERRf("old: destroying object %s.", obj_str);
                 target->dead = 1;
                 cache_discard(target);
+                target = NULL;
             }
         }
     } else if (new == N_NEW) {
@@ -583,23 +578,17 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
             /* $root and $sys should ALWAYS exist */
             target = cache_retrieve(objnum);
         } else {
-
             if (objnum != INV_OBJNUM) {
                 target = cache_retrieve(objnum);
                 if (target) {
                     WARN(("new: destroying existing object %s.", obj_str));
                     target->dead = 1;
                     cache_discard(target);
+                    target = NULL;
                 }
             }
-
             target = object_new(objnum, parents);
-#if DEBUG_TEXTDB
-            printf("DEBUG: Creating #%li (#%li)\n", objnum, target->objnum);
-#endif
-
         }
-
     } else {
         target = cache_retrieve(objnum);
 
@@ -607,23 +596,17 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
             WARN(("Creating object \"%s\".", obj_str));
             if (parents->len == 0 && objnum != ROOT_OBJNUM)
                 DIEf("Attempt to define object %s without parents.", obj_str);
-#if DEBUG_TEXTDB
-            printf("DEBUG: Creating %li\n", objnum);
-#endif
             target = object_new(objnum, parents);
             if (!target) {
-                DIEf("ABORT, unable to create object #%li", objnum);
+                DIEf("ABORT, unable to create object #%li", (long) objnum);
             }
-#if DEBUG_TEXTDB
-            printf("DEBUG: Creating %li\n", objnum);
-#endif
         }
 
     }
 
     /* if we should, add the name.  If it already has one, we just replace it.*/
     if (objnum != ROOT_OBJNUM && objnum != SYSTEM_OBJNUM) {
-        if (obj.str[0] != NULL)
+        if (obj.str[0] != (char) NULL)
             add_objname(obj.str, target->objnum);
     }
 
@@ -704,7 +687,7 @@ INTERNAL void handle_namecmd(char * line, char * s, Int new) {
     p = s;
 
     /* skip past the name */
-    for (; *p && !isspace(*p) && *p != NULL && *p != ';'; p++);
+    for (; *p && !isspace(*p) && *p != (char) NULL && *p != ';'; p++);
 
     /* copy the name */
     COPY(name, s, p);
@@ -713,14 +696,14 @@ INTERNAL void handle_namecmd(char * line, char * s, Int new) {
     id = ident_get(name);
     if (lookup_retrieve_name(id, &other)) {
         ident_discard(id);
-        WARN(("objname $%s is already bound to objnum #%li", name, other));
+        WARN(("objname $%s is already bound to objnum #%li", name, (long) other));
         return;
     }
 
     ident_discard(id);
 
     /* lets see if there is a objnum association, or if we should pick one */
-    for (; isspace(*p) && *p != NULL; p++);
+    for (; isspace(*p) && *p != (char) NULL; p++);
 
     if (*p != ';') {
         if (!p) { 
@@ -749,10 +732,11 @@ INTERNAL void handle_namecmd(char * line, char * s, Int new) {
 // ------------------------------------------------------------------------
 */
 INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
-    cData     d;
+    cData      d;
     char     * p = s;
     Long       definer, var;
     idref_t    name;
+    Obj      * def;
 
     if (*s == '#' || *s == '$') {
         s += get_idref(s, &name, ISOBJ);
@@ -762,7 +746,7 @@ INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
             WARN(("Ignoring object variable with invalid parent:"));
             if (strlen(line) > 55) {
                 line[50] = line[51] = line[52] = '.';
-                line[53] = NULL;
+                line[53] = (char) NULL;
             }
             WARN(("\"%s\"", line));
             return;
@@ -771,7 +755,7 @@ INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
             WARN(("Ignoring object variable with no ancestor:"));
             if (strlen(line) > 55) {
                 line[50] = line[51] = line[52] = '.';
-                line[53] = NULL;
+                line[53] = (char) NULL;
             }
             WARN(("\"%s\"", line));
             return;
@@ -786,28 +770,29 @@ INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
 
     /* strip trailing spaces and semi colons */
     while (s[strlen(s) - 1] == ';' || isspace(s[strlen(s) - 1]))
-        s[strlen(s) - 1] = NULL;
+        s[strlen(s) - 1] = (char) NULL;
 
     s += get_idref(s, &name, NOOBJ);
 
-    if (name.str[0] == NULL)
+    if (name.str[0] == (char) NULL)
         DIEf("Invalid variable name \"%s\"", p);
 
     var = ident_get(name.str);
 
     if (new == N_OLD) {
-        Obj * obj = cache_retrieve(definer);
+        def = cache_retrieve(definer);
 
-        if (!obj)
+        if (!def)
             DIE("Abnormal disappearance of object.");
 
         /* axe the variable */
-        object_delete_var(cur_obj, obj, var);
+        object_delete_var(cur_obj, def, var);
+        cache_discard(def);
     } else {
         d.type = -2;
 
         /* skip the current 'word' until we hit a space or a '=' */
-        for (; *s && !isspace(*s) && *s != NULL && *s != '='; s++);
+        for (; *s && !isspace(*s) && *s != (char) NULL && *s != '='; s++);
 
         /* incase we hit a space and not a '=', bump it up to the next word */
         NEXT_WORD(s);
@@ -817,7 +802,16 @@ INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
             NEXT_WORD(s);
             data_from_literal(&d, s);
             if (d.type == -1) {
-                WARN(("data is unparsable, defaulting to '0'."));
+                printf("\rLine %ld: WARNING: invalid data for variable ", (long) line_count);
+                print_objname(cur_obj, stdout);
+                if (cur_obj->objnum!=definer && (def=cache_retrieve(definer))) {
+                    fputc('<', stdout);
+                    print_objname(def, stdout);
+                    fputc('>', stdout);
+                    cache_discard(def);
+                }
+                printf(",%s:\nLine %ld: WARNING: data: %s\nLine %ld: WARNING: Defaulting value to ZERO ('0').\n",
+                       ident_name(var), (long) line_count, strchop(s, 50), (long) line_count);
             }
         }
 
@@ -827,6 +821,7 @@ INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
         }
 
         object_put_var(cur_obj, definer, var, &d);
+        data_discard(&d);
     }
 }
 
@@ -867,7 +862,7 @@ INTERNAL Int get_method_name(char * s, idref_t * id) {
     if (*s == '.')
         s++, count++;
 
-    for (x=0, p=s; *p != NULL; x++, p++) {
+    for (x=0, p=s; *p != (char) NULL; x++, p++) {
         if (isalnum(*p) || *p == '_')
             continue;
         break;
@@ -948,7 +943,7 @@ INTERNAL void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
 
     s += get_method_name(s, &id);
 
-    if (id.str[0] == NULL)
+    if (id.str[0] == (char) NULL)
         DIE("No method name.");
 
     name = ident_get(id.str);
@@ -957,7 +952,7 @@ INTERNAL void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
     if ((p = strchr(s, ':')) != NULL) {
         p++;
 
-        while (*p != NULL && running) {
+        while (*p != (char) NULL && running) {
             NEXT_WORD(p);   
             if (!strnccmp(p, "nooverride", 10)) {
                 p += 10;
@@ -1049,7 +1044,7 @@ INTERNAL void frob_n_print_errstr(char * err, char * name, cObjnum objnum) {
         err += 2;
     }
 
-    str = format("Line %l: [line %d in %O.%s()]: %s\n",
+    str = format("\rLine %l: [line %d in %O.%s()]: %s\n",
                  method_start + line,
                  line,
                  objnum,
@@ -1115,15 +1110,16 @@ INTERNAL Method * get_method(FILE * fp, Obj * obj, char * name) {
 void compile_cdc_file(FILE * fp) {
     Int        new = 0,
                access = A_NONE;
-    cStr * line,
+    cStr     * line,
              * str = NULL;
     char     * p,
              * s;
-    Obj * obj;
+    Obj      * obj,
+             * root;
 
     /* start at line 0 */
     line_count = 0;
-    cur_obj = cache_retrieve(ROOT_OBJNUM);
+    root = cur_obj = cache_retrieve(ROOT_OBJNUM);
 
     /* use fgetstring because it'll expand until we have the whole line */
     while ((line = fgetstring(fp)) && running) {
@@ -1132,7 +1128,7 @@ void compile_cdc_file(FILE * fp) {
         /* Strip trailing spaces from the line. */
         while (line->len && isspace(line->s[line->len - 1]))
             line->len--;
-        line->s[line->len] = NULL;
+        line->s[line->len] = (char) NULL;
 
         /* Strip unprintables from the line. */
         for (p = s = line->s; *p; p++) {
@@ -1140,7 +1136,7 @@ void compile_cdc_file(FILE * fp) {
                 p++;
             *s++ = *p;
         }
-        *s = NULL;
+        *s = (char) NULL;
         line->len = s - line->s;
 
         if (!line->len) {
@@ -1150,7 +1146,7 @@ void compile_cdc_file(FILE * fp) {
 
         /* if we end in a backslash, concatenate */
         if (line->s[line->len - 1] == '\\') {
-            line->s[line->len - 1] = NULL;
+            line->s[line->len - 1] = (char) NULL;
             line->len--;
             if (str != NULL) {
                 str = string_add(str, line);
@@ -1209,6 +1205,8 @@ void compile_cdc_file(FILE * fp) {
             if (obj != NULL) {
                 if (cur_obj != NULL)
                     cache_discard(cur_obj);
+                if (print_objs)
+                    blank_and_print_obj("Compiling ", obj);
                 cur_obj = obj;
             }
         } else if (MATCH(s, "parent", 6)) {
@@ -1245,11 +1243,14 @@ void compile_cdc_file(FILE * fp) {
         str = NULL;
     }
 
+    cache_discard(root);
     verify_native_methods();
 
-    printf("Cleaning up name holders...");
+    fputs("\rCleaning up name holders...", stdout);
+    fflush(stdout);
     cleanup_holders();
-    fputc(10, logfile);
+    fputs("done.\n", stdout);
+    fflush(stdout);
 }
 
 /* defined here, rather than in data.c, because it would be lint for genesis */
@@ -1260,26 +1261,31 @@ char * data_from_literal(cData *d, char *s) {
 
     d->type = -1;
 
-    if (isdigit(*s) || (*s == '-' && isdigit(s[1]))) {
+    if (isdigit(*s) || ((*s == '-' || *s == '+') && isdigit(s[1]))) {
         char *t = s;
 
 	d->type = INTEGER;
-	d->u.val = atol(s);
+	d->u.val = (Long) atol(s);
 	while (isdigit(*++s));
         if (*s=='.' || *s=='e') {
  	    d->type = FLOAT;
- 	    d->u.fval = atof(t);
+ 	    d->u.fval = (Float) atof(t);
  	    s++;
-            while (isdigit(*s) || *s == '.' || *s == 'e' || *s == '-') s++;
+            while (isdigit(*s) ||
+                   *s == '.' ||
+                   *s == 'e' ||
+                   *s == '-' ||
+                   *s == '+')
+                s++;
  	}
 	return s;
     } else if (*s == '"') {
 	d->type = STRING;
 	d->u.str = string_parse(&s);
 	return s;
-    } else if (*s == '#' && (isdigit(s[1]) || s[1] == '-')) {
+    } else if (*s == '#' && (isdigit(s[1]) || ((s[1] == '-' || s[1] == '+') && isdigit(s[2])))) {
 	d->type = OBJNUM;
-	d->u.objnum = atol(++s);
+	d->u.objnum = (cObjnum) atol(++s);
 	while (isdigit(*++s));
 	return s;
     } else if (*s == '$') {
@@ -1288,7 +1294,7 @@ char * data_from_literal(cData *d, char *s) {
 	cObjnum   objnum;
 
         s += get_idref(s, &id, ISOBJ);
-        if (id.err || id.str[0] == NULL)
+        if (id.err || id.str[0] == (char) NULL)
             DIE("Invalid object definition in data.")
         name = ident_get(id.str);
 	if (!lookup_retrieve_name(name, &objnum)) {
@@ -1417,6 +1423,7 @@ char * data_from_literal(cData *d, char *s) {
 // ------------------------------------------------------------------------
 // decompile the binary db to a text file
 */
+Int last_length; /* used in doing fancy formatting */
 void dump_object(Long objnum, FILE *fp);
 INTERNAL char * method_definition(Method * m);
 
@@ -1442,21 +1449,23 @@ Int text_dump(void) {
 
     fp = open_scratch_file(buf, "w");
     if (!fp) {
-        fprintf(stderr, "Unable to open temporary file \"%s\".\n", buf);
+        fprintf(stderr, "\rUnable to open temporary file \"%s\".\n", buf);
         return 0;
     }
 
+    last_length = 0;
     cur_search++;
     dump_object(ROOT_OBJNUM, fp);
 
     close_scratch_file(fp);
 
     if (rename(buf, c_dir_textdump) == F_FAILURE) {
-        fprintf(stderr, "Unable to rename \"%s\" to \"%s\":\n\t%s\n",
+        fprintf(stderr, "\rUnable to rename \"%s\" to \"%s\":\n\t%s\n",
                 buf, c_dir_textdump, strerror(GETERR()));
         return 0;
     }
 
+    fputc('\r', stdout);
     return 1;
 }
 #define is_system(__n) (__n == ROOT_OBJNUM || __n == SYSTEM_OBJNUM)
@@ -1467,21 +1476,21 @@ Int text_dump(void) {
     }
 
 void dump_object(Long objnum, FILE *fp) {
-    Obj * obj,
-             * tmp;
-    cList   * objs,
-             * code;
-    cData   * d;
-    cStr * str;
-    Var      * var;
-    Int        first,
-               i;
+    Obj    * obj,
+           * tmp;
+    cList  * objs,
+           * code;
+    cData  * d;
+    cStr   * str;
+    Var    * var;
+    Int      first,
+             i;
     Method * meth;
 
     obj = cache_retrieve(objnum);
 
     if (obj == NULL) {
-        printf("WARNING: NULL object pointer found, you used a corrupt binary db!\nWARNING: Attempting to work around.  This will probably create a\nWARNING: textdump with invalid ancestors\n");
+        printf("\rWARNING: NULL object pointer found, you used a corrupt binary db!\nWARNING: Attempting to work around.  This will probably create a\nWARNING: textdump with invalid ancestors\n");
         return;
     }
 
@@ -1506,6 +1515,9 @@ void dump_object(Long objnum, FILE *fp) {
 
     obj->dirty = 1;
     obj->search = cur_search;
+
+    if (print_objs)
+        blank_and_print_obj("Decompiling ", obj);
 
     if (!is_system(obj->objnum))
        fputs("new ", fp);
@@ -1572,7 +1584,7 @@ void dump_object(Long objnum, FILE *fp) {
 
         /* if it is native, and they have renamed it, put a rename
            directive down */
-        if (meth->m_flags & MF_NATIVE) {
+        if (meth->m_flags & MF_NATIVE && meth->native != -1) {
             if (strcmp(ident_name(meth->name), natives[meth->native].name))
                 fprintf(fp, "bind_native .%s() .%s();\n\n",
                         natives[meth->native].name,
@@ -1650,5 +1662,52 @@ INTERNAL char * method_definition(Method * m) {
     }
 
     return buf;
+}
+
+void blank_and_print_obj(char * what, Obj * obj) {
+    register int x;
+    static Int len = 0;
+    Number_buf nbuf;
+    char * sn;
+
+    /* white out what we just printed */
+    for (x=len; x; x--)
+        fputc('\b', stdout);
+    fputs("\b\b\b\b", stdout);
+    for (x=len; x; x--)
+        fputc(' ', stdout);
+    fputs("    \r", stdout);
+
+    /* let them know whats up now */
+    fputs(what, stdout);
+    if (obj->objname == NOT_AN_IDENT) {
+        sn = long_to_ascii(obj->objnum, nbuf);
+        fputc('#', stdout);
+    } else {  
+        sn = ident_name(obj->objname);
+        fputc('$', stdout);
+    }
+    fputs(sn, stdout);
+    fputs("...", stdout);
+
+    /* flush */
+    fflush(stdout);
+
+    len = strlen(sn);
+}
+
+/* the idea is to do this on strings that may be VERY large */
+/* len MUST be more than 4 */
+char * strchop(char * str, Int len) {
+    register int x;
+    for (x=0; x < len; x++) {
+        if (str[x] == (char) NULL)
+            return (char) NULL;
+    }
+    /* null terminate it and put an elipse in */
+    str[x] = (char) NULL;
+    str[x-1] = str[x-2] = str[x-3] = '.';
+
+    return str;
 }
 

@@ -9,6 +9,8 @@ void op_comment(void);
 void op_pop(void);
 void op_set_local(void);
 void op_set_obj_var(void);
+void op_map(void);
+void op_map_range(void);
 void op_if(void);
 void op_else(void);
 void op_for_range(void);

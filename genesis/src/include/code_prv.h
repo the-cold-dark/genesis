@@ -152,6 +152,19 @@ struct expr {
 	    Expr *right;
 	} and, or;
 
+        struct {
+	    Expr *src;
+	    char *var;
+	    Expr *job;
+	} map;
+
+        struct {
+	    Expr *start;
+	    Expr *end;
+	    char *var;
+	    Expr *job;
+	} maprange;
+
 	struct {
 	    Expr *cond;
 	    Expr *true;

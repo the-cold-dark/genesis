@@ -186,7 +186,6 @@ static cList   *object_ancestors_aux(Long objnum, cList *ancestors);
 static Int     object_has_ancestor_aux(Long objnum, Long ancestor);
 static Var    *object_create_var(Obj *object, Long cclass, Long name);
 static Var    *object_find_var(Obj *object, Long cclass, Long name);
-static Method * object_find_method_local(Obj *object, Long name);
 static Method * method_cache_check(Long objnum, Long name, Long after);
 static void    method_cache_set(Long objnum, Long name, Long after, Long loc);
 static void    search_object(Long objnum, Search_params *params);
@@ -215,6 +214,7 @@ Long    object_retrieve_var(Obj *object, Obj *cclass, Long name,
                             cData *ret);
 void    object_put_var(Obj *object, Long cclass, Long name, cData *val);
 Method * object_find_method(Long objnum, Long name);
+Method * object_find_method_local(Obj *object, Long name);
 Method * object_find_next_method(Long objnum, Long name, Long after);
 Int     object_rename_method(Obj * object, Long oname, Long nname);
 void    object_add_method(Obj *object, Long name, Method *method);
@@ -267,6 +267,7 @@ extern Long    object_retrieve_var(Obj *object, Obj *cclass, Long name,
 extern void    object_put_var(Obj *object, Long cclass, Long name,
                               cData *val);
 extern Method *object_find_method(Long objnum, Long name);
+extern Method *object_find_method_local(Obj * obj, Long name);
 extern Method *object_find_next_method(Long objnum, Long name, Long after);
 extern Int     object_rename_method(Obj * object, Long oname, Long nname);
 extern void    object_add_method(Obj *object, Long name, Method *method);

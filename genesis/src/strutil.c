@@ -372,24 +372,25 @@ cList * match_pattern(char *pattern, char *s) {
     return NULL;
 }
 
-cList * match_regexp(cStr * reg, char * s, Bool sensitive) {
-    cList * fields = (cList *) NULL,
+cList * match_regexp(cStr * reg, char * s, Bool sensitive, Bool *error) {
+    cList  * fields = (cList *) NULL,
            * elemlist; 
     regexp * rx;
-    cData   d;
+    cData    d;
     Int      i;
 
-    if ((rx = string_regexp(reg)) == (regexp *) NULL) {
+    if ((rx = string_regexp(reg)) == NULL) {
         cthrow(regexp_id, "%s", regerror(NULL));
+        *error = YES;
         return NULL;
     }
 
+    *error = NO;
     if (regexec(rx, s, sensitive)) {
-        /* Build the list of fields. */
         fields = list_new(NSUBEXP);
         for (i = 0; i < NSUBEXP; i++) {
             elemlist = list_new(2);
-    
+
             d.type = INTEGER; 
             if (!rx->startp[i]) {
                 d.u.val = 0;
@@ -400,15 +401,15 @@ cList * match_regexp(cStr * reg, char * s, Bool sensitive) {
                 elemlist = list_add(elemlist, &d);
                 d.u.val = rx->endp[i] - rx->startp[i];
                 elemlist = list_add(elemlist, &d);
-            }   
+            }
 
             d.type = LIST;
             d.u.list = elemlist;
             fields = list_add(fields, &d);
             list_discard(elemlist);
-        }    
-    }        
-             
+        }
+    }
+
     return fields;
 }
 
@@ -418,7 +419,7 @@ cList * match_regexp(cStr * reg, char * s, Bool sensitive) {
 #define REGSTR(rx, pos) (string_from_chars(rx->startp[pos], \
                                     rx->endp[pos] - rx->startp[pos]))
 
-cList * regexp_matches(cStr * reg, char * s, Bool sensitive) {
+cList * regexp_matches(cStr * reg, char * s, Bool sensitive, Bool * error) {
     cList * fields;
     regexp * rx;
     cData   d;
@@ -427,8 +428,10 @@ cList * regexp_matches(cStr * reg, char * s, Bool sensitive) {
 
     if ((rx = string_regexp(reg)) == (regexp *) NULL) {
         cthrow(regexp_id, "%s", regerror(NULL));
+        *error = YES;
         return NULL;
     }
+    *error = NO;
 
     if (!regexec(rx, s, sensitive))
         return NULL;
@@ -883,9 +886,9 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
                 }
                 break;
             default: {
-                char rrk[] = {NULL, NULL};
-                rrk[0] = *s;
-                x_THROW((error_id, "Unknown format type '%s'.", rrk))
+                char fmttype[] = {(char) NULL, (char) NULL};
+                fmttype[0] = *s;
+                x_THROW((error_id, "Unknown format type '%s'.", fmttype))
             }
         }
 

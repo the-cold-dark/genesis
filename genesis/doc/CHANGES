@@ -6,7 +6,29 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
-1.0-9 [] Brandon Gillespie, Miroslav Silovic
+1.0-10 [26-Jul-96] Miroslav Silovic, Brad Roberts, Brandon Gillespie
+      * Fixed a problem where natives would get frobbed if you
+        recompiled them. (Brandon)
+      * Lots of leaks plugged in coldcc. (Miro, Brandon, Brad)
+      * Fixed a problem with match_regexp() regexp() and their native
+        counterparts. (Brandon)
+      * Some more float problems fixed. (Miro)
+      * Added coldcc to print what it is (de)compiling, '-o' will turn this off.
+      * Tweaked a few things (configure, some defaults) (Brandon)
+      * Added new operators: map, filter, find, hash (Miro)
+      * Changed the order of arguments for the following functions,
+        shown with the new order (Brandon):
+            match_begin(str, key, ...)
+            match_pattern(str, key, ...)
+            match_template(str, key, ...)
+            match_regexp(str, key, ...)
+            regexp(str, key, ...)
+            strsed(str, key, ...)
+      * Fixed NULL usage to cast to char, cleans up warnings in Linux,
+        also included fix for handling SIGPIPE again (Brad)
+1.0-9 [13-Jul-96] Brandon Gillespie, Miroslav Silovic
+      * logs/genesis.run contains the pid of genesis, and is removed when
+        genesis exits.
       * Fixed a few things that cropped up when compiling on other systems
       * Added some compression code to the binary database (Miro)
       * Added asyncrynous backups to binarydb (Miro)

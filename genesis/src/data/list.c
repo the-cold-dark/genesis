@@ -72,10 +72,13 @@ cList * list_prep(cList *list, Int start, Int len) {
         for (; list->len > len; list->len--)
             data_discard(&list->el[list->len - 1]);
         list->len = len;
-        if (list->size > 4096)
-            list->size += 4096;
-        else
-            list->size = list->size * 2 + MALLOC_DELTA;
+        while (list->size < len)
+        {
+            if (list->size > 4096)
+                list->size += 4096;
+            else
+                list->size = list->size * 2 + MALLOC_DELTA;
+        }
         list = (cList *) erealloc(list, sizeof(cList) +
                                         (list->size * sizeof(cData)));
         return list;

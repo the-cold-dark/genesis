@@ -1,0 +1,212 @@
+Key: + => new
+     * => changed
+     ? => undecided, do we want/need it?
+     ! => Should be here, not where it currently is
+     - => going away
+
+--- Methods the driver is aware of:
+
+  System:
+
+   controller.startup()
+   controller.heartbeat()
+   controller.signal()
+
+  Network:
+
+   controller.connected()    (was: controller.connected())
+   controller.failed()
+   controller.parse()
+   controller.disconnected() (was: controller.disconnect())
+
+--- Object Variable functions:
+
+ add_var() (was add_parameter())
+ del_var() (was del_parameter())
+ variables() (was parameters())
+ set_var()
+ get_var()
+ clear_var()
+
+--- Object Method functions:
+
++compile()           (accepts a list of strings, returns parsetree)
++decompile()         (accepts a parsetree, returns a list of strings)
++add_method()        (accepts a parsetree or a list of strings)
+*method_flags()      (return a list of symbols)
+*set_method_flags()  (accept a list of symbols)
+*method_access()     (was method_state())
+*set_method_access() (was set_method_state())
+*method_info()       (args, vars, lines, etc)
++rename_method()
+ methods() 
+ find_method() 
+ find_next_method() 
+ list_method() 
+ del_method() 
+
+--- Object functions:
+
+ parents() 
+ children() 
+ ancestors() 
++descendants()
+ has_ancestor() 
+*size() (take args: size([data]) as well as size() (this object()))
+ create() 
+ chparents() 
+ destroy() 
+ add_objname()
+ del_objname()
+ get_objname()
+!get_dbref()
+
+--- System functions
+
+-log()         (this will go away, once we add good file writing/reading)
+-binary_dump() (replaced by backup())
+ text_dump()   (Bare level, use in-db and external routines for better dumps)
+ backup()
+ shutdown()
+ set_heartbeat()
+*data()        (Possibly allow break down by ancestor)
+-load()
+
+--- Task/Frame functions
+
+ cancel()
+ suspend()
+ resume()
+ pause()
+-tasks()
++paused_tasks()
++suspended_tasks()
+ task_id()
+ tick() 
+ ticks_left() 
+ method() 
+ this() 
+ definer() 
+ sender() 
+ caller() 
+*stack() (was callers())
+
+--- Data/Conversion functions
+
+ valid() 
+ type()
+ class()
+ toint()
+ tofloat()
+ tostr()
+ toliteral()
+ todbref()
+ tosym()
+ toerr()
+
+--- Exception functions
+
+ error()
+ traceback()
+ throw()
+ rethrow()
+
+--- Network control functions
+
+ reassign_connection()
+ bind_port()
+ unbind_port()
+ open_connection()
+ close_connection()
+*cwrite() (was echo(), write to a connection)
+ cwritef() (was echo_file(), send to a connection)
+ connection() (if a connection is bound to this object, returns basic info)
+
+--- File control functions
+
+ fstat() (was stat_file(), get stat info on a file:
+          bytes, blocks, type, mode, owner, group, last access times)
++fchmod()
++fmkdir()
++frmdir()
++files()   (returns files in a directory, a list)
++fremove()
++frename()
++fopen()
++fclose()
++fseek()
++feof()
++fwrite()
+*fread() (was read_file())
+ execute()
++file() (if a file is bound to this object, returns basic info)
+
+--- Misc functions
+
+ time()
+ mtime()
+ ctime()
+ localtime()
+-timestamp() (replace with $time.format("%d %h %y %H:%M"))
+ max()
+ min()
+ random()
+ abs()
+ bind_function()
+ unbind_function()
+ set_objname_var()
+
+--- Native Methods:
+
+ buffer_len()                  -> $buffer.length()
+ buffer_retrieve()             -> $buffer.retrieve()
+ buffer_append()               -> $buffer.append()
+ buffer_replace()              -> $buffer.replace()
++?                             -> $buffer.insert()
++?                             -> $buffer.subrange()
+ buffer_add()                  -> $buffer.add()
+ buffer_truncate()             -> $buffer.truncate()
+ buffer_tail()                 -> $buffer.tail()
+ buffer_to_string()            -> $buffer.to_string()
+ buffer_to_strings()           -> $buffer.to_strings()
+ buffer_from_string()          -> $buffer.from_string()
+ buffer_from_strings()         -> $buffer.from_strings()
+ dict_keys()                   -> $dictionary.keys()
+ dict_add()                    -> $dictionary.add()
+ dict_del()                    -> $dictionary.del()
+ dict_contains()               -> $dictionary.contains()
+ hostname()                    -> $network.hostname()
+ ip()                          -> $network.ip()
+ listlen()                     -> $list.length()
+ sublist()                     -> $list.subrange()
+ insert()                      -> $list.insert()
+ replace()                     -> $list.replace()
+ delete()                      -> $list.delete()
+ setadd()                      -> $list.setadd()
+ setremove()                   -> $list.setremove()
+ union()                       -> $list.union()
+ strlen()                      -> $string.length()
+ substr()                      -> $string.subrange()
+ explode()                     -> $string.explode()
+ pad()                         -> $string.pad()
+ match_begin()                 -> $string.match_begin()
+ match_template()              -> $string.match_template()
+ match_pattern()               -> $string.match_pattern()
+ match_regexp()                -> $string.match_regexp()
++                              -> $string.sub()
++                              -> $string.regexp()
+ strsub()                      -> $string.replace()
+ crypt()                       -> $string.crypt()
+ uppercase()                   -> $string.uppercase()
+ lowercase()                   -> $string.lowercase()
+ strcmp()                      -> $string.compare()
+ strfmt()                      -> $string.format()
+ next_dbref()                  -> $sys.next_dbref()
+ status()                      -> $sys.status()
+ version()                     -> $sys.version()
+ strftime()                    -> $time.format()
+
+ tokenize_cml()                -> $cml2_compiler.tokenize()
+ buf_to_veil_packets()         -> $buffer.to_veil_packets()
+ buf_from_veil_packets()       -> $buffer.from_veil_packets()
+

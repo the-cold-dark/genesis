@@ -1,0 +1,261 @@
+# Genesis, the ColdX driver
+
+CFLAGS=@CFLAGS@ -Iinclude -Imodules
+LIBS=@LIBS@
+COLDLIBS=-lcdc -lColdCore
+LDFLAGS=@LDFLAGS@ -Lmodules
+CC=@CC@
+RANLIB=@RANLIB@
+LINT=@LINT@
+YACC=@YACC@
+YFLAGS=-d
+
+SYS=@SYS@
+CPU=@CPU@
+VENDOR=@VENDOR@
+
+prefix=@prefix@
+BINDIR=$(prefix)/bin
+SRCDIR=$(prefix)/src
+MODULES=$(SRCDIR)/modules
+
+VERSION=@VERSION@
+
+DATA_O     = data.o buffer.o dict.o ident.o list.o object.o string.o
+GRAMMAR_O  = grammar.o
+DB_CACHE_O = cache.o db.o dbpack.o decode.o lookup.o
+IO_O       = io.o log.o net.o file.o
+MISC_O     = match.o memory.o sig.o util.o regexp.o defs.o
+PCODE_O    = codegen.o execute.o opcodes.o functions.o operators.o token.o \
+             modules.o
+
+COMMON_O   = $(DATA_O) $(DB_CACHE_O) $(IO_O) $(MISC_O) $(PCODE_O)
+
+DRIVER_O   = $(GRAMMAR_O) genesis.o dump.o $(COMMON_O)
+COMPILER_O = $(GRAMMAR_O) coldcc.o dump.o $(COMMON_O)
+CONTROL_O = control.o
+
+EVERYTHING_O = genesis.o control.o coldcc.o dump.o $(COMMON_O)
+EVERYTHING_C = `echo $(EVERYTHING_O) | sed -e 's/\.o/.c/g'`
+
+DRIVER = genesis
+COMPILER = coldcc
+CONTROL = control
+
+EXES = $(DRIVER) $(COMPILER) $(CONTROL)
+
+all: $(GRAMMAR_O) Modules $(EXES)
+
+Modules:
+	cd $(MODULES); make
+
+$(DRIVER): $(DRIVER_O)
+	$(CC) $(LDFLAGS) $(DRIVER_O) $(LIBS) $(COLDLIBS) -o $@
+
+$(COMPILER): $(COMPILER_O)
+	$(CC) $(LDFLAGS) $(COMPILER_O) $(LIBS) $(COLDLIBS) -o $@
+
+$(CONTROL): $(CONTROL_O)
+	$(CC) $(LDFLAGS) $(CONTROL_O) $(LIBS) $(COLDLIBS) -o $@
+
+clean:
+	rm -f y.tab.[ch] grammar.c $(EXES) *~ *.BAK *.bak y.output
+	@cd $(MODULES); make $@
+
+scrub:
+	rm -f y.tab.[ch] grammar.c $(EXES) *~ *.BAK *.bak y.output
+	rm -f *.o
+	@cd $(MODULES); make $@
+
+makefile:
+	@cd ..; configure
+
+install: all
+	for i in $(EXES); do \
+		cp -f \$i $(BINDIR) \
+		chmod 700 $(BINDIR)/\$i \
+	done
+
+depend:
+	@cd $(MODULES); make $@
+	@makedepend -- $(CFLAGS) -- $(SRCS)
+
+lint:
+	$(LINT) -u $(SRCS)
+
+# I duplicate scrub because of the recusion involved in calling modules
+patchable:
+	rm -f y.tab.[ch] grammar.c $(EXES) *~ *.BAK *.bak y.output
+	rm -f *.o
+	@cd $(MODULES); make $@
+	rm -f $(prefix)/etc/config.cache
+	rm -f $(prefix)/etc/config.log
+	rm -f $(prefix)/etc/config.status
+	rm -f $(SRCDIR)/Makefile
+	rm -f $(SRCDIR)/modules/Makefile
+	rm -f $(SRCDIR)/include/config.h
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.
+
+buffer.o: include/config.h include/defs.h y.tab.h
+buffer.o: include/buffer.h include/cdc_types.h include/regexp.h
+buffer.o: include/ident.h include/list.h include/cdc_string.h
+buffer.o: include/dict.h
+buffer.o: include/object.h include/data.h include/memory.h
+cache.o: include/config.h
+cache.o: include/defs.h include/cache.h include/object.h include/cdc_types.h
+cache.o: include/regexp.h include/ident.h include/list.h include/cdc_string.h
+cache.o: include/buffer.h include/dict.h include/data.h include/memory.h
+cache.o: include/db.h include/lookup.h include/log.h include/util.h
+codegen.o: include/config.h include/defs.h y.tab.h
+codegen.o: include/cdc_types.h include/regexp.h include/ident.h
+codegen.o: include/list.h include/cdc_string.h include/buffer.h
+codegen.o: include/dict.h include/object.h include/data.h include/codegen.h
+codegen.o: include/memory.h
+codegen.o: include/code_prv.h include/opcodes.h include/grammar.h
+codegen.o: include/util.h include/token.h
+data.o: include/config.h include/defs.h y.tab.h include/cdc_types.h
+data.o: include/regexp.h include/ident.h include/list.h include/cdc_string.h
+data.o: include/buffer.h include/dict.h include/object.h
+data.o: include/data.h include/util.h include/cache.h
+data.o: include/memory.h
+data.o: include/token.h include/log.h include/lookup.h
+db.o: include/config.h
+db.o: include/defs.h include/db.h include/object.h include/cdc_types.h
+db.o: include/regexp.h include/ident.h include/list.h include/cdc_string.h
+db.o: include/buffer.h include/dict.h include/data.h include/lookup.h
+db.o: include/cache.h include/log.h include/util.h
+db.o: include/dbpack.h include/memory.h
+dbpack.o: include/config.h include/defs.h y.tab.h
+dbpack.o: include/dbpack.h include/object.h include/cdc_types.h
+dbpack.o: include/regexp.h include/ident.h include/list.h
+dbpack.o: include/cdc_string.h include/buffer.h include/dict.h include/data.h
+dbpack.o: include/memory.h
+decode.o: include/config.h
+decode.o: include/defs.h y.tab.h include/decode.h include/data.h
+decode.o: include/cdc_types.h include/regexp.h include/ident.h include/list.h
+decode.o: include/cdc_string.h include/buffer.h include/dict.h
+decode.o: include/object.h include/code_prv.h include/codegen.h
+decode.o: include/memory.h
+decode.o: include/log.h include/util.h
+decode.o: include/opcodes.h include/token.h
+dict.o: include/config.h
+dict.o: include/defs.h y.tab.h include/dict.h include/cdc_types.h
+dict.o: include/regexp.h include/ident.h include/list.h include/cdc_string.h
+dict.o: include/buffer.h include/object.h include/data.h include/memory.h
+dump.o: include/config.h include/defs.h y.tab.h include/dump.h
+dump.o: include/cache.h include/object.h include/cdc_types.h include/regexp.h
+dump.o: include/ident.h include/list.h include/cdc_string.h include/buffer.h
+dump.o: include/dict.h include/data.h include/log.h include/util.h
+dump.o: include/execute.h
+dump.o: include/io.h include/grammar.h include/db.h include/lookup.h
+execute.o: include/config.h
+execute.o: include/defs.h y.tab.h include/execute.h
+execute.o: include/data.h include/cdc_types.h include/regexp.h
+execute.o: include/ident.h include/list.h include/cdc_string.h
+execute.o: include/buffer.h include/dict.h include/object.h include/io.h
+execute.o: include/memory.h
+execute.o: include/cache.h include/util.h include/opcodes.h include/log.h
+execute.o: include/decode.h
+ident.o: include/config.h include/defs.h
+ident.o: include/cdc_types.h include/regexp.h include/ident.h include/list.h
+ident.o: include/cdc_string.h include/buffer.h include/dict.h
+ident.o: include/object.h include/data.h include/memory.h
+ident.o: include/util.h
+ident.o: include/log.h
+io.o: include/config.h include/defs.h y.tab.h include/io.h
+io.o: include/cdc_types.h include/regexp.h include/ident.h include/list.h
+io.o: include/cdc_string.h include/buffer.h include/dict.h include/object.h
+io.o: include/data.h include/net.h include/execute.h
+io.o: include/memory.h
+io.o: include/grammar.h include/util.h
+list.o: include/config.h include/defs.h y.tab.h include/list.h
+list.o: include/cdc_types.h include/regexp.h include/ident.h
+list.o: include/cdc_string.h
+list.o: include/buffer.h include/dict.h include/object.h include/data.h
+list.o: include/memory.h
+lookup.o: include/config.h
+lookup.o: include/defs.h include/lookup.h include/log.h include/ident.h
+lookup.o: include/cdc_types.h include/regexp.h include/list.h
+lookup.o: include/cdc_string.h include/buffer.h include/dict.h
+lookup.o: include/object.h include/data.h include/util.h
+log.o: include/config.h
+log.o: include/defs.h include/log.h include/dump.h include/cdc_types.h
+log.o: include/regexp.h include/ident.h include/list.h include/cdc_string.h
+log.o: include/buffer.h include/dict.h include/object.h include/data.h
+log.o: include/util.h
+main.o: include/config.h
+main.o: include/defs.h y.tab.h include/codegen.h include/object.h
+main.o: include/cdc_types.h include/regexp.h include/ident.h include/list.h
+main.o: include/cdc_string.h include/buffer.h include/dict.h include/data.h
+main.o: include/memory.h include/opcodes.h
+main.o: include/match.h include/cache.h include/sig.h include/db.h
+main.o: include/util.h include/io.h include/log.h
+main.o: include/dump.h include/execute.h include/token.h
+match.o: include/config.h include/defs.h y.tab.h
+match.o: include/match.h include/data.h include/cdc_types.h include/regexp.h
+match.o: include/ident.h include/list.h include/cdc_string.h include/buffer.h
+match.o: include/dict.h include/object.h include/memory.h
+match.o: include/util.h
+memory.o: include/config.h
+memory.o: include/defs.h include/memory.h include/log.h
+net.o: include/config.h include/defs.h
+net.o: include/memory.h include/net.h include/io.h
+net.o: include/cdc_types.h include/regexp.h include/ident.h include/list.h
+net.o: include/cdc_string.h include/buffer.h include/dict.h include/object.h
+net.o: include/data.h include/log.h include/util.h
+object.o: include/config.h
+object.o: include/defs.h y.tab.h include/object.h
+object.o: include/cdc_types.h include/regexp.h include/ident.h include/list.h
+object.o: include/cdc_string.h include/buffer.h include/dict.h include/data.h
+object.o: include/memory.h
+object.o: include/opcodes.h include/cache.h include/io.h include/decode.h
+object.o: include/util.h include/log.h
+opcodes.o: include/config.h include/defs.h y.tab.h
+opcodes.o: include/opcodes.h include/ident.h include/cdc_types.h
+opcodes.o: include/regexp.h include/list.h include/cdc_string.h
+opcodes.o: include/buffer.h
+opcodes.o: include/dict.h include/object.h include/data.h include/operators.h
+opcodes.o: include/old_ops.h include/functions.h include/util.h
+sig.o: include/config.h include/defs.h include/sig.h
+sig.o: include/log.h include/execute.h include/data.h
+sig.o: include/cdc_types.h include/regexp.h include/ident.h include/list.h
+sig.o: include/cdc_string.h include/buffer.h include/dict.h include/object.h
+sig.o: include/io.h y.tab.h
+string.o: include/config.h include/defs.h
+string.o: include/cdc_string.h include/cdc_types.h include/regexp.h
+string.o: include/ident.h include/list.h include/buffer.h include/dict.h
+string.o: include/object.h include/data.h include/memory.h
+string.o: include/dbpack.h
+string.o: include/util.h
+token.o: include/config.h include/defs.h y.tab.h
+token.o: include/token.h
+token.o: include/data.h include/cdc_types.h include/regexp.h include/ident.h
+token.o: include/list.h include/cdc_string.h include/buffer.h include/dict.h
+token.o: include/object.h include/memory.h
+util.o: include/config.h include/defs.h y.tab.h
+util.o: include/util.h include/cdc_types.h include/regexp.h include/ident.h
+util.o: include/list.h include/cdc_string.h include/buffer.h include/dict.h
+util.o: include/object.h include/data.h include/token.h include/memory.h
+util.o: include/log.h
+regexp.o: include/config.h include/defs.h
+regexp.o: include/regexp.h include/regmagic.h include/util.h
+regexp.o: include/cdc_types.h include/ident.h
+regexp.o: include/list.h include/cdc_string.h include/buffer.h include/dict.h
+regexp.o: include/object.h include/data.h
+operators.o: include/config.h include/defs.h y.tab.h
+operators.o: include/operators.h include/execute.h
+operators.o: include/data.h
+operators.o: include/cdc_types.h include/regexp.h include/ident.h
+operators.o: include/list.h include/cdc_string.h
+operators.o: include/buffer.h include/dict.h include/object.h include/io.h
+operators.o: include/memory.h include/lookup.h
+operators.o: include/log.h include/util.h
+functions.o: include/config.h include/defs.h y.tab.h
+functions.o: include/lookup.h include/functions.h
+functions.o: include/execute.h include/data.h
+functions.o: include/cdc_types.h include/regexp.h include/ident.h
+functions.o: include/list.h include/cdc_string.h
+functions.o: include/buffer.h include/dict.h include/object.h include/io.h
+functions.o: include/grammar.h include/cache.h include/dbpack.h
+functions.o: include/memory.h include/opcodes.h

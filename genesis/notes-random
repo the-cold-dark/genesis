@@ -1,0 +1,62 @@
+* assignment expressions are not decompiling correctly in certain
+  circumstances, such as:
+
+    xxx (y = (expression))
+
+* rename_method()
+* protected/private variables
+
+* Finalize what will be functions, and what will be native methods,
+  convert db to partial compliance using bind/unbind
+* bind/unbind_function() (one takes sym, one takes str, bad brandon)
+* cleanup error _id's
+* add file_write(), remove log()
+* have file_read() do one block at a time
+* fix JeffK's bitwise op changes
+
+<frob>.method() does not compile
+(<frob>).method() does, but decompiles as <frob>.method().
+send(object, 'method, [args])
+match regexp: \ escaping does not seem to be working correctly, \$ does
+   not escape $.
+look over tray and bucket memory allocation, possibly rewrite, use brk/sbrk
+buffer_* functions -> buf_*
+(actually, modularization will make this needless)
+compile() -> compile_coldc()
+.
+Errors:
+
+for obj in (list) {
+    catch {
+        obj.query_test();
+    } handle ~locked {
+        sender().print("Object is locked.");
+    } handle others {
+        sender().print("Error: " + toliteral(error) + " encountered!"); 
+    } otherwise {
+        sender().print("Test is sucessful for: " + obj.name());
+        valid = valid + [obj];
+    }
+}
+
+CLOSURES:
+
+public test(threshold, list): disallow_overrides, syncronized 
+  var target, obj, add;
+ 
+  add = closure(elem) {
+      var total;
+
+      target.add(elem);
+      total = total + 1;
+      if (total > threshold)
+          throw(~max, "Maximum threshold breached.");
+  };
+ 
+  for x in (list)
+     (> ^add(second) <);
+.
+
+and possibly have: [1,2,3,4].map(add);
+
++definer flag

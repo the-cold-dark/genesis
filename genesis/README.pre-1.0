@@ -1,0 +1,27 @@
+This is the pre 1.0 release of Genesis.  The db syntax is _NOT_ what it
+will be when we are finished!!!!
+
+This driver is _ONLY_ for our own distributed developmental purposes.
+We do not mind if people use it to play around, but be warned, the db
+format will NOT be right, and will require some big overhauling to
+convert to the final 1.0 format (read notes-format), and we dont have
+the time to help you convert!
+
+You have been warned (muahaha)
+
+Also, this driver will not work with any db other than:
+
+    * ColdCore 2.1
+
+If you are trying to get others working, may the force be with you...
+
+Known bugs/problems:
+
+    * textdumping randomly leaves out objects after the db reaches
+      a certain size, coldcore has an in-db dumping mechanism to
+      get around this, as textdumping is being rewritten.
+    * callers() causes a SEGV sometimes (but not always).  It is
+      used in .debug() in coldcore, so you may want to remove this.
+    * tasks() causes a SEGV most times.
+
+-Brandon Gillespie-

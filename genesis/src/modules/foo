@@ -1,0 +1,37 @@
+Stages:
+
+    1. compilation
+    2. storage
+    3. evaluation
+    4. delivery
+    5. formatting
+
+ctext         = [element, [element, [...]]]
+element       = control "." method "(" ... ")"
+control       = frob | data
+method        = eval_ctext | compile_ctext | decompile_ctext
+
+Jeff:     {tag attrib=value:body}
+Example:
+
+    {list:
+        {elem: {bold:This text} we should consider [time "%H:%M"]}
+        {elem: {em:but this} is even more important}
+    }
+
+    The time is [time "%H:%M"].  Because it is [weather adjective] outside,
+    we are canceling the class for today.  Have fun [weather activity]
+    in the [weather name]!
+
+Brandon:  <tag attrib=value>body</tag>
+Example:
+
+    <list>
+        <elem><bold>This text</bold> we should consider [time "%H:%M"]
+        <elem><em>but this</em> is even more important
+    </list>
+
+    The time is [time:12hr].  Because it is [weather:adjective] outside,
+    we are canceling the class for today.  Have fun [weather:activity]
+    in the [weather:name]!
+

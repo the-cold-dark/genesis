@@ -24,7 +24,7 @@ RELEASE INFORMATION:
       * Fixed memory leak in signal handler (Bruce)
       * Fixed crash bug in signal handler when no current task (Bruce)
       * Fixed write_long to work properly on 64 bit systems (Brad)
-      * Fixed execute() to ??? (Bruce)
+      * Fixed execute() to return an exit status of 0 properly  (Bruce)
       * Fixed memory leak in unbind_port() (Bruce)
       * Fixed abs() to throw an error when the arg isn't an integer or
         float (Bruce)

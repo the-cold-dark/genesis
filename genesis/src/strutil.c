@@ -317,7 +317,7 @@ INTERNAL void add_field(char *start, char *end, Bool strip) {
 /* Returns a backwards list of fields if <s> matches the
    pattern <pattern>, or NULL if it doesn't. */
 cList * match_pattern(char *pattern, char *s) {
-    char *p, *q, c;
+    char *p, *q;
     cList *list;
     cStr *str;
     cData d;

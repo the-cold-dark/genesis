@@ -692,8 +692,12 @@ eval {
 		  "a" in "cab" ==> 2
 		  "am" in "llama" ==> 3
 		  "bc" in "llama" ==> 0
+		  "" in "llama" ==> 0
 		  4 in 'foo ==> ~type
+		  `[10, 13] in `[10, 13] ==> 1
 		  `[10, 13] in `[10, 10] ==> 0
+		  `[10, 13] in `[0] ==> 0
+		  `[10, 13] in `[] ==> 0
 		 Logic
 		  1 && 1 ==> 1
 		  1 && 0 ==> 0
@@ -784,8 +788,12 @@ eval {
     dblog("  \"a\" in \"cab\" ==> " + toliteral("a" in "cab"));
     dblog("  \"am\" in \"llama\" ==> " + toliteral("am" in "llama"));
     dblog("  \"bc\" in \"llama\" ==> " + toliteral("bc" in "llama"));
+    dblog("  \"\" in \"llama\" ==> " + toliteral("" in "llama"));
     dblog("  4 in 'foo ==> " + toliteral((| 4 in 'foo |)));
+    dblog("  `[10, 13] in `[10, 13] ==> " + toliteral((| `[10, 13] in `[10, 13] |)));
     dblog("  `[10, 13] in `[10, 10] ==> " + toliteral((| `[10, 13] in `[10, 10] |)));
+    dblog("  `[10, 13] in `[0] ==> " + toliteral((| `[10, 13] in `[0] |)));
+    dblog("  `[10, 13] in `[] ==> " + toliteral((| `[10, 13] in `[] |)));
     dblog(" Logic");
     dblog("  1 && 1 ==> " + toliteral(1 && 1));
     dblog("  1 && 0 ==> " + toliteral(1 && 0));
@@ -1549,7 +1557,10 @@ eval {
 		  `[1, 2, 1, 2, 1, 2], `[1, 2], -2 -> 5
 		  `[1, 2, 1, 2, 1, 2], `[1, 2], -3 -> 3
 		  `[0, 0, 97, 0, 0, 98, 92, 65, 99], `[92, 65], 6 -> 7
-
+		  `[10, 13], `[10, 13] -> 1
+		  `[10, 10], `[10, 13] -> 0
+		  `[0], `[10, 13] -> 0
+		  `[], `[10, 13] -> 0
 
 
 eval {
@@ -1589,6 +1600,13 @@ eval {
     b = `[92, 65];
     dblog("  " + toliteral(a) + ", " + b + ", 6 -> " +
                  toliteral((| bufidx(a, b, 6) |)));
+
+    a = `[10, 13];
+
+    dblog("  `[10, 13], " + toliteral(a) + " -> " + toliteral((| bufidx(`[10, 13], a) |)));
+    dblog("  `[10, 10], " + toliteral(a) + " -> " + toliteral((| bufidx(`[10, 10], a) |)));
+    dblog("  `[0], "      + toliteral(a) + " -> " + toliteral((| bufidx(`[0],      a) |)));
+    dblog("  `[], "       + toliteral(a) + " -> " + toliteral((| bufidx(`[],       a) |)));
 
 };
 

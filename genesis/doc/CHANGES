@@ -7,14 +7,27 @@ contributors to that version.
 -------------------------------------------------------------------------
 
 
-1.1.9  [1-Oct-100]
+1.1.12 [5/7/2004]
+      * fix `[buffer1] in `[buffer2] where buffer2 is empty to return 0 (Brad)
+      * overhaul the configure script for db header and library finding (Brad)
+
+
+1.1.11 [6/28/2002]
+      * fix BUFFER in BUFFER.  Use buffer_index which contained a fix
+        not propagated to the previously duplicated code in op_in
+        (Allen Noe)
+      * Apply (with changes (Brad)) a bunch of MSVC patches (Robert Bradley)
+      * Fix some missed regerror -> gen_regerror's (pvx at wmute.net)
+      * Fix method access setting error handling (pvx at wmute.net)
+
+1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)
       * misc cleanup (Generic Bob)
       * removed dnsserv (Brandon)
       * fix for ctime() in Borland (Psyclone)
       * Fixed inconsistent behavior in stridx(), listidx(), and
         bufidx() when presented with an empty first argument. (Bruce)
-
+
 1.1.8  [20-Nov-99] Brandon, Allen Noe
       * Committed the bufidx() fix to the stable branch.  Due to
         inexperience with CVS the fix did not get moved to the STABLE
@@ -24,9 +37,11 @@ contributors to that version.
       * fix to no-heartbeat runaway condition (Allen Noe)
       * ''Y2K'' fix for driver.log date format (Allen Noe)
       * fixed create([]) bug and added regression test (Brandon)
+
 1.1.7  [28-Jul-99] Brandon
       * Fixed bufidx() bug even more -- hopefully for the last time (Brandon)
       * Fixed listidx() bug when using single-element lists (Brandon)
+
 1.1.6  [15-Jul-99] Bruce, Jon Lambert, Brad, Robert Bradley
       * Fixed coldcc -h screen. (Bruce)
       * Lots of Win32 fixes (Jon Lambert)

@@ -222,7 +222,7 @@ COLDC_FUNC(bufidx) {
         push_int(0);
         return;
     }
-
+    
     if ((r = buffer_index(BUF1, cp, clen, origin)) == F_FAILURE)
         THROW((range_id, "Origin is beyond the range of the buffer."))
 

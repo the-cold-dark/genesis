@@ -11,15 +11,6 @@
 #include <sys/file.h>
 #endif
 #include <sys/stat.h>
-#ifdef __UNIX__
-#ifdef DBM_H_FILE
-#include DBM_H_FILE
-#else
-#include <ndbm.h>
-#endif
-#else
-#include "ndbm.h"
-#endif
 #include <fcntl.h>
 #include <string.h>
 
@@ -47,6 +38,8 @@ pthread_mutex_t lookup_mutex;
 
 #include "cdc_db.h"
 #include "util.h"
+
+#include DBM_H_FILE
 
 #ifdef S_IRUSR
 #define READ_WRITE		(S_IRUSR | S_IWUSR)

@@ -99,7 +99,7 @@ scrub:
 	@cd $(DATADIR); make $@
 
 commitable:
-	@cd $(MODULES); ./modbuild -m0 cdc veil web ext_math
+	@cd $(MODULES); ./modbuild -m0 cdc web ext_math
 
 commit: commitable
 	cvs commit

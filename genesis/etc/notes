@@ -11,18 +11,20 @@ Help can be found through the web site, or on the mailing list
 
 RELEASE INFORMATION:
 1.1p5   [????????] Bruce, Brad, Colin
-      * Fixed abs() to throw an error when the arg isn't an integer or
-        float (Bruce)
       * Brought random() into agreement with docs and enforced it by
         throwing ~range when arg is negative or zero. (Bruce)
       * Network I/O made non-blocking for incoming connections (Bruce,
         Brad, Colin)
+      * Add check to be sure backup() was able to open the directory. (Bruce)
+      * Removed memset() on Win32 from emalloc() (Bruce)
+      * Changed tell to ctell to resolve solaris 2.6 conflict (Brad)
       * bufidx() had an array bounds read problem. (Brad)
       * Fixed bug in strgraft() (Bruce)
       * Fixed crash bug in coldcc (Bruce, noticed by Kipp)
       * Fixed memory leak in signal handler (Bruce)
       * Fixed crash bug in signal handler when no current task (Bruce)
-      * Fix for execute() (Bruce)
-      * Add check to be sure backup() was able to open the directory. (Bruce)
-      * Fix memory leak in unbind_port() (Bruce)
-      * Removed memset() on Win32 from emalloc() (Bruce)
+      * Fixed write_long to work properly on 64 bit systems (Brad)
+      * Fixed execute() to ??? (Bruce)
+      * Fixed memory leak in unbind_port() (Bruce)
+      * Fixed abs() to throw an error when the arg isn't an integer or
+        float (Bruce)

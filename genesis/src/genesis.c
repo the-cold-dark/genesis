@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 #define addarg(__str) { \
         arg.type = STRING; \
         str = string_from_chars(__str, strlen(__str)); \
-	arg.u.str = str; \
+        arg.u.str = str; \
         args = list_add(args, &arg); \
         string_discard(str); \
     } \
@@ -191,9 +191,9 @@ INTERNAL void initialize(int argc, char **argv) {
     /* Switch into database directory. */
     if (chdir(basedir) == F_FAILURE) {
         usage(name);
-	fprintf(stderr, "** Couldn't change to base directory \"%s\".\n",
+        fprintf(stderr, "** Couldn't change to base directory \"%s\".\n",
                 basedir);
-	exit(1);
+        exit(1);
     }
 
     /* open the correct logfiles */
@@ -275,67 +275,53 @@ INTERNAL void initialize(int argc, char **argv) {
 //
 // The core of the interpreter, while this is looping it is interpreting
 //
+// use 'gettimeofday' since most OS's simply wrap time() around it
 */
 
 INTERNAL void main_loop(void) {
-    int             seconds;
-    time_t          next_heartbeat,
-                    last_heartbeat,
-                    t;
+    register int     seconds;
+    struct timeval   tp;
+    register time_t  next, last;
 
     setjmp(main_jmp);
 
     seconds = 0;
-    next_heartbeat = last_heartbeat = t = 0;
+    next = last = 0;
 
     while (running) {
-	/* delete any defunct connection or server records */
-	flush_defunct();
+        flush_defunct();
 
-	/* Sanity check: make sure there are no objects in active chains. */
-	/* cache_sanity_check(); */
+        /* cache_sanity_check(); */
 
-	/* Find number of seconds before next heartbeat. */
-	if (heartbeat_freq != -1) {
-	    next_heartbeat = (last_heartbeat -
-			      (last_heartbeat % heartbeat_freq)
-			      ) + heartbeat_freq;
-	    time(&t);
-	    seconds = (t >= next_heartbeat) ? 0 : next_heartbeat - t;
-	    seconds = (preempted ? 0 : seconds);
-	}
+        if (heartbeat_freq != -1) {
+            next = (last - (last % heartbeat_freq)) + heartbeat_freq;
+            gettimeofday(&tp, NULL);
+            seconds = (tp.tv_sec >= next) ? 0 : next - tp.tv_sec;
+            seconds = (preempted ? 0 : seconds);
 
-        /* wait seconds for something to happen */
+#if 0
+            seconds = (preempted ? 0 :
+                       ((tp.tv_sec >= next) ? 0 : next - tp.tv_sec));
+#endif
+        }
+
         handle_io_event_wait(seconds);
-
-        /* input */
         handle_connection_input();
+        handle_new_and_pending_connections();
 
-        /* handle new or pending connections */
-	handle_new_and_pending_connections();
-
-        /* do heartbeat? */
-	if (heartbeat_freq != -1) {
-	    time(&t);
-
-            /* yep */
-	    if (t >= next_heartbeat) {
-                /* call heartbeat on $sys */
-		last_heartbeat = t;
-		task(SYSTEM_OBJNUM, heartbeat_id, 0);
-
+        if (heartbeat_freq != -1) {
+            gettimeofday(&tp, NULL);
+            if (tp.tv_sec >= next) {
+                last = tp.tv_sec;
+                task(SYSTEM_OBJNUM, heartbeat_id, 0);
 #ifdef CLEAN_CACHE
-                /* cleanup the cache while we are at it */
                 cache_cleanup();
 #endif
-	    }
-	}
+            }
+        }
 
-        /* output */
         handle_connection_output();
-
-        /* complete paused tasks */
-	if (preempted)
+        if (preempted)
             run_paused_tasks();
     }
 }

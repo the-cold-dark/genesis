@@ -18,7 +18,7 @@
 
 /* ----------------------------------------------------------------- */
 /* cancel a suspended task                                           */
-void func_cancel(void) {
+COLDC_FUNC(cancel) {
     data_t *args;
  
     if (!func_init_1(&args, INTEGER))
@@ -206,5 +206,21 @@ void func_ticks_left(void) {
       return;
 
     push_int(cur_frame->ticks);
+}
+
+COLDC_FUNC(user) {
+    if (!func_init_0())
+        return;
+    if (cur_frame->user == NOT_AN_IDENT)
+        push_int(0);
+    else
+        push_objnum(cur_frame->user);
+}
+
+COLDC_FUNC(set_user) {
+    if (!func_init_0())
+        return;
+    cur_frame->user = cur_frame->object->objnum;
+    push_objnum(cur_frame->user);
 }
 

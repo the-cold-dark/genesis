@@ -6,6 +6,13 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-4  [26-Apr-96] Brandon Gillespie
+      * Maintenance
+      * 'compile()' now is a clone of 'add_method()', when the full
+        parse-tree capabilities are available they will be different.
+      * changed calls to 'time()' to use 'gettimeofday()', most modern
+        OS's wrap time() around this anyway.
+      * added 'user()' and 'set_user()'.
 1.0-3  [22-Apr-96] Brandon Gillespie
       * Fixed a bug in decompiling -- ++ += -= etc, they assumed the
         variable was always a local variable, this bombed when using

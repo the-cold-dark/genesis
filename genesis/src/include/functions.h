@@ -153,6 +153,8 @@ COLDC_FUNC(this);
 COLDC_FUNC(definer);
 COLDC_FUNC(sender);
 COLDC_FUNC(caller);
+COLDC_FUNC(user);
+COLDC_FUNC(set_user);
 COLDC_FUNC(task_id);
 COLDC_FUNC(ticks_left);
 COLDC_FUNC(sin);

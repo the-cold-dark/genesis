@@ -154,8 +154,6 @@ NATIVE_METHOD(encode) {
 
     INIT_1_ARG(STRING);
 
-    THROW((perm_id, "TWIT"));
-
     str = encode(string_chars(args[0].u.str));
 
     RETURN_STRING(str);

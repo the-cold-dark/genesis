@@ -115,7 +115,7 @@ static Op_info op_info[] = {
     FDEF(F_VARIABLES,  "variables", variables)
 
     /* Object method functions */
-    FDEF(F_COMPILE,           "compile",           compile)
+    FDEF(F_COMPILE,           "compile",           add_method)
     FDEF(F_DECOMPILE,         "decompile",         decompile)
     FDEF(F_ADD_METHOD,        "add_method",        add_method)
     FDEF(F_DEL_METHOD,        "del_method",        del_method)
@@ -170,6 +170,8 @@ static Op_info op_info[] = {
     { F_CALLER,           "caller",               func_caller },
     { F_STACK,            "stack",                func_stack },
     { F_ATOMIC,           "atomic",               func_atomic },
+    { F_USER,             "user",                 func_user },
+    { F_SET_USER,         "set_user",             func_set_user },
 
     /* Data/Conversion functions */
     { F_VALID,            "valid",                func_valid },

@@ -17,7 +17,7 @@
 #include "memory.h"
 #include "util.h" /* fformat() */
 
-void func_listgraft(void) {
+COLDC_FUNC(listgraft) {
     data_t * args, * d1, * d2;
     list_t * new, * l1, * l2;
     int pos, x;
@@ -56,7 +56,7 @@ void func_listgraft(void) {
     list_discard(new);
 }
 
-void func_listlen(void) {
+COLDC_FUNC(listlen) {
     data_t *args;
     int len;
 
@@ -70,7 +70,7 @@ void func_listlen(void) {
     push_int(len);
 }
 
-void func_sublist(void) {
+COLDC_FUNC(sublist) {
     int num_args, start, span, list_len;
     data_t *args;
 
@@ -98,7 +98,7 @@ void func_sublist(void) {
     }
 }
 
-void func_insert(void) {
+COLDC_FUNC(insert) {
     int pos, list_len;
     data_t *args;
 
@@ -122,7 +122,7 @@ void func_insert(void) {
     }
 }
 
-void func_replace(void) {
+COLDC_FUNC(replace) {
     int pos, list_len;
     data_t *args;
 
@@ -146,7 +146,7 @@ void func_replace(void) {
     }
 }
 
-void func_delete(void) {
+COLDC_FUNC(delete) {
     int pos, list_len;
     data_t *args;
 
@@ -170,7 +170,7 @@ void func_delete(void) {
     }
 }
 
-void func_setadd(void) {
+COLDC_FUNC(setadd) {
     data_t *args;
 
     /* Accept a list and a data value of any type. */
@@ -183,7 +183,7 @@ void func_setadd(void) {
     pop(1);
 }
 
-void func_setremove(void) {
+COLDC_FUNC(setremove) {
     data_t *args;
 
     /* Accept a list and a data value of any type. */
@@ -196,7 +196,7 @@ void func_setremove(void) {
     pop(1);
 }
 
-void func_union(void) {
+COLDC_FUNC(union) {
     data_t *args;
 
     /* Accept two lists. */

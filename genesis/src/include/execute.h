@@ -64,6 +64,7 @@ struct frame {
     object_t *object;
     objnum_t sender;
     objnum_t caller;
+    objnum_t user;
     method_t *method;
     long *opcodes;
     int pc;
@@ -129,6 +130,7 @@ int  frame_start(object_t *obj,
                  method_t *method,
                  objnum_t sender,
                  objnum_t caller,
+                 objnum_t user,
 		 int stack_start,
                  int arg_start);
 void frame_return(void);

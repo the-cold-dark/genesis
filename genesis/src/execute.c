@@ -196,6 +196,8 @@ void task_resume(long tid, data_t *ret) {
     } else {
         push_int(0);
     }
+    if (cur_frame->ticks < PAUSED_METHOD_TICKS)
+        cur_frame->ticks = PAUSED_METHOD_TICKS;
     execute();
     store_stack();
     restore_vm(old_vm);
@@ -224,11 +226,10 @@ void task_cancel(long tid) {
     restore_vm(vm);
     while (cur_frame)
         frame_return();
-    if (vm->preempted) {
-        REMOVE_TASK(preempted, vm);
-    } else {
-        REMOVE_TASK(suspended, vm);
-    }
+    if (vm->preempted)
+        REMOVE_TASK(preempted, vm)
+    else
+        REMOVE_TASK(suspended, vm)
     store_stack();
     ADD_TASK(vmstore, vm);
     restore_vm(old_vm);
@@ -283,12 +284,13 @@ void run_paused_tasks(void) {
 list_t * task_list(void) {
     list_t  * r;
     data_t    elem;
-    VMState * vm = suspended;
+    VMState * vm;
   
     r = list_new(0);
   
     elem.type = INTEGER;
-    for (; vm; vm = vm->next) {
+
+    for (vm = suspended; vm; vm = vm->next) {
         elem.u.val = vm->task_id;
         r = list_add(r, &elem); 
     }
@@ -418,7 +420,7 @@ void task(objnum_t objnum, long name, int num_args, ...) {
 //
 */
 void task_method(object_t *obj, method_t *method) {
-    frame_start(obj, method, NOT_AN_IDENT, NOT_AN_IDENT, 0, 0);
+    frame_start(obj, method, NOT_AN_IDENT, NOT_AN_IDENT, NOT_AN_IDENT, 0, 0);
 
     execute();
 
@@ -433,6 +435,7 @@ int frame_start(object_t * obj,
                 method_t * method,
                 objnum_t    sender,
                 objnum_t    caller,
+                objnum_t    user,
                 int      stack_start,
                 int      arg_start)
 {
@@ -491,6 +494,7 @@ int frame_start(object_t * obj,
     frame->object = cache_grab(obj);
     frame->sender = sender;
     frame->caller = caller;
+    frame->user = user;
     frame->method = method_dup(method);
     cache_grab(method->object);
     frame->opcodes = method->opcodes;
@@ -561,27 +565,16 @@ INTERNAL void execute(void) {
 
     while (cur_frame) {
         tick++;
+
         if ((--(cur_frame->ticks)) == 0) {
             out_of_ticks_error();
-        } else {
-            opcode = cur_frame->opcodes[cur_frame->pc];
-
-#if DEBUG_EXECUTE
-            write_err("#%d #%d.%I %d %s",
-                cur_frame->object->objnum, 
-                cur_frame->method->object->objnum,
-                ((cur_frame->method->name != NOT_AN_IDENT) ?
-                    cur_frame->method->name :
-                    opcode_id),
-                line_number(cur_frame->method, cur_frame->pc),
-                op_table[cur_frame->opcodes[cur_frame->pc]].name);
-            printf("%d\n", opcode); fflush(stdout);
-#endif
-
-            cur_frame->last_opcode = opcode;
-            cur_frame->pc++;
-            (*op_table[opcode].func)();
+            return;
         }
+
+        opcode = cur_frame->opcodes[cur_frame->pc];
+        cur_frame->last_opcode = opcode;
+        cur_frame->pc++;
+        (*op_table[opcode].func)();
     }
 }
 
@@ -671,7 +664,8 @@ int pass_method(int stack_start, int arg_start) {
     /* Start the new frame. */
     if (method->native == -1) {
         result = frame_start(cur_frame->object, method, cur_frame->sender,
-                             cur_frame->caller, stack_start, arg_start);
+                             cur_frame->caller, cur_frame->user, stack_start,
+                             arg_start);
     } else {
         call_native_method(method, stack_start, arg_start, method->object->objnum);
        /* method_discard(method); */
@@ -696,7 +690,7 @@ int call_method(objnum_t objnum,    /* the object */
     method_t * method;
     int        result;
     objnum_t   sender,
-               caller;
+               caller, user;
 
     /* Get the target object from the cache. */
     obj = cache_retrieve(objnum);
@@ -742,7 +736,9 @@ int call_method(objnum_t objnum,    /* the object */
     if (method->native == -1) {
         sender = (cur_frame) ? cur_frame->object->objnum : NOT_AN_IDENT;
         caller = (cur_frame) ? cur_frame->method->object->objnum : NOT_AN_IDENT;
-        result = frame_start(obj,method,sender,caller,stack_start,arg_start);
+        user   = (cur_frame) ? cur_frame->user : INV_OBJNUM;
+        result = frame_start(obj,method,sender,
+                             caller,user,stack_start,arg_start);
     } else {
         call_native_method(method, stack_start, arg_start, objnum);
         /* method_discard(method); */

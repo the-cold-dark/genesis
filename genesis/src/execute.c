@@ -118,6 +118,7 @@ VMState * vm_current(void) {
     vm->arg_pos = arg_pos;
     vm->arg_size = arg_size;
     vm->task_id = task_id;
+    vm->frame_depth = frame_depth;
     vm->next = NULL;
     vm->limit_datasize = limit_datasize;
     vm->limit_fork = limit_fork;
@@ -137,6 +138,7 @@ VMState * vm_current(void) {
 */
 void restore_vm(VMState *vm) {
     task_id = vm->task_id;
+    frame_depth = vm->frame_depth;
     cur_frame = vm->cur_frame;
     stack = vm->stack;
     stack_pos = vm->stack_pos;
@@ -589,6 +591,7 @@ void init_execute(void) {
     }
     stack_pos = 0;
     arg_pos = 0;
+    frame_depth = 0;
 
     /* reset limits */
     limit_datasize = 0;

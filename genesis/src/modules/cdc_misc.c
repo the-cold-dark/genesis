@@ -30,6 +30,11 @@ NATIVE_METHOD(strftime) {
 
     INIT_1_OR_2_ARGS(STRING, INTEGER);
 
+    if (STR1->len == 0) {
+        s[0] = '\0';
+        CLEAN_RETURN_STRING(string_from_chars(s, 0));
+    }
+
 #ifdef __BORLANDC__
     if (argc == 2) {
         if (INT2 < 18000) {

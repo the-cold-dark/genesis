@@ -334,9 +334,6 @@ int buffer_index(cBuf * buf, uChar * ss, int slen, int origin) {
     if (origin > len || !origin)
         return F_FAILURE;
 
-    if (origin == len)
-        return 0;
-
     if (reverse) {
         if (slen == 1)
             return buf_rindexc(s, len, *ss, origin);
@@ -346,7 +343,6 @@ int buffer_index(cBuf * buf, uChar * ss, int slen, int origin) {
         len -= origin;
         if (len < slen)
             return 0;
-
         p = s + origin;
         p = (uChar *) memchr(p, *ss, len);
         if (slen == 1) {

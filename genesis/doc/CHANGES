@@ -7,12 +7,25 @@ contributors to that version.
 -------------------------------------------------------------------------
 
 
+1.1p2  [22-Dec-97]
+      * fixed problem with frame depth and forking methods (Bruce)
+      * added tz offset as 12 element to localtime() -- this was
+        unintentionally left out of the original implementation (Brandon)
+      * fixed problem with using strfmt() on large floats that may overflow
+        the number buffer (Bruce)
+      * fixed minor memory leak in strfmt() (Bruce)
+      * $time.format() fixed odd behaviour if zero-length string for
+        format was given (Bruce)
+      * bufidx() wouldn't find the last char, if origin==len; reported
+        by Kipp (Brandon)
+      * fixed a bug where the WIDTH x DEPTH settings in configure were
+        being ignored (Brandon)
+
 1.1p1  [18-Nov-97]
       * added primes.b for bc, created by Brad, revised by Brandon
       * #-x decompiling in textdumps would mess up the dict in the binary
         database, this has been fixed (hopefully once and for all)
       * Fixed minor syntax problems, crufted up the releasing mechanism
-
 1.1p0  [17-Nov-97] Brandon
       * Branched 1.1.0-STABLE
 1.0-38 [17-Nov-97] Brandon, Brian
@@ -56,7 +69,7 @@ contributors to that version.
         when using coldcc (the -W option was always on) (Brandon)
       * pause() while atomic will now act like resume() (Brandon)
       * coldcc will always run atomically (Brandon)
-      * changed how UCASE/LCASE work for better cacheing (Brandon)
+      * changed how UCASE/LCASE work for better cacheing
       * Fixed a problem in configure (Brandon)
       * niggled here and there from purify warnings (Brandon/Brad)
 1.0-32 [01-Jul-97] Miro, Brandon, others

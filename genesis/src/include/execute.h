@@ -37,6 +37,7 @@ struct vmstate {
               arg_pos,
               arg_size;
     Int       task_id;
+    Int       frame_depth;
     Int       preempted;
 #ifdef DRIVER_DEBUG
     cData     debug;

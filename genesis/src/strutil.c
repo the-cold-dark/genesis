@@ -762,8 +762,10 @@ cStr * strsed(cStr * reg,  /* the regexp string */
             value = string_from_chars(tmp, strlen(tmp));\
             break;\
         case FLOAT:\
-            sprintf(buf, "%.*f", (int) prec, (double) args[cur].u.fval); \
-            value = string_from_chars(buf, strlen(buf));\
+            numbuf = (char *)emalloc(320 + prec);\
+            sprintf(numbuf, "%.*f", (int) prec, (double) args[cur].u.fval); \
+            value = string_from_chars(numbuf, strlen(numbuf));\
+            efree(numbuf);\
             break;\
         default:\
             value = data_to_literal(&args[cur], DF_WITH_OBJNAMES);\
@@ -781,7 +783,7 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
     register char * s;
     char     * fmt,
              * tmp,
-               buf[LINE],
+             * numbuf,
                fill[LINE];
     register Int pad, prec, trunc;
     Int        cur = -1;
@@ -815,8 +817,10 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
 
         pad = prec = trunc = 0;
         if (*s == '*') {
-            if (args[cur].type != INTEGER)
+            if (args[cur].type != INTEGER) {
+                string_discard(out);
                 x_THROW((type_id, "Argument for '*' is not an integer."))
+            }
             pad = args[cur].u.val;
             s++;
             if (++cur >= argc) {
@@ -953,6 +957,7 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
             default: {
                 char fmttype[] = {(char) NULL, (char) NULL};
                 fmttype[0] = *s;
+                string_discard(out);
                 x_THROW((error_id, "Unknown format type '%s'.", fmttype))
             }
         }

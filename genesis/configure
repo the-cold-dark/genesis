@@ -1457,6 +1457,37 @@ if test "$ac_cv_struct_d_namlen" = yes; then
 EOF
 fi
 
+echo $ac_n "  Checking for tm_gmtoff in struct tm""... $ac_c" 1>&6
+if eval "test \"`echo '$''{'ac_cv_struct_tm_gmtoff'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 1475 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <$ac_cv_struct_tm>
+int main() { return 0; }
+int t() {
+struct tm tm; tm.tm_gmtoff;
+; return 0; }
+EOF
+  if eval $ac_compile; then
+    rm -rf conftest*
+    ac_cv_struct_tm_gmtoff=yes
+  else
+    rm -rf conftest*
+    ac_cv_struct_tm_gmtoff=no
+  fi
+  rm -f conftest*
+
+fi
+echo "$ac_t""$ac_cv_struct_tm_gmtoff" 1>&6
+if test "$ac_cv_struct_tm_gmtoff" = yes; then
+  cat >> confdefs.h <<\EOF
+#define HAVE_TM_GMTOFF 1
+EOF
+fi
+
 echo $ac_n "  Checking for tm_zone in struct tm""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_struct_tm_zone'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -2424,6 +2455,7 @@ while [ "$loop" = "yes" ]; do
             echo "Invalid Width: $expr"
         else
             loop=no
+            CACHE_WIDTH=$expr
         fi
     fi
 done
@@ -2442,6 +2474,7 @@ while [ "$loop" = "yes" ]; do
             echo "Invalid DEPTH: $expr"
         else
             loop=no
+            CACHE_DEPTH=$expr
         fi
     fi
 done

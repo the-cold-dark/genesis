@@ -87,8 +87,8 @@ void func_localtime(void) {
 
     tms = localtime(&t);
 
-    l = list_new(11);
-    d = list_empty_spaces(l, 11);
+    l = list_new(12);
+    d = list_empty_spaces(l, 12);
 
     /* Add one to certain elements to make them 1-x instead of 0-x */
     d[0].type=INTEGER;
@@ -113,6 +113,12 @@ void func_localtime(void) {
     d[9].u.val = tms->tm_isdst;
     d[10].type = STRING;
     d[10].u.str= string_dup(str_tzname);
+    d[11].type=INTEGER;
+#ifdef HAVE_TM_GMTOFF
+    d[11].u.val = tms->tm_gmtoff;
+#else
+    d[11].u.val = 0;
+#endif
 
     push_list(l);
     list_discard(l);

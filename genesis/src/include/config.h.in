@@ -26,6 +26,9 @@
 /* Define if your struct tm has tm_zone.  */
 #undef HAVE_TM_ZONE
 
+/* Define if your struct tm has tm_gmtoff */
+#undef HAVE_TM_GMTOFF
+
 /* Define if you don't have tm_zone but do have the external array
    tzname.  */
 #undef HAVE_TZNAME

@@ -45,7 +45,6 @@ cList * method_cache_history = NULL;
 #define STRING_STARTING_SIZE    (16 - MALLOC_DELTA)
 #define IDENTS_STARTING_SIZE    (16 - MALLOC_DELTA)
 
-#define START_SEARCH_AT 0 /* zero is the 'unsearched' number */
 #define RESET_SEARCH_AT MAX_ULONG
 #define SEARCHED(_obj__)      (_obj__->search == cache_search)
 #define HAVE_SEARCHED(_obj__) (_obj__->search = cache_search)

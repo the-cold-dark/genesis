@@ -16,6 +16,7 @@
 #include <ctype.h>
 #include "cdc_db.h"
 #include "cdc_pcode.h"
+#include "coldcc.h"
 #include "util.h"
 #include "textdb.h"
 #include "moddef.h"
@@ -117,18 +118,6 @@ static Method * get_method(FILE * fp, Obj * obj, char * name);
 char * strchop(char * str, Int len);
 static void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames);
 void blank_and_print_obj(char * what, Float percent_done, Obj * obj);
-
-/*
-// ------------------------------------------------------------------------
-// make this do more eventually
-*/
-#if 0
-static void shutdown_coldcc(void) {
-    exit(1);
-}
-#endif
-
-extern void shutdown_coldcc(void);
 
 typedef struct holder_s holder_t;
 
@@ -291,7 +280,7 @@ static void remember_native(Method * method) {
 
 static void frob_n_print_errstr(char * err, char * name, cObjnum objnum);
 
-Int find_native_method(Long object, Long method_name) {
+static Int find_native_method(Long object, Long method_name) {
     Ident      oname;
     Ident      mname;
     native_t * native;
@@ -333,7 +322,7 @@ Int find_native_method(Long object, Long method_name) {
     return -1;
 }
 
-void verify_native_methods(void) {
+static void verify_native_methods(void) {
     Ident      mname;
     Ident      name;
     Obj      * obj;

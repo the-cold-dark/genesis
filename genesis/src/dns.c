@@ -23,11 +23,11 @@
 /* out must be a DNS_MAXLEN character buffer */
 int lookup_name_by_ip(char * ip, char * out)
 {
-   unsigned addr;
+   unsigned long addr;
    register struct hostent * hp;
 
    addr = inet_addr(ip);
-   if (addr == INVALID_INADDR)
+   if (addr == (unsigned long)INVALID_INADDR)
        return DNS_INVADDR;
 
    if (!(hp = gethostbyaddr((char *) &addr, 4, AF_INET)))

@@ -673,7 +673,7 @@ static char **regendp;        /* Ditto for endp. */
  * Forwards.
  */
 static int regtry(regexp *, char *);
-static int regmatch();
+static int regmatch(char *);
 static int regrepeat(char *);
 
 #ifdef DEBUG

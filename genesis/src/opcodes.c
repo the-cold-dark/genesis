@@ -330,7 +330,7 @@ static Op_info op_info[] = {
 };
 
 void init_op_table(void) {
-    Int i;
+    uInt i;
 
     for (i = 0; i < NUM_OPERATORS; i++) {
         op_info[i].binding = INV_OBJNUM;
@@ -348,7 +348,7 @@ void init_op_table(void) {
 }
 
 Int find_function(char *name) {
-    Int i;
+    uInt i;
 
     for (i = first_function; i < NUM_OPERATORS; i++) {
         if (strcmp(op_info[i].name, name) == 0)

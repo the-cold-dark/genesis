@@ -17,6 +17,7 @@ extern pthread_t cleaner;
 
 #include "cdc_pcode.h"
 #include "cdc_db.h"
+#include "coldcc.h"
 #include "textdb.h"
 
 #include "strutil.h"
@@ -44,7 +45,7 @@ static void   usage(char * name);
 static FILE * find_text_db(void);
 static void   compile_db(Int type);
 
-void   shutdown_coldcc(void) {
+void shutdown_coldcc(void) {
     running = NO;
     write_err("Syncing binarydb...");
     cache_sync();
@@ -171,7 +172,7 @@ static FILE * find_text_db(void) {
 // be cute and columnize
 */
 
-void print_natives(void) {
+static void print_natives(void) {
     Int          mid, x;
     char         buf[LINE];
 

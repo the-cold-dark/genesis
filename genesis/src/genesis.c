@@ -46,7 +46,7 @@ void usage (char * name);
 // if we have a logs/genesis.run, unlink it when we exit,
 // hooked into exiting with 'atexit()'
 */
-void unlink_runningfile(void) {
+static void unlink_runningfile(void) {
     if (unlink(c_runfile)) {
         char buf[BUF];
 
@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
 // Initialization
 //
 */
-void get_my_hostname(void) {
+static void get_my_hostname(void) {
     char   cbuf[LINE];
 
     /* for those OS's that do not do this */

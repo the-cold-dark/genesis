@@ -152,6 +152,9 @@ struct Method {
 #define FROB_ANY 2
 #define FROB_RETRY -1
 
+/* Needed here for defs.c and cache.c */
+#define START_SEARCH_AT 0 /* zero is the 'unsearched' number */
+
 /* ..................................................................... */
 /* function prototypes */
 

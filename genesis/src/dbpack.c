@@ -10,128 +10,166 @@
 #include "cdc_db.h"
 #include "macros.h"
 
-
-/* Write a Float to the output buffer */
-cBuf * write_float(cBuf *buf, Float f)
-{
-    buf = buffer_append_uchars_single_ref(buf, (uChar*)(&f), SIZEOF_FLOAT);
-    return buf;
-}
-
-/* Read a Float from the input buffer */
-Float read_float(cBuf *buf, Long *buf_pos)
-{
-    Float f;
-
-    memcpy((uChar*)(&f), &(buf->s[*buf_pos]), SIZEOF_FLOAT);
-    (*buf_pos) += SIZEOF_FLOAT;
-    return f;
-}
-
-/* Determine the size of a Float */
-Int size_float(Float f)
-{
-    return SIZEOF_FLOAT;
-}
+#define COMPRESS ENABLED
+#define ORDER_BYTES DISABLED
 
 /* Write a four-byte number to fp in a consistent byte-order. */
-cBuf * write_long(cBuf *buf, Long n)
+void write_long(Long n, FILE *fp)
 {
-    uLong i = (uLong)n;
-    uLong i2 = i ^ (uLong)(-1);
-    uChar long_buf[sizeof(Long)+1];
-    Int   bit_flip = 0;
-    uInt  num_bytes = 0;
+#if COMPRESS
+    Int sign, i, h, buf[5];
 
-    if (i2 < i) {
-        i = i2;
-        bit_flip = 1;
+    if (n == MIN_INT)
+    {
+        fputc((int) 0xA0, fp);
+        fputc((int) 0x00, fp);
+        fputc((int) 0x00, fp);
+        fputc((int) 0x00, fp);
+        fputc((int) 0x08, fp);
+        return;
+    }
+    sign = n<0 ? 1 : 0;
+    n = abs(n);
+    h = 1;
+    buf[0] = n&15;
+    n >>= 4;
+    while (n) {
+      buf[h++] = n & 255;
+      n >>= 8;
+    }
+    buf[0] += (h << 5) + (sign << 4);
+    for (i=0; i<h; i++)
+      fputc((int) buf[i], fp);
+#else
+#  if ORDER_BYTES
+    /* Since first byte is special, special-case 0 as well. */
+    if (!n) {
+	fputc((int) 96, fp);
+	return;
     }
 
-    long_buf[0] = i & 15;
-    i >>= 4;
+    /* First byte depends on sign. */
+    fputc((int) (n > 0) ? 64 + (n % 32) : 32 + (-n % 32), fp);
+    n = (n > 0) ? n / 32 : -n / 32;
 
-    num_bytes++;
-    while (i && (num_bytes <= sizeof(Long))) {
-        long_buf[num_bytes++] = i & 255;
-        i >>= 8;
+    while (n) {
+	fputc((int) 32 + (n % 64), fp);
+	n /= 64;
     }
-    long_buf[0] |= ((num_bytes-1) << 5) + (bit_flip << 4);
-    buf = buffer_append_uchars_single_ref(buf, long_buf, num_bytes);
 
-    return buf;
+    fputc((int) 96, fp);
+#  else
+    fwrite(&n, sizeof(Long), 1, fp);
+#  endif
+#endif
 }
 
 /* Read a four-byte number in a consistent byte-order. */
-Long read_long(cBuf *buf, Long *buf_pos)
+Long read_long(FILE *fp)
 {
-    Int bit_flip, num_bytes, bit_shift;
-    uLong n;
+#if COMPRESS
+    Int sign, i, h, n, k;
 
-    num_bytes = (unsigned)buf->s[(*buf_pos)++] & 255;
-    bit_flip = num_bytes & 16;
-    n = num_bytes & 15;
-    bit_shift = 4;
-    num_bytes >>= 5;
-    while (num_bytes) {
-        n += ((unsigned)buf->s[(*buf_pos)++] & 255) << bit_shift;
-        bit_shift += 8;
-        num_bytes--;
+    h = (unsigned)getc(fp) & 255;
+    sign = h & 16;
+    n = h & 15;
+    k = 4;
+    h >>= 5;
+    h--;
+    for (i=0; i<h; i++) {
+      n += ((unsigned)getc(fp) & 255) << k;
+      k += 8;
     }
-    if (bit_flip)
-        n ^= (uLong)(-1);
-    return (Long)n;
-}
+    if (sign) n=-n;
+    return n;
+#else
+# if ORDER_BYTES
+    Int c;
+    Long n, place;
 
-static Int size_long_internal(Long n)
-{
-    uLong i = (uLong)n;
-    Int num_bytes;
+    /* Check for initial terminator, meaning 0. */
+    c = getc(fp);
+    if (c == 96)
+	return 0;
 
-    i >>= 4;
-    num_bytes = 0;
-    while (i) {
-        num_bytes++;
-        i >>= 8;
+    /* Initial byte determines sign. */
+    n = (c < 64) ? -((c - 32) % 32) : ((c - 64) % 32);
+    place = (c < 64) ? -32 : 32;
+
+    forever {
+	c = getc(fp);
+	if (c == 96)
+	    return n;
+	n += place * (c - 32);
+	place *= 64;
     }
-    return num_bytes;
+# else
+    Long    l;
+  
+    fread(&l, sizeof(Long), 1, fp);
+
+    return l;
+# endif
+#endif
 }
 
 Int size_long(Long n)
 {
-    uLong i = (uLong)n;
-    uLong i2 = i ^ (uLong)(-1);
+#if COMPRESS
+    Int h;
 
-    if (i2 >= i)
-        return size_long_internal(i);
-    else
-        return size_long_internal(i2);
+    if (n == MIN_INT)
+        return 5;
+    n = abs(n);
+    h = 1;
+    n >>= 4;
+    while (n) {
+      h++;
+      n >>= 8;
+    }
+    return h;
+#else
+# if ORDER_BYTES
+    Int count = 2;
+
+    if (!n)
+	return 1;
+    n /= 32;
+    while (n) {
+	n /= 64;
+	count++;
+    }
+    return count;
+# else
+    return sizeof(n);
+# endif
+#endif
 }
 
-cBuf * write_ident(cBuf *buf, Ident id)
+
+void write_ident(Long id, FILE *fp)
 {
     Char *s;
     Int len;
 
     if (id == NOT_AN_IDENT) {
-        buf = write_long(buf, NOT_AN_IDENT);
-        return buf;
+        write_long(NOT_AN_IDENT, fp);
+        return;
     }
-    s = ident_name_size(id, &len);
-    buf = write_long(buf, len);
-    buf = buffer_append_uchars_single_ref(buf, (uChar *)s, len);
-
-    return buf;
+    s = ident_name(id);
+    len = strlen(s);
+    write_long(len, fp);
+    fwrite(s, sizeof(Char), len, fp);
 }
 
-Ident read_ident(cBuf *buf, Long *buf_pos)
+Long read_ident(FILE *fp)
 {
-    Int   len;
+    Int len;
     Char *s;
-    Ident id;
+    Long id;
 
     /* Read the length of the identifier. */
-    len = read_long(buf, buf_pos);
+    len = read_long(fp);
 
     /* If the length is -1, it's not really an identifier, but a -1 signalling
      * a blank variable or method. */
@@ -140,9 +178,9 @@ Ident read_ident(cBuf *buf, Long *buf_pos)
 
     /* Otherwise, it's an identifier.  Read it into temporary storage. */
     s = TMALLOC(Char, len + 1);
-    MEMCPY(s, &(buf->s[*buf_pos]), len);
-    (*buf_pos) += len;
+    fread(s, sizeof(Char), len, fp);
     s[len] = 0;
+
 
     /* Get the index for the identifier and free the temporary memory. */
     id = ident_get(s);
@@ -151,44 +189,40 @@ Ident read_ident(cBuf *buf, Long *buf_pos)
     return id;
 }
 
-Int size_ident(Ident id)
+Long size_ident(Long id)
 {
     Int len;
-
+    
     if (id == NOT_AN_IDENT)
         return size_long(NOT_AN_IDENT);
-
-    ident_name_size(id, &len);
+    
+    len = strlen(ident_name(id));
 
     return size_long(len) + (len * sizeof(Char));
 }
 
-static cBuf * pack_list(cBuf *buf, cList *list)
-{
+INTERNAL void pack_list(cList *list, FILE *fp) {
     cData *d;
 
-    buf = write_long(buf, list_length(list));
+    write_long(list_length(list), fp);
     for (d = list_first(list); d; d = list_next(list, d))
-	buf = pack_data(buf, d);
-
-    return buf;
+	pack_data(d, fp);
 }
 
-static cList *unpack_list(cBuf *buf, Long *buf_pos)
-{
+INTERNAL cList *unpack_list(FILE *fp) {
     Int len, i;
     cList *list;
     cData *d;
 
-    len = read_long(buf, buf_pos);
+    len = read_long(fp);
     list = list_new(len);
     d = list_empty_spaces(list, len);
     for (i = 0; i < len; i++)
-	unpack_data(buf, buf_pos, d++);
+	unpack_data(d++, fp);
     return list;
 }
 
-static Int size_list(cList *list)
+INTERNAL Int size_list(cList *list)
 {
     cData *d;
     Int size = 0;
@@ -199,40 +233,39 @@ static Int size_list(cList *list)
     return size;
 }
 
-static cBuf * pack_dict(cBuf *buf, cDict *dict)
+INTERNAL void pack_dict(cDict *dict, FILE *fp)
 {
     Int i;
 
-    buf = pack_list(buf, dict->keys);
-    buf = pack_list(buf, dict->values);
-    buf = write_long(buf, dict->hashtab_size);
+    pack_list(dict->keys, fp);
+    pack_list(dict->values, fp);
+    write_long(dict->hashtab_size, fp);
     for (i = 0; i < dict->hashtab_size; i++) {
-	buf = write_long(buf, dict->links[i]);
-	buf = write_long(buf, dict->hashtab[i]);
+	write_long(dict->links[i], fp);
+	write_long(dict->hashtab[i], fp);
     }
-    return buf;
 }
 
-static cDict *unpack_dict(cBuf *buf, Long *buf_pos)
+INTERNAL cDict *unpack_dict(FILE *fp)
 {
     cDict *dict;
     Int i;
 
     dict = EMALLOC(cDict, 1);
-    dict->keys = unpack_list(buf, buf_pos);
-    dict->values = unpack_list(buf, buf_pos);
-    dict->hashtab_size = read_long(buf, buf_pos);
+    dict->keys = unpack_list(fp);
+    dict->values = unpack_list(fp);
+    dict->hashtab_size = read_long(fp);
     dict->links = EMALLOC(Int, dict->hashtab_size);
     dict->hashtab = EMALLOC(Int, dict->hashtab_size);
     for (i = 0; i < dict->hashtab_size; i++) {
-	dict->links[i] = read_long(buf, buf_pos);
-	dict->hashtab[i] = read_long(buf, buf_pos);
+	dict->links[i] = read_long(fp);
+	dict->hashtab[i] = read_long(fp);
     }
     dict->refs = 1;
     return dict;
 }
 
-static Int size_dict(cDict *dict)
+INTERNAL Int size_dict(cDict *dict)
 {
     Int size = 0, i;
 
@@ -246,50 +279,49 @@ static Int size_dict(cDict *dict)
     return size;
 }
 
-static cBuf * pack_vars(cBuf *buf, Obj *obj)
+INTERNAL void pack_vars(Obj *obj, FILE *fp)
 {
     Int i;
 
-    buf = write_long(buf, obj->vars.size);
-    buf = write_long(buf, obj->vars.blanks);
+    write_long(obj->vars.size, fp);
+    write_long(obj->vars.blanks, fp);
 
     for (i = 0; i < obj->vars.size; i++) {
-	buf = write_long(buf, obj->vars.hashtab[i]);
+	write_long(obj->vars.hashtab[i], fp);
 	if (obj->vars.tab[i].name != NOT_AN_IDENT) {
-	    buf = write_ident(buf, obj->vars.tab[i].name);
-	    buf = write_long(buf, obj->vars.tab[i].cclass);
-	    buf = pack_data(buf, &obj->vars.tab[i].val);
+	    write_ident(obj->vars.tab[i].name, fp);
+	    write_long(obj->vars.tab[i].cclass, fp);
+	    pack_data(&obj->vars.tab[i].val, fp);
 	} else {
-	    buf = write_long(buf, NOT_AN_IDENT);
+	    write_long(NOT_AN_IDENT, fp);
 	}
-	buf = write_long(buf, obj->vars.tab[i].next);
+	write_long(obj->vars.tab[i].next, fp);
     }
-    return buf;
 }
 
-static void unpack_vars(cBuf *buf, Long *buf_pos, Obj *obj)
+INTERNAL void unpack_vars(Obj *obj, FILE *fp)
 {
     Int i;
 
-    obj->vars.size = read_long(buf, buf_pos);
-    obj->vars.blanks = read_long(buf, buf_pos);
+    obj->vars.size = read_long(fp);
+    obj->vars.blanks = read_long(fp);
 
     obj->vars.hashtab = EMALLOC(Int, obj->vars.size);
     obj->vars.tab = EMALLOC(Var, obj->vars.size);
 
     for (i = 0; i < obj->vars.size; i++) {
-	obj->vars.hashtab[i] = read_long(buf, buf_pos);
-	obj->vars.tab[i].name = read_ident(buf, buf_pos);
+	obj->vars.hashtab[i] = read_long(fp);
+	obj->vars.tab[i].name = read_ident(fp);
 	if (obj->vars.tab[i].name != NOT_AN_IDENT) {
-	    obj->vars.tab[i].cclass = read_long(buf, buf_pos);
-	    unpack_data(buf, buf_pos, &obj->vars.tab[i].val);
+	    obj->vars.tab[i].cclass = read_long(fp);
+	    unpack_data(&obj->vars.tab[i].val, fp);
 	}
-	obj->vars.tab[i].next = read_long(buf, buf_pos);
+	obj->vars.tab[i].next = read_long(fp);
     }
 
 }
 
-static Int size_vars(Obj *obj)
+INTERNAL Int size_vars(Obj *obj)
 {
     Int size = 0, i;
 
@@ -311,115 +343,105 @@ static Int size_vars(Obj *obj)
     return size;
 }
 
-static cBuf * pack_method(cBuf *buf, Method *method)
+INTERNAL void pack_method(Method *method, FILE *fp)
 {
     Int i, j;
 
-    buf = write_ident(buf, method->name);
+    write_ident(method->name, fp);
 
-    buf = write_long(buf, method->m_access);
-    buf = write_long(buf, method->m_flags);
-    buf = write_long(buf, method->native);
+    write_long(method->num_args, fp);
+    for (i = 0; i < method->num_args; i++)
+	write_long(method->argnames[i], fp);
+    write_long(method->rest, fp);
 
-    buf = write_long(buf, method->num_args);
-    for (i = 0; i < method->num_args; i++) {
-	buf = write_long(buf, method->argnames[i]);
-    }
-    buf = write_long(buf, method->rest);
+    write_long(method->num_vars, fp);
+    for (i = 0; i < method->num_vars; i++)
+	write_long(method->varnames[i], fp);
 
-    buf = write_long(buf, method->num_vars);
-    for (i = 0; i < method->num_vars; i++) {
-	buf = write_long(buf, method->varnames[i]);
-    }
-
-    buf = write_long(buf, method->num_opcodes);
+    write_long(method->num_opcodes, fp);
     for (i = 0; i < method->num_opcodes; i++)
-	buf = write_long(buf, method->opcodes[i]);
+	write_long(method->opcodes[i], fp);
 
-    buf = write_long(buf, method->num_error_lists);
+    write_long(method->num_error_lists, fp);
     for (i = 0; i < method->num_error_lists; i++) {
-	buf = write_long(buf, method->error_lists[i].num_errors);
+	write_long(method->error_lists[i].num_errors, fp);
 	for (j = 0; j < method->error_lists[i].num_errors; j++)
-	    buf = write_ident(buf, method->error_lists[i].error_ids[j]);
+	    write_ident(method->error_lists[i].error_ids[j], fp);
     }
-    return buf;
+
+    write_long(method->m_access, fp);
+    write_long(method->m_flags, fp);
+    write_long(method->native, fp);
 }
 
-static Method *unpack_method(cBuf *buf, Long *buf_pos)
+INTERNAL Method *unpack_method(FILE *fp)
 {
-    Int     i, j, n;
+    Int name, i, j, n;
     Method *method;
-    Int     name;
 
     /* Read in the name.  If this is -1, it was a marker for a blank entry. */
-    name = read_ident(buf, buf_pos);
+    name = read_ident(fp);
     if (name == NOT_AN_IDENT)
 	return NULL;
 
     method = EMALLOC(Method, 1);
 
     method->name = name;
-    method->m_access = read_long(buf, buf_pos);
-    method->m_flags = read_long(buf, buf_pos);
-    method->native = read_long(buf, buf_pos);
-    method->refs = 1;
 
-    method->num_args = read_long(buf, buf_pos);
+    method->num_args = read_long(fp);
     if (method->num_args) {
 	method->argnames = TMALLOC(Int, method->num_args);
-	for (i = 0; i < method->num_args; i++) {
-	    method->argnames[i] = read_long(buf, buf_pos);
-        }
+	for (i = 0; i < method->num_args; i++)
+	    method->argnames[i] = read_long(fp);
     }
-    method->rest = read_long(buf, buf_pos);
+    method->rest = read_long(fp);
 
-    method->num_vars = read_long(buf, buf_pos);
+    method->num_vars = read_long(fp);
     if (method->num_vars) {
 	method->varnames = TMALLOC(Int, method->num_vars);
-	for (i = 0; i < method->num_vars; i++) {
-	    method->varnames[i] = read_long(buf, buf_pos);
-        }
+	for (i = 0; i < method->num_vars; i++)
+	    method->varnames[i] = read_long(fp);
     }
 
-    method->num_opcodes = read_long(buf, buf_pos);
+    method->num_opcodes = read_long(fp);
     method->opcodes = TMALLOC(Long, method->num_opcodes);
     for (i = 0; i < method->num_opcodes; i++)
-	method->opcodes[i] = read_long(buf, buf_pos);
+	method->opcodes[i] = read_long(fp);
 
-    method->num_error_lists = read_long(buf, buf_pos);
+    method->num_error_lists = read_long(fp);
     if (method->num_error_lists) {
 	method->error_lists = TMALLOC(Error_list, method->num_error_lists);
 	for (i = 0; i < method->num_error_lists; i++) {
-	    n = read_long(buf, buf_pos);
+	    n = read_long(fp);
 	    method->error_lists[i].num_errors = n;
 	    method->error_lists[i].error_ids = TMALLOC(Int, n);
 	    for (j = 0; j < n; j++)
-		method->error_lists[i].error_ids[j] = read_ident(buf, buf_pos);
+		method->error_lists[i].error_ids[j] = read_ident(fp);
 	}
     }
 
+    method->m_access = read_long(fp);
+    method->m_flags = read_long(fp);
+    method->native = read_long(fp);
+
+    method->refs = 1;
     return method;
 }
 
-static Int size_method(Method *method)
+INTERNAL Int size_method(Method *method)
 {
     Int size = 0, i, j;
 
     size += size_ident(method->name);
-    size += size_long(method->native);
-    size += size_long(method->m_access);
-    size += size_long(method->m_flags);
 
     size += size_long(method->num_args);
-    for (i = 0; i < method->num_args; i++) {
+    for (i = 0; i < method->num_args; i++)
 	size += size_long(method->argnames[i]);
-    }
     size += size_long(method->rest);
 
     size += size_long(method->num_vars);
-    for (i = 0; i < method->num_vars; i++) {
+    for (i = 0; i < method->num_vars; i++)
 	size += size_long(method->varnames[i]);
-    }
 
     size += size_long(method->num_opcodes);
     for (i = 0; i < method->num_opcodes; i++)
@@ -432,49 +454,51 @@ static Int size_method(Method *method)
 	    size += size_ident(method->error_lists[i].error_ids[j]);
     }
 
+    size += size_long(method->native);
+    size += size_long(method->m_access);
+    size += size_long(method->m_flags);
     return size;
 }
 
-static cBuf * pack_methods(cBuf *buf, Obj *obj)
+INTERNAL void pack_methods(Obj *obj, FILE *fp)
 {
     Int i;
 
-    buf = write_long(buf, obj->methods.size);
-    buf = write_long(buf, obj->methods.blanks);
+    write_long(obj->methods.size, fp);
+    write_long(obj->methods.blanks, fp);
 
     for (i = 0; i < obj->methods.size; i++) {
-	buf = write_long(buf, obj->methods.hashtab[i]);
+	write_long(obj->methods.hashtab[i], fp);
 	if (obj->methods.tab[i].m) {
-	    buf = pack_method(buf, obj->methods.tab[i].m);
+	    pack_method(obj->methods.tab[i].m, fp);
 	} else {
 	    /* Method begins with name identifier; write NOT_AN_IDENT. */
-	    buf = write_long(buf, NOT_AN_IDENT);
+	    write_long(NOT_AN_IDENT, fp);
 	}
-	buf = write_long(buf, obj->methods.tab[i].next);
+	write_long(obj->methods.tab[i].next, fp);
     }
-    return buf;
 }
 
-static void unpack_methods(cBuf *buf, Long *buf_pos, Obj *obj)
+INTERNAL void unpack_methods(Obj *obj, FILE *fp)
 {
     Int i;
 
-    obj->methods.size = read_long(buf, buf_pos);
-    obj->methods.blanks = read_long(buf, buf_pos);
+    obj->methods.size = read_long(fp);
+    obj->methods.blanks = read_long(fp);
 
     obj->methods.hashtab = EMALLOC(Int, obj->methods.size);
     obj->methods.tab = EMALLOC(struct mptr, obj->methods.size);
 
     for (i = 0; i < obj->methods.size; i++) {
-	obj->methods.hashtab[i] = read_long(buf, buf_pos);
-	obj->methods.tab[i].m = unpack_method(buf, buf_pos);
+	obj->methods.hashtab[i] = read_long(fp);
+	obj->methods.tab[i].m = unpack_method(fp);
 	if (obj->methods.tab[i].m)
 	    obj->methods.tab[i].m->object = obj;
-	obj->methods.tab[i].next = read_long(buf, buf_pos);
+	obj->methods.tab[i].next = read_long(fp);
     }
 }
 
-static Int size_methods(Obj *obj)
+INTERNAL Int size_methods(Obj *obj)
 {
     Int size = 0, i;
 
@@ -493,109 +517,79 @@ static Int size_methods(Obj *obj)
     return size;
 }
 
-static cBuf * pack_strings(cBuf *buf, Obj *obj)
+INTERNAL void pack_strings(Obj *obj, FILE *fp)
 {
     Int i;
 
-    if (obj->strings->tab_num > 0) {
-        buf = write_long(buf, obj->strings->tab_size);
-        buf = write_long(buf, obj->strings->tab_num);
-        buf = write_long(buf, obj->strings->blanks);
-        for (i = 0; i < obj->strings->tab_size; i++) {
-            buf = write_long(buf, obj->strings->hashtab[i]);
-            buf = write_long(buf, obj->strings->tab[i].next);
-            buf = write_long(buf, obj->strings->tab[i].hash);
-            buf = write_long(buf, obj->strings->tab[i].refs);
-        }
-        for (i = 0; i < obj->strings->tab_size; i++) {
-	    buf = string_pack(buf, obj->strings->tab[i].str);
-        }
-    } else {
-        buf = write_long(buf, -1);
+    write_long(obj->strings_size, fp);
+    write_long(obj->num_strings, fp);
+    for (i = 0; i < obj->num_strings; i++) {
+	string_pack(obj->strings[i].str, fp);
+	if (obj->strings[i].str)
+	    write_long(obj->strings[i].refs, fp);
     }
-    return buf;
 }
 
-static void unpack_strings(cBuf *buf, Long *buf_pos, Obj *obj)
+INTERNAL void unpack_strings(Obj *obj, FILE *fp)
 {
     Int i;
-    Long size;
 
-    size = read_long(buf, buf_pos);
-    if (size != -1) {
-        obj->strings = string_tab_new_with_size(size);
-        obj->strings->tab_num = read_long(buf, buf_pos);
-        obj->strings->blanks = read_long(buf, buf_pos);
-        for (i = 0; i < size; i++) {
-	    obj->strings->hashtab[i] = read_long(buf, buf_pos);
-	    obj->strings->tab[i].next = read_long(buf, buf_pos);
-	    obj->strings->tab[i].hash = read_long(buf, buf_pos);
-	    obj->strings->tab[i].refs = read_long(buf, buf_pos);
-        }
-        for (i = 0; i < obj->strings->tab_size; i++) {
-	    obj->strings->tab[i].str = string_unpack(buf, buf_pos);
-        }
-    } else {
-	obj->strings = string_tab_new();
+    obj->strings_size = read_long(fp);
+    obj->num_strings = read_long(fp);
+    obj->strings = EMALLOC(String_entry, obj->strings_size);
+    for (i = 0; i < obj->num_strings; i++) {
+	obj->strings[i].str = string_unpack(fp);
+	if (obj->strings[i].str)
+	    obj->strings[i].refs = read_long(fp);
     }
 }
 
-static Int size_strings(Obj *obj)
+INTERNAL Int size_strings(Obj *obj)
 {
     Int size = 0, i;
 
-    if (obj->strings->tab_num > 0) {
-        size += size_long(obj->strings->tab_size);
-        size += size_long(obj->strings->tab_num);
-        size += size_long(obj->strings->blanks);
-        for (i = 0; i < obj->strings->tab_size; i++) {
-	    size += size_long(obj->strings->hashtab[i]);
-	    size += size_long(obj->strings->tab[i].next);
-	    size += size_long(obj->strings->tab[i].hash);
-	    size += size_long(obj->strings->tab[i].refs);
-        }
-        for (i = 0; i < obj->strings->tab_size; i++) {
-	    size += string_packed_size(obj->strings->tab[i].str);
-        }
-    } else {
-	size += size_long(-1);
+    size += size_long(obj->strings_size);
+    size += size_long(obj->num_strings);
+    for (i = 0; i < obj->num_strings; i++) {
+	size += string_packed_size(obj->strings[i].str);
+	if (obj->strings[i].str)
+	    size += size_long(obj->strings[i].refs);
     }
 
     return size;
 }
 
-static cBuf * pack_idents(cBuf *buf, Obj *obj)
+INTERNAL void pack_idents(Obj *obj, FILE *fp)
 {
     Int i;
 
-    buf = write_long(buf, obj->idents_size);
-    buf = write_long(buf, obj->num_idents);
+    write_long(obj->idents_size, fp);
+    write_long(obj->num_idents, fp);
     for (i = 0; i < obj->num_idents; i++) {
 	if (obj->idents[i].id != NOT_AN_IDENT) {
-	    buf = write_ident(buf, obj->idents[i].id);
-	    buf = write_long(buf, obj->idents[i].refs);
+	    write_ident(obj->idents[i].id, fp);
+	    write_long(obj->idents[i].refs, fp);
 	} else {
-	    buf = write_long(buf, NOT_AN_IDENT);
+	    write_long(NOT_AN_IDENT, fp);
 	}
     }
-    return buf;
 }
 
-static void unpack_idents(cBuf *buf, Long *buf_pos, Obj *obj)
+INTERNAL void unpack_idents(Obj *obj, FILE *fp)
 {
     Int i;
 
-    obj->idents_size = read_long(buf, buf_pos);
-    obj->num_idents = read_long(buf, buf_pos);
+    obj->idents_size = read_long(fp);
+    obj->num_idents = read_long(fp);
     obj->idents = EMALLOC(Ident_entry, obj->idents_size);
     for (i = 0; i < obj->num_idents; i++) {
-	obj->idents[i].id = read_ident(buf, buf_pos);
+	obj->idents[i].id = read_ident(fp);
 	if (obj->idents[i].id != NOT_AN_IDENT)
-	    obj->idents[i].refs = read_long(buf, buf_pos);
+	    obj->idents[i].refs = read_long(fp);
     }
 }
 
-static Int size_idents(Obj *obj)
+INTERNAL Int size_idents(Obj *obj)
 {
     Int size = 0, i;
 
@@ -613,122 +607,125 @@ static Int size_idents(Obj *obj)
     return size;
 }
 
-cBuf * pack_data(cBuf *buf, cData *data)
+void pack_data(cData *data, FILE *fp)
 {
-    buf = write_long(buf, data->type);
+    write_long(data->type, fp);
     switch (data->type) {
 
       case INTEGER:
-	buf = write_long(buf, data->u.val);
+	write_long(data->u.val, fp);
 	break;
 
       case FLOAT:
-	buf = write_float(buf, data->u.fval);
-	break;
+        write_long(*((Long*)(&data->u.fval)), fp);
+        break;
 
       case STRING:
-	buf = string_pack(buf, data->u.str);
+	string_pack(data->u.str, fp);
 	break;
 
       case OBJNUM:
-	buf = write_long(buf, data->u.objnum);
+	write_long(data->u.objnum, fp);
 	break;
 
       case LIST:
-	buf = pack_list(buf, data->u.list);
+	pack_list(data->u.list, fp);
 	break;
 
       case SYMBOL:
-	buf = write_ident(buf, data->u.symbol);
+	write_ident(data->u.symbol, fp);
 	break;
 
       case T_ERROR:
-	buf = write_ident(buf, data->u.error);
+	write_ident(data->u.error, fp);
 	break;
 
       case FROB:
-	buf = write_long(buf, data->u.frob->cclass);
-	buf = pack_data(buf, &data->u.frob->rep);
+	write_long(data->u.frob->cclass, fp);
+	pack_data(&data->u.frob->rep, fp);
 	break;
 
       case DICT:
-	buf = pack_dict(buf, data->u.dict);
-	break;
-
-      case BUFFER:
-	buf = write_long(buf, data->u.buffer->len);
-        buf = buffer_append(buf, data->u.buffer);
-	break;
-      default: {
-	  INSTANCE_RECORD(data->type, r);
-	  buf = r->pack(buf, data);
-      }
-    }
-    return buf;
-}
-
-void unpack_data(cBuf *buf, Long *buf_pos, cData *data)
-{
-    data->type = read_long(buf, buf_pos);
-    switch (data->type) {
-
-      case INTEGER:
-	data->u.val = read_long(buf, buf_pos);
-	break;
-
-      case FLOAT:
-	data->u.fval = read_float(buf, buf_pos);
-	break;
-
-      case STRING:
-	data->u.str = string_unpack(buf, buf_pos);
-	break;
-
-      case OBJNUM:
-	data->u.objnum = read_long(buf, buf_pos);
-	break;
-
-      case LIST:
-	data->u.list = unpack_list(buf, buf_pos);
-	break;
-
-      case SYMBOL:
-	data->u.symbol = read_ident(buf, buf_pos);
-	break;
-
-      case T_ERROR:
-	data->u.error = read_ident(buf, buf_pos);
-	break;
-
-      case FROB:
-	data->u.frob = TMALLOC(cFrob, 1);
-	data->u.frob->cclass = read_long(buf, buf_pos);
-	unpack_data(buf, buf_pos, &data->u.frob->rep);
-	break;
-
-      case DICT:
-	data->u.dict = unpack_dict(buf, buf_pos);
+	pack_dict(data->u.dict, fp);
 	break;
 
       case BUFFER: {
-	  Int len;
+	  Int i;
 
-	  len = read_long(buf, buf_pos);
-	  data->u.buffer = buffer_new(len);
-          data->u.buffer->len = len;
-          MEMCPY(data->u.buffer->s, &(buf->s[*buf_pos]), len);
-          (*buf_pos) += len;
+	  write_long(data->u.buffer->len, fp);
+	  for (i = 0; i < data->u.buffer->len; i++)
+	      write_long(data->u.buffer->s[i], fp);
 	  break;
       }
       default: {
 	  INSTANCE_RECORD(data->type, r);
-	  r->unpack(buf, buf_pos, data);
+	  r->pack(data, fp);
       }
     }
 }
 
-Int size_data(cData *data)
+void unpack_data(cData *data, FILE *fp)
 {
+    data->type = read_long(fp);
+    switch (data->type) {
+
+      case INTEGER:
+	data->u.val = read_long(fp);
+	break;
+
+      case FLOAT: {
+        Long k = read_long(fp);
+        data->u.fval = *((cFloat*)(&k));
+        break;
+      }
+
+      case STRING:
+	data->u.str = string_unpack(fp);
+	break;
+
+      case OBJNUM:
+	data->u.objnum = read_long(fp);
+	break;
+
+      case LIST:
+	data->u.list = unpack_list(fp);
+	break;
+
+      case SYMBOL:
+	data->u.symbol = read_ident(fp);
+	break;
+
+      case T_ERROR:
+	data->u.error = read_ident(fp);
+	break;
+
+      case FROB:
+        data->u.frob = TMALLOC(cFrob, 1);
+	data->u.frob->cclass = read_long(fp);
+	unpack_data(&data->u.frob->rep, fp);
+	break;
+
+      case DICT:
+	data->u.dict = unpack_dict(fp);
+	break;
+
+      case BUFFER: {
+	  Int len, i;
+
+	  len = read_long(fp);
+	  data->u.buffer = buffer_new(len);
+	  for (i = 0; i < len; i++)
+	      data->u.buffer->s[i] = read_long(fp);
+	  break;
+      }
+      default: {
+	  INSTANCE_RECORD(data->type, r);
+	  r->unpack(data, fp);
+      }
+    }
+}
+
+Int size_data(cData *data) {
     Int size = 0;
 
     size += size_long(data->type);
@@ -739,8 +736,8 @@ Int size_data(cData *data)
 	break;
 
       case FLOAT:
-	size += size_float(data->u.fval);
-	break;
+        size += size_long(*((Long*)(&data->u.fval)));
+        break;
 
       case STRING:
 	size += string_packed_size(data->u.str);
@@ -787,27 +784,32 @@ Int size_data(cData *data)
     return size;
 }
 
-cBuf * pack_object(cBuf *buf, Obj *obj)
+void pack_object(Obj *obj, FILE *fp)
 {
-    buf = pack_list(buf, obj->parents);
-    buf = pack_list(buf, obj->children);
-    buf = pack_vars(buf, obj);
-    buf = pack_methods(buf, obj);
-    buf = pack_strings(buf, obj);
-    buf = pack_idents(buf, obj);
-    buf = write_ident(buf, obj->objname);
-    return buf;
+    pack_list(obj->parents, fp);
+    pack_list(obj->children, fp);
+    pack_vars(obj, fp);
+    pack_methods(obj, fp);
+    pack_strings(obj, fp);
+    pack_idents(obj, fp);
+    write_ident(obj->objname, fp);
+#if 0
+    write_long(obj->search, fp);
+#endif
 }
 
-void unpack_object(cBuf *buf, Long *buf_pos, Obj *obj)
+void unpack_object(Obj *obj, FILE *fp)
 {
-    obj->parents = unpack_list(buf, buf_pos);
-    obj->children = unpack_list(buf, buf_pos);
-    unpack_vars(buf, buf_pos, obj);
-    unpack_methods(buf, buf_pos, obj);
-    unpack_strings(buf, buf_pos, obj);
-    unpack_idents(buf, buf_pos, obj);
-    obj->objname = read_ident(buf, buf_pos);
+    obj->parents = unpack_list(fp);
+    obj->children = unpack_list(fp);
+    unpack_vars(obj, fp);
+    unpack_methods(obj, fp);
+    unpack_strings(obj, fp);
+    unpack_idents(obj, fp);
+    obj->objname = read_ident(fp);
+#if 0
+    obj->search = read_long(fp);
+#endif
 }
 
 Int size_object(Obj *obj)
@@ -821,6 +823,9 @@ Int size_object(Obj *obj)
     size += size_strings(obj);
     size += size_idents(obj);
     size += size_ident(obj->objname);
-
+#if 0
+    size += size_long(obj->search);
+#endif
     return size;
 }
+

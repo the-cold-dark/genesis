@@ -18,6 +18,7 @@ typedef struct case_list	Case_list;
 extern Pile * compiler_pile;
 
 void init_codegen(void);
+void uninit_codegen(void);
 
 Prog * make_prog(Int overridable, Arguments * args, Id_list * vars,
 		Stmt_list * stmts);

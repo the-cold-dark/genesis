@@ -55,6 +55,7 @@ static void unlink_runningfile(void) {
         strcat(buf, c_runfile);
         system(buf);
     }
+    free(c_runfile);
 }
 
 /*
@@ -136,7 +137,15 @@ int main(int argc, char **argv) {
     simble_close();
     flush_output();
     close_files();
+    uninit_cache();
     uninit_scratch_file();
+    uninit_execute();
+    uninit_op_table();
+    uninit_ident();
+    uninit_codegen();
+    uninit_match();
+    uninit_defs();
+    uninit_emalloc();
     write_err("Genesis shutdown");
     if (errfile)
         fclose(errfile);

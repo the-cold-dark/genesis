@@ -67,4 +67,23 @@ void init_defs(void) {
 
 #undef INIT_VAR
 
+void uninit_defs(void) {
+    efree(c_dir_binary);
+    efree(c_dir_textdump);
+    efree(c_dir_bin);
+    efree(c_dir_root);
+    efree(c_logfile);
+    efree(c_errfile);
+
+    string_discard(str_tzname);
+    string_discard(str_hostname);
+    string_discard(str_release);
+    string_discard(str_system);
+
+#ifdef USE_CACHE_HISTORY
+    list_discard(ancestor_cache_history);
+    list_discard(method_cache_history);
+#endif
+}
+
 #undef _defs_

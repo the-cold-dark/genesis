@@ -80,6 +80,13 @@ void init_codegen(void)
     jump_size = JUMP_TABLE_START;
 }
 
+void uninit_codegen(void)
+{
+    free_pile(compiler_pile);
+    efree(instr_buf);
+    efree(jump_table);
+}
+
 /* All constructors allocate memory from compiler_pile, so their results are
  * only good until the next pfree() of compiler_pile.  Their effects should
  * all be self-explanatory unless otherwise noted. */

@@ -141,3 +141,8 @@ void init_ident(void)
     partial_id = ident_get("partial");
 }
 
+void uninit_ident(void)
+{
+    string_tab_free(idents);
+}
+

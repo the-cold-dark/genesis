@@ -138,4 +138,5 @@ RELEASE INFORMATION:
       * Fix memory leak in lookup_bdb.c lookup_open() (Brad)
       * Cleanup memory.c to separate old vs new pile code (Brad)
       * Add free_pile() (Brad)
+      * Cleanup memory at exit (Brad)
 

@@ -36,6 +36,10 @@ void init_match(void) {
     field_size = FIELD_STARTING_SIZE;
 }
 
+void uninit_match(void) {
+    efree(fields);
+}
+
 cList * match_template(char *ctemplate, char *s) {
     char *p;
     Int i, coupled;

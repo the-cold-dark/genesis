@@ -484,6 +484,7 @@ cDict * cleaner_ignore_dict;
 #endif
 
 void init_defs(void);
+void uninit_defs(void);
 
 /* limits configurable with 'config()' */
 Int  limit_datasize;
@@ -539,6 +540,7 @@ extern Int  cleaner_wait;
 #endif
 
 extern void init_defs(void); 
+extern void uninit_defs(void); 
 
 /* limits configurable with 'config()' */
 extern Int  limit_datasize;

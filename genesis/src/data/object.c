@@ -343,7 +343,6 @@ void object_free(Obj *object) {
 
         /* Discard method's strings. */
         string_tab_free(object->methods->strings);
-        efree(object->methods->strings);
 
         /* Discard method's identifiers. */
         for (i = 0; i < object->methods->num_idents; i++) {

@@ -1480,6 +1480,7 @@ void compile_cdc_file(FILE * fp) {
     cache_sync();
     write_err("Cleaning up name holders...");
     cleanup_holders();
+    hash_discard(dump_hash);
 #endif
 }
 

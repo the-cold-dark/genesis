@@ -321,6 +321,14 @@ void init_op_table(void) {
     first_function = i;
 }
 
+void uninit_op_table(void) {
+    uInt i;
+
+    for (i = 0; i < NUM_OPERATORS; i++) {
+        ident_discard(op_info[i].symbol);
+    }
+}
+
 Int find_function(char *name) {
     uInt start = first_function;
     uInt end   = NUM_OPERATORS-1;

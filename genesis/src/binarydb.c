@@ -755,6 +755,7 @@ void simble_close(void)
     fclose(database_file);
     efree(bitmap);
     simble_flag_as_clean();
+    string_discard(pad_string);
     UNLOCK_DB("simble_close")
 }
 

@@ -52,6 +52,19 @@ void shutdown_coldcc(void) {
     simble_close();
     flush_output();
     close_files();
+    uninit_cache();
+    uninit_scratch_file();
+    uninit_execute();
+    uninit_op_table();
+    uninit_ident();
+    uninit_codegen();
+    uninit_match();
+    uninit_defs();
+
+    /* do this manually, genesis does it from an atexit routine */
+    efree(c_runfile);
+
+    uninit_emalloc();
     write_err("Done");
     exit(0);
 }

@@ -47,6 +47,7 @@ extern Ident left_id, right_id, both_id;
 extern StringTab *idents;
 
 void   init_ident(void);
+void   uninit_ident(void);
 
 #define ident_get(s)		string_tab_get(idents, s)
 #define ident_get_length(s,len)	string_tab_get_length(idents, s, len)

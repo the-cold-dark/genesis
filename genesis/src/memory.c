@@ -36,6 +36,13 @@
 #define PILE_BLOCK_SIZE 254
 #define MAX_PILE_BLOCKS 8
 
+typedef struct tblock Tblocks;
+
+struct tblock {
+    void *block;
+    struct tblock *next;
+};
+
 typedef struct tlist Tlist;
 
 struct tlist {
@@ -54,9 +61,29 @@ struct pile {
     blink_t *blocks;
 };
 
+static Tblocks *tray_blocks;
 static Tlist *trays[NUM_TRAYS];
 
 static Bool inside_emalloc_logger = FALSE;
+
+void init_emalloc(void) {
+    int i;
+
+    for (i = 0; i < NUM_TRAYS; i++) {
+        trays[i] = NULL;
+    }
+
+    tray_blocks = NULL;
+}
+
+void uninit_emalloc(void) {
+    while (tray_blocks) {
+        Tblocks *tmp = tray_blocks;
+        tray_blocks = tray_blocks->next;
+        efree(tmp->block);
+        efree(tmp);
+    }
+}
 
 #ifdef DOFUNC_FREE
 void efree(void *block) {
@@ -119,7 +146,12 @@ void *tmalloc(size_t size)
 
     /* If we're out of tray elements, make a new tray. */
     if (!trays[t]) {
-	trays[t] = EMALLOC(Tlist, TRAY_ELEM);
+	Tblocks *tmp = EMALLOC(Tblocks, 1);
+        tmp->block = EMALLOC(Tlist, TRAY_ELEM);
+        tmp->next = tray_blocks;
+        tray_blocks = tmp;
+
+	trays[t] = (void*)tmp->block;
 
 	/* n is the number of Tlists we need for each tray element. */
 	n = t + 1;

@@ -11,6 +11,7 @@ typedef struct pile Pile;
 #include <stdlib.h>
 #include <string.h>
 
+void uninit_emalloc(void);
 void * emalloc(size_t size);
 void * erealloc(void *ptr, size_t size);
 void * tmalloc(size_t size);

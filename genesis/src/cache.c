@@ -245,6 +245,46 @@ void init_cache(Bool spawn_cleaner)
     }
 }
 
+void uninit_cache()
+{
+    Int i;
+
+#ifdef USE_CLEANER_THREAD
+    dict_discard(cleaner_ignore_dict);
+#endif
+#ifdef USE_DIRTY_LIST
+    efree(dirty);
+#endif
+    for (i = 0; i < cache_width; i++) {
+        while (active[i].first) {
+            Obj *tmp = active[i].first;
+            active[i].first = active[i].first->next_obj;
+            if (tmp->objnum != INV_OBJNUM) {
+                fprintf(stderr, "object %s($%d) still active!\n",
+                        tmp->objname != -1 ? ident_name(tmp->objname) : "not named", tmp->objnum);
+                if (tmp->dirty)
+                    fprintf(stderr, "and its dirty still!!\n");
+                object_free(tmp);
+            }
+            efree(tmp);
+        }
+
+        while (inactive[i].first) {
+            Obj *tmp = inactive[i].first;
+            inactive[i].first = inactive[i].first->next_obj;
+            if (tmp->objnum != INV_OBJNUM) {
+                if (tmp->dirty)
+                    fprintf(stderr, "object %s($%d) is still dirty!\n",
+                            tmp->objname != -1 ? ident_name(tmp->objname) : "not named", tmp->objnum);
+                object_free(tmp);
+            }
+            efree(tmp);
+        }
+    }
+    efree(active);
+    efree(inactive);
+}
+
 /*
 // ----------------------------------------------------------------------
 //

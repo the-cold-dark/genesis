@@ -161,6 +161,7 @@ extern VMState * preempted;
 extern VMState * suspended;
 
 void init_execute(void);
+void uninit_execute(void);
 void vm_task(cObjnum objnum, Long message, Int num_args, ...);
 void vm_method(Obj *obj, Method *method);
 Int  frame_start(Obj *obj,

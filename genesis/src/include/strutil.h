@@ -5,7 +5,8 @@
 #ifndef cdc_strutil_h
 #define cdc_strutil_h
 
-void     init_match(void);
+void    init_match(void);
+void    uninit_match(void);
 cList * match_template(char * ctemplate, char * s);
 cList * match_pattern(char * pattern, char * s);
 cList * match_regexp(cStr * reg, char * s, Bool sensitive, Bool * error);

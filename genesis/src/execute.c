@@ -677,6 +677,34 @@ void init_execute(void) {
 #endif
 }
 
+void uninit_execute(void) {
+    while (holder_cache) {
+        VMStack *tmp = holder_cache;
+        holder_cache = holder_cache->next;
+        efree(tmp);
+    }
+
+    while (stack_store) {
+        VMStack *tmp = stack_store;
+        stack_store = stack_store->next;
+        efree(tmp->stack);
+        efree(tmp->arg_starts);
+        efree(tmp);
+    }
+
+    efree(stack);
+    efree(arg_starts);
+
+    while (frame_store) {
+        Frame *tmp = frame_store;
+        frame_store = frame_store->caller_frame;
+        efree(tmp);
+    }
+
+    if (numargs_str)
+        string_discard(numargs_str);
+}
+
 /*
 // ---------------------------------------------------------------
 //

@@ -154,31 +154,29 @@ void func_tick(void) {
 /* ----------------------------------------------------------------- */
 void func_stack(void) {
     VMState * vm = NULL;
+    Frame   * frame = NULL;
     cData   * args;
     Int       nargs;
-    Long      tid;
     Bool      want_lineno = TRUE;
 
     if (!func_init_0_to_2(&args, &nargs, INTEGER, INTEGER))
         return;
 
-    if (nargs == 0) {
-        vm = vm_current();
+    if ((nargs == 0) || (INT1 == task_id)) {
+        frame = cur_frame;
     } else {
-        tid = args[0].u.val;
-        if (tid == task_id)
-            vm = vm_current();
-        else
-            vm = task_lookup(tid);
+        vm = task_lookup(INT1);
+        if (vm)
+            frame = vm->cur_frame;
     }
 
     if ((nargs == 2) && (args[1].u.val == 0))
         want_lineno = FALSE;
 
-    if (vm) {
+    if (frame) {
         cList * list;
 
-        list = task_stack(vm->cur_frame, want_lineno);
+        list = task_stack(cur_frame, want_lineno);
 
         pop(nargs);
         push_list(list);

@@ -40,7 +40,8 @@ cBuf * write_long(cBuf *buf, Long n)
     uLong i = (uLong)n;
     uLong i2 = i ^ (uLong)(-1);
     uChar long_buf[sizeof(Long)+1];
-    Int bit_flip = 0, num_bytes = 0;
+    Int   bit_flip = 0;
+    uInt  num_bytes = 0;
 
     if (i2 < i) {
         i = i2;
@@ -82,7 +83,7 @@ Long read_long(cBuf *buf, Long *buf_pos)
     return (Long)n;
 }
 
-Int size_long_internal(Long n)
+static Int size_long_internal(Long n)
 {
     uLong i = (uLong)n;
     Int num_bytes;
@@ -107,7 +108,7 @@ Int size_long(Long n)
         return size_long_internal(i2);
 }
 
-cBuf * write_ident(cBuf *buf, Long id)
+cBuf * write_ident(cBuf *buf, Ident id)
 {
     Char *s;
     Int len;
@@ -123,11 +124,11 @@ cBuf * write_ident(cBuf *buf, Long id)
     return buf;
 }
 
-Long read_ident(cBuf *buf, Long *buf_pos)
+Ident read_ident(cBuf *buf, Long *buf_pos)
 {
-    Int len;
+    Int   len;
     Char *s;
-    Long id;
+    Ident id;
 
     /* Read the length of the identifier. */
     len = read_long(buf, buf_pos);
@@ -150,7 +151,7 @@ Long read_ident(cBuf *buf, Long *buf_pos)
     return id;
 }
 
-Long size_ident(Long id)
+Int size_ident(Ident id)
 {
     Int len;
     ident_name_size(id, &len);

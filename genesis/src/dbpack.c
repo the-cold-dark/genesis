@@ -553,7 +553,10 @@ static cBuf * pack_strings(cBuf *buf, Obj *obj)
         for (i = 0; i < obj->strings->tab_size; i++) {
             buf = string_pack(buf, obj->strings->tab[i].str);
             if (obj->strings->tab[i].str)
+            {
+                buf = write_long(buf, obj->strings->tab[i].hash);
                 buf = write_long(buf, obj->strings->tab[i].refs);
+            }
         }
 #endif
     } else {
@@ -590,8 +593,8 @@ static void unpack_strings(cBuf *buf, Long *buf_pos, Obj *obj)
             obj->strings->tab[i].str = string_unpack(buf, buf_pos);
             if (obj->strings->tab[i].str) {
                 obj->strings->tab_num++;
+	        obj->strings->tab[i].hash = read_long(buf, buf_pos);
                 obj->strings->tab[i].refs = read_long(buf, buf_pos);
-                obj->strings->tab[i].hash = hash_string(obj->strings->tab[i].str);
                 if (obj->strings->blanks == i) {
                     obj->strings->blanks = i+1;
                     last_blank = i+1;
@@ -632,7 +635,10 @@ static Int size_strings(Obj *obj)
         for (i = 0; i < obj->strings->tab_size; i++) {
             size += string_packed_size(obj->strings->tab[i].str);
             if (obj->strings->tab[i].str)
+            {
+                size += size_long(obj->strings->tab[i].hash);
                 size += size_long(obj->strings->tab[i].refs);
+            }
         }
 #endif
     } else {

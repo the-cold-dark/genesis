@@ -13,6 +13,8 @@
 #include "log.h"
 #include "quickhash.h"
 
+#define MAGIC_NUMBER 1000003
+
 static void method_cache_invalidate(cObjnum objnum);
 
 Int ancestor_cache_hits = 0;
@@ -448,7 +450,7 @@ static Bool ancestor_cache_check(cObjnum objnum, cObjnum ancestor,
 {
     cObjnum i;
 
-    i = (objnum + ancestor) % ANCESTOR_CACHE_SIZE;
+    i = (objnum  + (ancestor * MAGIC_NUMBER)) % ANCESTOR_CACHE_SIZE;
 
     if ((ancestor_cache[i].stamp == cur_anc_stamp) &&
         (ancestor_cache[i].objnum == objnum) &&
@@ -468,7 +470,7 @@ static void ancestor_cache_set(cObjnum objnum, cObjnum ancestor,
 {
     cObjnum i;
 
-    i = (objnum + ancestor) % ANCESTOR_CACHE_SIZE;
+    i = (objnum + (ancestor * MAGIC_NUMBER)) % ANCESTOR_CACHE_SIZE;
 
     if (ancestor_cache[i].stamp == cur_anc_stamp)
         ancestor_cache_collisions++;

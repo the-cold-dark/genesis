@@ -10,7 +10,7 @@ Help can be found through the web site, or on the mailing list
       http://www.cold.org/info/lists
 
 RELEASE INFORMATION:
-1.1.9+ [6-Jan-2001]
+1.2.0 [6-Jan-2001]
       * cleanup config() and add a new 'cachelog parameter (Brad)
       * add logging of object name and size at all db_put()'s (Brad)
       * add pre-allocation to cBuf's (Brad)

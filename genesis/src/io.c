@@ -318,6 +318,8 @@ INTERNAL void connection_read(Conn *conn) {
             conn->flags.dead = 1;
             return;
         }
+        /* hrm.. we got ERR_AGAIN, do nothing this time */
+        return;
     } else if (len == 0) {
         conn->flags.readable = 0;
         conn->flags.dead = 1;

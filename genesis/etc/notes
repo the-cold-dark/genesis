@@ -41,6 +41,7 @@ RELEASE INFORMATION:
         not returning bytecode for methods on parent objects (Allen Noe)
       * Also fix a bug in method_bytecode where it checks the wrong
         variable.  (Allen Noe)
+      * Win32 build fix involving VRELEASE. (Allen Noe)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

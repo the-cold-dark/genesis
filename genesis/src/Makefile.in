@@ -29,6 +29,7 @@ VERSION=@VERSION@
 VMAJOR=@VMAJOR@
 VMINOR=@VMINOR@
 VPATCH=@VPATCH@
+VRELEASE=@VRELEASE@
 INSTALL=@INSTALL@
 
 DATA_O     = data/data.o data/buffer.o data/dict.o data/ident.o\
@@ -159,12 +160,13 @@ config:
 win32: Win32
 
 Win32:
-	@echo "cleaning heirarchy..."
+	@echo "cleaning hierarchy..."
 	@make scrub 2>&1 > /dev/null
 	@echo "creating config file..."
 	@sed -e "s/#VMAJOR#/#define VERSION_MAJOR $(VMAJOR)/;\
                 s/#VMINOR#/#define VERSION_MINOR $(VMINOR)/;\
-                s/#VPATCH#/#define VERSION_PATCH $(VPATCH)/" include/config.h.win32 > include/config.h
+                s/#VPATCH#/#define VERSION_PATCH $(VPATCH)/;\
+                s/#VRELEASE#/#define VERSION_RELEASE \"$(VRELEASE)\"/" include/config.h.win32 > include/config.h
 	@echo "generating parser source..."
 	@$(YACC) $(YFLAGS) grammar.y
 	@mv -f y.tab.c grammar.c

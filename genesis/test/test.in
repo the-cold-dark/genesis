@@ -2233,6 +2233,11 @@ eval {
 		  27 in [8, 19, 27, 32] -> 3
 		  19 in [8, 19, 27, 32] -> 2
 		  48 in [8, 19, 27, 32] -> -1
+		  32 in [[8, 1], [19, 2], [27, 3], [32, 4]] -> 4
+		  8 in [[8, 1], [19, 2], [27, 3], [32, 4]] -> 1
+		  27 in [[8, 1], [19, 2], [27, 3], [32, 4]] -> 3
+		  19 in [[8, 1], [19, 2], [27, 3], [32, 4]] -> 2
+		  48 in [[8, 1], [19, 2], [27, 3], [32, 4]] -> -1
 
 eval {
     var list;
@@ -2244,6 +2249,19 @@ eval {
     dblog("  27 in " + toliteral(list) + " -> " + toliteral(list.sorted_index(27)));
     dblog("  19 in " + toliteral(list) + " -> " + toliteral(list.sorted_index(19)));
     dblog("  48 in " + toliteral(list) + " -> " + toliteral(list.sorted_index(48)));
+
+    list = [[8, 1], [19, 2], [27, 3], [32, 4]];
+    dblog("  32 in " + toliteral(list) + " -> " +
+          toliteral(list.sorted_index([32, 4], 2)));
+    dblog("  8 in " + toliteral(list) + " -> " +
+          toliteral(list.sorted_index([8, 1], 2)));
+    dblog("  27 in " + toliteral(list) + " -> " +
+          toliteral(list.sorted_index([27, 3], 2)));
+    dblog("  19 in " + toliteral(list) + " -> " +
+          toliteral(list.sorted_index([19, 2], 2)));
+    dblog("  48 in " + toliteral(list) + " -> " +
+          toliteral(list.sorted_index([48, 5], 2)));
+
 };
 
 	// String test 1

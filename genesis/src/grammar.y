@@ -144,7 +144,7 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %token F_TASKS F_TASK_INFO F_CANCEL F_PAUSE F_REFRESH F_STACK F_STATUS
 %token F_BIND_FUNCTION F_UNBIND_FUNCTION F_ATOMIC
 %token F_METHOD_INFO F_ENCODE F_DECODE F_SIN F_EXP F_LOG F_COS
-%token F_TAN F_SQRT F_ASIN F_ACOS F_ATAN F_POW F_ATAN2
+%token F_TAN F_SQRT F_ASIN F_ACOS F_ATAN F_POW F_ATAN2 F_CONFIG
 
 /* Reserved for future use. */
 /*%token FORK*/

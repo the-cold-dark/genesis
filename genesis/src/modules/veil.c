@@ -27,7 +27,7 @@ extern Ident pabort_id, pclose_id, popen_id;
 /*
 // 1 byte bitfield flags
 // 1 byte unused
-// 2 bytes session id
+// 2 bytes channel id
 // 2 bytes unused
 // 2 bytes length
 */
@@ -73,14 +73,14 @@ void uninit_veil(void) {
 */
 cList * buf_to_veil_packets(cBuf * buf) {
     Int             flags,
-                    session,
+                    channel,
                     length,
                     blen;
-    cBuf        * databuf,
+    cBuf          * databuf,
                   * incomplete;
-    cData          d,
+    cData           d,
                   * list;
-    cList        * output,
+    cList         * output,
                   * packet;
     unsigned char * cbuf;
 
@@ -94,9 +94,12 @@ cList * buf_to_veil_packets(cBuf * buf) {
         if (blen < HEADER_SIZE)
             break;
 
+        /* grab the bit flags */
         flags = (Int) cbuf[0];
-        session = (Int) cbuf[2] * 256 + (Int) cbuf[3];
-        length = (Int) cbuf[6] * 256 + (Int) cbuf[7];
+
+        /* get the Channel ID and data length */
+        channel = (Int) (((int) cbuf[2] * 256) + ((int) cbuf[3]));
+        length = (Int) (((int) cbuf[6] * 256) + ((int) cbuf[7]));
 
         if (length > (blen - HEADER_SIZE))
             break;
@@ -109,7 +112,6 @@ cList * buf_to_veil_packets(cBuf * buf) {
         blen -= (length + HEADER_SIZE);
 
         /* create the packet list, add it to the output list */
-
         packet = list_new(4);
         list = list_empty_spaces(packet, 4);
         list[0].type = INTEGER;
@@ -131,7 +133,7 @@ cList * buf_to_veil_packets(cBuf * buf) {
         }
 
         list[2].type = INTEGER;
-        list[2].u.val = session;
+        list[2].u.val = channel;
 
         list[3].type = BUFFER;
         list[3].u.buffer = buffer_dup(databuf);

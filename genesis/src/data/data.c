@@ -138,7 +138,7 @@ uLong data_hash(cData *d)
 	    return 100;
 
       case SYMBOL:
-	return hash(ident_name(d->u.symbol));
+	return ident_hash(d->u.symbol);
 
       case T_ERROR:
 	return hash(ident_name(d->u.error));

@@ -464,7 +464,7 @@ Long object_del_var(Obj *object, Long name)
     /* This is the index-thread equivalent of double pointers in a standard
      * linked list.  We traverse the list using pointers to the ->next element
      * of the variables. */
-    indp = &object->vars.hashtab[hash(ident_name(name)) % object->vars.size];
+    indp = &object->vars.hashtab[ident_hash(name) % object->vars.size];
     for (; *indp != -1; indp = &object->vars.tab[*indp].next) {
 	var = &object->vars.tab[*indp];
 	if (var->name == name && var->cclass == object->objnum) {
@@ -518,7 +518,7 @@ Long object_delete_var(Obj *object, Obj *cclass, Long name) {
     /* Get variable slot on object */
     var = object_find_var(object, cclass->objnum, name);
     if (var) {
-        indp=&object->vars.hashtab[hash(ident_name(name))%object->vars.size];
+        indp=&object->vars.hashtab[ident_hash(name)%object->vars.size];
         for (; *indp != -1; indp = &object->vars.tab[*indp].next) {
             var = &object->vars.tab[*indp];
             if (var->name == name && var->cclass == cclass->objnum) {
@@ -593,7 +593,7 @@ static Var *object_create_var(Obj *object, Long cclass, Long name)
 	for (i = 0; i < new_size; i++)
 	    object->vars.hashtab[i] = -1;
 	for (i = 0; i < object->vars.size; i++) {
-	    ind = hash(ident_name(object->vars.tab[i].name)) % new_size;
+	    ind = ident_hash(object->vars.tab[i].name) % new_size;
 	    object->vars.tab[i].next = object->vars.hashtab[ind];
 	    object->vars.hashtab[ind] = i;
 	}
@@ -620,7 +620,7 @@ static Var *object_create_var(Obj *object, Long cclass, Long name)
     cnew->val.u.val = 0;
 
     /* Add variable to hash table thread. */
-    ind = hash(ident_name(name)) % object->vars.size;
+    ind = ident_hash(name) % object->vars.size;
     cnew->next = object->vars.hashtab[ind];
     object->vars.hashtab[ind] = cnew - object->vars.tab;
 
@@ -636,7 +636,7 @@ static Var *object_find_var(Obj *object, Long cclass, Long name)
     Var *var;
 
     /* Traverse hash table thread, stopping if we get a match on the name. */
-    ind = object->vars.hashtab[hash(ident_name(name)) % object->vars.size];
+    ind = object->vars.hashtab[ident_hash(name) % object->vars.size];
     for (; ind != -1; ind = object->vars.tab[ind].next) {
 	var = &object->vars.tab[ind];
 	if (var->name == name && var->cclass == cclass)
@@ -828,7 +828,7 @@ Method *object_find_method_local(Obj *object, Long name, Bool is_frob)
     Method *meth;
 
     /* Traverse hash table thread, stopping if we get a match on the name. */
-    ind = hash(ident_name(name)) % object->methods.size;
+    ind = ident_hash(name) % object->methods.size;
     method = object->methods.hashtab[ind];
     if (is_frob == FROB_ANY) {
 	for (; method != -1; method = object->methods.tab[method].next) {
@@ -933,7 +933,7 @@ void object_add_method(Obj *object, Long name, Method *method) {
 	for (i = 0; i < new_size; i++)
 	    object->methods.hashtab[i] = -1;
 	for (i = 0; i < object->methods.size; i++) {
-	    ind = hash(ident_name(object->methods.tab[i].m->name)) % new_size;
+	    ind = ident_hash(object->methods.tab[i].m->name) % new_size;
 	    object->methods.tab[i].next = object->methods.hashtab[ind];
 	    object->methods.hashtab[ind] = i;
 	}
@@ -958,7 +958,7 @@ void object_add_method(Obj *object, Long name, Method *method) {
     object->methods.tab[ind].m = method_dup(method);
 
     /* Add method to hash table thread. */
-    hval = hash(ident_name(name)) % object->methods.size;
+    hval = ident_hash(name) % object->methods.size;
     object->methods.tab[ind].next = object->methods.hashtab[hval];
     object->methods.hashtab[hval] = ind;
 
@@ -974,7 +974,7 @@ Int object_del_method(Obj *object, Long name) {
     /* This is the index-thread equivalent of double pointers in a standard
      * linked list.  We traverse the list using pointers to the ->next element
      * of the method pointers. */
-    ind = hash(ident_name(name)) % object->methods.size;
+    ind = ident_hash(name) % object->methods.size;
     indp = &object->methods.hashtab[ind];
     for (; *indp != -1; indp = &object->methods.tab[*indp].next) {
 	ind = *indp;

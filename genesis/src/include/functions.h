@@ -166,5 +166,6 @@ COLDC_FUNC(acos);
 COLDC_FUNC(atan);
 COLDC_FUNC(pow);
 COLDC_FUNC(atan2);
+COLDC_FUNC(config);
 
 #endif

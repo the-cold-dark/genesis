@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # Created by Brandon Gillespie
-# Additional work by Vang
+# Additional work by Vang (Dale Mayberry)
 #
 # if (fork()) { exit(); }
 #

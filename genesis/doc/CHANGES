@@ -6,6 +6,12 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-19 [14-Nov-96] Brandon Gillespie, Miroslav Silovic
+      * Signifigantly sped up symbols and methods lookups. (Miro)
+      * added 'config()' to be used to set task limits.  Currently recognized
+        limits: 'datasize 'fork 'calldepth 'recursion 'objswap
+        Only 'calldepth does anything, at the moment.  (Brandon)
+      * Fixed a bug in $list.transpose() (Miro)
 1.0-18 [05-Nov-96] Brandon Gillespie
       * Included some of Brian's fixes that I accidentally left out of p17
 1.0-17 [04-Nov-96] Miroslav Silovic, Brian Buchanan

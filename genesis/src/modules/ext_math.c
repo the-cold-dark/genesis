@@ -4,15 +4,7 @@
 #include "ext_math.h"
 #include "list.h"
 
-module_t ext_math_module = {init_ext_math, uninit_ext_math};
-
-void init_ext_math(Int argc, char ** argv)
-{
-}
-
-void uninit_ext_math(void)
-{
-}
+module_t ext_math_module = {NULL, NULL};
 
 static int check_one_vector(cList *l1, Int *len_ret)
 {
@@ -250,33 +242,38 @@ NATIVE_METHOD(transpose) {
     l1=LIST1;
     len=list_length(l1);
     if (!len) {
-	CLEAN_RETURN_LIST(l1);
+        l1=list_dup(l1);
+        CLEAN_RETURN_LIST(l1);
     }
     e=list_elem(l1,0);
     for (i=0; i<len; i++) {
-	if (e[i].type!=LIST)
-	    THROW((type_id,"The argument must be a list of lists."))
+        if (e[i].type!=LIST)
+            THROW((type_id,"The argument must be a list of lists."))
     }
-    len1=list_length(e[1].u.list);
+    len1=list_length(e[0].u.list);
+    if (!len1) {
+        l1=list_dup(e[0].u.list);
+        CLEAN_RETURN_LIST(l1);
+    }
     for (i=1; i<len; i++) {
-	if (list_length(e[i].u.list)!=len1)
-	    THROW((range_id,"All sublists must be of the same length"))
+        if (list_length(e[i].u.list)!=len1)
+            THROW((range_id,"All sublists must be of the same length"))
     }
     l=list_new(len1);
     l->len=len1;
     o=list_elem(l,0);
     for (i=0; i<len1; i++) {
-	cList *l2;
-	cData *k;
-	Int j;
+        cList *l2;
+        cData *k;
+        Int j;
 
-	l2=list_new(len);
-	l2->len=len;
-	o[i].type=LIST;
-	o[i].u.list=l2;
-	k=list_elem(l2,0);
-	for (j=0; j<len; j++)
-	    data_dup(&k[j],list_elem(e[j].u.list,i));
+        l2=list_new(len);
+        l2->len=len;
+        o[i].type=LIST;
+        o[i].u.list=l2;
+        k=list_elem(l2,0);
+        for (j=0; j<len; j++)
+            data_dup(&k[j],list_elem(e[j].u.list,i));
     }
     CLEAN_RETURN_LIST(l);
 }

@@ -16,6 +16,7 @@
 typedef struct xident_entry {
     char *s;
     Int refs;
+    uLong hash;
     Long next;
 } xIdent_entry;
 
@@ -37,6 +38,9 @@ Ident public_id, protected_id, private_id, root_id, driver_id, fpe_id, inf_id,
       noover_id, sync_id, locked_id, native_id, forked_id, atomic_id;
 
 Ident SEEK_SET_id, SEEK_CUR_id, SEEK_END_id;
+
+/* limits */
+Ident datasize_id, forkdepth_id, calldepth_id, recursion_id, objswap_id;     
 
 void init_ident(void)
 {
@@ -122,6 +126,12 @@ void init_ident(void)
     SEEK_SET_id = ident_get("SEEK_SET");
     SEEK_CUR_id = ident_get("SEEK_CUR");
     SEEK_END_id = ident_get("SEEK_END");
+
+    datasize_id = ident_get("datasize");
+    forkdepth_id = ident_get("forkdepth");
+    recursion_id = ident_get("recursion");
+    objswap_id = ident_get("objswap");
+    calldepth_id = ident_get("calldepth");
 }
 
 
@@ -139,7 +149,7 @@ Ident ident_get(char *s)
     /* Look for an existing identifier. */
     ind = hashtab[hval % tab_size];
     while (ind != -1) {
-	if (strcmp(tab[ind].s, s) == 0) {
+	if (tab[ind].hash == hval && strcmp(tab[ind].s, s) == 0) {
 	    tab[ind].refs++;
 #ifdef IDENT_DEBUG
 	    write_err("get(old) %s: %d refs %d", s, ind, tab[ind].refs);
@@ -170,7 +180,7 @@ Ident ident_get(char *s)
 
 	/* Install old symbols in hash table. */
 	for (i = 0; i < tab_size; i++) {
-	    ind = hash(tab[i].s) % new_size;
+	    ind = tab[i].hash % new_size;
 	    tab[i].next = hashtab[ind];
 	    hashtab[ind] = i;
 	}
@@ -182,6 +192,7 @@ Ident ident_get(char *s)
     ind = blanks;
     blanks = tab[ind].next;
     tab[ind].s = tstrdup(s);
+    tab[ind].hash = hval;
     tab[ind].refs = 1;
     tab[ind].next = hashtab[hval % tab_size];
     hashtab[hval % tab_size] = ind;
@@ -238,3 +249,7 @@ char *ident_name(Ident id)
     return tab[id].s;
 }
 
+uLong ident_hash(Ident id)
+{
+    return tab[id].hash;
+}

@@ -110,12 +110,6 @@
 
 /*
 // ---------------------------------------------------------------------
-// Maximum depth of method calls.
-*/
-#define MAX_CALL_DEPTH             128
-
-/*
-// ---------------------------------------------------------------------
 // Default Width and depth of object cache. (10 and 30 are defaults),
 // use the command line to change these at run-time.
 */
@@ -394,12 +388,24 @@ FILE * errfile;
 cStr * str_tzname;
 
 Int  c_interactive;
-Bool readonly_db;
 Bool running;
 Bool atomic;
 Int  heartbeat_freq;
 
 void init_defs(void);
+
+/*
+// ---------------------------------------------------------------------
+// Maximum depth of method calls.
+*/
+#define MAX_CALL_DEPTH             128
+
+/* limits configurable with 'config()' */
+Int  limit_datasize;
+Int  limit_fork;
+Int  limit_calldepth;
+Int  limit_recursion;
+Int  limit_objswap;
 
 #endif
 

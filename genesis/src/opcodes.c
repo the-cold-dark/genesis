@@ -227,6 +227,7 @@ static Op_info op_info[] = {
     { F_CTIME,            "ctime",           func_ctime },
     { F_BIND_FUNCTION,    "bind_function",   func_bind_function },
     { F_UNBIND_FUNCTION,  "unbind_function", func_unbind_function },
+    { F_CONFIG,           "config",          func_config },
     { F_RANDOM,           "random",          func_random },
     { F_MIN,            "min",               func_min },
     { F_MAX,            "max",               func_max },

@@ -154,16 +154,16 @@ char *strcstr(char *s, char *search) {
 /* A random number generator.  A lot of Unix rand() implementations don't
  * produce very random low bits, so we shift by eight bits if we can do that
  * without truncating the range. */
+#ifndef RAND_MAX
+#define RAND_MAX 256
+#endif
+
 Long random_number(Long n) {
     Long num = rand();
     if (!n)
       return 0;
 
-#ifdef SUNOS
-    if (256           >= n)
-#else
     if (RAND_MAX >> 8 >= n)
-#endif
 	num >>= 8;
     return num % n;
 }

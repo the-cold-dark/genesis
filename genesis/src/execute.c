@@ -114,6 +114,11 @@ VMState * vm_current(void) {
     vm->arg_size = arg_size;
     vm->task_id = task_id;
     vm->next = NULL;
+    vm->limit_datasize = limit_datasize;
+    vm->limit_fork = limit_fork;
+    vm->limit_recursion = limit_recursion;
+    vm->limit_objswap = limit_objswap;
+    vm->limit_calldepth = limit_calldepth;
 
     return vm;
 }
@@ -130,6 +135,11 @@ void restore_vm(VMState *vm) {
     arg_starts = vm->arg_starts;
     arg_pos = vm->arg_pos;
     arg_size = vm->arg_size;
+    limit_datasize = vm->limit_datasize;
+    limit_fork = vm->limit_fork;
+    limit_recursion = vm->limit_recursion;
+    limit_objswap = vm->limit_objswap;
+    limit_calldepth = vm->limit_calldepth;
 #if DEBUG_VM
     write_err("restore_vm: tid %d opcode %s",
               vm->task_id, op_table[cur_frame->opcodes[cur_frame->pc]].name);
@@ -207,21 +217,43 @@ cList * frame_info(Frame * frame) {
 cList * task_info(Long tid) {
     cList   * list;
     Frame   * frame;
-    cData     d;
+    cData     d,
+            * dl;
     VMState * vm = task_lookup(tid);
 
     if (!vm)
         return NULL;
 
-    list = list_new(4);
+    list = list_new(2);
 
-    d.type = INTEGER;
-    d.u.val = vm->task_id;
-    list = list_add(list, &d);
-    d.u.val = vm->preempted;
-    list = list_add(list, &d);
-    frame = vm->cur_frame;
     d.type = LIST;
+    d.u.list = list_new(7);
+    dl = list_empty_spaces(d.u.list, 7);
+
+    /* ARG[1] == task_id */
+    dl[0].type = INTEGER;
+    dl[0].u.val = vm->task_id;
+
+    /* ARG[2] == preempted? */
+    dl[1].type = INTEGER;
+    dl[1].u.val = vm->preempted;
+
+    /* ARG[3..7] == limit_datasize */
+    dl[2].type = INTEGER;
+    dl[2].u.val = vm->limit_datasize;
+    dl[3].type = INTEGER;
+    dl[3].u.val = vm->limit_fork;
+    dl[4].type = INTEGER;
+    dl[4].u.val = vm->limit_recursion;
+    dl[5].type = INTEGER;
+    dl[5].u.val = vm->limit_objswap;
+    dl[6].type = INTEGER;
+    dl[6].u.val = vm->limit_calldepth;
+
+    /* frames */
+    list = list_add(list, &d);
+    d.type = LIST;
+    frame = vm->cur_frame;
     while (frame) {
         d.u.list = frame_info(frame);
         list = list_add(list, &d);
@@ -488,6 +520,13 @@ void init_execute(void) {
     }
     stack_pos = 0;
     arg_pos = 0;
+
+    /* reset limits */
+    limit_datasize = 0;
+    limit_fork = 0;
+    limit_recursion = 128;
+    limit_objswap = 0;
+    limit_calldepth = 128;
 }
 
 /*
@@ -593,7 +632,7 @@ Int frame_start(Obj * obj,
         call_error(CALL_ERR_NUMARGS)
     }
 
-    if (frame_depth > MAX_CALL_DEPTH)
+    if (frame_depth > limit_calldepth)
         call_error(CALL_ERR_MAXDEPTH);
     frame_depth++;
 

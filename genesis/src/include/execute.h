@@ -38,6 +38,11 @@ struct vmstate {
               arg_size;
     Int       task_id;
     Int       preempted;
+    Int       limit_datasize;
+    Int       limit_fork;
+    Int       limit_calldepth;
+    Int       limit_recursion;
+    Int       limit_objswap;
     VMState * next;
 };
 

@@ -34,7 +34,6 @@ void init_defs(void) {
 
     logfile = stdout;
     errfile = stderr;
-    readonly_db = NO;
 
 #ifdef HAVE_TM_ZONE
     time(&t);

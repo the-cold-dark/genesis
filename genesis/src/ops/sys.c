@@ -185,3 +185,58 @@ void func_set_heartbeat(void) {
     pop(1);
 }
 
+/*
+// -----------------------------------------------------------------
+
+ * Datasize limit (example: 1024K)
+ * Task forking limit (for instance, 20. Each time a task forks, each 
+   child gets only a half of this quota)
+ * Recursion depth (good default: 128)
+ * Object swapping (a task can't swap an object from disk-db more than 
+   (for example) 16 times before calling pause() and preempting)
+   (we might be able to do away with swap limit with Genesis 2.0, as
+   we'll go multithreaded then, and it'll be much harder to lag the server)
+
+*/
+COLDC_FUNC(config) {
+    cData * args;
+    Int     argc,
+            rval;
+
+    /* change to ANY and adjust appropriately below, if we start accepting
+       non-integers */
+    if (!func_init_1_or_2(&args, &argc, SYMBOL, INTEGER))
+        return;
+
+    if (argc == 1) {
+        if (SYM1 == datasize_id)
+            rval = limit_datasize;
+        else if (SYM1 == forkdepth_id)
+            rval = limit_fork;
+        else if (SYM1 == calldepth_id)
+            rval = limit_calldepth;
+        else if (SYM1 == recursion_id)
+            rval = limit_recursion;
+        else if (SYM1 == objswap_id)
+            rval = limit_objswap;
+        else
+            THROW((type_id, "Invalid configuration name."))
+    } else {
+        if (SYM1 == datasize_id)
+            rval = limit_datasize = INT2;
+        else if (SYM1 == forkdepth_id)
+            rval = limit_fork = INT2;
+        else if (SYM1 == calldepth_id)
+            rval = limit_calldepth = INT2;
+        else if (SYM1 == recursion_id)
+            rval = limit_recursion = INT2;
+        else if (SYM1 == objswap_id)
+            rval = limit_objswap = INT2;
+        else
+            THROW((type_id, "Invalid configuration name."))
+    }
+
+    pop(argc);
+    push_int(rval);
+}
+

@@ -25,6 +25,9 @@ extern Ident fpe_id, inf_id;
 
 extern Ident SEEK_SET_id, SEEK_CUR_id, SEEK_END_id;
 
+/* limit idents */
+extern Ident datasize_id, forkdepth_id, calldepth_id, recursion_id, objswap_id;
+
 /* method id's */
 extern Ident signal_id;
 
@@ -33,6 +36,7 @@ Ident  ident_get(char *s);
 void   ident_discard(Ident id);
 Ident  ident_dup(Ident id);
 char * ident_name(Ident id);
+uLong  ident_hash(Ident id);
 
 #endif
 

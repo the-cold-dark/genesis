@@ -302,20 +302,22 @@ INTERNAL void connection_read(Conn *conn) {
     cData d;
 
     len = SOCK_READ(conn->fd, (char *) temp, BIGBUF);
-    if (len == SOCKET_ERROR && GETERR() == ERR_INTR)
-        return;
+    if (len == SOCKET_ERROR) {
+        if (GETERR() == ERR_INTR)
+            return;
+        if (GETERR() != ERR_AGAIN) {
+            /* The connection closed. */
+            conn->flags.readable = 0;
+            conn->flags.dead = 1;
+            return;
+        }
+    }
 
     conn->flags.readable = 0;
 
-    if (len <= 0) {
-        /* The connection closed. */
-        conn->flags.dead = 1;
-        return;
-    }
-
     /* We successfully read some data.  Handle it. */
     buf = buffer_new(len);
-    MEMCPY(buf->s, temp, len);
+    buffer_append_uchars(buf, temp, len);
     d.type = BUFFER;
     d.u.buffer = buf;
     task(conn->objnum, parse_id, 1, &d);
@@ -337,16 +339,19 @@ INTERNAL void connection_read(Conn *conn) {
     }
 
     len = SOCK_READ(conn->fd, (void *) socket_buffer->s, BIGBUF);
-    if (len == SOCKET_ERROR && GETERR() == ERR_INTR)
-        return;
+    if (len == SOCKET_ERROR) {
+        if (GETERR() == ERR_INTR)
+            return;
+
+        if (GETERR() != ERR_AGAIN) {
+            /* The connection closed. */
+            conn->flags.readable = 0;
+            conn->flags.dead = 1;
+            return;
+        }
+    }
 
     conn->flags.readable = 0;
-
-    if (len <= 0) {
-        /* The connection closed. */
-        conn->flags.dead = 1;
-        return;
-    }
 
     /* We successfully read some data.  Handle it. */
     socket_buffer->refs++;
@@ -369,7 +374,7 @@ INTERNAL void connection_write(Conn *conn) {
     conn->flags.writable = 0;
 
     /* We lost the connection. */
-    if (r == SOCKET_ERROR) {
+    if ((r == SOCKET_ERROR) && (GETERR() != ERR_AGAIN)) {
        conn->flags.dead = 1;
        buf = buffer_resize(buf, 0);
     } else {
@@ -504,8 +509,14 @@ void flush_output(void) {
         len = conn->write_buf->len;
         while (len) {
             r = SOCK_WRITE(conn->fd, s, len);
-            if (r == SOCKET_ERROR)
+            if ((r == SOCKET_ERROR) && (GETERR() != ERR_AGAIN))
                 break;
+	    /* 
+	     * If it would've blocked, then don't change len or s,
+             * so set the bytes written to 0
+             */
+            if ((r = SOCKET_ERROR) && (GETERR() == ERR_AGAIN))
+                r = 0;
             len -= r;
             s += r;
         }

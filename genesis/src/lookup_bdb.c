@@ -49,7 +49,7 @@ struct _offset_size {
     Int   size;
 };
 
-static void objnum_keyvalue(cObjnum objnum, char *buf, DBT *key);
+static void objnum_keyvalue(cObjnum *objnum, DBT *key);
 static void name_key(Ident name, DBT *key);
 static void offset_size_value(off_t offset, Int size,
                                 _offset_size *os, DBT *value);
@@ -188,12 +188,11 @@ Int lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size)
 {
     DBT key, value;
     int ret;
-    char buf[SIZEOF_LONG];
 
     LOCK_LOOKUP("lookup_retrieve_objnum")
 
     /* Get the value for objnum from the database. */
-    objnum_keyvalue(objnum, buf, &key);
+    objnum_keyvalue(&objnum, &key);
     memset(&value, 0, sizeof(value));
     if ((ret = objnum_dbp->get(objnum_dbp, NULL, &key, &value, 0)) != 0)
     {
@@ -210,11 +209,10 @@ Int lookup_store_objnum(cObjnum objnum, off_t offset, Int size)
 {
     DBT key, value;
     _offset_size os;
-    char buf[SIZEOF_LONG];
     int ret;
 
     LOCK_LOOKUP("lookup_store_objnum")
-    objnum_keyvalue(objnum, buf, &key);
+    objnum_keyvalue(&objnum, &key);
     offset_size_value(offset, size, &os, &value);
     if ((ret =  objnum_dbp->put(objnum_dbp, NULL, &key, &value, 0)) != 0) {
 	write_err("ERROR: Failed to store key %l.", objnum);
@@ -230,12 +228,11 @@ Int lookup_store_objnum(cObjnum objnum, off_t offset, Int size)
 Int lookup_remove_objnum(cObjnum objnum)
 {
     DBT key;
-    char buf[SIZEOF_LONG];
     int ret;
 
     LOCK_LOOKUP("lookup_remove_objnum")
     /* Remove the key from the database. */
-    objnum_keyvalue(objnum, buf, &key);
+    objnum_keyvalue(&objnum, &key);
     if ((ret = objnum_dbp->del(objnum_dbp, NULL, &key, 0)) != 0) {
 	write_err("ERROR: Failed to delete key %l.", objnum);
         UNLOCK_LOOKUP("lookup_remove_objnum")
@@ -380,12 +377,11 @@ Int lookup_remove_name(Ident name)
     return 1;
 }
 
-static void objnum_keyvalue(cObjnum objnum, char *buf, DBT *key)
+static void objnum_keyvalue(cObjnum *objnum, DBT *key)
 {
     memset(key, 0, sizeof(*key));
-    memcpy(buf, (uChar*)(&objnum), sizeof(objnum));
-    key->data = buf;
-    key->size = sizeof(objnum);
+    key->data = objnum;
+    key->size = sizeof(cObjnum);
 }
 
 static void offset_size_value(off_t offset, Int size,
@@ -437,11 +433,10 @@ static void sync_name_cache(void)
 static Int store_name(Ident name, cObjnum objnum)
 {
     DBT key, value;
-    char buf[SIZEOF_LONG];
     int ret;
 
     /* Set up the value structure. */
-    objnum_keyvalue(objnum, buf, &value);
+    objnum_keyvalue(&objnum, &value);
 
     name_key(name, &key);
     if ((ret = name_dbp->put(name_dbp, NULL, &key, &value, 0)) != 0) {

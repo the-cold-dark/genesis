@@ -129,11 +129,12 @@ Ident string_tab_get(StringTab *tab, char *s) {
 
 Ident string_tab_get_length(StringTab *tab, char *s, Int len)
 {
-    uLong hval = hash_nullchar(s);
+    uLong hval;
     Int ind;
     cStr *str;
 
     str = string_from_chars(s, len);
+    hval = hash_string(str);
     ind = string_tab_from_hash(tab, hval, str);
     string_discard(str);
     return ind;

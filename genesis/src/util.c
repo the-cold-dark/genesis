@@ -105,35 +105,32 @@ Long atoln(char *s, Int n) {
 }
 
 char *long_long_to_ascii(long long num, Number_buf nbuf) {
-    *nbuf++ = (char) 0;
     sprintf(nbuf, "%lld", num);
     return nbuf;
 }
 
 char *long_to_ascii(Long num, Number_buf nbuf) {
-#if DISABLED /* why?? */
-    char *p = &nbuf[NUMBER_BUF_SIZE - 1];
+    char *p = nbuf + sizeof(nbuf) - 1; // point to end of buffer
     Int sign = 0;
+    unsigned long u;
 
-    *p-- = 0;
     if (num < 0) {
 	sign = 1;
-	num = -num;
-    } else if (!num) {
-	*p-- = '0';
+        u = ((unsigned long)(-(1+num))) + 1;
+    } else {
+        u = num;
     }
-    while (num) {
-	*p-- = num % 10 + '0';
-	num /= 10;
-    }
+
+    *p = 0;
+    do {
+	*--p = u % 10 + '0';
+	u /= 10;
+    } while (u);
+
     if (sign)
-	*p-- = '-';
-    return p + 1;
-#else
-    *nbuf++ = (char) 0;
-    sprintf(nbuf, "%ld", (long) num);
-    return nbuf;
-#endif
+	*--p = '-';
+
+    return p;
 }
 
 char * float_to_ascii(Float num, Number_buf nbuf) {
@@ -474,7 +471,7 @@ Ident parse_ident(char **sptr) {
     str = string_from_chars(*sptr, s - *sptr);
 
 #ifndef ONLY_PARSE_TEXTDB
-    id = ident_get(string_chars(str));
+    id = ident_get_length(string_chars(str), string_length(str));
 #endif
     string_discard(str);
 

@@ -337,14 +337,9 @@ static datum objnum_key(cObjnum objnum, Number_buf nbuf)
     /* Set up a key for a objnum.  The first byte will be 0, distinguishing it
      * from a string. */
     s = long_to_ascii(objnum, nbuf);
-#if DISABLED
     *--s = 0;
     key.dptr = s;
     key.dsize = strlen(s + 1) + 2;
-#else
-    key.dptr = s-1;
-    key.dsize = strlen(s) + 2;
-#endif
     return key;
 }
 
@@ -360,7 +355,6 @@ static datum offset_size_value(off_t offset, Int size, Number_buf nbuf)
 #else
     s = long_long_to_ascii(offset, tmp_buf);
 #endif
-    nbuf[0] = 0;
     strcpy(nbuf, s);
     strcat(nbuf, ";");
     s = long_to_ascii(size, tmp_buf);

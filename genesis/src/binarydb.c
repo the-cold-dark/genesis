@@ -59,7 +59,7 @@ pthread_mutex_t db_mutex;
 #define ROUND_UP(a, m)		(((a) - 1) + (m) - (((a) - 1) % (m)))
 
 #define	BLOCK_SIZE		256		/* Default block size */
-#define	DB_BITBLOCK		512		/* Bitmap growth in blocks */
+#define	DB_BITBLOCK		10240		/* Bitmap growth in blocks */
 #define	LOGICAL_BLOCK(off)	((off) / BLOCK_SIZE)
 #define	BLOCK_OFFSET(block)	((block) * BLOCK_SIZE)
 
@@ -505,7 +505,11 @@ static Int simble_alloc(Int size)
 
     b = last_free;
     blocks_needed = NEEDED(size, BLOCK_SIZE);
+#ifdef BUILDING_COLDCC
+    over_the_top = 1;
+#else
     over_the_top = 0;
+#endif
 
     for (;;) {
 
@@ -592,7 +596,7 @@ Int simble_get(Obj *object, cObjnum objnum, Long *sizeread)
 
     buf_pos = 0;
     unpack_object(buf, &buf_pos, object);
-    free(buf);
+    buffer_discard(buf);
 
     return 1;
 }

@@ -10,7 +10,6 @@
 #include "cdc_db.h"
 #include "macros.h"
 
-
 /* Write a Float to the output buffer */
 cBuf * write_float(cBuf *buf, Float f)
 {
@@ -34,14 +33,23 @@ Int size_float(Float f, int memory_size)
     return SIZEOF_FLOAT;
 }
 
-/* Write a four-byte number to fp in a consistent byte-order. */
+/* Write a four-byte number to fp in a consistent byte-order.
+ *
+ * Violates encapsulation with buffers to check for space, but doing this
+ * cuts the number of memcpy's down to about 1/3 of what they were with
+ * building a buffer and calling buffer_append_uchars_single_ref(). */
 cBuf * write_long(cBuf *buf, Long n)
 {
     uLong i = (uLong)n;
     uLong i2 = i ^ (uLong)(-1);
-    uChar long_buf[sizeof(Long)+1];
+    uChar *long_buf;
     Int   bit_flip = 0;
     uInt  num_bytes = 0;
+
+    if (buf->size < buf->len + sizeof(Long) + 1)
+        buf = buffer_prep(buf, buf->len + sizeof(Long) + 1);
+
+    long_buf = &buf->s[buf->len];
 
     if (i2 < i) {
         i = i2;
@@ -57,7 +65,7 @@ cBuf * write_long(cBuf *buf, Long n)
         i >>= 8;
     }
     long_buf[0] |= ((num_bytes-1) << 5) + (bit_flip << 4);
-    buf = buffer_append_uchars_single_ref(buf, long_buf, num_bytes);
+    buf->len += num_bytes;
 
     return buf;
 }
@@ -448,7 +456,7 @@ static void unpack_strings(cBuf *buf, Long *buf_pos, Obj *obj)
         string_tab_fixup_hashtab(obj->methods->strings, obj->methods->strings->tab_size);
 #endif
     } else {
-	obj->methods->strings = string_tab_new();
+        obj->methods->strings = string_tab_new();
     }
 }
 

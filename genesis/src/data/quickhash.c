@@ -8,8 +8,8 @@
 #define MALLOC_DELTA			 0
 #define HASHTAB_STARTING_SIZE		 128
 
-static void increase_hashtab_size(Hash * hash);
-static void insert_key(Hash * hash, Int i);
+static void quickhash_increase_hashtab_size(Hash * hash);
+static void quickhash_insert_key(Hash * hash, Int i);
 
 Hash * hash_new_with(cList *keys) {
     Hash *cnew;
@@ -36,7 +36,7 @@ Hash * hash_new_with(cList *keys) {
 	if (i != j)
 	    cnew->keys->el[j] = cnew->keys->el[i];
 	if (hash_find(cnew, &keys->el[i]) == F_FAILURE)
-	    insert_key(cnew, j++);
+	    quickhash_insert_key(cnew, j++);
 	else
 	    data_discard(&cnew->keys->el[i]);
 	i++;
@@ -91,13 +91,13 @@ Hash * hash_add(Hash * hash, cData * key) {
 
     /* Check if we should resize the hash table. */
     if (hash->keys->len > hash->hashtab_size)
-	increase_hashtab_size(hash);
+	quickhash_increase_hashtab_size(hash);
     else
-	insert_key(hash, hash->keys->len - 1);
+	quickhash_insert_key(hash, hash->keys->len - 1);
     return hash;
 }
 
-static void insert_key(Hash * hash, Int i) {
+static void quickhash_insert_key(Hash * hash, Int i) {
     Int ind;
 
     ind = data_hash(&hash->keys->el[i]) % hash->hashtab_size;
@@ -117,20 +117,27 @@ Int hash_find(Hash * hash, cData *key) {
     return F_FAILURE;
 }
 
-static void increase_hashtab_size(Hash * hash)
+static void quickhash_increase_hashtab_size(Hash * hash)
 {
     Int i;
 
-    if (hash->hashtab_size > 4096)
-	hash->hashtab_size += 4096;
+    if (hash->hashtab_size > 40960)
+	hash->hashtab_size += 40960;
     else
         hash->hashtab_size = hash->hashtab_size * 2 + MALLOC_DELTA;
+
+    printf ("quick hash increase size: %d\n", hash->hashtab_size);
+
     hash->links = EREALLOC(hash->links, Int, hash->hashtab_size);
     hash->hashtab = EREALLOC(hash->hashtab, Int, hash->hashtab_size);
     memset(hash->links,   -1, sizeof(Long)*hash->hashtab_size);
     memset(hash->hashtab, -1, sizeof(Long)*hash->hashtab_size);
+    printf ("rehashing... ");
+    fflush (stdout);
     for (i = 0; i < hash->keys->len; i++)
-	insert_key(hash, i);
+	quickhash_insert_key(hash, i);
+    printf ("done.\n");
+    fflush (stdout);
 }
 
 

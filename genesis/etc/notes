@@ -49,6 +49,7 @@ RELEASE INFORMATION:
       * Add explode_quoted() patch. (Jeremy Weatherford)
       * Add calling_method() patch. (Allen Noe)
       * Make method_bytecode() output info on jumps. (Allen Noe)
+      * Makefile fix, putting textdb.c into EVERYTHING_O (Jeff Dubrule)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

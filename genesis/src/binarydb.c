@@ -623,11 +623,15 @@ Int db_put(Obj *obj, Long objnum, Long *sizewritten)
 	new_offset = BLOCK_OFFSET(db_alloc(new_size));
     }
 
-    if (!lookup_store_objnum(objnum, new_offset, new_size)) {
-	UNLOCK_DB("db_put")
-	buffer_discard(buf);
-        if (sizewritten) *sizewritten = 0;
-	return 0;
+    /* Don't store it if it hasn't changed! */
+    if ((new_offset != old_offset) ||
+      (new_size   != old_size)) {
+        if (!lookup_store_objnum(objnum, new_offset, new_size)) {
+	    UNLOCK_DB("db_put")
+	    buffer_discard(buf);
+            if (sizewritten) *sizewritten = 0;
+	    return 0;
+        }
     }
 
     if (fseek(database_file, new_offset, SEEK_SET)) {

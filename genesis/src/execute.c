@@ -646,7 +646,7 @@ void init_execute(void) {
         holder_cache = holder;
 
 #if DEBUG_VM
-        write_err("resuing execution state");
+        write_err("reusing execution state");
 #endif
 
     } else {

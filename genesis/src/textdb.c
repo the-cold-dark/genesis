@@ -430,6 +430,7 @@ static void verify_native_methods(void) {
                 if (nh != (nh_t *) NULL)
                     nh->valid = 1;
             }
+            cache_discard(method->object);
         }
 
         ident_discard(mname);
@@ -1326,9 +1327,6 @@ void compile_cdc_file(FILE * fp) {
     char     * p,
              * s;
     Obj      * obj;
-#ifndef ONLY_PARSE_TEXTDB
-    Obj      * root;
-#endif
     off_t      filesize = 0;
     struct stat statbuf;
 
@@ -1338,7 +1336,7 @@ void compile_cdc_file(FILE * fp) {
     /* start at line 0 */
     line_count = 0;
 #ifndef ONLY_PARSE_TEXTDB
-    root = cur_obj = cache_retrieve(ROOT_OBJNUM);
+    cur_obj = cache_retrieve(ROOT_OBJNUM);
     dump_hash = hash_new(0);
 #endif
 
@@ -1471,7 +1469,7 @@ void compile_cdc_file(FILE * fp) {
     }
 
 #ifndef ONLY_PARSE_TEXTDB
-    cache_discard(root);
+    cache_discard(cur_obj);
     verify_native_methods();
 #endif
 

@@ -49,10 +49,9 @@ void string_tab_free(StringTab *tab)
 	if (tab->tab[i].str)
 	    string_discard(tab->tab[i].str);
     }
-    free(tab->tab);
-    free(tab->hashtab);
-    tab->tab = NULL;
-    tab->hashtab = NULL;
+    efree(tab->tab);
+    efree(tab->hashtab);
+    efree(tab);
 }
 
 void string_tab_fixup_hashtab(StringTab *tab, Long num)

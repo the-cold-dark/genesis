@@ -129,4 +129,10 @@ RELEASE INFORMATION:
       * Alter binardby's on-disk scribbling of deleted objects, no 0's the
         entire object's region rather than just the first block and no longer
         writes out 'delobj' as the first part of that block. (Brad)
+      * Fix typo in a debug message in execute.c (Brad)
+      * Fix object reference leak in textdb.c verify_native_methods() (Brad)
+      * Fix sorted_delete() (Brad)
+      * Remove unused variable root in textdb.c compile_cdc_file() (Brad)
+      * Change string_tab_free() to release itself also (Brad)
+      * Fix string_tab_free() to use efree rather than free directly (Brad)
 

@@ -436,7 +436,7 @@ NATIVE_METHOD(sorted_insert) {
 }
 
 NATIVE_METHOD(sorted_delete) {
-    cList * list;
+    cList * list, * result;
     cData   data,
             key;
 
@@ -452,19 +452,18 @@ NATIVE_METHOD(sorted_delete) {
     if (argc == 3)
         data_dup(&key, &args[ARG3]);
 
-    CLEAN_STACK();
-    anticipate_assignment();
-    list = list_delete_sorted_element(list, &data, &key);
+    result = list_delete_sorted_element(list, &data, &key);
 
     data_discard(&data);
     if (argc == 3)
         data_discard(&key);
 
-    if (list == NULL) {
+    if (result == NULL) {
+        list_discard(list);
         THROW((range_id, "Value must be within the list"))
     }
 
-    RETURN_LIST(list);
+    CLEAN_RETURN_LIST(result);
 }
 
 NATIVE_METHOD(sorted_validate) {

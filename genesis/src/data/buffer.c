@@ -273,6 +273,37 @@ cBuf * buffer_subrange(cBuf * buf, Int start, Int len) {
     return cnew;
 }
 
+cBuf * buffer_bufsub(cBuf * buf, cBuf * old, cBuf * new) {
+    cBuf *cnew;
+    Int lb, lo, ln, p, q;
+
+    lb = buf->len;
+    lo = old->len;
+    ln = new->len;
+
+    if (((lo == ln) && (memcmp(old->s, new->s, lo) == 0)) ||
+        (lo > lb) ||
+	(lo == 0) ||
+	(lb == 0))
+        return buf;
+
+    p = q = 1;
+    cnew = buffer_new(buf->len);
+    while ((p <= buf->len) &&
+           (q = buffer_index(buf, old->s, lo, p)) &&
+	   (q != -1)) {
+        cnew = buffer_append_uchars(cnew, buf->s + p - 1, q - p);
+        cnew = buffer_append_uchars(cnew, new->s, ln);
+        p = q + lo;
+    }
+    cnew = buffer_append_uchars(cnew, buf->s + p - 1, lb - p + 1);
+
+    buffer_discard(buf);
+    buffer_discard(old);
+    buffer_discard(new);
+    return cnew;
+}
+
 cBuf *buffer_prep(cBuf *buf, Int new_size) {
     cBuf *cnew;
 

@@ -317,7 +317,7 @@ INTERNAL void connection_read(Conn *conn) {
 
     /* We successfully read some data.  Handle it. */
     buf = buffer_new(len);
-    MEMCPY(buf->s, /*@temp@*/, len);
+    MEMCPY(buf->s, temp, len);
     d.type = BUFFER;
     d.u.buffer = buf;
     task(conn->objnum, parse_id, 1, &d);
@@ -349,6 +349,9 @@ INTERNAL void connection_read(Conn *conn) {
             conn->flags.dead = 1;
             return;
         }
+    } else if (len == 0) {
+        conn->flags.readable = 0;
+        conn->flags.dead = 1;
     }
 
     conn->flags.readable = 0;

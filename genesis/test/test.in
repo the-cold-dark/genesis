@@ -2228,16 +2228,16 @@ eval {
 	// Output:
 
 		List test 13
-		  32 in [32, 8, 27, 19] -> 1
-		  8 in [32, 8, 27, 19] -> 2
-		  27 in [32, 8, 27, 19] -> 3
-		  19 in [32, 8, 27, 19] -> 4
-		  48 in [32, 8, 27, 19] -> -1
+		  32 in [8, 19, 27, 32] -> 4
+		  8 in [8, 19, 27, 32] -> 1
+		  27 in [8, 19, 27, 32] -> 3
+		  19 in [8, 19, 27, 32] -> 2
+		  48 in [8, 19, 27, 32] -> -1
 
 eval {
     var list;
 
-    list = [32, 8, 27, 19];
+    list = [8, 19, 27, 32];
     dblog("List test 13");
     dblog("  32 in " + toliteral(list) + " -> " + toliteral(list.sorted_index(32)));
     dblog("  8 in " + toliteral(list) + " -> " + toliteral(list.sorted_index(8)));

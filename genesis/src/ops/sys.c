@@ -127,6 +127,12 @@ void func_backup(void) {
 
     /* copy the index files and '.clean' */
     dp = opendir(c_dir_binary); 
+    /* if this failed, then this backup can't complete. die. */
+    if (dp == NULL) {
+        write_err("ERROR: error in backup: %s: %s", c_dir_binary, strerror(GETERR()));
+        cthrow(file_id, "%s: %s", c_dir_binary, strerror(GETERR()));
+        return;
+    }
     while ((dent = readdir(dp)) != NULL) {
         if (*(dent->d_name) == '.' || !strncmp(dent->d_name, "objects", 7))
             continue;

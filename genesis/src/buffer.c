@@ -20,7 +20,7 @@
 #define BUFALLOC(len)		(Buffer *)emalloc(sizeof(Buffer) + (len) - 1)
 #define BUFREALLOC(buf, len)	(Buffer *)erealloc(buf, sizeof(Buffer) + (len) - 1)
 
-internal Buffer *prepare_to_modify(Buffer *buf);
+INTERNAL Buffer *prepare_to_modify(Buffer *buf);
 
 Buffer *buffer_new(int len) {
     Buffer *buf;
@@ -198,7 +198,9 @@ Buffer *buffer_from_string(string_t * string) {
     int      new;
 
     buf = buffer_new(string_length(string));
-    new = parse_strcpy(buf->s, string_chars(string), string_length(string));
+    new = parse_strcpy((char *) buf->s,
+                       string_chars(string),
+                       string_length(string));
 
     if (string_length(string) - new)
         buf = buffer_resize(buf, new);
@@ -224,7 +226,7 @@ Buffer *buffer_from_strings(list_t * string_list, Buffer * sep) {
     buf = buffer_new(len);
     pos = 0;
     for (i = 0; i < num_strings; i++) {
-        s = string_chars(string_data[i].u.str);
+        s = (unsigned char *) string_chars(string_data[i].u.str);
         len = string_length(string_data[i].u.str);
         MEMCPY(buf->s + pos, s, len);
         pos += len;
@@ -240,7 +242,7 @@ Buffer *buffer_from_strings(list_t * string_list, Buffer * sep) {
     return buf;
 }
 
-static Buffer *prepare_to_modify(Buffer *buf)
+INTERNAL Buffer *prepare_to_modify(Buffer *buf)
 {
     Buffer *cnew;
 

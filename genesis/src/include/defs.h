@@ -9,17 +9,30 @@
 // Generic definitions, these usually dont change
 */
 
-#ifndef _defs_
+#ifndef _defs_h_
+#define _defs_h_
 
-extern char c_dir_binary[32];
-extern char c_dir_textdump[32];
-extern char c_dir_bin[32];
-extern char c_dir_root[32];
-extern int  c_interactive;
-extern int  running;
-extern int  heartbeat_freq;
+#include <stdlib.h>
+#include <stdio.h>
+#include <setjmp.h>
 
-#endif
+jmp_buf main_jmp;
+
+char * c_dir_binary;
+char * c_dir_textdump;
+char * c_dir_bin;
+char * c_dir_root;
+char * c_logfile;
+char * c_errfile;
+char * c_pidfile;
+
+FILE * logfile;
+FILE * errfile;
+
+int  c_interactive;
+int  running;
+int  atomic;
+int  heartbeat_freq;
 
 void init_defs(void);
 
@@ -31,6 +44,9 @@ void init_defs(void);
 /* Number of ticks a paused method gets before dying with an E_TICKS */
 #define PAUSED_METHOD_TICKS     5000
 
+/* How much of a threshold refresh() should decide to pause on */
+#define REFRESH_METHOD_THRESHOLD   500
+
 /* Maximum depth of method calls. */
 #define MAX_CALL_DEPTH		128
 
@@ -40,6 +56,15 @@ void init_defs(void);
 #define FORCED_CLEANUP_LIMIT 64
 #define FORCED_CLEANUP_BOUND 40
 
+/* size of name cache, this number is total magic--although primes make
+   for better magic, lower for less memory usage but more lookups to
+   disk; raise for vise-versa, other primes:
+
+       71, 173, 281, 409, 541, 659, 809
+
+*/
+#define NAME_CACHE_SIZE 173
+
 /* Default indent for decompiled code. */
 #define DEFAULT_INDENT	4
 
@@ -47,8 +72,8 @@ void init_defs(void);
 #define MAX_DATA_DISPLAY 15
 
 #define INV_OBJNUM	-1
-#define SYSTEM_DBREF	0
-#define ROOT_DBREF	1
+#define SYSTEM_OBJNUM	0
+#define ROOT_OBJNUM	1
 
 /* sizes */
 
@@ -67,6 +92,8 @@ void init_defs(void);
 
 #define DISABLED 0   /* I use this in place of #if 0, -Brandon */
 
-#define internal static /* because I dislike static in function defs */
+#define INTERNAL static
 
 #define SERVER_NAME "Genesis (the ColdX driver)"
+
+#endif

@@ -11,8 +11,6 @@
 
 #define _control_
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "config.h"
 #include "defs.h"
 

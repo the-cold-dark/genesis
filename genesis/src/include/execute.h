@@ -49,8 +49,8 @@ struct vmstate {
 
 struct frame {
     object_t *object;
-    Dbref sender;
-    Dbref caller;
+    objnum_t sender;
+    objnum_t caller;
     method_t *method;
     long *opcodes;
     int pc;
@@ -87,6 +87,17 @@ struct handler_info {
     Handler_info *next;
 };
 
+/* define these seperately, so we can switch the result of 'call_method' */
+#define    CALL_OK       0
+#define    CALL_NUMARGS  1
+#define    CALL_MAXDEPTH 2
+#define    CALL_OBJNF    3
+#define    CALL_METHNF   4
+#define    CALL_PRIVATE  5
+#define    CALL_PROT     6
+#define    CALL_ROOT     7
+#define    CALL_DRIVER   8
+
 extern Frame *cur_frame;
 extern connection_t *cur_conn;
 extern data_t *stack;
@@ -96,22 +107,27 @@ extern string_t *numargs_str;
 extern long task_id;
 extern long tick;
 extern VMState *paused;
+extern VMState *tasks;
 
 void init_execute(void);
-void task(connection_t *conn, Dbref dbref, long message, int num_args, ...);
-void task_method(connection_t *conn, object_t *obj, method_t *method);
-long frame_start(object_t *obj, method_t *method, Dbref sender, Dbref caller,
-		 int stack_start, int arg_start);
+void task(objnum_t objnum, long message, int num_args, ...);
+void task_method(object_t *obj, method_t *method);
+int  frame_start(object_t *obj,
+                 method_t *method,
+                 objnum_t sender,
+                 objnum_t caller,
+		 int stack_start,
+                 int arg_start);
 void frame_return(void);
 void anticipate_assignment(void);
-Ident pass_message(int stack_start, int arg_start);
-Ident send_message(Dbref dbref, Ident message, int stack_start, int arg_start);
+int pass_method(int stack_start, int arg_start);
+int call_method(objnum_t objnum, Ident message, int stack_start, int arg_start);
 void pop(int n);
 void check_stack(int n);
 void push_int(long n);
 void push_float(float f);
 void push_string(string_t *str);
-void push_dbref(Dbref dbref);
+void push_objnum(objnum_t objnum);
 void push_list(list_t *list);
 void push_symbol(Ident id);
 void push_error(Ident id);
@@ -142,10 +158,10 @@ void task_resume(long tid, data_t *ret);
 void task_cancel(long tid);
 void task_pause(void);
 VMState *task_lookup(long tid);
-list_t *task_list(void);
-list_t *task_callers(void);
+list_t * task_list(void);
+list_t * task_stack(void);
 void run_paused_tasks(void);
-void bind_opcode(int opcode, Dbref dbref);
+void bind_opcode(int opcode, objnum_t objnum);
 
 #endif
 

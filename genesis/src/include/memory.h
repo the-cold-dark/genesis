@@ -29,9 +29,13 @@ void   tfree_chars(char *s);
 Pile * new_pile(void);
 void * pmalloc(Pile *pile, size_t size);
 void  pfree(Pile *pile);
-inline void efree(void * block);
+void efree(void * block);
 
-/* #define efree(what) { free(what); } */
+#if DISABLED
+  #define DOFUNC_FREE
+#else
+  #define efree(what) free(what)
+#endif
 
 #define EMALLOC(type, num)	 ((type *) emalloc((num) * sizeof(type)))
 #define EREALLOC(ptr, type, num) ((type *) erealloc(ptr, (num) * sizeof(type)))

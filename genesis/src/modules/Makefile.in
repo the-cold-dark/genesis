@@ -20,16 +20,22 @@ MODULES=$(SRCDIR)/modules
 VERSION=@VERSION@
 
 CDC_OBJS = cdc_buffer.o cdc_integer.o cdc_object.o cdc_time.o \
-           cdc_dict.o cdc_list.o cdc_string.o cdc_file.o \
+           cdc_dict.o cdc_list.o cdc_string.o \
            cdc_network.o cdc_sys.o
 COLDCORE_O = coldcore_cml.o coldcore_veil.o
+WEB_OBJS = web.o
 
 SRCS = `echo $(CDC_OBJS) $(COLDCORE_O) | sed -e 's/\.o/.c/g'`
 
 #######
 # rules
 
-libs: libcdc.a libColdCore.a
+libs: libcdc.a libColdCore.a libweb.a
+
+libweb.a: $(WEB_OBJS)
+	rm -f $@
+	ar -cq $@ $(WEB_OBJS)
+	$(RANLIB) $@
 
 libcdc.a: $(CDC_OBJS)
 	rm -f $@

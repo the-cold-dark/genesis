@@ -13,6 +13,7 @@
 #define _grammar_h_
 
 #include <stdarg.h>
+#include "config.h"
 #include "cdc_types.h"
 #include "object.h"
 #include "list.h"
@@ -20,5 +21,9 @@
 method_t * compile(object_t *object, list_t * code, list_t ** error_ret);
 void       compiler_error(int lineno, char * fmt, ...);
 int        no_errors(void);
+
+/*
+#define YYERROR_VERBOSE 1
+*/
 
 #endif

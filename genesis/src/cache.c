@@ -13,17 +13,18 @@
 // all rights reserved.
 */
 
-#include <stdio.h>
 #include "config.h"
 #include "defs.h"
+
 #include "cache.h"
 #include "object.h"
 #include "memory.h"
-#include "db.h"
+#include "binarydb.h"
 #include "lookup.h"
 #include "log.h"
 #include "util.h"
 #include "ident.h"
+#include "execute.h"
 
 #define DEBUG_CACHE 0
 
@@ -68,7 +69,7 @@ void init_cache(void) {
 	inactive[i].next = inactive[i].prev = &inactive[i];
 	for (j = 0; j < CACHE_DEPTH; j++) {
 	    obj = EMALLOC(object_t, 1);
-	    obj->dbref = INV_OBJNUM;
+	    obj->objnum = INV_OBJNUM;
             obj->ucounter=0;
 	    obj->prev = &inactive[i];
 	    obj->next = inactive[i].next;
@@ -89,8 +90,8 @@ void init_cache(void) {
 //
 */
 
-object_t * cache_get_holder(long dbref) {
-    int ind = dbref % CACHE_WIDTH;
+object_t * cache_get_holder(long objnum) {
+    int ind = objnum % CACHE_WIDTH;
     object_t *obj;
 
     if (inactive[ind].next != &inactive[ind]) {
@@ -98,9 +99,9 @@ object_t * cache_get_holder(long dbref) {
 	obj = inactive[ind].prev;
 
 	/* Check if we need to swap anything out. */
-	if (obj->dbref != INV_OBJNUM) {
+	if (obj->objnum != INV_OBJNUM) {
 	    if (obj->dirty) {
-		if (!db_put(obj, obj->dbref))
+		if (!db_put(obj, obj->objnum))
 		    panic("Could not store an object.");
 	    }
 	    object_free(obj);
@@ -133,7 +134,7 @@ object_t * cache_get_holder(long dbref) {
     _acounter++;
 #endif
 
-    obj->dbref = dbref;
+    obj->objnum = objnum;
     return obj;
 }
 
@@ -142,14 +143,14 @@ object_t * cache_get_holder(long dbref) {
 //
 // Requires: Initialized cache.
 // Modifies: Contents of active, inactive, database files
-// Effects: Returns the object associated with dbref, getting it from the cache
+// Effects: Returns the object associated with objnum, getting it from the cache
 //	    or from disk.  If the object is in the inactive chain or is on
 //	    disk, it will be linked into the active chain.  Returns NULL if no
-//	    object exists with the given dbref.
+//	    object exists with the given objnum.
 //
 */
-object_t *cache_retrieve(long dbref) {
-    int ind = dbref % CACHE_WIDTH;
+object_t *cache_retrieve(long objnum) {
+    int ind = objnum % CACHE_WIDTH;
     object_t *obj;
 
 #if DISABLED
@@ -161,12 +162,12 @@ object_t *cache_retrieve(long dbref) {
     }
 #endif
 
-    if (dbref < 0)
+    if (objnum < 0)
 	return NULL;
 
     /* Search active chain for object. */
     for (obj = active[ind].next; obj != &active[ind]; obj = obj->next) {
-	if (obj->dbref == dbref) {
+	if (obj->objnum == objnum) {
 	    obj->refs++;
             obj->ucounter+=10;
 	    return obj;
@@ -175,7 +176,7 @@ object_t *cache_retrieve(long dbref) {
 
     /* Search inactive chain for object. */
     for (obj = inactive[ind].next; obj != &inactive[ind]; obj = obj->next) {
-	if (obj->dbref == dbref) {
+	if (obj->objnum == objnum) {
 	    /* Remove object from inactive chain. */
 	    obj->next->prev = obj->prev;
 	    obj->prev->next = obj->next;
@@ -198,15 +199,15 @@ object_t *cache_retrieve(long dbref) {
     }
 
     /* Cache miss.  Find an object to load in from disk. */
-    obj = cache_get_holder(dbref);
+    obj = cache_get_holder(objnum);
 
     /* Read the object into the place-holder, if it's on disk. */
     load_count++;
-    if (db_get(obj, dbref)) {
+    if (db_get(obj, objnum)) {
 	return obj;
     } else {
 	/* Oops.  Install holder at tail of inactive chain and return NULL. */
-	obj->dbref = INV_OBJNUM;
+	obj->objnum = INV_OBJNUM;
 	obj->prev->next = obj->next;
 	obj->next->prev = obj->prev;
 #if 1
@@ -255,7 +256,7 @@ void cache_discard(object_t *obj) {
 #if DEBUG_CACHE
     _acounter--;
 #endif
-    ind = obj->dbref % CACHE_WIDTH;
+    ind = obj->objnum % CACHE_WIDTH;
 
     /* Reference count hit 0; remove from active chain. */
     obj->prev->next = obj->next;
@@ -266,9 +267,9 @@ void cache_discard(object_t *obj) {
            holder at the tail of the inactive chain.  Be careful about this,
            since object_destroy() can fiddle with the cache.  We're safe as
            long as obj isn't in any chains at the time of db_del(). */
-	db_del(obj->dbref);
+	db_del(obj->objnum);
 	object_destroy(obj);
-	obj->dbref = INV_OBJNUM;
+	obj->objnum = INV_OBJNUM;
 	obj->prev = inactive[ind].prev;
 	obj->next = &inactive[ind];
 	obj->prev->next = obj->next->prev = obj;
@@ -287,31 +288,31 @@ void cache_discard(object_t *obj) {
 // ----------------------------------------------------------------------
 //
 // Requires: Initialized cache.
-// Effects: Returns nonzero if an object exists with the given dbref.
+// Effects: Returns nonzero if an object exists with the given objnum.
 //
 */
 
-int cache_check(long dbref) {
-    int ind = dbref % CACHE_WIDTH;
+int cache_check(long objnum) {
+    int ind = objnum % CACHE_WIDTH;
     object_t *obj;
 
-    if (dbref < 0)
+    if (objnum < 0)
 	return 0;
 
     /* Search active chain. */
     for (obj = active[ind].next; obj != &active[ind]; obj = obj->next) {
-	if (obj->dbref == dbref)
+	if (obj->objnum == objnum)
 	    return 1;
     }
 
     /* Search inactive chain. */
     for (obj = inactive[ind].next; obj != &inactive[ind]; obj = obj->next) {
-	if (obj->dbref == dbref)
+	if (obj->objnum == objnum)
 	    return 1;
     }
 
     /* Check database on disk. */
-    return db_check(dbref);
+    return db_check(objnum);
 }
 
 /*
@@ -332,7 +333,7 @@ void cache_sync(void) {
 	/* Check active chain. */
 	for (obj = active[i].next; obj != &active[i]; obj = obj->next) {
 	    if (obj->dirty) {
-		if (!db_put(obj, obj->dbref))
+		if (!db_put(obj, obj->objnum))
 		    panic("Could not store an object.");
 		obj->dirty = 0;
 	    }
@@ -340,8 +341,8 @@ void cache_sync(void) {
 
 	/* Check inactive chain. */
 	for (obj = inactive[i].next; obj != &inactive[i]; obj = obj->next) {
-	    if (obj->dbref != INV_OBJNUM && obj->dirty) {
-		if (!db_put(obj, obj->dbref))
+	    if (obj->objnum != INV_OBJNUM && obj->dirty) {
+		if (!db_put(obj, obj->objnum))
 		    panic("Could not store an object.");
 		obj->dirty = 0;
 	    }
@@ -356,13 +357,13 @@ void cache_sync(void) {
 */
 
 object_t *cache_first(void) {
-    long dbref;
+    long objnum;
 
     cache_sync();
-    dbref = lookup_first_dbref();
-    if (dbref == INV_OBJNUM)
+    objnum = lookup_first_objnum();
+    if (objnum == INV_OBJNUM)
 	return NULL;
-    return cache_retrieve(dbref);
+    return cache_retrieve(objnum);
 }
 
 /*
@@ -370,31 +371,56 @@ object_t *cache_first(void) {
 */
 
 object_t *cache_next(void) {
-    long dbref;
+    long objnum;
 
-    dbref = lookup_next_dbref();
-    if (dbref == INV_OBJNUM)
+    objnum = lookup_next_objnum();
+    if (objnum == INV_OBJNUM)
 	return NULL;
-    return cache_retrieve(dbref);
+    return cache_retrieve(objnum);
 }
 
 /*
 // ----------------------------------------------------------------------
 //
-// Called during main loop to verify that no objects are active.
-//
-// JBB: Well, actually, its not called.  Should really be re-written to check
-// the suspended task list to see what is not really active and what is dirty 
+// Called during main loop to verify that no objects are active,
+// or if they are, it is only because they are paused or suspended.
 //
 */
 
 void cache_sanity_check(void) {
-    int i;
+#if DISABLED /* need to do some more work here */
+    int        i;
+    object_t * obj;
+    VMState  * task;
 
+    /* using labels was the best way I could come up with, I'm sorry... */
     for (i = 0; i < CACHE_WIDTH; i++) {
-	if (active[i].next != &active[i])
-	    panic("Active objects at start of main loop.");
+        for (obj = active[i].next; obj != &active[i]; obj = obj->next) {
+
+            /* check suspended tasks */
+            for (task = tasks; task != NULL; task = task->next) {
+                if (task->cur_frame->object->objnum == obj->objnum)
+                    goto end;
+            }
+
+            /* check paused tasks */
+            for (task = paused; task != NULL; task = task->next) {
+                if (task->cur_frame->object->objnum == obj->objnum)
+                    goto end;
+            }
+
+            /* ack, panic */
+	    panic("Active object #%d at start of main loop.", (int) obj->objnum);
+
+            /* label both for loops can jump to, skipping the panic */
+            end:
+        }
     }
+#endif
+#if 0
+	if (active[i].next != &active[i]) 
+	    panic("Active objects at start of main loop.");
+#endif
 }
 
 /*
@@ -416,33 +442,33 @@ void cache_cleanup(void) {
             obj->ucounter >>= 1;
             if(obj->ucounter > flood_bound) {
 #if DISABLED
-                if(obj->dbref == INV_OBJNUM)
+                if(obj->objnum == INV_OBJNUM)
                     continue;
 
                 /* Attempt to pack fragmented object
                    storage space by reallocating it */
-                dbref = obj->dbref;
-                if (obj->dirty && !db_put(obj, obj->dbref))
+                objnum = obj->objnum;
+                if (obj->dirty && !db_put(obj, obj->objnum))
                     panic("Could not store an object.");
 
                 object_free(obj);
-                if(!db_get(obj, dbref))
-                    obj->dbref = INV_OBJNUM;
+                if(!db_get(obj, objnum))
+                    obj->objnum = INV_OBJNUM;
 #endif
                 continue;
             }
-            if (obj->dbref != INV_OBJNUM && obj->dirty) {
-                if (!db_put(obj, obj->dbref))
+            if (obj->objnum != INV_OBJNUM && obj->dirty) {
+                if (!db_put(obj, obj->objnum))
                     panic("Could not store an object.");
                 obj->dirty = 0;
             }
-            if(obj->dbref != INV_OBJNUM) {
+            if(obj->objnum != INV_OBJNUM) {
 #if DEBUG_CACHE
                 _icounter--;
-                fprintf(stderr,"<%d\n",_icounter);
+                fprintf(errfile,"<%d\n",_icounter);
 #endif
                 object_free(obj);
-                obj->dbref = INV_OBJNUM;
+                obj->objnum = INV_OBJNUM;
                 continue;
             }
         }

@@ -17,8 +17,9 @@
 
 #define _BSD 44 /* For RS6000s. */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "config.h"
+#include "defs.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -29,8 +30,6 @@
 #include <netdb.h>
 #include <errno.h>
 #include <fcntl.h>
-#include "config.h"
-#include "defs.h"
 #include "memory.h"
 #include "net.h"
 #include "io.h"

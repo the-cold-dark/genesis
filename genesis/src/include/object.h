@@ -58,13 +58,15 @@ struct object {
     int idents_size;
 
     /* Information for the cache. */
-    Dbref dbref;
+    objnum_t objnum;
     int   refs;
     char  dirty;                 /* Flag: Object has been modified. */
     char  dead;	                 /* Flag: Object has been destroyed. */
     int   ucounter;              /* counter: Object references */
 
     long search;                 /* Last search to visit object. */
+
+    Ident objname;               /* object name */
 
     /* Pointers to next and previous objects in cache chain. */
     object_t * next;
@@ -98,7 +100,7 @@ struct ident_entry {
 
 struct var {
     Ident name;
-    Dbref cclass;
+    objnum_t cclass;
     data_t val;
     int next;
 };
@@ -117,12 +119,12 @@ struct method {
     Error_list *error_lists;
 
     /* consolidate the following into bit flags */
-    int m_state;       /* public, protected, private */
+    int m_access;       /* public, protected, private */
     int m_flags;       /* overridable, synchronized, locked */
     int refs;
 };
 
-/* states: only one at a time */
+/* access: only one at a time */
 #define MS_PUBLIC    0x1    /* public */
 #define MS_PROTECTED 0x2    /* protected */
 #define MS_PRIVATE   0x4    /* private */
@@ -179,57 +181,60 @@ struct search_params {
 
 struct {
     long stamp;
-    Dbref dbref;
+    objnum_t objnum;
     Ident name;
-    Dbref after;
-    Dbref loc;
+    objnum_t after;
+    objnum_t loc;
 } method_cache[METHOD_CACHE_SIZE];
 
 /* ..................................................................... */
 /* function prototypes */
 static void    object_update_parents(object_t *object,
                                   list_t *(*list_op)(list_t *, data_t *));
-static list_t   *object_ancestors_aux(long dbref, list_t *ancestors);
-static int     object_has_ancestor_aux(long dbref, long ancestor);
+static list_t   *object_descendants_aux(long objnum, list_t *descendants);
+static list_t   *object_ancestors_aux(long objnum, list_t *ancestors);
+static int     object_has_ancestor_aux(long objnum, long ancestor);
 static Var    *object_create_var(object_t *object, long cclass, long name);
 static Var    *object_find_var(object_t *object, long cclass, long name);
 static method_t * object_find_method_local(object_t *object, long name);
-static method_t * method_cache_check(long dbref, long name, long after);
-static void    method_cache_set(long dbref, long name, long after, long loc);
-static void    search_object(long dbref, Search_params *params);
+static method_t * method_cache_check(long objnum, long name, long after);
+static void    method_cache_set(long objnum, long name, long after, long loc);
+static void    search_object(long objnum, Search_params *params);
 static void    method_delete_code_refs(method_t * method);
-static void    object_text_dump_aux(object_t *obj, FILE *fp);
 
-object_t *object_new(long dbref, list_t *parents);
+object_t *object_new(long objnum, list_t *parents);
 void    object_free(object_t *object);
 void    object_destroy(object_t *object);
 void    object_construct_ancprec(object_t *object);
 int     object_change_parents(object_t *object, list_t *parents);
-list_t   *object_ancestors(long dbref);
-int     object_has_ancestor(long dbref, long ancestor);
-void    object_reconstruct_descendent_ancprec(long dbref);
+list_t *object_ancestors(long objnum);
+list_t *object_descendants(long objnum);
+int     object_has_ancestor(long objnum, long ancestor);
+void    object_reconstruct_descendent_ancprec(long objnum);
 int     object_add_string(object_t *object, string_t *string);
 void    object_discard_string(object_t *object, int ind);
 string_t *object_get_string(object_t *object, int ind);
 int     object_add_ident(object_t *object, char *ident);
 void    object_discard_ident(object_t *object, int ind);
 long    object_get_ident(object_t *object, int ind);
-long    object_add_param(object_t *object, long name);
-long    object_del_param(object_t *object, long name);
+long    object_add_var(object_t *object, long name);
+long    object_del_var(object_t *object, long name);
 long    object_assign_var(object_t *object, object_t *cclass, long name, data_t *val);
 long    object_delete_var(object_t *object, object_t *cclass, long name);
 long    object_retrieve_var(object_t *object, object_t *cclass, long name,
                             data_t *ret);
 void    object_put_var(object_t *object, long cclass, long name, data_t *val);
-method_t * object_find_method(long dbref, long name);
-method_t * object_find_next_method(long dbref, long name, long after);
+method_t * object_find_method(long objnum, long name);
+method_t * object_find_next_method(long objnum, long name, long after);
+int     object_rename_method(object_t * object, long oname, long nname);
 void    object_add_method(object_t *object, long name, method_t *method);
 int     object_del_method(object_t *object, long name);
 list_t   *object_list_method(object_t *object, long name, int indent, int parens);
 void    method_free(method_t *method);
 method_t *method_dup(method_t *method);
 void    method_discard(method_t *method);
-void    object_text_dump(long dbref, FILE *fp);
+int     object_set_objname(object_t * object, long name);
+int     object_del_objname(object_t * object);
 
 /* ..................................................................... */
 /* global variables */
@@ -237,7 +242,7 @@ void    object_text_dump(long dbref, FILE *fp);
 /* Count for keeping track of of already-searched objects during searches. */
 long cur_search;
 
-/* Keeps track of dbref for next object in database. */
+/* Keeps track of objnum for next object in database. */
 long db_top;
 
 /* Validity count for method cache (incrementing this count invalidates all
@@ -246,22 +251,23 @@ static int cur_stamp = 1;
 
 #else /* _object_ */
 
-extern object_t *object_new(long dbref, list_t *parents);
+extern object_t *object_new(long objnum, list_t *parents);
 extern void    object_free(object_t *object);
 extern void    object_destroy(object_t *object);
 extern void    object_construct_ancprec(object_t *object);
 extern int     object_change_parents(object_t *object, list_t *parents);
-extern list_t   *object_ancestors(long dbref);
-extern int     object_has_ancestor(long dbref, long ancestor);
-extern void    object_reconstruct_descendent_ancprec(long dbref);
+extern list_t   *object_ancestors(long objnum);
+extern list_t   *object_descendants(long objnum);
+extern int     object_has_ancestor(long objnum, long ancestor);
+extern void    object_reconstruct_descendent_ancprec(long objnum);
 extern int     object_add_string(object_t *object, string_t *string);
 extern void    object_discard_string(object_t *object, int ind);
 extern string_t *object_get_string(object_t *object, int ind);
 extern int     object_add_ident(object_t *object, char *ident);
 extern void    object_discard_ident(object_t *object, int ind);
 extern long    object_get_ident(object_t *object, int ind);
-extern long    object_add_param(object_t *object, long name);
-extern long    object_del_param(object_t *object, long name);
+extern long    object_add_var(object_t *object, long name);
+extern long    object_del_var(object_t *object, long name);
 extern long    object_assign_var(object_t *object, object_t *cclass, long name,
                                  data_t *val);
 extern long    object_delete_var(object_t *object, object_t *cclass, long name);
@@ -269,8 +275,9 @@ extern long    object_retrieve_var(object_t *object, object_t *cclass, long name
                                    data_t *ret);
 extern void    object_put_var(object_t *object, long cclass, long name,
                               data_t *val);
-extern method_t *object_find_method(long dbref, long name);
-extern method_t *object_find_next_method(long dbref, long name, long after);
+extern method_t *object_find_method(long objnum, long name);
+extern method_t *object_find_next_method(long objnum, long name, long after);
+extern int     object_rename_method(object_t * object, long oname, long nname);
 extern void    object_add_method(object_t *object, long name, method_t *method);
 extern int     object_del_method(object_t *object, long name);
 extern list_t   *object_list_method(object_t *object, long name, int indent,
@@ -278,11 +285,12 @@ extern list_t   *object_list_method(object_t *object, long name, int indent,
 extern void    method_free(method_t *method);
 extern method_t *method_dup(method_t *method);
 extern void    method_discard(method_t *method);
-extern void    object_text_dump(long dbref, FILE *fp);
+extern int     object_set_objname(object_t * object, long name);
+extern int     object_del_objname(object_t * object);
 extern int     object_get_method_flags(object_t * object, long name);
-extern int     object_get_method_state(object_t * object, long name);
+extern int     object_get_method_access(object_t * object, long name);
 extern int     object_set_method_flags(object_t * object, long name, int flags);
-extern int     object_set_method_state(object_t * object, long name, int state);
+extern int     object_set_method_access(object_t * object, long name, int access);
 
 /* variables */
 extern long db_top;

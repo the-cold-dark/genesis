@@ -1,3 +1,5 @@
+BIND: chparents();
+
 Key: + => new
      * => changed
      ? => undecided, do we want/need it?
@@ -14,63 +16,63 @@ Key: + => new
 
   Network:
 
-   controller.connected()    (was: controller.connected())
+   controller.connect()
    controller.failed()
    controller.parse()
-   controller.disconnected() (was: controller.disconnect())
+   controller.disconnect()
 
 --- Object Variable functions:
 
- add_var() (was add_parameter())
- del_var() (was del_parameter())
- variables() (was parameters())
+ add_var()
+ del_var()
+ variables()
  set_var()
  get_var()
  clear_var()
 
 --- Object Method functions:
 
-+compile()           (accepts a list of strings, returns parsetree)
-+decompile()         (accepts a parsetree, returns a list of strings)
-+add_method()        (accepts a parsetree or a list of strings)
-*method_flags()      (return a list of symbols)
-*set_method_flags()  (accept a list of symbols)
-*method_access()     (was method_state())
-*set_method_access() (was set_method_state())
-*method_info()       (args, vars, lines, etc)
-+rename_method()
+ compile()           (accepts a list of strings, returns parsetree)
+ decompile()         (accepts a parsetree, returns a list of strings)
+ add_method()        (accepts a parsetree or a list of strings)
+ del_method() 
+ get_method()        (return a parsetree)
+ method_flags()
+ set_method_flags()
+ method_access()
+ set_method_access()
+ method_info()       (args, vars, lines, etc)
+ rename_method()
  methods() 
  find_method() 
  find_next_method() 
- list_method() 
- del_method() 
 
 --- Object functions:
 
  parents() 
  children() 
  ancestors() 
-+descendants()
+ descendants()
  has_ancestor() 
-*size() (take args: size([data]) as well as size() (this object()))
+ size() (take args: size([data]) as well as size() (this object()))
  create() 
- chparents() 
+ chparents() (change: oop, no definer obj: check others for this problem)
  destroy() 
- add_objname()
+ set_objname() (was add_objname(), because you can only have one, its now set)
  del_objname()
- get_objname()
-!get_dbref()
+ objname()
+ objnum()
+ lookup() (take symbol -> objnum)
+ data()
 
 --- System functions
 
 -log()         (this will go away, once we add good file writing/reading)
 -binary_dump() (replaced by backup())
- text_dump()   (Bare level, use in-db and external routines for better dumps)
+-text_dump()   (Bare level, use in-db and external routines for better dumps)
  backup()
  shutdown()
  set_heartbeat()
-*data()        (Possibly allow break down by ancestor)
--load()
 
 --- Task/Frame functions
 
@@ -78,9 +80,9 @@ Key: + => new
  suspend()
  resume()
  pause()
--tasks()
-+paused_tasks()
-+suspended_tasks()
+ refresh()
+ paused_tasks()
+ suspended_tasks()
  task_id()
  tick() 
  ticks_left() 
@@ -89,7 +91,8 @@ Key: + => new
  definer() 
  sender() 
  caller() 
-*stack() (was callers())
+ stack()
+ atomic()
 
 --- Data/Conversion functions
 
@@ -100,7 +103,7 @@ Key: + => new
  tofloat()
  tostr()
  toliteral()
- todbref()
+ toobjnum()
  tosym()
  toerr()
 
@@ -118,28 +121,28 @@ Key: + => new
  unbind_port()
  open_connection()
  close_connection()
-*cwrite() (was echo(), write to a connection)
- cwritef() (was echo_file(), send to a connection)
- connection() (if a connection is bound to this object, returns basic info)
+ cwrite()
+ cwritef()
+ connection()
 
 --- File control functions
 
- fstat() (was stat_file(), get stat info on a file:
-          bytes, blocks, type, mode, owner, group, last access times)
-+fchmod()
-+fmkdir()
-+frmdir()
-+files()   (returns files in a directory, a list)
-+fremove()
-+frename()
-+fopen()
-+fclose()
-+fseek()
-+feof()
-+fwrite()
-*fread() (was read_file())
+ fopen()
+ fstat() [bytes,blocks,type,mode,owner,group,last access times]
+ fchmod()
+ fmkdir()
+ frmdir()
+ files() (files in a directory)
+ fremove()
+ frename()
+ fclose()
+ fseek()
+ feof()
+ fwrite()
+ fread()
  execute()
-+file() (if a file is bound to this object, returns basic info)
+ file() (basic file info on the file bound to this object) 
+ fflush()
 
 --- Misc functions
 
@@ -147,14 +150,12 @@ Key: + => new
  mtime()
  ctime()
  localtime()
--timestamp() (replace with $time.format("%d %h %y %H:%M"))
  max()
  min()
  random()
  abs()
  bind_function()
  unbind_function()
- set_objname_var()
 
 --- Native Methods:
 
@@ -201,7 +202,7 @@ Key: + => new
  lowercase()                   -> $string.lowercase()
  strcmp()                      -> $string.compare()
  strfmt()                      -> $string.format()
- next_dbref()                  -> $sys.next_dbref()
+ next_objnum()                 -> $sys.next_objnum()
  status()                      -> $sys.status()
  version()                     -> $sys.version()
  strftime()                    -> $time.format()

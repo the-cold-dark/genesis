@@ -14,13 +14,13 @@
 
 #define _file_
 
+#include "config.h"
+#include "defs.h"
+
 #include <ctype.h>
-#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include "config.h"
-#include "defs.h"
 #include "y.tab.h"
 #include "file.h"
 #include "execute.h"
@@ -39,131 +39,175 @@
 // --------------------------------------------------------------------
 */
 
+filec_t * files = NULL;
+
+void flush_files(void) {
+    filec_t * file;
+
+    for (file = files; file; file = file->next)
+        flush_file(file);
+}
+
+void close_files(void) {
+    filec_t * file,
+            * old;
+
+    file = files;
+    while (file) {
+        close_file(file);
+        old = file;
+        file = file->next;
+        file_discard(old, NULL);
+    }
+}
+
 /*
 // --------------------------------------------------------------------
-// this is called _AFTER_ the file has been flushed and closed.
+//
+// NOTE: If you send the object along, it is assumed it is the CORRECT
+// object bound to this function, sending the wrong object can cause
+// problems.
+//
 */
-void file_discard(filec_t * file) {
+void file_discard(filec_t * file, object_t * obj) {
+    filec_t  ** fp, * f;
+
     /* clear the object's file variable */
-    object_t * obj = cache_retrieve(file->dbref);
-    if (obj != NULL) {
+    if (obj == NULL) {
+        if (file->objnum != INV_OBJNUM) {
+            object_t * obj = cache_retrieve(file->objnum);
+
+            if (obj != NULL) {
+                obj->file = NULL;
+                cache_discard(obj);
+            }
+        }
+    } else {
         obj->file = NULL;
-        cache_discard(obj);
     }
 
-    if (file->wbuf)
-        buffer_discard(file->wbuf);
-    if (file->rbuf)
-        buffer_discard(file->rbuf);
+    /* pull it out of the 'files' list */
+    fp = &files;
+    while (*fp) {
+        f = *fp;
+        if (f->objnum == file->objnum) {
+            if (!f->f.closed)
+                close_file(f);
+            *fp = f->next;
+            break;
+        } else {
+            fp = &f->next;
+        }
+    }
+
+    /* toss the file proper */
+    string_discard(file->path);
 
     efree(file);
 }
 
-filec_t * file_new(int blocksize) {
+filec_t * file_new(void) {
     filec_t * fnew = EMALLOC(filec_t, 1);
 
     fnew->fp = NULL;
-    fnew->rbuf = NULL;
-    fnew->wbuf = NULL;
-    fnew->dbref = INV_OBJNUM;
-    fnew->block = blocksize;
-    fnew->flags.readable = 0;
-    fnew->flags.writable = 0;
-    fnew->flags.closed = 0;
+    fnew->objnum = INV_OBJNUM;
+    fnew->f.readable = 0;
+    fnew->f.writable = 0;
+    fnew->f.closed = 0;
+    fnew->f.binary = 0;
+    fnew->path = NULL;
     fnew->next = NULL;
 
     return fnew;
 }
 
-int close_file(filec_t * file) {
-    flush_file(file);
-    fclose(file->fp);
-    file->flags.closed = 1;
-
-    return 1;
+void file_add(filec_t * file) {
+    file->next = files;
+    files = file;
 }
 
-int flush_file(filec_t * file) {
-    if (file->flags.writable) {
-        while (file->wbuf)
-            file_write(file);
-    }
+filec_t * find_file_controller(object_t * obj) {
 
-    return 1;
-}
-
-int read_file(filec_t * file) {
-    size_t   size;
-    Buffer * buf;
-
-    if (!feof(file->fp)) {
-        buf = buffer_new(file->block);
-        size = fread(buf->s, sizeof(unsigned char), file->block, file->fp);
-        buf->len = size;
-        buffer_append(file->rbuf, buf);
-        buffer_discard(buf);
-
-        return 1;
-    }
-
-    return 0;
-}
-
-/* assumes the file is writable, to reduce checks */
-void file_write(filec_t * file) {
-    if (file->wbuf->len) {
-        if (file->wbuf->len > file->block) {
-            fwrite(file->wbuf->s, sizeof(unsigned char), file->block, file->fp);
-            file->wbuf = buffer_tail(file->wbuf, file->block+1);
-        } else {
-            fwrite(file->wbuf->s, sizeof(unsigned char), file->wbuf->len, file->fp);
-            buffer_discard(file->wbuf);
-            file->wbuf = NULL;
-        }
-    }
-}
-
-internal filec_t * find_file_controller(object_t * obj) {
-
-    /* obj->file is only for faster lookups */
+    /* obj->file is only for faster lookups,
+       and will go away when written to disk. */
     if (obj->file == NULL) {
         filec_t * file;
 
         /* lets try and find the file */
         for (file = files; file; file = file->next) {
-            if (file->dbref == obj->dbref && !file->flags.closed) {
+            if (file->objnum == obj->objnum && !file->f.closed) {
                 obj->file = file;
                 break;
             }
         }
     }
 
-    /* it could still be NULL */
+    /* it may still be NULL */
     return obj->file;
 }
 
-int abort_file(object_t * obj) {
-    filec_t * file = find_file_controller(obj);
-
-    if (file != NULL) {
-        close_file(file);
-        return 1;
-    }
-
+int close_file(filec_t * file) {
+    file->f.closed = 1;
+    if (fclose(file->fp) == EOF)
+        return errno;
     return 0;
 }
 
-int stat_file(object_t * obj, struct stat * sbuf) {
-    filec_t * file = find_file_controller(obj);
-
-    if (file != NULL) {
-#if 0
-        fstat(, sbuf);
-#endif
-        return 1;
+int flush_file(filec_t * file) {
+    if (file->f.writable) {
+        if (fflush(file->fp) == EOF)
+            return errno;
+        return F_SUCCESS;
     }
 
-    return 0;
+    return F_FAILURE;
+}
+
+Buffer * read_binary_file(filec_t * file, int block) {
+    Buffer * buf = buffer_new(block);
+
+    if (feof(file->fp)) {
+        cthrow(eof_id, "End of file.");
+        return NULL;
+    }
+
+    buf->len = fread(buf->s, sizeof(unsigned char), block, file->fp);
+
+    return buf;
+}
+
+string_t * read_file(filec_t * file) {
+    string_t * str;
+
+    if (feof(file->fp)) {
+        cthrow(eof_id, "End of file.");
+        return NULL;
+    }
+
+    str = fgetstring(file->fp);
+    if (str == NULL)
+        cthrow(eof_id, "End of file.");
+
+    return str;
+}
+
+int abort_file(filec_t * file) {
+    if (file != NULL) {
+        close_file(file);
+        file_discard(file, NULL);
+        return F_SUCCESS;
+    }
+
+    return F_FAILURE;
+}
+
+int stat_file(filec_t * file, struct stat * sbuf) {
+    if (file != NULL) {
+        stat(file->path->s, sbuf);
+        return F_SUCCESS;
+    }
+
+    return F_FAILURE;
 }
 
 /*
@@ -173,124 +217,148 @@ int stat_file(object_t * obj, struct stat * sbuf) {
 // --------------------------------------------------------------------
 */
 
-int build_path(char * buf, char * fname, int size) {
+string_t * build_path(char * fname, struct stat * sbuf, int nodir) {
     int         len = strlen(fname);
+    string_t  * str = NULL;
 
-    if (len == 0)
-        return FE_INVPATH;
-
-    if (len + strlen(c_dir_root) + 1 > size)
-        return FE_LONGNAME;
+    if (len == 0) {
+        cthrow(file_id, "No file specified.");
+        return NULL;
+    }
 
 #ifdef RESTRICTIVE_FILES
+    if (strstr(fname, "../") || strstr(fname, "/..") || !strcmp(fname, "..")) {
+        cthrow(perm_id, "Filename \"%s\" is not legal.", fname);
+        return NULL;
+    }
 
-    if (strstr(fname, "../"))
-        return FE_INVPATH;
-
-    strncpy(buf, c_dir_root, size);
-    strncat(buf, "/", size);
-    strncat(buf, fname, size);
-
+    str = string_from_chars(c_dir_root, strlen(c_dir_root));
+    str = string_addc(str, '/');
+    str = string_add_chars(str, fname, len);
 #else
-
-    strncpy(buf, fname, size);
-
+    if (*fname != '/') {
+        str = string_from_chars(c_dir_root, strlen(c_dir_root));
+        str = string_addc(str, '/');
+        str = string_add_chars(str, fname, len);
+    } else {
+        str = string_from_chars(fname, len);
+    }
 #endif
 
-    return 0;
-}
-
-int find_file(char * fname, struct stat * statbuf) {
-    if (stat(fname, statbuf) < 0)
-        return FE_NOFILE;
-
-    if (S_ISDIR(statbuf->st_mode))
-        return FE_ISDIR;
-
-    return 0;
-}
-
-#define ABORT(__s) { file_discard(fnew); return __s; }
-
-int open_file(char * fname, char * perms, filec_t ** file, int blocksize) {
-    char        buf[BUF];
-    filec_t    * fnew = file_new(blocksize);
-    int         status;
-
-    if (!strlen(perms))
-        ABORT(FE_INVPERMS);
-
-    switch (perms[0]) {
-        case 'r':
-            fnew->flags.readable = 1;
-            break;
-        case 'w':
-        case 'a':
-            fnew->flags.writable = 1;
-            break;
+    if (sbuf != NULL) {
+        if (stat(str->s, sbuf) < 0) {
+            cthrow(file_id, "Cannot find file \"%s\".", str->s);
+            string_discard(str);
+            return NULL;
+        }
+        if (nodir) {
+            if (S_ISDIR(sbuf->st_mode)) {
+                cthrow(directory_id, "\"%s\" is a directory.", str->s);
+                string_discard(str);
+                return NULL;
+            }
+        }
     }
 
-    status = build_path(buf, fname, BUF);
-    if (status != 0)
-        ABORT(status);
+    return str;
+}
 
-    status = find_file(buf, &fnew->statbuf);
-    if (status != F_SUCCESS)
-        ABORT(status);
+list_t * statbuf_to_list(struct stat * sbuf) {
+    list_t       * list;
+    data_t       * d;
+    register int   x;
 
-    fnew->fp = fopen(buf, perms);
+    list = list_new(5);
+    d = list_empty_spaces(list, 5);
+    for (x=0; x < 5; x++)
+        d[x].type = INTEGER;
+
+    d[0].u.val = (int) sbuf->st_mode;
+    d[1].u.val = (int) sbuf->st_size;
+    d[2].u.val = (int) sbuf->st_atime;
+    d[3].u.val = (int) sbuf->st_mtime;
+    d[4].u.val = (int) sbuf->st_ctime;
+
+    return list;
+}
+
+list_t * open_file(string_t * name, string_t * smode, object_t * obj) {
+    char        mode[4];
+    int         rw = 0;
+    char      * s = NULL;
+    filec_t   * fnew = file_new();
+    struct stat sbuf;
+
+    /* parse the mode first, if the string pointer is NULL, set it readable */
+    if (smode != NULL) {
+        s = smode->s;
+        if (*s == '+') {
+            rw = 1;
+            fnew->f.readable = fnew->f.writable = 1;
+            s++;
+        }
+    
+        if (*s == '>') {
+            s++;
+            if (*s == '>') {
+                s++;
+                mode[0] = 'a';
+            } else {
+                mode[0] = 'w';
+            }
+            fnew->f.writable = 1;
+        } else {
+            if (*s == '<' )
+                s++;
+            mode[0] = 'r';
+            fnew->f.readable = 1;
+        }
+
+        /* here is where we branch from perl, '-' is used to specify it as
+           a 'binary' file (i.e. use buffers not cold strings) */
+        if (*s == '-') {
+            s++;
+            fnew->f.binary = 1;
+        }
+
+    } else {
+        mode[0] = 'r';
+        fnew->f.readable = 1;
+    }
+
+    /* most systems ignore this, some need it */
+    mode[1] = 'b';
+
+    if (rw) {
+        mode[2] = '+';
+        mode[3] = (char) NULL;
+    } else {
+        mode[2] = (char) NULL;
+    }
+
+    /* urm, this will not let us create new files */
+    fnew->path = build_path(name->s, &sbuf, DISALLOW_DIR);
+    if (fnew->path == NULL)
+        return NULL;
+
+    fnew->fp = fopen(fnew->path->s, mode);
 
     if (fnew->fp == NULL) {
-        switch (errno) {
-            case EACCES:  status = FE_ACCESS; break;
-            case EPERM:   status = FE_PERM;   break;
-            case EINTR:   status = FE_INTR;   break;
-            case ELOOP:   status = FE_LOOP;   break;
-            case EMFILE:  status = FE_MFILE;  break;
-            case ENFILE:  status = FE_NFILE;  break;
-            case ENOENT:  status = FE_NOENT;  break;
-            case ENOTDIR: status = FE_NOTDIR; break;
-            case EROFS:   status = FE_ROFS;   break;
-            case ETXTBSY: status = FE_TXTBSY; break;
-            case ENOMEM:
-                panic("Unable to allocate memory for file buffer!");
-                break;
-            case ENOSPC:
-                panic("Unable to open file: not enough disk space!");
-                break;
-            default: status = FE_UNKNOWN;
-        }
-        ABORT(status);
+        if (errno == ENOMEM)
+            panic("open_file(): %s", strerror(errno));
+        cthrow(file_id, "%s (%s)", strerror(errno), name->s);
+        file_discard(fnew, NULL);
+        return NULL;
     }
 
-    *file = fnew;
+    file_add(fnew);
+    obj->file = fnew;
+    fnew->objnum = obj->objnum;
 
-    return 1;
+    return statbuf_to_list(&sbuf);
 }
 
-/*
-// --------------------------------------------------------------------
-*/
-/*
-
- fstat() (was stat_file(), get stat info on a file:
-          bytes, blocks, type, mode, owner, group, last access times)
-+fchmod()
-+fmkdir()
-+frmdir()
-+files()   (returns files in a directory, a list)
-+fremove()
-+frename()
-
-+fopen()
-+fclose()
-+fseek()
-
- execute()
-+file() (if a file is bound to this object, returns basic info)
-
-*/
-
+#if DISABLED
 /*
 // --------------------------------------------------------------------
 // called by fread()
@@ -305,7 +373,7 @@ Buffer * read_from_file(object_t * obj) {
     if (!file->rbuf) {
         if (feof(file->fp))
             return NULL;
-        read_file(file);
+        file_read(file);
     }
 
     buf = file->rbuf;
@@ -321,7 +389,7 @@ Buffer * read_from_file(object_t * obj) {
 int write_to_file(object_t * obj, Buffer * buf) {
     filec_t * file = find_file_controller(obj);
 
-    if (file == NULL || !file->flags.writable)
+    if (file == NULL || !file->f.writable)
         return 0;
 
     if (file->wbuf)
@@ -344,5 +412,6 @@ int file_end(object_t * obj) {
 
     return (feof(file->fp));
 }
+#endif
 
 #undef _file_

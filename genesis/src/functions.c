@@ -15,17 +15,22 @@
 // which is why they are not modularized (such as object functions) or
 // they are inherent to the functionality of ColdC
 //
+// The need to split these into seperate files is not too great, as they
+// will not be changing often.
 */
+
+#include "config.h"
+#include "defs.h"
 
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <limits.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <dirent.h>  /* func_files() */
 #include <fcntl.h>
-#include "config.h"
-#include "defs.h"
 #include "y.tab.h"
 #include "lookup.h"
 #include "functions.h"
@@ -38,8 +43,10 @@
 #include "dbpack.h"
 #include "memory.h"
 #include "opcodes.h"
-#include "log.h" /* op_log() */
-#include "dump.h" /* func_text_dump(), func_backup() */
+#include "log.h"       /* op_log() */
+#include "net.h"       /* network functions */
+#include "util.h"      /* some file functions */
+#include "file.h"
 
 void func_null_function(void) {
     if (!func_init_0())
@@ -47,7 +54,7 @@ void func_null_function(void) {
     push_int(1);
 }
 
-void func_add_parameter(void) {
+void func_add_var(void) {
     data_t * args;
     long     result;
 
@@ -55,17 +62,17 @@ void func_add_parameter(void) {
     if (!func_init_1(&args, SYMBOL))
 	return;
 
-    result = object_add_param(cur_frame->object, args[0].u.symbol);
-    if (result == paramexists_id) {
-	cthrow(paramexists_id,
-	      "Parameter %I already exists.", args[0].u.symbol);
+    result = object_add_var(cur_frame->object, args[0].u.symbol);
+    if (result == varexists_id) {
+	cthrow(varexists_id,
+	      "Object variable %I already exists.", args[0].u.symbol);
     } else {
 	pop(1);
 	push_int(1);
     }
 }
 
-void func_del_parameter(void) {
+void func_del_var(void) {
     data_t * args;
     long     result;
 
@@ -73,17 +80,17 @@ void func_del_parameter(void) {
     if (!func_init_1(&args, SYMBOL))
 	return;
 
-    result = object_del_param(cur_frame->object, args[0].u.symbol);
-    if (result == paramnf_id) {
-	cthrow(paramnf_id, "Parameter %I does not exist.", args[0].u.symbol);
+    result = object_del_var(cur_frame->object, args[0].u.symbol);
+    if (result == varnf_id) {
+	cthrow(varnf_id, "Object variable %I does not exist.", args[0].u.symbol);
     } else {
 	pop(1);
 	push_int(1);
     }
 }
 
-void func_parameters(void) {
-    list_t   * params;
+void func_variables(void) {
+    list_t   * vars;
     object_t * obj;
     int        i;
     Var      * var;
@@ -95,19 +102,19 @@ void func_parameters(void) {
 
     /* Construct the list of variable names. */
     obj = cur_frame->object;
-    params = list_new(0);
+    vars = list_new(0);
     d.type = SYMBOL;
     for (i = 0; i < obj->vars.size; i++) {
 	var = &obj->vars.tab[i];
-	if (var->name != -1 && var->cclass == obj->dbref) {
+	if (var->name != -1 && var->cclass == obj->objnum) {
 	    d.u.symbol = var->name;
-	    params = list_add(params, &d);
+	    vars = list_add(vars, &d);
 	}
     }
 
     /* Push the list onto the stack. */
-    push_list(params);
-    list_discard(params);
+    push_list(vars);
+    list_discard(vars);
 }
 
 void func_set_var(void) {
@@ -121,8 +128,8 @@ void func_set_var(void) {
 
     result = object_assign_var(cur_frame->object, cur_frame->method->object,
 			       args[0].u.symbol, &args[1]);
-    if (result == paramnf_id) {
-	cthrow(paramnf_id, "No such parameter %I.", args[0].u.symbol);
+    if (result == varnf_id) {
+	cthrow(varnf_id, "Object variable %I does not exist.", args[0].u.symbol);
     } else {
         /* This is just a stupid way of returning args[1] */
         data_dup(&d, &args[1]);
@@ -143,8 +150,8 @@ void func_get_var(void) {
 
     result = object_retrieve_var(cur_frame->object, cur_frame->method->object,
 				 args[0].u.symbol, &d);
-    if (result == paramnf_id) {
-	cthrow(paramnf_id, "No such parameter %I.", args[0].u.symbol);
+    if (result == varnf_id) {
+	cthrow(varnf_id, "Object variable %I does not exist.", args[0].u.symbol);
     } else {
 	pop(1);
 	data_dup(&stack[stack_pos++], &d);
@@ -168,27 +175,27 @@ void func_clear_var(void) {
                                    args[0].u.symbol);
     }
 
-    if (result == paramnf_id) {
-        cthrow(paramnf_id, "No such parameter %I.", args[0].u.symbol);
+    if (result == varnf_id) {
+        cthrow(varnf_id, "Object variable %I does not exist.", args[0].u.symbol);
     } else {
         pop(1);
         push_int(1);
     }
 }
 
-void func_compile_to_method(void) {
+void func_add_method(void) {
     data_t   * args,
              * d;
     method_t * method;
     list_t   * code,
              * errors;
-    int        flags=-1, state=-1;
+    int        flags=-1, access=-1;
 
     /* Accept a list of lines of code and a symbol for the name. */
     if (!func_init_2(&args, LIST, SYMBOL))
 	return;
 
-    method = object_find_method(cur_frame->object->dbref, args[1].u.symbol);
+    method = object_find_method(cur_frame->object->objnum, args[1].u.symbol);
     if (method && (method->m_flags & MF_LOCK)) {
         cthrow(perm_id, "Method is locked, and cannot be changed.");
         return;
@@ -197,7 +204,7 @@ void func_compile_to_method(void) {
     /* keep these for later reference, if its already around */
     if (method) {
         flags = method->m_flags;
-        state = method->m_state;
+        access = method->m_access;
     }
 
     code = args[0].u.list;
@@ -215,8 +222,8 @@ void func_compile_to_method(void) {
     if (method) {
         if (flags != -1)
             method->m_flags = flags;
-        if (state != -1)
-            method->m_state = state;
+        if (access != -1)
+            method->m_access = access;
 	object_add_method(cur_frame->object, args[1].u.symbol, method);
 	method_discard(method);
     }
@@ -226,21 +233,30 @@ void func_compile_to_method(void) {
     list_discard(errors);
 }
 
+void func_rename_method(void) {
+    data_t   * args;
+    int        result;
+
+    if (!func_init_2(&args, SYMBOL, SYMBOL))
+        return;
+
+    result = object_rename_method(cur_frame->object,
+                                  args[0].u.symbol,
+                                  args[1].u.symbol);
+
+    pop(2);
+    push_int(result);
+}
+
 #define LADD(__s) { \
         d.u.symbol = __s; \
         list = list_add(list, &d); \
     }
 
-void func_method_flags(void) {
-    data_t  * args,
-              d;
-    list_t  * list;
-    int       flags;
+INTERNAL list_t * list_method_flags(int flags) {
+    list_t * list;
+    data_t d;
 
-    if (!func_init_1(&args, SYMBOL))
-        return;
-
-    flags = object_get_method_flags(cur_frame->object, args[0].u.symbol);
     if (flags == F_FAILURE)
         flags = MF_NONE;
 
@@ -255,12 +271,24 @@ void func_method_flags(void) {
     if (flags & MF_NATIVE)
         LADD(native_id);
 
+    return list;
+}
+
+#undef LADD
+
+void func_method_flags(void) {
+    data_t  * args;
+    list_t  * list;
+
+    if (!func_init_1(&args, SYMBOL))
+        return;
+
+    list = list_method_flags(object_get_method_flags(cur_frame->object, args[0].u.symbol));
+
     pop(1);
     push_list(list);
     list_discard(list);
 }
-
-#undef LADD(__s)
 
 #define _THROW_(__e, __m) { cthrow(__e, __m); return; }
 
@@ -308,18 +336,18 @@ void func_set_method_flags(void) {
     push_int(new_flags);
 }
 
-void func_method_state(void) {
-    int       state;
+void func_method_access(void) {
+    int       access;
     data_t  * args;
 
     if (!func_init_1(&args, SYMBOL))
         return;
 
-    state = object_get_method_state(cur_frame->object, args[0].u.symbol);
+    access = object_get_method_access(cur_frame->object, args[0].u.symbol);
 
     pop(1);
 
-    switch(state) {
+    switch(access) {
         case MS_PUBLIC:    push_symbol(public_id);    break;
         case MS_PROTECTED: push_symbol(protected_id); break;
         case MS_PRIVATE:   push_symbol(private_id);   break;
@@ -329,8 +357,8 @@ void func_method_state(void) {
     }
 }
 
-void func_set_method_state(void) {
-    int       state = 0;
+void func_set_method_access(void) {
+    int       access = 0;
     data_t  * args;
     Ident     sym;
 
@@ -339,29 +367,31 @@ void func_set_method_state(void) {
 
     sym = args[1].u.symbol;
     if (sym == public_id)
-        state = MS_PUBLIC;
+        access = MS_PUBLIC;
     else if (sym == protected_id)
-        state = MS_PROTECTED;
+        access = MS_PROTECTED;
     else if (sym == private_id)
-        state = MS_PRIVATE;
+        access = MS_PRIVATE;
     else if (sym == root_id)
-        state = MS_ROOT;
+        access = MS_ROOT;
     else if (sym == driver_id)
-        state = MS_DRIVER;
+        access = MS_DRIVER;
     else
-        cthrow(type_id, "Invalid method state flag.");
+        cthrow(type_id, "Invalid method access flag.");
 
-    object_set_method_state(cur_frame->object, args[0].u.symbol, state);
+    object_set_method_access(cur_frame->object, args[0].u.symbol, access);
 
-    if (state == -1)
+    if (access == -1)
         cthrow(type_id, "Method %D not found.", args[0]);
 
     pop(2);
-    push_int(state);
+    push_int(access);
 }
 
-void func_method_args(void) {
-    data_t   * args;
+void func_method_info(void) {
+    data_t   * args,
+             * list;
+    list_t   * output;
     method_t * method;
     string_t * str;
     char     * s;
@@ -371,12 +401,17 @@ void func_method_args(void) {
     if (!func_init_1(&args, SYMBOL))
 	return;
 
-    method = object_find_method(cur_frame->object->dbref, args[0].u.symbol);
+    method = object_find_method(cur_frame->object->objnum, args[0].u.symbol);
     if (!method) {
         cthrow(methodnf_id, "Method not found.");
         return;
     }
 
+    /* initialize the list */
+    output = list_new(6);
+    list = list_empty_spaces(output, 6);
+
+    /* build up the args list (string) */
     str = string_new(0);
     if (method->num_args || method->rest != -1) {
         for (i = method->num_args - 1; i >= 0; i--) {
@@ -391,12 +426,33 @@ void func_method_args(void) {
             str = string_add_chars(str, s, strlen(s));
             str = string_addc(str, ']');
         }
-        str = string_addc(str, ';');
     }
 
+    list[0].type = STRING;
+    list[0].u.str = str;
+    list[1].type = INTEGER;
+    list[1].u.val = method->num_args;
+    list[2].type = INTEGER;
+    list[2].u.val = method->num_vars;
+    list[3].type = INTEGER;
+    list[3].u.val = method->num_opcodes;
+
+    list[4].type = SYMBOL;
+    switch(method->m_access) {
+        case MS_PUBLIC:    list[4].u.symbol = public_id;    break;
+        case MS_PROTECTED: list[4].u.symbol = protected_id; break;
+        case MS_PRIVATE:   list[4].u.symbol = private_id;   break;
+        case MS_ROOT:      list[4].u.symbol = root_id;      break;
+        case MS_DRIVER:    list[4].u.symbol = driver_id;    break;
+        default:           list[4].type = INTEGER; list[4].u.val = 0; break;
+    }
+
+    list[5].type = LIST;
+    list[5].u.list = list_method_flags(method->m_flags);
+
     pop(1);
-    push_string(str);
-    string_discard(str);
+    push_list(output);
+    list_discard(output);
 }
 
 void func_methods(void) {
@@ -435,14 +491,13 @@ void func_find_method(void) {
 	return;
 
     /* Look for the method on the current object. */
-    method = object_find_method(cur_frame->object->dbref, args[0].u.symbol);
+    method = object_find_method(cur_frame->object->objnum, args[0].u.symbol);
     pop(1);
     if (method) {
-	push_dbref(method->object->dbref);
+	push_objnum(method->object->objnum);
 	cache_discard(method->object);
     } else {
-	cthrow(methodnf_id, "Method %s not found.",
-	      ident_name(args[0].u.symbol));
+	cthrow(methodnf_id, "Method %I not found.", args[0].u.symbol);
     }
 }
 
@@ -450,24 +505,23 @@ void func_find_next_method(void) {
     data_t   * args;
     method_t * method;
 
-    /* Accept a symbol argument giving the method name, and a dbref giving the
+    /* Accept a symbol argument giving the method name, and a objnum giving the
      * object to search past. */
-    if (!func_init_2(&args, SYMBOL, DBREF))
+    if (!func_init_2(&args, SYMBOL, OBJNUM))
 	return;
 
     /* Look for the method on the current object. */
-    method = object_find_next_method(cur_frame->object->dbref,
-				     args[0].u.symbol, args[1].u.dbref);
+    method = object_find_next_method(cur_frame->object->objnum,
+				     args[0].u.symbol, args[1].u.objnum);
     if (method) {
-	push_dbref(method->object->dbref);
+	push_objnum(method->object->objnum);
 	cache_discard(method->object);
     } else {
-	cthrow(methodnf_id, "Method %s not found.",
-	      ident_name(args[0].u.symbol));
+	cthrow(methodnf_id, "Method %I not found.", args[0].u.symbol);
     }
 }
 
-void func_list_method(void) {
+void func_decompile(void) {
     int      num_args,
              indent,
              parens;
@@ -491,8 +545,7 @@ void func_list_method(void) {
 	push_list(code);
 	list_discard(code);
     } else {
-	cthrow(methodnf_id, "Method %s not found.",
-	      ident_name(args[0].u.symbol));
+	cthrow(methodnf_id, "Method %I not found.", args[0].u.symbol);
     }
 }
 
@@ -506,8 +559,7 @@ void func_del_method(void) {
 
     status = object_del_method(cur_frame->object, args[0].u.symbol);
     if (status == 0) {
-	cthrow(methodnf_id, "No method named %s was found.",
-	      ident_name(args[0].u.symbol));
+	cthrow(methodnf_id, "No method named %I was found.", args[0].u.symbol);
     } else if (status == -1) {
         cthrow(perm_id, "Method is locked, and cannot be removed.");
     } else {
@@ -534,6 +586,18 @@ void func_children(void) {
     push_list(cur_frame->object->children);
 }
 
+void func_descendants(void) {
+    list_t * desc;
+
+    if (!func_init_0())
+        return;
+
+    desc = object_descendants(cur_frame->object->objnum);
+
+    push_list(desc);
+    list_discard(desc);
+}
+
 void func_ancestors(void) {
     list_t * ancestors;
 
@@ -542,7 +606,7 @@ void func_ancestors(void) {
 	return;
 
     /* Get an ancestors list from the object. */
-    ancestors = object_ancestors(cur_frame->object->dbref);
+    ancestors = object_ancestors(cur_frame->object->objnum);
     push_list(ancestors);
     list_discard(ancestors);
 }
@@ -551,22 +615,36 @@ void func_has_ancestor(void) {
     data_t * args;
     int result;
 
-    /* Accept a dbref to check as an ancestor. */
-    if (!func_init_1(&args, DBREF))
+    /* Accept a objnum to check as an ancestor. */
+    if (!func_init_1(&args, OBJNUM))
 	return;
 
-    result = object_has_ancestor(cur_frame->object->dbref, args[0].u.dbref);
+    result = object_has_ancestor(cur_frame->object->objnum, args[0].u.objnum);
     pop(1);
     push_int(result);
 }
 
 void func_size(void) {
-    /* Accept no arguments. */
-    if (!func_init_0())
+    data_t * args;
+    int      nargs,
+             size;
+
+    if (!func_init_0_or_1(&args, &nargs, 0))
 	return;
 
+    if (nargs) {
+        if (args[0].type == OBJNUM) {
+            cthrow(perm_id, "Attempt to size object which is not this().");
+            return;
+        }
+        size = size_data(&args[0]);
+        pop(1);
+    } else {
+        size = size_object(cur_frame->object);
+    }
+
     /* Push size of current object. */
-    push_int(size_object(cur_frame->object));
+    push_int(size);
 }
 
 void func_create(void) {
@@ -581,12 +659,12 @@ void func_create(void) {
     /* Get parents list from second argument. */
     parents = args[0].u.list;
 
-    /* Verify that all parents are dbrefs. */
+    /* Verify that all parents are objnums. */
     for (d = list_first(parents); d; d = list_next(parents, d)) {
-        if (d->type != DBREF) {
-            cthrow(type_id, "Parent %D is not a dbref.", d);
+        if (d->type != OBJNUM) {
+            cthrow(type_id, "Parent %D is not a objnum.", d);
             return;
-        } else if (!cache_check(d->u.dbref)) {
+        } else if (!cache_check(d->u.objnum)) {
             cthrow(objnf_id, "Parent %D does not refer to an object.", d);
             return;
         }
@@ -596,75 +674,68 @@ void func_create(void) {
     obj = object_new(-1, parents);
 
     pop(1);
-    push_dbref(obj->dbref);
+    push_objnum(obj->objnum);
     cache_discard(obj);
 }
 
 void func_chparents(void) {
     data_t   * args,
-             * d;
-    object_t * obj;
+             * d,
+               d2;
     int        wrong;
 
-    /* Accept a dbref and a list of parents to change to. */
-    if (!func_init_2(&args, DBREF, LIST))
+    /* Accept a list of parents to change to. */
+    if (!func_init_1(&args, LIST))
         return;
 
-    if (args[0].u.dbref == ROOT_DBREF) {
+    if (cur_frame->object->objnum == ROOT_OBJNUM) {
         cthrow(perm_id, "You cannot change the root object's parents.");
         return;
     }
 
-    obj = cache_retrieve(args[0].u.dbref);
-    if (!obj) {
-        cthrow(objnf_id, "Object #%l not found.", args[0].u.dbref);
-        return;
-    }
-
-    if (!list_length(args[1].u.list)) {
+    if (!list_length(args[0].u.list)) {
         cthrow(perm_id, "You must specify at least one parent.");
         return;
     }
 
     /* Call object_change_parents().  This will return the number of a
      * parent which was invalid, or -1 if they were all okay. */
-    wrong = object_change_parents(obj, args[1].u.list);
+    wrong = object_change_parents(cur_frame->object, args[0].u.list);
     if (wrong >= 0) {
-        d = list_elem(args[1].u.list, wrong);
-        if (d->type != DBREF) {
-            cthrow(type_id, "New parent %D is not a dbref.", d);
-        } else if (d->u.dbref == args[0].u.dbref) {
-            cthrow(parent_id, "New parent %D is the same as %D.", d, &args[0]);
-        } else if (!cache_check(d->u.dbref)) {
-            cthrow(objnf_id, "New parent %D does not exist.", d);
+        d = list_elem(args[0].u.list, wrong);
+        if (d->type != OBJNUM) {
+            cthrow(type_id,   "New parent %D is not a objnum.", d);
+        } else if (d->u.objnum == cur_frame->object->objnum) {
+            cthrow(parent_id, "New parent %D is already a parent.", d);
+        } else if (!cache_check(d->u.objnum)) {
+            cthrow(objnf_id,  "New parent %D does not exist.", d);
         } else {
-            cthrow(parent_id, "New parent %D is a descendent of %D.", d,
-                   &args[0]);
+            d2.type = OBJNUM;
+            d2.u.objnum = cur_frame->object->objnum;
+            cthrow(parent_id, "New parent %D is a descendent of %D.", d, &d2);
         }
     } else {
-        pop(2);
+        pop(1);
         push_int(1);
     }
-
-    cache_discard(obj);
 }
 
 void func_destroy(void) {
     data_t   * args;
     object_t * obj;
 
-    /* Accept a dbref to destroy. */
-    if (!func_init_1(&args, DBREF))
+    /* Accept a objnum to destroy. */
+    if (!func_init_1(&args, OBJNUM))
         return;
 
-    if (args[0].u.dbref == ROOT_DBREF) {
+    if (args[0].u.objnum == ROOT_OBJNUM) {
         cthrow(perm_id, "You can't destroy the root object.");
-    } else if (args[0].u.dbref == SYSTEM_DBREF) {
+    } else if (args[0].u.objnum == SYSTEM_OBJNUM) {
         cthrow(perm_id, "You can't destroy the system object.");
     } else {
-        obj = cache_retrieve(args[0].u.dbref);
+        obj = cache_retrieve(args[0].u.objnum);
         if (!obj) {
-            cthrow(objnf_id, "Object #%l not found.", args[0].u.dbref);
+            cthrow(objnf_id, "Object #%l not found.", args[0].u.objnum);
             return;
         }
         /* Set the object dead, so it will go away when nothing is holding onto
@@ -714,72 +785,25 @@ void func_backup(void) {
     if (!func_init_0())
         return;
 
-    if (binary_dump()) {
-        strcpy(buf1, c_dir_binary);
-        strcat(buf1, ".bak");
+    strcpy(buf1, c_dir_binary);
+    strcat(buf1, ".bak");
 
-        /* blast old backups */
-        if (stat(buf1, &statbuf) != F_FAILURE) {
-            sprintf(buf2, "rm -rf %s", buf1);
-            if (system(buf2) == SHELL_FAILURE)
-                push_int(0);
-        }
-        sprintf(buf2, "cp -r %s %s", c_dir_binary, buf1);
-        if (system(buf2) != SHELL_FAILURE) {
-            push_int(1);
-        } else {
-            push_int(-1);
-        }
+    /* blast old backups */
+    if (stat(buf1, &statbuf) != F_FAILURE) {
+        sprintf(buf2, "rm -rf %s", buf1);
+        if (system(buf2) == SHELL_FAILURE)
+            push_int(0);
+    }
+    cache_sync();
+    sprintf(buf2, "cp -r %s %s", c_dir_binary, buf1);
+    if (system(buf2) != SHELL_FAILURE) {
+        push_int(1);
     } else {
-        push_int(0);
+        push_int(-1);
     }
 }
 
 #undef SHELL_FAILURE
-
-/*
-// -----------------------------------------------------------------
-//
-// Modifies: The object cache, identifier table, and binary database
-//           files via cache_sync() and ident_dump().
-// Effects: If called by the sytem object with no arguments,
-//          performs a binary dump, ensuring that the files db and
-//          db are consistent.  Returns 1 if the binary dump
-//          succeeds, or 0 if it fails.
-//
-*/
-
-void func_binary_dump(void) {
-
-    /* Accept no arguments. */
-    if (!func_init_0())
-        return;
-
-    push_int(binary_dump());
-}
-
-/*
-// -----------------------------------------------------------------
-//
-// Modifies: The object cache and binary database files via cache_sync()
-//           and two sweeps through the database.  Modifies the internal
-//           dbm state use by dbm_firstkey() and dbm_nextkey().
-// Effects: If called by the system object with no arguments, performs a
-//          text dump, creating a file 'textdump' which contains a
-//          representation of the database in terms of a few simple
-//          commands and the ColdC language.  Returns 1 if the text dump
-//          succeeds, or 0 if it fails.
-//
-*/
-
-void func_text_dump(void) {
-
-    /* Accept no arguments. */
-    if (!func_init_0())
-        return;
-
-    push_int(text_dump());
-}
 
 /*
 // -----------------------------------------------------------------
@@ -930,43 +954,53 @@ void func_set_heartbeat(void) {
 */
 
 void func_data(void) {
-    data_t *args, key, value;
-    object_t *obj;
-    Dict *dict;
-    int i;
+    data_t   * args,
+               key,
+               value;
+    Dict     * dict;
+    object_t * obj = cur_frame->object;
+    int        i,
+               nargs;
+    objnum_t   objnum;
 
-    if (!func_init_1(&args, DBREF))
+    if (!func_init_0_or_1(&args, &nargs, OBJNUM))
         return;
 
-    obj = cache_retrieve(args[0].u.dbref);
-    if (!obj) {
-        cthrow(objnf_id, "No such object #%l", args[0].u.dbref);
-        return;
-    }
-
-    /* Construct the dictionary. */
     dict = dict_new_empty();
-    for (i = 0; i < obj->vars.size; i++) {
-        if (obj->vars.tab[i].name == -1)
-            continue;
-        key.type = DBREF;
-        key.u.dbref = obj->vars.tab[i].cclass;
-        if (dict_find(dict, &key, &value) == keynf_id) {
-            value.type = DICT;
-            value.u.dict = dict_new_empty();
-            dict = dict_add(dict, &key, &value);
+    if (nargs) {
+        objnum = args[0].u.objnum;
+
+        for (i = 0; i < obj->vars.size; i++) {
+            if (obj->vars.tab[i].name == INV_OBJNUM ||
+                obj->vars.tab[i].cclass != objnum)
+                continue;
+            key.type = SYMBOL;
+            key.u.symbol = obj->vars.tab[i].name;
+            dict = dict_add(dict, &key, &obj->vars.tab[i].val);
         }
-        key.type = SYMBOL;
-        key.u.symbol = obj->vars.tab[i].name;
-        value.u.dict = dict_add(value.u.dict, &key, &obj->vars.tab[i].val);
-        key.type = DBREF;
-        key.u.dbref = obj->vars.tab[i].cclass;
-        dict = dict_add(dict, &key, &value);
-        dict_discard(value.u.dict);
+
+        pop(1);
+    } else {
+        for (i = 0; i < obj->vars.size; i++) {
+            if (obj->vars.tab[i].name == INV_OBJNUM)
+                continue;
+            key.type = OBJNUM;
+            key.u.objnum = obj->vars.tab[i].cclass;
+            if (dict_find(dict, &key, &value) == keynf_id) {
+                value.type = DICT;
+                value.u.dict = dict_new_empty();
+                dict = dict_add(dict, &key, &value);
+            }
+            key.type = SYMBOL;
+            key.u.symbol = obj->vars.tab[i].name;
+            value.u.dict = dict_add(value.u.dict, &key, &obj->vars.tab[i].val);
+            key.type = OBJNUM;
+            key.u.objnum = obj->vars.tab[i].cclass;
+            dict = dict_add(dict, &key, &value);
+            dict_discard(value.u.dict);
+        }
     }
 
-    cache_discard(obj);
-    pop(1);
     push_dict(dict);
     dict_discard(dict);
 }
@@ -975,17 +1009,19 @@ void func_data(void) {
 // -----------------------------------------------------------------
 */
 
-void func_add_objname(void) {
+void func_set_objname(void) {
     data_t *args;
-    int result;
 
-    if (!func_init_2(&args, SYMBOL, DBREF))
+    if (!func_init_1(&args, SYMBOL))
         return;
 
-    result = lookup_store_name(args[0].u.symbol, args[1].u.dbref);
+    if (!object_set_objname(cur_frame->object, args[0].u.symbol)) {
+        cthrow(error_id, "The name $%I is already taken.", args[0].u.symbol);
+        return;
+    }
 
-    pop(2);
-    push_int(result);
+    pop(1);
+    push_int(1);
 }
 
 /*
@@ -993,18 +1029,61 @@ void func_add_objname(void) {
 */
 
 void func_del_objname(void) {
+    if (!func_init_0())
+        return;
+
+    if (!object_del_objname(cur_frame->object)) {
+        cthrow(namenf_id, "Object #%l does not have a name.",
+               cur_frame->object->objnum);
+        return;
+    }
+
+    push_int(1);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+
+void func_objname(void) {
+    if (!func_init_0())
+        return;
+  
+    if (cur_frame->object->objname == -1)
+        push_int(0);
+    else
+        push_symbol(cur_frame->object->objname);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+
+void func_lookup(void) {
     data_t *args;
+    long objnum;
 
     if (!func_init_1(&args, SYMBOL))
         return;
 
-    if (!lookup_remove_name(args[0].u.symbol)) {
-        cthrow(namenf_id, "Can't find object name %I.", args[0].u.symbol);
+    if (!lookup_retrieve_name(args[0].u.symbol, &objnum)) {
+        cthrow(namenf_id, "Cannot find object %I.", args[0].u.symbol);
         return;
     }
 
     pop(1);
-    push_int(1);
+    push_objnum(objnum);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+
+void func_objnum(void) {
+    if (!func_init_0())
+        return;
+  
+    push_int(cur_frame->object->objnum);
 }
 
 /* ----------------------------------------------------------------- */
@@ -1017,7 +1096,7 @@ void func_cancel(void) {
 
 
     if (!task_lookup(args[0].u.val)) {
-        cthrow(type_id, "No such task");
+        cthrow(type_id, "No task %d.", args[0].u.val);
     } else {
         task_cancel(args[0].u.val);
         pop(1);
@@ -1031,6 +1110,11 @@ void func_suspend(void) {
 
     if (!func_init_0())
         return;
+
+    if (atomic) {
+        cthrow(atomic_id, "Attempt to suspend while executing atomically.");
+        return;
+    }
 
     task_suspend();
 
@@ -1049,7 +1133,7 @@ void func_resume(void) {
     tid = args[0].u.val;
 
     if (!task_lookup(tid)) {
-        cthrow(type_id, "No such task");
+        cthrow(type_id, "No task %d.", args[0].u.val);
     } else {
         if (nargs == 1)
             task_resume(tid, NULL);
@@ -1062,13 +1146,47 @@ void func_resume(void) {
 
 /* ----------------------------------------------------------------- */
 void func_pause(void) {
+    if (!func_init_0())
+        return;
+
+    if (atomic) {
+        cthrow(atomic_id, "Attempt to pause while executing atomically.");
+        return;
+    }
+
+    push_int(1);
+
+    task_pause();
+}
+
+/* ----------------------------------------------------------------- */
+void func_atomic(void) {
+    data_t * args;
+
+    if (!func_init_1(&args, INTEGER))
+        return;
+
+    atomic = (int) (args[0].u.val ? 1 : 0);
+
+    pop(1);
+    push_int(1);
+}
+
+/* ----------------------------------------------------------------- */
+void func_refresh(void) {
 
     if (!func_init_0())
         return;
 
     push_int(1);
 
-    task_pause();
+    if (cur_frame->ticks <= REFRESH_METHOD_THRESHOLD) {
+        if (atomic) {
+            cur_frame->ticks = PAUSED_METHOD_TICKS;
+        } else {
+            task_pause();
+        }
+    }
 }
 
 /* ----------------------------------------------------------------- */
@@ -1079,6 +1197,7 @@ void func_tasks(void) {
         return;
 
     list = task_list();
+
     push_list(list);
     list_discard(list);
 }
@@ -1091,13 +1210,14 @@ void func_tick(void) {
 }
 
 /* ----------------------------------------------------------------- */
-void func_callers(void) {
+void func_stack(void) {
     list_t * list;
 
     if (!func_init_0())
         return;
 
-    list = task_callers();
+    list = task_stack();
+
     push_list(list);
     list_discard(list);
 }
@@ -1106,8 +1226,8 @@ void func_bind_function(void) {
     data_t * args;
     int      opcode;
 
-    /* accept a symbol and dbref */
-    if (!func_init_2(&args, SYMBOL, DBREF))
+    /* accept a symbol and objnum */
+    if (!func_init_2(&args, SYMBOL, OBJNUM))
         return;
 
     opcode = find_function(ident_name(args[0].u.symbol));
@@ -1117,7 +1237,7 @@ void func_bind_function(void) {
         return;
     }
 
-    op_table[opcode].binding = args[1].u.dbref;
+    op_table[opcode].binding = args[1].u.objnum;
 
     pop(2);
     push_int(1);
@@ -1152,38 +1272,38 @@ void func_method(void) {
 }
 
 void func_this(void) {
-    /* Accept no arguments, and push the dbref of the current object. */
+    /* Accept no arguments, and push the objnum of the current object. */
     if (!func_init_0())
         return;
-    push_dbref(cur_frame->object->dbref);
+    push_objnum(cur_frame->object->objnum);
 }
 
 void func_definer(void) {
-    /* Accept no arguments, and push the dbref of the method definer. */
+    /* Accept no arguments, and push the objnum of the method definer. */
     if (!func_init_0())
         return;
-    push_dbref(cur_frame->method->object->dbref);
+    push_objnum(cur_frame->method->object->objnum);
 }
 
 void func_sender(void) {
-    /* Accept no arguments, and push the dbref of the sending object. */
+    /* Accept no arguments, and push the objnum of the sending object. */
     if (!func_init_0())
         return;
     if (cur_frame->sender == NOT_AN_IDENT)
         push_int(0);
     else
-        push_dbref(cur_frame->sender);
+        push_objnum(cur_frame->sender);
 }
 
 void func_caller(void) {
-    /* Accept no arguments, and push the dbref of the calling method's
+    /* Accept no arguments, and push the objnum of the calling method's
      * definer. */
     if (!func_init_0())
         return;
     if (cur_frame->caller == NOT_AN_IDENT)
         push_int(0);
     else
-        push_dbref(cur_frame->caller);
+        push_objnum(cur_frame->caller);
 }
 
 void func_task_id(void) {
@@ -1225,7 +1345,7 @@ void func_class(void) {
     /* Replace argument with class. */
     cclass = args[0].u.frob->cclass;
     pop(1);
-    push_dbref(cclass);
+    push_objnum(cclass);
 }
 
 void func_toint(void) {
@@ -1242,8 +1362,8 @@ void func_toint(void) {
         val = (long) args[0].u.fval;
     } else if (args[0].type == STRING) {
 	val = atol(string_chars(args[0].u.str));
-    } else if (args[0].type == DBREF) {
-	val = args[0].u.dbref;
+    } else if (args[0].type == OBJNUM) {
+	val = args[0].u.objnum;
     } else {
 	cthrow(type_id, "The first argument (%D) is not an integer or string.",
 	      &args[0]);
@@ -1266,8 +1386,8 @@ void func_tofloat(void) {
   	val = args[0].u.val;
       } else if (args[0].type == FLOAT) {
   	return;
-      } else if (args[0].type == DBREF) {
-  	val = args[0].u.dbref;
+      } else if (args[0].type == OBJNUM) {
+  	val = args[0].u.objnum;
       } else {
   	cthrow(type_id, "The first argument (%D) is not an integer or string.",
   	      &args[0]);
@@ -1306,18 +1426,18 @@ void func_toliteral(void) {
     string_discard(str);
 }
 
-void func_todbref(void) {
+void func_toobjnum(void) {
     data_t *args;
 
-    /* Accept an integer to convert into a dbref. */
+    /* Accept an integer to convert into a objnum. */
     if (!func_init_1(&args, INTEGER))
 	return;
 
     if (args[0].u.val < 0)
-        cthrow(type_id, "objnums must be 0 or greater");
+        cthrow(type_id, "Objnums must be 0 or greater");
 
-    args[0].u.dbref = args[0].u.val;
-    args[0].type = DBREF;
+    args[0].u.objnum = args[0].u.val;
+    args[0].type = OBJNUM;
 }
 
 void func_tosym(void) {
@@ -1350,11 +1470,11 @@ void func_valid(void) {
     data_t *args;
     int is_valid;
 
-    /* Accept one argument of any type (only dbrefs can be valid, though). */
+    /* Accept one argument of any type (only objnums can be valid, though). */
     if (!func_init_1(&args, 0))
 	return;
 
-    is_valid = (args[0].type == DBREF && cache_check(args[0].u.dbref));
+    is_valid = (args[0].type == OBJNUM && cache_check(args[0].u.objnum));
     pop(1);
     push_int(is_valid);
 }
@@ -1420,4 +1540,804 @@ void func_rethrow(void) {
     frame_return();
     propagate_error(traceback, args[0].u.error);
 }
+
+/*
+// ------------------------------------------------------------------------
+//
+// Network Functions
+//
+// ------------------------------------------------------------------------
+*/
+
+/*
+// -----------------------------------------------------------------
+//
+// If the current object has a connection, it will reassign that
+// connection too the specified object.
+//
+*/
+
+void func_reassign_connection(void) {
+    data_t       * args;
+    connection_t * c;
+
+    /* Accept a objnum. */
+    if (!func_init_1(&args, OBJNUM))
+        return;
+
+    c = find_connection(cur_frame->object);
+    if (c) {
+        c->objnum = args[0].u.objnum;
+        pop(1);
+        push_int(1);
+    } else {
+        pop(1);
+        push_int(0);
+    }
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+void func_bind_port(void) {
+    data_t * args;
+
+    /* Accept a port to bind to, and a objnum to handle connections. */
+    if (!func_init_2(&args, INTEGER, OBJNUM))
+        return;
+
+    if (add_server(args[0].u.val, args[1].u.objnum))
+        push_int(1);
+    else if (server_failure_reason == socket_id)
+        cthrow(socket_id, "Couldn't create server socket.");
+    else /* (server_failure_reason == bind_id) */
+        cthrow(bind_id, "Couldn't bind to port %d.", args[0].u.val);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+void func_unbind_port(void) {
+    data_t * args;
+
+    /* Accept a port number. */
+    if (!func_init_1(&args, INTEGER))
+        return;
+
+    if (!remove_server(args[0].u.val))
+        cthrow(servnf_id, "No server socket on port %d.", args[0].u.val);
+    else
+        push_int(1);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+void func_open_connection(void) {
+    data_t *args;
+    char *address;
+    int port;
+    objnum_t receiver;
+    long r;
+
+    if (!func_init_3(&args, STRING, INTEGER, OBJNUM))
+        return;
+
+    address = string_chars(args[0].u.str);
+    port = args[1].u.val;
+    receiver = args[2].u.objnum;
+
+    r = make_connection(address, port, receiver);
+    if (r == address_id)
+        cthrow(address_id, "Invalid address");
+    else if (r == socket_id)
+        cthrow(socket_id, "Couldn't create socket for connection");
+    pop(3);
+    push_int(1);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+void func_close_connection(void) {
+    /* Accept no arguments. */
+    if (!func_init_0())
+        return;
+
+    /* Kick off anyone assigned to the current object. */
+    push_int(boot(cur_frame->object));
+}
+
+/*
+// -----------------------------------------------------------------
+// Echo a buffer to the connection
+*/
+void func_cwrite(void) {
+    data_t *args;
+
+    /* Accept a buffer to write. */
+    if (!func_init_1(&args, BUFFER))
+        return;
+
+    /* Write the string to any connection associated with this object.  */
+    tell(cur_frame->object, args[0].u.buffer);
+
+    pop(1);
+    push_int(1);
+}
+
+/*
+// -----------------------------------------------------------------
+// write a file to the connection
+*/
+void func_cwritef(void) {
+    size_t        block, r;
+    data_t      * args;
+    FILE        * fp;
+    Buffer      * buf;
+    string_t    * str;
+    struct stat   statbuf;
+    int           nargs;
+
+    /* Accept the name of a file to echo */
+    if (!func_init_1_or_2(&args, &nargs, STRING, INTEGER))
+        return;
+
+    /* Initialize the file */
+    str = build_path(args[0].u.str->s, &statbuf, DISALLOW_DIR);
+    if (str == NULL)
+        return;
+
+    /* Open the file for reading. */
+    fp = open_scratch_file(str->s, "rb");
+    if (!fp) {
+        cthrow(file_id, "Cannot open file \"%s\" for reading.", str->s);
+        return;
+    }
+
+    /* how big of a chunk do we read at a time? */
+    if (nargs == 2) {
+        if (args[1].u.val == -1)
+            block = statbuf.st_size;
+        else
+            block = (size_t) args[1].u.val;
+    } else
+        block = (size_t) DEF_BLOCKSIZE;
+
+    /* Allocate a buffer to hold the block */
+    buf = buffer_new(block);
+
+    while (!feof(fp)) {
+        r = fread(buf->s, sizeof(unsigned char), block, fp);
+        if (r != block && !feof(fp)) {
+            buffer_discard(buf);
+            close_scratch_file(fp);
+            cthrow(file_id, "Trouble reading file \"%s\": %s",
+                   str->s, strerror(errno));
+            return;
+        }
+        tell(cur_frame->object, buf);
+    }
+
+    /* Discard the buffer and close the file. */
+    buffer_discard(buf);
+    close_scratch_file(fp);
+
+    pop(nargs);
+    push_int(1);
+}
+
+/*
+// -----------------------------------------------------------------
+// return random info on the connection
+*/
+void func_connection(void) {
+    list_t       * info;
+    data_t       * list;
+    connection_t * c;
+
+    if (!func_init_0())
+        return;
+
+    c = find_connection(cur_frame->object);
+    if (!c) {
+        cthrow(net_id, "No connection established.");
+        return;
+    }
+
+    info = list_new(4);
+    list = list_empty_spaces(info, 4);
+
+    list[0].type = INTEGER;
+    list[0].u.val = (long) (c->flags.readable ? 1 : 0);
+    list[1].type = INTEGER;
+    list[1].u.val = (long) (c->flags.writable ? 1 : 0);
+    list[2].type = INTEGER;
+    list[2].u.val = (long) (c->flags.dead ? 1 : 0);
+    list[3].type = INTEGER;
+    list[3].u.val = (long) (c->fd);
+
+    push_list(info);
+    list_discard(info);
+}
+
+/*
+// ------------------------------------------------------------------------
+//
+// File Functions
+//
+// ------------------------------------------------------------------------
+*/
+
+#define GET_FILE_CONTROLLER(__f) { \
+        __f = find_file_controller(cur_frame->object); \
+        if (__f == NULL) { \
+            cthrow(file_id, "No file is bound to this object."); \
+            return; \
+        } \
+    } \
+
+/*
+// -----------------------------------------------------------------
+*/
+void func_fopen(void) {
+    data_t  * args;
+    int       nargs;
+    list_t  * stat; 
+    filec_t * file;
+
+    if (!func_init_1_or_2(&args, &nargs, STRING, STRING))
+        return;
+
+    file = find_file_controller(cur_frame->object);
+
+    /* only one file at a time on an object */
+    if (file != NULL) {
+        cthrow(file_id, "A file (%s) is already open on this object.",
+               file->path->s);
+        return;
+    }
+
+    /* open the file, it will automagically be set on the current object,
+       if we are sucessfull, otherwise our stat list is NULL */
+    stat = open_file(args[0].u.str,
+                     (nargs == 2 ? args[1].u.str : NULL),
+                     cur_frame->object);
+
+    if (stat == NULL)
+        return;
+
+    pop(nargs);
+    push_list(stat);
+    list_discard(stat);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+void func_file(void) {
+    filec_t * file;
+    list_t  * info;
+    data_t  * list;
+
+    if (!func_init_0())
+        return;
+
+    GET_FILE_CONTROLLER(file)
+
+    info = list_new(5);
+    list = list_empty_spaces(info, 5);
+
+    list[0].type = INTEGER;
+    list[0].u.val = (long) (file->f.readable ? 1 : 0);
+    list[1].type = INTEGER;
+    list[1].u.val = (long) (file->f.writable ? 1 : 0);
+    list[2].type = INTEGER;
+    list[2].u.val = (long) (file->f.closed ? 1 : 0);
+    list[3].type = INTEGER;
+    list[3].u.val = (long) (file->f.binary ? 1 : 0);
+    list[4].type = STRING;
+    list[4].u.str = string_dup(file->path);
+
+    push_list(info);
+    list_discard(info);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+void func_files(void) {
+    data_t   * args;
+    string_t * path,
+             * name;
+    list_t   * out;
+    data_t     d;
+    struct dirent * dent;
+    DIR      * dp;
+    struct stat sbuf;
+
+    if (!func_init_1(&args, STRING))
+        return;
+
+    path = build_path(args[0].u.str->s, NULL, -1);
+    if (!path)
+        return;
+
+    if (stat(path->s, &sbuf) == F_FAILURE) {
+        cthrow(directory_id, "Unable to find directory \"%s\".", path->s);
+        string_discard(path);
+        return;
+    }
+
+    if (!S_ISDIR(sbuf.st_mode)) {
+        cthrow(directory_id, "File \"%s\" is not a directory.", path->s);
+        string_discard(path);
+        return;
+    }
+
+    dp = opendir(path->s);
+    out = list_new(0);
+    d.type = STRING;
+ 
+    while ((dent = readdir(dp)) != NULL) {
+        if (strncmp(dent->d_name, ".", 1) == F_SUCCESS ||
+            strncmp(dent->d_name, "..", 2) == F_SUCCESS)
+            continue;
+
+#ifdef HAVE_D_NAMLEN
+        name = string_from_chars(dent->d_name, dent->d_namlen);
+#else
+        name = string_from_chars(dent->d_name, strlen(dent->d_name));
+#endif
+        d.u.str = name;
+        out = list_add(out, &d);
+        string_discard(name);
+    }
+
+    closedir(dp);
+
+    pop(1);
+    push_list(out);
+    list_discard(out);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+void func_fclose(void) {
+    filec_t * file;
+    int       err;
+
+    if (!func_init_0())
+        return;
+
+    file = find_file_controller(cur_frame->object);
+
+    if (file == NULL) {
+        cthrow(file_id, "A file is not open on this object.");
+        return;
+    }
+
+    err = close_file(file);
+    file_discard(file, cur_frame->object);
+
+    if (err) {
+        cthrow(file_id, strerror(errno));
+        return;
+    }
+
+    push_int(1);
+}
+
+/*
+// -----------------------------------------------------------------
+//
+// NOTE: args are inverted from the stdio chmod() function call,
+// This makes it easier defaulting to this() file.
+//
+*/
+void func_fchmod(void) {
+    filec_t  * file;
+    data_t   * args;
+    string_t * path;
+    int        failed,
+               nargs;
+    long       mode;
+    char     * p,
+             * ep;
+
+    if (!func_init_1_or_2(&args, &nargs, STRING, STRING))
+        return;
+
+    /* frob the string to a mode_t, somewhat taken from FreeBSD's chmod.c */
+    p = args[0].u.str->s;
+
+    errno = 0;
+    mode = strtol(p, &ep, 8);
+
+    if (*p < '0' || *p > '7' || mode > INT_MAX || mode < 0)
+        errno = ERANGE;
+    if (errno) {
+        cthrow(file_id, "invalid file mode \"%s\": %s", p, strerror(errno));
+        return;
+    }
+
+    /* don't allow SUID mods, incase somebody is being stupid and
+       running the server as root; so it could actually happen */
+    if (mode & S_ISUID || mode & S_ISGID || mode & S_ISVTX) {
+        cthrow(file_id, "You cannot set sticky bits this way, sorry.");
+        return;
+    }
+
+    if (nargs == 1) {
+        GET_FILE_CONTROLLER(file)
+        path = string_dup(file->path);
+    } else {
+        struct stat sbuf;
+
+        path = build_path(args[1].u.str->s, &sbuf, ALLOW_DIR);
+        if (path == NULL)
+            return;
+    }
+
+    failed = chmod(path->s, mode);
+    string_discard(path);
+
+    if (failed) {
+        cthrow(file_id, strerror(errno));
+        return;
+    }
+
+    pop(2);
+    push_int(1);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+void func_frmdir(void) {
+    data_t      * args;
+    string_t    * path;
+    int           err;
+    struct stat   sbuf;
+
+    if (!func_init_1(&args, STRING))
+        return;
+
+    path = build_path(args[0].u.str->s, &sbuf, ALLOW_DIR);
+    if (!path)
+        return;
+
+    /* default the mode to 0700, they can chmod it later */
+    err = rmdir(path->s);
+    string_discard(path);
+    if (err != F_SUCCESS) {
+        cthrow(file_id, strerror(errno));
+        return;
+    }
+
+    pop(1);
+    push_int(1);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+void func_fmkdir(void) {
+    data_t      * args;
+    string_t    * path;
+    int           err;
+    struct stat   sbuf;
+
+    if (!func_init_1(&args, STRING))
+        return;
+
+    path = build_path(args[0].u.str->s, NULL, -1);
+    if (!path)
+        return;
+
+    if (stat(path->s, &sbuf) == F_SUCCESS) {
+        cthrow(file_id,"A file or directory already exists as \"%s\".",path->s);
+        string_discard(path);
+        return;
+    }
+
+    /* default the mode to 0700, they can chmod it later */
+    err = mkdir(path->s, 0700);
+    string_discard(path);
+    if (err != F_SUCCESS) {
+        cthrow(file_id, strerror(errno));
+        return;
+    }
+
+    pop(1);
+    push_int(1);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+void func_fremove(void) {
+    data_t      * args;
+    filec_t     * file;
+    string_t    * path;
+    int           nargs,
+                  err;
+    struct stat   sbuf;
+
+    if (!func_init_0_or_1(&args, &nargs, STRING))
+        return;
+
+    if (nargs) {
+        path = build_path(args[0].u.str->s, &sbuf, DISALLOW_DIR);
+        if (!path)
+            return;
+    } else {
+        GET_FILE_CONTROLLER(file)
+        path = string_dup(file->path);
+    }
+
+    err = unlink(path->s);
+    string_discard(path);
+    if (err != F_SUCCESS) {
+        cthrow(file_id, strerror(errno));
+        return;
+    }
+
+    if (nargs)
+        pop(1);
+
+    push_int(1);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+void func_fseek(void) {
+    data_t  * args;
+    filec_t * file;
+    int       whence = SEEK_CUR;
+
+    if (!func_init_2(&args, INTEGER, SYMBOL))
+        return;
+
+    GET_FILE_CONTROLLER(file)
+ 
+    if (!file->f.readable || !file->f.writable) {
+        cthrow(file_id,
+               "File \"%s\" is not both readable and writable.",
+               file->path->s);
+        return;
+    }
+
+    if (strccmp(ident_name(args[1].u.symbol), "SEEK_SET"))
+        whence = SEEK_SET;
+    else if (strccmp(ident_name(args[1].u.symbol), "SEEK_CUR")) 
+        whence = SEEK_CUR;
+    else if (strccmp(ident_name(args[1].u.symbol), "SEEK_END")) 
+        whence = SEEK_END;
+
+    printf("whence: %d, %s\n", whence, ident_name(args[1].u.symbol));
+
+    if (fseek(file->fp, args[0].u.val, whence) != F_SUCCESS) {
+        cthrow(file_id, strerror(errno));
+        return;
+    }
+
+    pop(2);
+    push_int(1);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+void func_frename(void) {
+    string_t    * from,
+                * to;
+    data_t      * args;
+    struct stat   sbuf;
+    int           err;
+
+    if (!func_init_2(&args, 0, STRING))
+        return;
+
+#if DISABLED
+    /* bad behavior, changes the name of the file but doesn't update itself */
+    /* somebody may want to add this in eventually, but i'm tired right now */
+    if (args[0].type != STRING) {
+        filec_t  * file;
+
+        GET_FILE_CONTROLLER(file)
+        from = string_dup(file->path);
+    } else {
+
+#endif
+        from = build_path(args[0].u.str->s, &sbuf, ALLOW_DIR);
+        if (!from)
+            return;
+
+    /* stat it seperately so that we can give a better error */
+    to = build_path(args[1].u.str->s, NULL, ALLOW_DIR);
+    if (stat(to->s, &sbuf) < 0) {
+        cthrow(file_id, "Destination \"%s\" already exists.", to->s);
+        string_discard(to);
+        string_discard(from);
+        return;
+    }
+
+    err = rename(from->s, to->s);
+    string_discard(from);
+    string_discard(to);
+    if (err != F_SUCCESS) {
+        cthrow(file_id, strerror(errno));
+        return;
+    }
+
+    pop(2);
+    push_int(1);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+void func_fflush(void) {
+    filec_t * file;
+
+    if (!func_init_0())
+        return;
+
+    GET_FILE_CONTROLLER(file)
+
+    if (fflush(file->fp) == EOF) {
+        cthrow(file_id, strerror(errno));
+        return;
+    }
+
+    push_int(1);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+void func_feof(void) {
+    filec_t * file;
+
+    if (!func_init_0())
+        return;
+
+    GET_FILE_CONTROLLER(file);
+
+    if (feof(file->fp))
+        push_int(1);
+    else
+        push_int(0);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+void func_fread(void) {
+    data_t  * args;
+    int       nargs;
+    filec_t  * file;
+
+    if (!func_init_0_or_1(&args, &nargs, INTEGER))
+        return;
+
+    GET_FILE_CONTROLLER(file)
+
+    if (!file->f.readable) {
+        cthrow(file_id, "File is not readable.");
+        return;
+    }
+
+    if (file->f.binary) {
+        Buffer * buf = NULL;
+        int      block = DEF_BLOCKSIZE;
+
+        if (nargs) {
+            block = args[0].u.val;
+            pop(1);
+        }
+
+        buf = read_binary_file(file, block);
+   
+        if (!buf)
+            return;
+
+        push_buffer(buf);
+        buffer_discard(buf);
+    } else {
+        string_t * str = read_file(file);
+
+        if (!str)
+            return;
+
+        if (nargs)
+            pop(1);
+
+        push_string(str);
+        string_discard(str);
+    }
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+void func_fwrite(void) {
+    data_t   * args;
+    int        count;
+    filec_t  * file;
+
+    if (!func_init_1(&args, 0))
+        return;
+
+    GET_FILE_CONTROLLER(file)
+
+    if (!file->f.writable) {
+        cthrow(perm_id, "File is not writable.");
+        return;
+    }
+
+    if (file->f.binary) {
+        if (args[0].type != BUFFER) {
+            cthrow(type_id,"File type is binary, you may only fwrite buffers.");
+            return;
+        }
+        count = fwrite(args[0].u.buffer->s,
+                       sizeof(unsigned char),
+                       args[0].u.buffer->len,
+                       file->fp);
+        count -= args[0].u.buffer->len;
+    } else {
+        if (args[0].type != STRING) {
+            cthrow(type_id, "File type is text, you may only fwrite strings.");
+            return;
+        }
+        count = fwrite(args[0].u.str->s,
+                       sizeof(unsigned char),
+                       args[0].u.str->len,
+                       file->fp);
+        count -= args[0].u.str->len;
+
+        /* if we successfully wrote everything, drop a newline on it */
+        if (!count)
+            fputc((char) 10, file->fp);
+    }
+
+    pop(1);
+    push_int(count);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+void func_fstat(void) {
+    struct stat    sbuf;
+    list_t       * stat;
+    data_t       * args;
+    int            nargs;
+    filec_t      * file;
+
+    if (!func_init_0_or_1(&args, &nargs, STRING))
+        return;
+
+    if (!nargs) {
+        GET_FILE_CONTROLLER(file)
+        stat_file(file, &sbuf);
+    } else {
+        string_t * path = build_path(args[0].u.str->s, &sbuf, ALLOW_DIR);
+
+        if (!path)
+            return;
+
+        string_discard(path);
+    }
+
+    stat = statbuf_to_list(&sbuf);
+
+    push_list(stat);
+    list_discard(stat);
+}   
+
 

@@ -1,18 +1,24 @@
 Look into the directory "doc/" for documentation on the ColdX Driver,
 the ColdX Project and other instructions.
 
-An email list is available, send to:
+An email list is available, send 'subscribe' in a mail message to:
 
     coldstuff-request@cold.org
 
-With a mail message of 'subscribe'.  This will register you to the list,
-which is at:
+This will register you to the coldstuff list at:
 
     coldstuff@cold.org
 
 Further information can be obtained from:
 
-    http://cold.org:8080/
+    http://www.cold.org/
 
 Read any other README's which may exist in this directory before
 continuing, please!
+
+Known bugs/problems:
+
+    * callers() causes a SEGV sometimes (but not always).  It is
+      used in .debug() in coldcore, so you may want to remove this.
+    * tasks() causes a SEGV most times.
+

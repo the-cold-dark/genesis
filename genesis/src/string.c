@@ -11,11 +11,10 @@
 // of String structure and references it with a one-element array.
 */
 
-
-#include <stdio.h>
-#include <string.h>
 #include "config.h"
 #include "defs.h"
+
+#include <string.h>
 #include "cdc_string.h"
 #include "memory.h"
 #include "dbpack.h"
@@ -35,7 +34,7 @@
 #define MALLOC_DELTA	(sizeof(string_t) + 32)
 #define STARTING_SIZE	(128 - MALLOC_DELTA)
 
-internal string_t *prepare_to_modify(string_t *str, int start, int len);
+INTERNAL string_t *prepare_to_modify(string_t *str, int start, int len);
 
 string_t *string_new(int size_needed) {
     string_t *cnew;
@@ -279,7 +278,7 @@ char *regerror(char *msg) {
 // In general, modifying start and len is the responsibility of this routine;
 // modifying the contents is the responsibility of the calling routine.
 */
-internal string_t *prepare_to_modify(string_t *str, int start, int len) {
+INTERNAL string_t *prepare_to_modify(string_t *str, int start, int len) {
     string_t *cnew;
     int need_to_move, need_to_resize, size;
 

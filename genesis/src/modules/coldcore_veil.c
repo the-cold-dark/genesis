@@ -63,7 +63,7 @@ typedef struct header_s {
 // -------------------------------------------------------------------
 // internal function for buffer -> VEIL packet
 */
-inline list_t * buffer_to_veil_packets(Buffer * buf) {
+list_t * buffer_to_veil_packets(Buffer * buf) {
     int             flags,
                     session,
                     length,

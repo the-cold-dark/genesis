@@ -11,14 +11,14 @@
 
 #define _main_
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "config.h"
+#include "defs.h"
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
-#include "config.h"
-#include "defs.h"
+#include <errno.h>
 #include "y.tab.h"
 #include "codegen.h"
 #include "opcodes.h"
@@ -30,18 +30,19 @@
 #include "match.h"
 #include "cache.h"
 #include "sig.h"
-#include "db.h"
+#include "binarydb.h"
 #include "util.h"
 #include "io.h"
+#include "file.h"
 #include "log.h"
-#include "dump.h"
 #include "execute.h"
 #include "token.h"
 #include "modules.h"
+#include "memory.h"
 
-internal void initialize(int argc, char **argv);
-internal void main_loop(void);
-internal void usage (char * name);
+INTERNAL void initialize(int argc, char **argv);
+INTERNAL void main_loop(void);
+void usage (char * name);
 
 /*
 // --------------------------------------------------------------------
@@ -51,6 +52,9 @@ internal void usage (char * name);
 */
 
 int main(int argc, char **argv) {
+    /* make us look purdy */
+    inststr(argv, argc, "Genesis");
+
     initialize(argc, argv);
     main_loop();
 
@@ -58,6 +62,7 @@ int main(int argc, char **argv) {
     cache_sync();
     db_close();
     flush_output();
+    close_files();
 
     return 0;
 }
@@ -69,16 +74,6 @@ int main(int argc, char **argv) {
 //
 */
 
-#define nextarg() { \
-        argv++; \
-        argc--; \
-        if (!argc) { \
-            usage(name); \
-            fprintf(stderr, "** No followup argument to -%s.\n", opt); \
-            exit(0); \
-        } \
-    }
-
 #define addarg(__str) { \
         arg.type = STRING; \
         str = string_from_chars(__str, strlen(__str)); \
@@ -87,16 +82,21 @@ int main(int argc, char **argv) {
         string_discard(str); \
     } \
 
-internal void initialize(int argc, char **argv) {
-    object_t * obj;
-    list_t   * parents,
-             * args;
+#define NEWFILE(var, name) { \
+        free(var); \
+        var = EMALLOC(char, strlen(name)); \
+        strcpy(var, name); \
+    }
+
+INTERNAL void initialize(int argc, char **argv) {
+    list_t   * args;
     string_t * str;
-    data_t     arg,
-             * d;
+    data_t     arg;
     char     * opt,
              * name,
-             * basedir = NULL;
+             * basedir = NULL,
+             * buf;
+    FILE     * fp;
 
     name = *argv;
     argv++;
@@ -104,6 +104,8 @@ internal void initialize(int argc, char **argv) {
 
     /* Ditch stdin, so we can reuse the file descriptor */
     fclose(stdin);
+
+    init_defs();
 
     /* Initialize internal tables and variables. */
     init_codegen();
@@ -116,7 +118,6 @@ internal void initialize(int argc, char **argv) {
     init_scratch_file();
     init_token();
     init_modules(argc, argv);
-    init_defs();
 
     /* db argument list */
     args = list_new(0);
@@ -125,26 +126,34 @@ internal void initialize(int argc, char **argv) {
     while (argc) {
         opt = *argv;
         if (*opt == '-') {
-            if (strlen(opt) != 2) {
-                addarg(*argv);
+            opt++;
+            if (*opt == '-') {
+                addarg(opt);
             } else {
-                opt++;
                 switch (*opt) {
-                    case 'b':
-                        nextarg();
-                        strcpy(c_dir_binary, *argv);
+                    case 'd':
+                        argv += getarg(name,&buf,opt,argv,&argc,usage);
+                        NEWFILE(c_dir_binary, buf);
                         break;
                     case 'r':
-                        nextarg();
-                        strcpy(c_dir_root, *argv);
+                        argv += getarg(name,&buf,opt,argv,&argc,usage);
+                        NEWFILE(c_dir_root, buf);
                         break;
-                    case 't':
-                        nextarg();
-                        strcpy(c_dir_textdump, *argv);
+                    case 'b':
+                        argv += getarg(name,&buf,opt,argv,&argc,usage);
+                        NEWFILE(c_dir_bin, buf);
+                        break;
+                    case 's':
+                        argv += getarg(name,&buf,opt,argv,&argc,usage);
+                        NEWFILE(c_logfile, buf);
                         break;
                     case 'e':
-                        nextarg();
-                        strcpy(c_dir_bin, *argv);
+                        argv += getarg(name,&buf,opt,argv,&argc,usage);
+                        NEWFILE(c_errfile, buf);
+                        break;
+                    case 'p':
+                        argv += getarg(name,&buf,opt,argv,&argc,usage);
+                        NEWFILE(c_pidfile, buf);
                         break;
                     case 'v':
                         printf("Genesis %d.%d-%d\n",
@@ -158,7 +167,9 @@ internal void initialize(int argc, char **argv) {
                         exit(0);
                         break;
                     default:
-                        addarg(*argv);
+                        usage(name);
+                        fprintf(stderr, "** Invalid argument -%s\n** send arguments to the database by prefixing them with '--', not '-'\n", opt); 
+                        exit(1);
                 }
             }
         } else {
@@ -182,63 +193,63 @@ internal void initialize(int argc, char **argv) {
 	exit(1);
     }
 
-    /* people like to know what is up */
-    fprintf(stderr, "Initializing database...");
+    /* open the correct logfiles */
+    if (strccmp(c_logfile, "stderr") == 0)
+        logfile = stderr;
+    else if (strccmp(c_logfile, "stdout") != 0 &&
+             (logfile = fopen(c_logfile, "ab")) == NULL)
+    {
+        fprintf(stderr, "Unable to open log %s: %s\nDefaulting to stdout..\n",
+                c_logfile, strerror(errno));
+        logfile = stdout;
+    }
+
+    if (strccmp(c_errfile, "stdout") == 0)
+        logfile = stdout;
+    else if (strccmp(c_errfile, "stderr") != 0 &&
+             (errfile = fopen(c_errfile, "ab")) == NULL)
+    {
+        fprintf(stderr, "Unable to open log %s: %s\nDefaulting to stderr..\n",
+                c_errfile, strerror(errno));
+        errfile = stderr;
+    }
+
+    /* print the PID */
+    if ((fp = fopen(c_pidfile, "wb")) != NULL) {
+        fprintf(fp, "%ld\n", (long) getpid());
+        fclose(fp);
+    }
 
     /* Initialize database and network modules. */
     init_cache();
-#if 1
     init_binary_db();
-#else
-    use_textdump = init_db(0);
-#endif
+    init_core_objects();
 
-    /* Order of operations note: it might seem like we'd want to read the text
-     * dump (if we're going to) before making sure there's a root and system
-     * object.  However, this way is correct, since the textdump reader can
-     * evaluate arbitrary ColdC code and thus should start with a consistent
-     * database. */
+    /* give useful information, good for debugging */
+    { /* reduce the scope */
+        data_t   * d;
+        string_t * str;
+        int        first = 1;
 
-    /* Make sure there is a root object. */
-    obj = cache_retrieve(ROOT_DBREF);
-    if (!obj) {
-	parents = list_new(0);
-	obj = object_new(ROOT_DBREF, parents);
-	list_discard(parents);
+        fputs("Calling $sys.startup(", logfile);
+        for (d=list_first(args); d; d=list_next(args, d)) {
+            str = data_to_literal(d);
+            if (!first) {
+                fputc(',', logfile);
+                fputc(' ', logfile);
+            } else {
+                first = 0;
+            }
+            fputs(string_chars(str), logfile);
+            string_discard(str);
+        }
+        fputs(")...\n", logfile);
     }
-    cache_discard(obj);
-
-    /* Make sure there is a system object. */
-    obj = cache_retrieve(SYSTEM_DBREF);
-    if (!obj) {
-	parents = list_new(1);
-	d = list_empty_spaces(parents, 1);
-	d->type = DBREF;
-	d->u.dbref = ROOT_DBREF;
-	obj = object_new(SYSTEM_DBREF, parents);
-	list_discard(parents);
-    }
-    cache_discard(obj);
-
-#if DISABLED
-    /* Read a text dump if there was no existing binary database. */
-    if (use_textdump) {
-        write_err("Reading from textdump...");
-	fp = fopen("textdump", "r");
-	if (!fp) {
-	    fail_to_start("Couldn't open text dump file.");
-	} else {
-	    text_dump_read(fp);
-	    fclose(fp);
-	}
-    }
-#endif
-
-    printf("Sending Startup Message.\n");
-    /* Send a startup message to the system object. */
+     
+    /* call $sys.startup() */
     arg.type = LIST;
     arg.u.list = args;
-    task(NULL, SYSTEM_DBREF, startup_id, 1, &arg);
+    task(SYSTEM_OBJNUM, startup_id, 1, &arg);
     list_discard(args);
 }
 
@@ -249,18 +260,23 @@ internal void initialize(int argc, char **argv) {
 //
 */
 
-internal void main_loop(void) {
-    int             seconds = 0;
-    time_t          next_heartbeat = 0,
-                    last_heartbeat = 0,
-                    t = 0;
+INTERNAL void main_loop(void) {
+    int             seconds;
+    time_t          next_heartbeat,
+                    last_heartbeat,
+                    t;
+
+    setjmp(main_jmp);
+
+    seconds = 0;
+    next_heartbeat = last_heartbeat = t = 0;
 
     while (running) {
 	/* delete any defunct connection or server records */
 	flush_defunct();
 
 	/* Sanity check: make sure there are no objects in active chains. */
-	/*	cache_sanity_check(); */
+	cache_sanity_check();
 
 	/* Find number of seconds before next heartbeat. */
 	if (heartbeat_freq != -1) {
@@ -270,7 +286,6 @@ internal void main_loop(void) {
 	    time(&t);
 	    seconds = (t >= next_heartbeat) ? 0 : next_heartbeat - t;
 	    seconds = (paused ? 0 : seconds);
-            /* fprintf(stderr, "seconds: %d\n", seconds); */
 	}
 
         /* wait seconds for something to happen */
@@ -290,9 +305,9 @@ internal void main_loop(void) {
 	    if (t >= next_heartbeat) {
                 /* call heartbeat on $sys */
 		last_heartbeat = t;
-		task(NULL, SYSTEM_DBREF, heartbeat_id, 0);
+		task(SYSTEM_OBJNUM, heartbeat_id, 0);
 
-                /* clenup the cache */
+                /* cleanup the cache */
                 cache_cleanup();
 	    }
 	}
@@ -306,18 +321,22 @@ internal void main_loop(void) {
     }
 }
 
-internal void usage (char * name) {
+void usage (char * name) {
     fprintf(stderr, "\n-- Genesis %d.%d-%d --\n\n\
 Usage: %s [base dir] [options]\n\n\
-    Base directory will default to \".\" if unspecified.\n\n\
-    Options which the driver does not understand are passed onto\n\
-    the database as arguments to $sys.startup().\n\n\
+    Base directory will default to \".\" if unspecified.  Arguments which\n\
+    the driver does not recognize, or options which begin with \"--\" rather\n\
+    than \"-\" are passed onto the database as arguments to $sys.startup().\n\n\
+    Note: specifying \"stdin\" or \"stderr\" for either of the logs will\n\
+    direct them appropriately.\n\n\
 Options:\n\n\
     -v               version.\n\
-    -b <binary>      binary db directory name, default: \"binary\"\n\
-    -r <root>        root file directory name, default: \"root\"\n\
-    -t <textdump>    textdump filename to write to, default: \"textdump\"\n\
-    -e <bindir>      executables directory name, default: \"root/bin\"\n\
+    -d binary        binary database directory name, default: \"binary\"\n\
+    -r root          root file directory name, default: \"root\"\n\
+    -b bindir        exacutables directory, default: \"root/bin\"\n\
+    -s serverlog     alternate server logfile, default: \"logs/server.log\"\n\
+    -e errorlog      alternate error file, default: \"logs/error.log\"\n\
+    -p pidfile       alternate pid file, default: \"logs/genesis.pid\"\n\
 \n",  VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, name);
 }
 

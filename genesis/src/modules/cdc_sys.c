@@ -22,20 +22,12 @@
 int getrusage(int who, struct rusage * r_usage);
 #endif
 
-void op_next_dbref(void) {
+void op_next_objnum(void) {
 
     if (!func_init_0())
         return;
 
-    push_dbref(db_top);
-}
-
-void op_load(void) {
-
-    if (!func_init_0())
-        return;
-
-    push_int(1);
+    push_objnum(db_top);
 }
 
 void op_status(void) {
@@ -49,7 +41,7 @@ void op_status(void) {
     if (!func_init_0())
         return;
 
-#define __LLENGTH__ 18
+#define __LLENGTH__ 19
 
     status = list_new(__LLENGTH__);
     d = list_empty_spaces(status, __LLENGTH__);
@@ -58,7 +50,7 @@ void op_status(void) {
 
 #ifndef HAVE_GETRUSAGE
 
-    for (x=0; x < __LLENGTH__; x++)
+    for (x=0; x < __LLENGTH__ - 1; x++)
         d[x].u.val = -1;
 
 #else
@@ -83,6 +75,7 @@ void op_status(void) {
 
 #endif
 
+    d[18].u.val = (int) atomic;
 #undef __LLENGTH__
 
     push_list(status);

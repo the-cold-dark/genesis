@@ -10,10 +10,8 @@
 */
 
 #include "config.h"
-
-#include <stdio.h>
-#include <stdlib.h>
 #include "defs.h"
+
 #include "y.tab.h"
 #include "cdc_types.h"
 #include "execute.h"
@@ -55,7 +53,7 @@ list_t * tokenize_cml(string_t * str) {
     esc = 0;
     list = list_new(0);
 
-    for (; *s != (char *)NULL; s++) {
+    for (; *s != (char) NULL; s++) {
         if (esc) {
             esc = 0;
 

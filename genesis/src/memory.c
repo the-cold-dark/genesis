@@ -14,11 +14,10 @@
 // they work on most systems and save space.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
 #include "config.h"
 #include "defs.h"
+
+#include <sys/types.h>
 #include "memory.h"
 #include "log.h"
 
@@ -73,16 +72,18 @@ struct oversized {
 
 static Tlist *trays[NUM_TRAYS];
 
-inline void efree(void *block) {
+#ifdef DOFUNC_FREE
+void efree(void *block) {
     free(block);
 }
+#endif
 
 void * emalloc(size_t size) {
     void *ptr;
 
     ptr = malloc(size);
     if (!ptr)
-        panic("malloc() failed.");
+        panic("emalloc(%lX) failed.", size);
     return ptr;
 }
 
@@ -92,7 +93,7 @@ void *erealloc(void *ptr, size_t size)
 
     newptr = realloc(ptr, size);
     if (!newptr)
-	panic("realloc() failed.");
+	panic("erealloc(%ld) failed.", size);
     return newptr;
 }
 
@@ -177,7 +178,7 @@ char *tstrdup(char *s)
     if (cnew)
       memcpy(cnew, s, len + 1);
     else
-      panic("malloc() failed.");
+      panic("tstrdup(): malloc(%ld) failed.", len);
 
     return cnew;
 }

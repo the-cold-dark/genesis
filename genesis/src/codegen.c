@@ -9,10 +9,10 @@
 // Generate internal representation for ColdC code.
 */
 
-#include <stdio.h>
-#include <string.h>
 #include "config.h"
 #include "defs.h"
+
+#include <string.h>
 #include "y.tab.h"
 #include "cdc_types.h"
 #include "codegen.h"
@@ -90,7 +90,7 @@ Prog *make_prog(int overridable, Arguments *args, Id_list *vars,
 
     /* default states */
     cnew->m_flags = MF_NONE;
-    cnew->m_state = MS_PUBLIC;
+    cnew->m_access = MS_PUBLIC;
 #if 1
     if (!overridable)
         cnew->m_flags |= MF_NOOVER;
@@ -294,13 +294,13 @@ Expr *string_expr(char *s)
     return cnew;
 }
 
-Expr *dbref_expr(long dbref)
+Expr *objnum_expr(long objnum)
 {
     Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
 
-    cnew->type = DBREF;
+    cnew->type = OBJNUM;
     cnew->lineno = cur_lineno();
-    cnew->u.dbref = dbref;
+    cnew->u.objnum = objnum;
     return cnew;
 }
 
@@ -1047,10 +1047,10 @@ static void compile_expr(Expr *expr)
 
 	break;
 
-      case DBREF:
+      case OBJNUM:
 
-	code(DBREF);
-	code(expr->u.dbref);
+	code(OBJNUM);
+	code(expr->u.objnum);
 
 	break;
 
@@ -1474,7 +1474,7 @@ static method_t *final_pass(object_t *object)
     method = EMALLOC(method_t, 1);
 
     method->m_flags = the_prog->m_flags;
-    method->m_state = the_prog->m_state;
+    method->m_access = the_prog->m_access;
 
     /* Set argument names. */
     method->num_args = id_list_size(the_prog->args->ids);

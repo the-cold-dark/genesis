@@ -7,12 +7,15 @@
 // File: dbpack.c
 // ---
 // Write and retrieve objects to disk.
+//
+// note: ORDER_BYTES is buggy, don't enable it unless you are willing 
+//       and able to field problems which may arise.
 */
 
-#include <stdio.h>
-#include <string.h>
 #include "config.h"
 #include "defs.h"
+
+#include <string.h>
 #include "y.tab.h"
 #include "dbpack.h"
 #include "cdc_types.h"
@@ -22,6 +25,7 @@
 /* Write a four-byte number to fp in a consistent byte-order. */
 void write_long(long n, FILE *fp)
 {
+#ifdef ORDER_BYTES
     /* Since first byte is special, special-case 0 as well. */
     if (!n) {
 	putc(96, fp);
@@ -38,11 +42,15 @@ void write_long(long n, FILE *fp)
     }
 
     putc(96, fp);
+#else
+    fwrite(&n, sizeof(long), 1, fp);
+#endif
 }
 
 /* Read a four-byte number in a consistent byte-order. */
 long read_long(FILE *fp)
 {
+#ifdef ORDER_BYTES
     int c;
     long n, place;
 
@@ -62,10 +70,18 @@ long read_long(FILE *fp)
 	n += place * (c - 32);
 	place *= 64;
     }
+#else
+    long    l;
+  
+    fread(&l, sizeof(long), 1, fp);
+
+    return l;
+#endif
 }
 
 int size_long(long n)
 {
+#ifdef ORDER_BYTES
     int count = 2;
 
     if (!n)
@@ -76,21 +92,28 @@ int size_long(long n)
 	count++;
     }
     return count;
+#else
+    return sizeof(n);
+#endif
 }
 
 
-internal void write_ident(long id, FILE *fp)
+INTERNAL void write_ident(long id, FILE *fp)
 {
     char *s;
     int len;
 
+    if (id == NOT_AN_IDENT) {
+        write_long(NOT_AN_IDENT, fp);
+        return;
+    }
     s = ident_name(id);
     len = strlen(s);
     write_long(len, fp);
     fwrite(s, sizeof(char), len, fp);
 }
 
-internal long read_ident(FILE *fp)
+INTERNAL long read_ident(FILE *fp)
 {
     int len;
     char *s;
@@ -117,7 +140,7 @@ internal long read_ident(FILE *fp)
     return id;
 }
 
-internal long size_ident(long id)
+INTERNAL long size_ident(long id)
 {
     int len = strlen(ident_name(id));
 
@@ -125,11 +148,10 @@ internal long size_ident(long id)
 }
 
 /* forward references for recursion */
-internal void pack_data(data_t *data, FILE *fp);
-internal void unpack_data(data_t *data, FILE *fp);
-internal int size_data(data_t *data);
+INTERNAL void pack_data(data_t *data, FILE *fp);
+INTERNAL void unpack_data(data_t *data, FILE *fp);
 
-internal void pack_list(list_t *list, FILE *fp) {
+INTERNAL void pack_list(list_t *list, FILE *fp) {
     data_t *d;
 
     write_long(list_length(list), fp);
@@ -137,7 +159,7 @@ internal void pack_list(list_t *list, FILE *fp) {
 	pack_data(d, fp);
 }
 
-internal list_t *unpack_list(FILE *fp) {
+INTERNAL list_t *unpack_list(FILE *fp) {
     int len, i;
     list_t *list;
     data_t *d;
@@ -150,7 +172,7 @@ internal list_t *unpack_list(FILE *fp) {
     return list;
 }
 
-internal int size_list(list_t *list)
+INTERNAL int size_list(list_t *list)
 {
     data_t *d;
     int size = 0;
@@ -161,7 +183,7 @@ internal int size_list(list_t *list)
     return size;
 }
 
-internal void pack_dict(Dict *dict, FILE *fp)
+INTERNAL void pack_dict(Dict *dict, FILE *fp)
 {
     int i;
 
@@ -174,7 +196,7 @@ internal void pack_dict(Dict *dict, FILE *fp)
     }
 }
 
-internal Dict *unpack_dict(FILE *fp)
+INTERNAL Dict *unpack_dict(FILE *fp)
 {
     Dict *dict;
     int i;
@@ -193,7 +215,7 @@ internal Dict *unpack_dict(FILE *fp)
     return dict;
 }
 
-internal int size_dict(Dict *dict)
+INTERNAL int size_dict(Dict *dict)
 {
     int size = 0, i;
 
@@ -207,7 +229,7 @@ internal int size_dict(Dict *dict)
     return size;
 }
 
-internal void pack_vars(object_t *obj, FILE *fp)
+INTERNAL void pack_vars(object_t *obj, FILE *fp)
 {
     int i;
 
@@ -227,7 +249,7 @@ internal void pack_vars(object_t *obj, FILE *fp)
     }
 }
 
-internal void unpack_vars(object_t *obj, FILE *fp)
+INTERNAL void unpack_vars(object_t *obj, FILE *fp)
 {
     int i;
 
@@ -249,7 +271,7 @@ internal void unpack_vars(object_t *obj, FILE *fp)
 
 }
 
-internal int size_vars(object_t *obj)
+INTERNAL int size_vars(object_t *obj)
 {
     int size = 0, i;
 
@@ -271,7 +293,7 @@ internal int size_vars(object_t *obj)
     return size;
 }
 
-internal void pack_method(method_t *method, FILE *fp)
+INTERNAL void pack_method(method_t *method, FILE *fp)
 {
     int i, j;
 
@@ -297,11 +319,12 @@ internal void pack_method(method_t *method, FILE *fp)
 	    write_ident(method->error_lists[i].error_ids[j], fp);
     }
 
-    write_long(method->m_state, fp);
+    write_long(method->m_access, fp);
     write_long(method->m_flags, fp);
+
 }
 
-internal method_t *unpack_method(FILE *fp)
+INTERNAL method_t *unpack_method(FILE *fp)
 {
     int name, i, j, n;
     method_t *method;
@@ -347,14 +370,14 @@ internal method_t *unpack_method(FILE *fp)
 	}
     }
 
-    method->m_state = read_long(fp);
+    method->m_access = read_long(fp);
     method->m_flags = read_long(fp);
 
     method->refs = 1;
     return method;
 }
 
-internal int size_method(method_t *method)
+INTERNAL int size_method(method_t *method)
 {
     int size = 0, i, j;
 
@@ -380,12 +403,12 @@ internal int size_method(method_t *method)
 	    size += size_ident(method->error_lists[i].error_ids[j]);
     }
 
-    size += size_long(method->m_state);
+    size += size_long(method->m_access);
     size += size_long(method->m_flags);
     return size;
 }
 
-internal void pack_methods(object_t *obj, FILE *fp)
+INTERNAL void pack_methods(object_t *obj, FILE *fp)
 {
     int i;
 
@@ -404,7 +427,7 @@ internal void pack_methods(object_t *obj, FILE *fp)
     }
 }
 
-internal void unpack_methods(object_t *obj, FILE *fp)
+INTERNAL void unpack_methods(object_t *obj, FILE *fp)
 {
     int i;
 
@@ -423,7 +446,7 @@ internal void unpack_methods(object_t *obj, FILE *fp)
     }
 }
 
-internal int size_methods(object_t *obj)
+INTERNAL int size_methods(object_t *obj)
 {
     int size = 0, i;
 
@@ -442,7 +465,7 @@ internal int size_methods(object_t *obj)
     return size;
 }
 
-internal void pack_strings(object_t *obj, FILE *fp)
+INTERNAL void pack_strings(object_t *obj, FILE *fp)
 {
     int i;
 
@@ -455,7 +478,7 @@ internal void pack_strings(object_t *obj, FILE *fp)
     }
 }
 
-internal void unpack_strings(object_t *obj, FILE *fp)
+INTERNAL void unpack_strings(object_t *obj, FILE *fp)
 {
     int i;
 
@@ -469,7 +492,7 @@ internal void unpack_strings(object_t *obj, FILE *fp)
     }
 }
 
-internal int size_strings(object_t *obj)
+INTERNAL int size_strings(object_t *obj)
 {
     int size = 0, i;
 
@@ -484,7 +507,7 @@ internal int size_strings(object_t *obj)
     return size;
 }
 
-internal void pack_idents(object_t *obj, FILE *fp)
+INTERNAL void pack_idents(object_t *obj, FILE *fp)
 {
     int i;
 
@@ -500,7 +523,7 @@ internal void pack_idents(object_t *obj, FILE *fp)
     }
 }
 
-internal void unpack_idents(object_t *obj, FILE *fp)
+INTERNAL void unpack_idents(object_t *obj, FILE *fp)
 {
     int i;
 
@@ -514,7 +537,7 @@ internal void unpack_idents(object_t *obj, FILE *fp)
     }
 }
 
-internal int size_idents(object_t *obj)
+INTERNAL int size_idents(object_t *obj)
 {
     int size = 0, i;
 
@@ -532,7 +555,7 @@ internal int size_idents(object_t *obj)
     return size;
 }
 
-internal void pack_data(data_t *data, FILE *fp)
+INTERNAL void pack_data(data_t *data, FILE *fp)
 {
     write_long(data->type, fp);
     switch (data->type) {
@@ -549,8 +572,8 @@ internal void pack_data(data_t *data, FILE *fp)
 	string_pack(data->u.str, fp);
 	break;
 
-      case DBREF:
-	write_long(data->u.dbref, fp);
+      case OBJNUM:
+	write_long(data->u.objnum, fp);
 	break;
 
       case LIST:
@@ -585,7 +608,7 @@ internal void pack_data(data_t *data, FILE *fp)
     }
 }
 
-internal void unpack_data(data_t *data, FILE *fp)
+INTERNAL void unpack_data(data_t *data, FILE *fp)
 {
     data->type = read_long(fp);
     switch (data->type) {
@@ -604,8 +627,8 @@ internal void unpack_data(data_t *data, FILE *fp)
 	data->u.str = string_unpack(fp);
 	break;
 
-      case DBREF:
-	data->u.dbref = read_long(fp);
+      case OBJNUM:
+	data->u.objnum = read_long(fp);
 	break;
 
       case LIST:
@@ -642,8 +665,7 @@ internal void unpack_data(data_t *data, FILE *fp)
     }
 }
 
-internal int size_data(data_t *data)
-{
+int size_data(data_t *data) {
     int size = 0;
 
     size += size_long(data->type);
@@ -661,8 +683,8 @@ internal int size_data(data_t *data)
 	size += string_packed_size(data->u.str);
 	break;
 
-      case DBREF:
-	size += size_long(data->u.dbref);
+      case OBJNUM:
+	size += size_long(data->u.objnum);
 	break;
 
       case LIST:
@@ -707,6 +729,7 @@ void pack_object(object_t *obj, FILE *fp)
     pack_methods(obj, fp);
     pack_strings(obj, fp);
     pack_idents(obj, fp);
+    write_ident(obj->objname, fp);
     write_long(obj->search, fp);
 }
 
@@ -718,6 +741,7 @@ void unpack_object(object_t *obj, FILE *fp)
     unpack_methods(obj, fp);
     unpack_strings(obj, fp);
     unpack_idents(obj, fp);
+    obj->objname = read_ident(fp);
     obj->search = read_long(fp);
 }
 
@@ -731,6 +755,8 @@ int size_object(object_t *obj)
     size += size_methods(obj);
     size += size_strings(obj);
     size += size_idents(obj);
+    if (obj->objname != -1)
+        size += size_ident(obj->objname);
     size += size_long(obj->search);
     return size;
 }

@@ -34,10 +34,10 @@
 // ** Modified by BJG, memory cleanup and ANSI-izing
 */
 
-#include <stdio.h>
-#include <string.h>
 #include "config.h"
 #include "defs.h"
+
+#include <string.h>
 #include "regexp.h"
 #include "regmagic.h"
 #include "util.h"
@@ -822,7 +822,7 @@ char *prog;
 {
 	register char *scan;	/* Current node. */
 	char *next;		/* Next node. */
-	extern char *strchr();
+	/* extern char *strchr(); */
 
 	scan = prog;
 #ifdef DEBUG
@@ -1083,7 +1083,7 @@ regexp *r;
 	register char *s;
 	register char op = EXACTLY;	/* Arbitrary non-END op. */
 	register char *next;
-	extern char *strchr();
+	/* extern char *strchr(); */
 
 
 	s = r->program + 1;
@@ -1206,7 +1206,7 @@ char *op;
  * about it; at least one public-domain implementation of those (highly
  * useful) string routines has been published on Usenet.
  */
-#ifdef STRCSPN
+#ifndef HAVE_STRCSPN
 /*
  * strcspn - find length of initial segment of s1 consisting entirely
  * of characters not from s2

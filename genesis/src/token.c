@@ -20,8 +20,8 @@
 #define NUM_RESERVED_WORDS (sizeof(reserved_words) / sizeof(*reserved_words))
 #define SUBSCRIPT(c) ((c) & 0x7f)
 
-internal char *string_token(char *s, int len, int *token_len);
-internal char *identifier_token(char *s, int len, int *token_len);
+INTERNAL char *string_token(char *s, int len, int *token_len);
+INTERNAL char *identifier_token(char *s, int len, int *token_len);
 
 static list_t *code;
 static cur_line, cur_pos;
@@ -33,7 +33,7 @@ static struct {
 } reserved_words[] = {
     { "any",			ANY },
     { "arg",			ARG },
-    { "atomic",			ATOMIC },
+/*    { "atomic",			ATOMIC }, */
     { "break",			BREAK },
     { "case",			CASE },
     { "catch",			CATCH },
@@ -54,6 +54,10 @@ static struct {
     { "var",			VAR },
     { "while",			WHILE },
     { "with",			WITH },
+
+    /* these are around for backwards/future compatability */
+
+    /* cryptic reserved 'words' */
     { "(|",			CRITLEFT },
     { "(>",			PROPLEFT },
     { "<)",			PROPRIGHT },
@@ -68,11 +72,6 @@ static struct {
     { "==",			EQ },
     { "!=",			NE },
     { ">=",			GE }
-#if 0
-    ,
-    { ">>",			SR },
-    { "<<",			SL }
-#endif
 };
 
 static struct {
@@ -265,7 +264,7 @@ int yylex(void)
 	return COMMENT;
     }
 
-    /* Check if it's a dbref. */
+    /* Check if it's a objnum. */
     if (len >= 2 && *s == '#' && isdigit(s[1])) {
 	/* Convert the string to a number. */
 	s++, cur_pos++, len--;
@@ -274,7 +273,7 @@ int yylex(void)
 	    yylval.num = yylval.num * 10 + (*s - '0');
 	    s++, cur_pos++, len--;
 	}
-	return DBREF;
+	return OBJNUM;
     }
 
     /* None of the above. */
@@ -287,7 +286,7 @@ int cur_lineno(void)
     return cur_line + 1;
 }
 
-internal char *string_token(char * s, int len, int *token_len)
+INTERNAL char *string_token(char * s, int len, int *token_len)
 {
     int count = 0, i;
     char *p, *q;
@@ -331,7 +330,7 @@ internal char *string_token(char * s, int len, int *token_len)
 }
 
 /* Assumption: isalpha(*s) || *s == '_'. */
-internal char *identifier_token(char *s, int len, int *token_len)
+INTERNAL char *identifier_token(char *s, int len, int *token_len)
 {
     int count = 1, i;
     char *p;

@@ -9,18 +9,17 @@
 // General utilities.
 */
 
-#include <stdio.h>
+#include "config.h"
+#include "defs.h"
+
 #include <ctype.h>
 #include <string.h>
 #include <time.h>
-#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdarg.h>
 #include <fcntl.h>
-#include "config.h"
-#include "defs.h"
 #include "y.tab.h"
 #include "util.h"
 #include "cdc_string.h"
@@ -41,7 +40,7 @@ extern char * crypt(const char *, const char *);
 static int  reserve_fds[MAX_SCRATCH];
 static int  fds_used;
 
-internal void claim_fd(int i);
+INTERNAL void claim_fd(int i);
 
 void init_util(void)
 {
@@ -98,6 +97,7 @@ long atoln(char *s, int n)
 
 char *long_to_ascii(long num, Number_buf nbuf)
 {
+#if DISABLED /* why?? */
     char *p = &nbuf[NUMBER_BUF_SIZE - 1];
     int sign = 0;
 
@@ -115,6 +115,11 @@ char *long_to_ascii(long num, Number_buf nbuf)
     if (sign)
 	*p-- = '-';
     return p + 1;
+#else
+    *nbuf++ = (char) 0;
+    sprintf(nbuf, "%ld", num);
+    return nbuf;
+#endif
 }
 
 char * float_to_ascii(float num, Number_buf nbuf) {
@@ -232,9 +237,6 @@ string_t *vformat(char *fmt, va_list arg) {
 	    buf = string_add(buf, str);
 	    break;
 
-	  case 'O':
-            /* figure objname, if not that then use dbref */
-
 	  case 'd':
 	    s = long_to_ascii(va_arg(arg, int), nbuf);
 	    buf = string_add_chars(buf, s, strlen(s));
@@ -254,6 +256,15 @@ string_t *vformat(char *fmt, va_list arg) {
 	    buf = string_add_chars(buf, string_chars(str), string_length(str));
 	    string_discard(str);
 	    break;
+
+          case 'O': {
+            data_t d;
+            d.type = OBJNUM;
+            d.u.objnum = va_arg(arg, objnum_t);
+            str = data_to_literal(&d);
+            buf = string_add_chars(buf, string_chars(str), string_length(str));
+            string_discard(str);
+          }
 
 	  case 'I':
 	    s = ident_name(va_arg(arg, long));
@@ -356,7 +367,7 @@ char *english_type(int type)
       case INTEGER:	return "an integer";
       case FLOAT:	return "a float";
       case STRING:	return "a string";
-      case DBREF:	return "a dbref";
+      case OBJNUM:	return "a objnum";
       case LIST:	return "a list";
       case SYMBOL:	return "a symbol";
       case ERROR:	return "an error";
@@ -429,7 +440,7 @@ void init_scratch_file(void)
 	claim_fd(i);
 }
 
-internal void claim_fd(int i)
+INTERNAL void claim_fd(int i)
 {
     reserve_fds[i] = open("/dev/null", O_WRONLY);
     if (reserve_fds[i] == -1)
@@ -474,3 +485,66 @@ int parse_strcpy(char * b1, char * b2, int slen) {
 }
 
 #undef add_char(__s, __c)
+
+extern char** environ;
+
+/* taken from bdflush-1.5 for Linux source code */
+
+/* actually, I stole it from the apache source -Brandon */
+
+void inststr(char *dst[], int argc, char *src) {
+    if (strlen(src) <= strlen(dst[0])) {
+        char *ptr;
+ 
+        for (ptr = dst[0]; *ptr; *(ptr++) = '\0'); 
+ 
+        strcpy(dst[0], src);
+    } else {
+        /* stolen from the source to perl 4.036 (assigning to $0) */ 
+        char *ptr, *ptr2;
+        int count;
+        ptr = dst[0] + strlen(dst[0]);
+        for (count = 1; count < argc; count++) {
+            if (dst[count] == ptr + 1)
+                ptr += strlen(++ptr);
+        } 
+        if (environ[0] == ptr + 1) { 
+            for (count = 0; environ[count]; count++)
+                if (environ[count] == ptr + 1)
+                    ptr += strlen(++ptr);
+        }
+        count = 0;
+        for (ptr2 = dst[0]; ptr2 <= ptr; ptr2++) {
+            *ptr2 = '\0';
+            count++;
+        }
+        strncpy(dst[0], src, count);
+    }
+}
+
+int getarg(char * n,
+           char **buf,
+           char * opt,
+           char **argv,
+           int  * argc,
+           void (*usage)(char *))
+{
+    char * p = opt; 
+    
+    if (*++p != (char) NULL) {
+        *buf = p;
+
+        return 0;
+    }
+
+    if (!(*argc - 1)) {
+        usage(n);
+        fprintf(stderr, "** No followup argument to -%s.\n", opt);
+        exit(1);
+    }
+    *buf = *argv;
+    *argc -= 1;
+
+    return 1;
+}       
+

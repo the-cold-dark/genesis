@@ -10,8 +10,9 @@
 */
 
 #include "config.h"
+#include "defs.h"
+
 #include <string.h>
-#include <stdlib.h>
 #include <ctype.h>
 #include "y.tab.h"
 #include "operators.h"
@@ -344,6 +345,7 @@ void op_match_regexp(void) {
 	    d.type = LIST;
 	    d.u.list = elemlist;
 	    fields = list_add(fields, &d);
+            list_discard(elemlist);
 	}
     }
 
@@ -419,37 +421,291 @@ void op_strcmp(void) {
     push_int(val);
 }
 
+#if 0
 /*
 // -------------------------------------------------------------
-//  %<args><type>
-// 
-// types: d or D       (literal data),
-//        l or L       (string -- left aligned)
-//        r or R       (string -- right)
-//        c or C       (string -- centered)
-//        e or E       (string, breaks with an elipse after pad width)
-// 
-// args are integers, plus an optional colon seperator, which specifies
-// the fill character.  If the fill character is any of the special
-// characters, prefix it with a slash.  A period may eventually specify
-// precision, with 'f'.  Capitalized versions of each string will
-// cut the string, when it reaches the end of the specified padding.
+// %<type>
+//
+// %<type>{<args>}
+//
+// %<type>{<pad>:<fill>:<precision>}
+//
+// float and other examples:
+//
+//     %f{::0.2}
+//     %f{10::0.2}
+//     %f{10:>>:0.2}
+//     %l{10:>>}
+//     %s{10}
+//
+// Types:
+//        d            (literal data),
+//        s,l          (string -- left aligned)
+//        r            (string -- right)
+//        c            (string -- centered)
+//        e            (string, breaks with an elipse after pad width)
+//
+// Caplitalized types will crop the string if/when it reaches the 'pad' length.
+// Examples:
 // 
 //    "%r", "test"      => "test"
 //    "%l", "test"      => "test"
 //    "%c", "test"      => "test"
 //    "%d", "test"      => "\"test\""
 // 
-//    "%10r", "test"    => "      test"
-//    "%10l", "test"    => "test      "
-//    "%10c", "test"    => "   test   "
-//    "%10:|r", "test"  => "||||||test"
-//    "%10:|l", "test"  => "test||||||"
-//    "%10:|c", "test"  => "|||test|||"
+//    "%r{10}", "test"    => "      test"
+//    "%l{10}", "test"    => "test      "
+//    "%c{10}", "test"    => "   test   "
+//    "%r{10:|>}", "test" => "|>|>|>test"
+//    "%l{10:|>}", "test" => "test|>|>|>"
+//    "%c{10:|>}", "test" => "|>|test|>|"
+//    "%f{::0.2}", 1.1214 => "1.12"
 // 
 //    "%5e", "testing"  => "te..."
+//
 // -------------------------------------------------------------
 */
+
+#define init_fmtargs() { fill = FILL; pad = p1 = p2 = 0; }
+
+int get_fmt_args(char * s, int * pad, char * fill, int * p1, int * p2) {
+    static char sfill[WORD]; /* hardcoded fill boundary... *shrug* */
+
+    s++;
+
+    if (*s != ':') {
+        pad = (int) atol(s);
+        s = strchr(s, ':');
+        if (s == NULL)
+            return 1;
+        s++;
+    }
+
+    if (*s != ':') {
+        char * p = strchr(s, ':') || strchr(s, '}');
+        if (p == (char) NULL)
+            return 0;
+        strncpy(sfill, s, p - s);
+        fill = sfill;
+        s = p;
+
+    }
+
+    if (*s != '}') {
+        p1 = atol(s);
+        s = strchr(s, '.');
+        if (s) {
+            s++;
+            p2 = atol(s);
+        }
+    }
+
+    return 1;
+}
+
+INTERNAL string_t * PAD(string_t * str, string_t * v, int pad, char * fill) {
+    char * f = fill;
+    int    len = pad;
+    int    x;
+
+    len -= v->len;
+    v = prepare_to_modify(v, v->start, pad);
+    for (x = v->len - 1; x < pad; x++) {
+        v->s[x] = *f;
+        f++;
+        if (!*f)
+            f = fill;
+    }
+
+    v->s[pad] = (char) NULL;
+}
+
+void op_strfmt(void) {
+    data_t    * argv,
+              * arg;
+    string_t  * str,
+              * value;
+    list_t    * args;
+    char      * fmt,
+              * s,
+                type,
+                FILL[] = {' ', (char) NULL};
+              * fill;
+              * f = fill;
+    int         len, pad, p1, p2;
+
+    /* accept two arguments, second is a list for the format */
+    if (!func_init_2(&argv, STRING, LIST))
+	return;
+
+    fmt = string_chars(argv[0].u.str);
+    len = argv[0].u.str->len;
+    args = argv[1].u.list;
+    str = string_new(0);
+    arg = list_first(argv[1].u.list);
+
+    while (arg) {
+        s = strchr(fmt, '%');
+
+        /* no more fmt, or if we end with "%" erase the "%" from the string */
+        if (s == NULL || (s[1] == NULL && s[0] = NULL)) {
+            str = string_add_chars(str, fmt, strlen(fmt));
+            break;
+        }
+
+        str = string_add_chars(str, fmt, s - fmt);
+        s++;
+        len -= (s - fmt);
+
+        type = *s;
+
+        s++;
+
+        /* get the args */
+        init_fmt_args();
+        if (*s == '{') {
+            char * p = strchr(s, '}');
+            if (p == (char) NULL) {
+                string_discard(str);
+                cthrow(type_id, "Format args terminate prematurely.");
+                return;
+            }
+            if (!get_fmt_args(s, &pad, &fill, &p1, &p2)) {
+                string_discard(str);
+                cthrow(type_id, "An error occured while parsing format args.");
+                return;
+            }
+            if (!strlen(fill))
+                fill = FILL;
+            s = ++p;
+        }
+
+        /* convert the data */
+        if (*s != 'd' && arg->type == STRING)
+            value = string_dup(arg->u.str);
+        else if (*s != 'd' && arg->type == SYMBOL) {
+            tmp = ident_name(arg->u.symbol);
+            value = string_from_chars(tmp, strlen(tmp));
+        } else
+            value = data_to_literal(arg);
+
+        /* handle the type */
+        switch (type) {
+            case 'L':
+            case 'S':
+                if (!pad)
+                    goto fmt_left;
+                str = PAD(str, value, pad, fill);
+                break;
+            case 'd':
+            case 's':
+            case 'l':
+                fmt_left:
+                if (v->len > pad)
+                    break;
+                str = PAD(str, value, pad, fill);
+                break;
+            case 'R':
+                if (!pad)
+                    goto fmt_right;
+                str = PAD(str, value, pad, fill);
+            case 'r':
+                fmt_right:
+            case 'C':
+                fmt_center_cropped:
+            case 'c':
+                fmt_center:
+            case 'E':
+            case 'e':
+                fmt_elipse:
+        }
+
+            case 'R':
+                if (p1 == 0)
+                    break;
+                if (value->len > p1) {
+                    value = string_truncate(value, p1);
+                } else {
+                    p1 -= value->len;
+                    while (p1-- > 0)
+                        str = string_addc(str, pchar);
+                }
+                str = string_add(str, value);
+                break;
+            case 'r':
+                p1 -= value->len;
+                while (p1-- > 0)
+                    str = string_addc(str, pchar);
+                str = string_add(str, value);
+                break;
+            case 'C':
+                if (p1 == 0)
+                    break;
+                if (value->len > p1) {
+                    value = string_truncate(value, p1);
+                } else {
+                    p1 -= value->len;
+                    p1 = p1 / 2;
+                    while (p1-- > 0) {
+                        str = string_addc(str, pchar);
+                        value = string_addc(value, pchar);
+                    }
+                }
+                str = string_add(str, value);
+                break;
+            case 'c':
+                if (p1 >= value->len) {
+                    p1 -= value->len;
+                    p1 = p1 / 2;
+                    while (p1-- > 0) {
+                        str = string_addc(str, pchar);
+                        value = string_addc(value, pchar);
+                    }
+                }
+                str = string_add(str, value);
+                break;
+            case 'E':
+            case 'e':
+                if (p1 == 0)
+                    break;
+                if (p1 <= 3) {
+                    string_discard(str);
+                    string_discard(value);
+                    cthrow(type_id,
+                           "Elipse pad length must be at least 4 or more.");
+                    return;
+                }
+                if (value->len > p1) {
+                    if (value->len - (p1 - 3) > 0)
+                        p1 = p1 - 3;
+                    value = string_truncate(value, p1);
+                    value = string_add_chars(value, "...", 3);
+                } else {
+                    p1 -= value->len;
+                    while (p1-- > 0)
+                        value = string_addc(value, pchar);
+                }
+                str = string_add(str, value);
+                break;
+            default:
+                /* invalid format, abort */
+                string_discard(str);
+                string_discard(value);
+                cthrow(type_id, "Invalid format, unknown control sequence.");
+                return;
+        }
+        string_discard(value);
+        arg = list_next(argv[1].u.list, arg);
+        fmt = ++s;
+        len--;
+    }
+
+    pop(2);
+    push_string(str);
+    string_discard(str);
+}
+
+#else
 
 void op_strfmt(void) {
     data_t   * argv,
@@ -640,3 +896,5 @@ void op_strfmt(void) {
     string_discard(str);
 }
 
+
+#endif

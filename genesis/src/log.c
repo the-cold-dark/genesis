@@ -9,28 +9,34 @@
 // Procedures to handle logging and fatal errors.
 */
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <stdarg.h>
 #include "config.h"
 #include "defs.h"
+
+#include <sys/types.h>
+#include <stdarg.h>
 #include "log.h"
-#include "dump.h"
+#include "cache.h"
 #include "cdc_types.h"
 #include "util.h"
 
-void panic(char *s) {
-    static int panic_state = 0;
+void panic(char *s, ...) {
+           va_list vargs;
+    static int     panic_state = 0;
 
-    fprintf(stderr, "[%s] %s: %s\n", timestamp(NULL),
-            (panic_state ? "RECURSIVE PANIC" : "PANIC"), s);
+    va_start(vargs,s);
+    fprintf(errfile, "[%s] %s: ", timestamp(NULL),
+            (panic_state ? "RECURSIVE PANIC" : "PANIC"));
+    vfprintf(errfile,s,vargs);
+    va_end(vargs);
+    fputc('\n',errfile);
 
     if (!panic_state) {
 	panic_state = 1;
-        fprintf(stderr, "[%s] doing binary dump...", timestamp(NULL));
-	binary_dump();
-        fputs("Done\n", stderr);
+        fprintf(errfile, "[%s] doing binary dump...", timestamp(NULL));
+	cache_sync();
+        fputs("Done\n", errfile);
     }
+
     exit(1);
 }
 
@@ -40,7 +46,7 @@ void abort(void) {
 }
 
 void fail_to_start(char *s) {
-    fprintf(stderr, "[%s] FAILED TO START: %s\n", timestamp(NULL), s);
+    fprintf(errfile, "[%s] FAILED TO START: %s\n", timestamp(NULL), s);
 
     exit(1);
 }
@@ -53,10 +59,10 @@ void write_log(char *fmt, ...) {
 
     str = vformat(fmt, arg);
 
-    fputs(string_chars(str), stdout);
-    fputc('\n', stdout);
+    fputs(string_chars(str), logfile);
+    fputc('\n', logfile);
 
-    fflush(stdout);
+    fflush(logfile);
 
     string_discard(str);
     va_end(arg);
@@ -70,8 +76,8 @@ void write_err(char *fmt, ...) {
     str = vformat(fmt, arg);
     va_end(arg);
 
-    fprintf(stderr, "[%s] %s\n", timestamp(NULL), string_chars(str));
-    fflush(stderr);
+    fprintf(errfile, "[%s] %s\n", timestamp(NULL), string_chars(str));
+    fflush(errfile);
 
     string_discard(str);
 }

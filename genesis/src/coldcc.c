@@ -11,13 +11,12 @@
 
 #define _coldcc_
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "config.h"
+#include "defs.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "cdc_string.h"               /* strccmp() */
-#include "config.h"
-#include "defs.h"
 #include "y.tab.h"
 #include "codegen.h"
 #include "cdc_types.h"
@@ -28,13 +27,14 @@
 #include "sig.h"
 #include "execute.h"
 #include "token.h"
-#include "dump.h"
 #include "modules.h"
-#include "db.h"
+#include "binarydb.h"
+#include "textdb.h"
 #include "cache.h"
 #include "object.h"
 #include "data.h"
 #include "io.h"
+#include "file.h"
 
 #if DISABLED
 #include <unistd.h>
@@ -43,16 +43,19 @@
 
 #define OPT_COMP 0
 #define OPT_DECOMP 1
-#define OPT_PARSE 2
+#define OPT_PARTIAL 2
 
 int    c_nowrite = 1;
 int    c_opt = OPT_COMP;
 
+#define NEW_DB       1
+#define EXISTING_DB  0
+
 /* function prototypes */
-internal void   initialize(int argc, char **argv);
-internal void   usage(char * name);
-internal FILE * find_text_db(void);
-internal void   compile_db(void);
+INTERNAL void   initialize(int argc, char **argv);
+INTERNAL void   usage(char * name);
+INTERNAL FILE * find_text_db(void);
+INTERNAL void   compile_db(int type);
 
 /*
 // --------------------------------------------------------------------
@@ -63,18 +66,22 @@ int main(int argc, char **argv) {
     if (c_opt == OPT_DECOMP) {
         fprintf(stderr, "Decompiling database...\n");
         init_binary_db();
+        init_core_objects();
         text_dump();
     } else if (c_opt == OPT_COMP) {
         fprintf(stderr, "Compiling database...\n");
-        compile_db();
-    } else if (c_opt == OPT_PARSE) {
-        fprintf(stderr, "This option is not yet supported, sorry\n");
-        return 0;
+        compile_db(NEW_DB);
+    } else if (c_opt == OPT_PARTIAL) {
+        fprintf(stderr, "Opening database for partial compile...\n");
+        compile_db(EXISTING_DB);
     }
 
     cache_sync();
     db_close();
     flush_output();
+    close_files();
+
+    fputc(10, logfile);
 
     return 0;
 }
@@ -82,48 +89,33 @@ int main(int argc, char **argv) {
 /*
 // --------------------------------------------------------------------
 */
-internal void compile_db() {
+INTERNAL void compile_db(int newdb) {
     FILE       * fp;
-    object_t   * obj;
-    list_t     * parents;
-    data_t     * d;
 
-    init_new_db();
+    /* create a new db, this will blast old dbs */
+    if (newdb)
+        init_new_db();
+    else
+        init_binary_db();
+
+    /* get new db */
     fp = find_text_db();
 
-    /* create the root object */
-    obj = cache_retrieve(ROOT_DBREF);
-    if (!obj) {
-        parents = list_new(0);
-        obj = object_new(ROOT_DBREF, parents);
-        list_discard(parents);
-    }
-    cache_discard(obj);
+    /* verify $root/#1 and $sys/#0 exist */
+    init_core_objects();
 
-    /* create the system object */
-    obj = cache_retrieve(SYSTEM_DBREF);
-    if (!obj) {
-        parents = list_new(1);
-        d = list_empty_spaces(parents, 1);
-        d->type = DBREF;
-        d->u.dbref = ROOT_DBREF;
-        obj = object_new(SYSTEM_DBREF, parents);
-        list_discard(parents);
-    }
-    cache_discard(obj);
-
-    fp = fopen(c_dir_textdump, "r");
     if (!fp) {
         fprintf(stderr, "Couldn't open text dump file \"%s\".\n",
                 c_dir_textdump);
         exit(1);
     } else {
-        text_dump_read(fp);
+        /* text_dump_read(fp); */
+        compile_cdc_file(fp);
         fclose(fp);
     }
 
-    fprintf(stderr, "Database compiled from \"%s\" to \"%s\".\n",
-            c_dir_textdump, c_dir_binary);
+    fprintf(stderr, "Database compiled to \"%s\"\nClosing binary database...",
+            c_dir_binary);
 }
 
 /*
@@ -139,12 +131,12 @@ internal void compile_db() {
 // Will output to global name "output", set by options
 */
 
-internal FILE * find_text_db(void) {
+INTERNAL FILE * find_text_db(void) {
     FILE        * fp = NULL;
 
-    if (strccmp(c_dir_textdump, "stdin") == F_SUCCESS) {
-        fputs("Reading from stdin.\n", stderr);
-        fp = stdin;
+    if (strccmp(c_dir_textdump, "stdin") == 0) {
+        fputs("Reading from STDIN.\n", stderr);
+        return stdin;
     } else {
         struct stat sbuf;
 
@@ -162,7 +154,7 @@ internal FILE * find_text_db(void) {
         }
 
         /* just let fopen deal with the other perms */
-        fp = fopen(c_dir_textdump, "r");
+        fp = fopen(c_dir_textdump, "rb");
         if (fp == NULL) {
             fprintf(stderr, "** bad happened.\n");
             exit(1);
@@ -178,34 +170,32 @@ internal FILE * find_text_db(void) {
 // --------------------------------------------------------------------
 // Initializes tables, variables and other aspects for use
 */
-#define nextarg() { \
-        argv++; \
-        argc--; \
-        if (!argc) { \
-            usage(name); \
-            fprintf(stderr, "** No followup argument to -%s.\n", opt); \
-            exit(0); \
-        } \
+
+#define NEWFILE(var, name) { \
+        free(var); \
+        var = EMALLOC(char, strlen(name)); \
+        strcpy(var, name); \
     }
 
-internal void initialize(int argc, char **argv) {
+INTERNAL void initialize(int argc, char **argv) {
     char * name = NULL,
-         * opt = NULL;
+         * opt = NULL,
+         * buf;
 
     name = *argv;
+
+    init_defs();
 
     init_codegen();
     init_ident();
     init_op_table();
     init_match();
     init_util();
-    init_sig();
     init_execute();
     init_scratch_file();
     init_token();
     init_modules(argc, argv);
     init_cache();
-    init_defs();
 
     argv++;
     argc--;
@@ -228,21 +218,20 @@ internal void initialize(int argc, char **argv) {
                     c_opt = OPT_DECOMP;
                     break;
                 case 'p':
-                    c_opt = OPT_PARSE;
-                    fputs("\n** Unsupported option: -p\n", stderr);
+                    c_opt = OPT_PARTIAL;
                     break;
                 case 'w':
                     fputs("\n** Unsupported option: -w\n", stderr);
                     c_nowrite = 0;
                     break;
                 case 't':
-                    nextarg();
-                    strcpy(c_dir_textdump, *argv);
+                    argv += getarg(name,&buf, opt, argv,&argc,usage);
+                    NEWFILE(c_dir_textdump, buf);
                     break;
                 case 'o':
                 case 'b':
-                    nextarg();
-                    strcpy(c_dir_binary, *argv);
+                    argv += getarg(name,&buf, opt, argv, &argc, usage);
+                    NEWFILE(c_dir_binary, buf);
                     break;
                 case '-':
                 case 'h':
@@ -263,7 +252,7 @@ internal void initialize(int argc, char **argv) {
 // --------------------------------------------------------------------
 // Simple usage message, rather explanatory
 */
-internal void usage (char * name) {
+void usage (char * name) {
     fprintf(stderr, "\n-- ColdCC %d.%d-%d --\n\n\
 Usage: %s [options]\n\
 \n\
@@ -272,17 +261,18 @@ Options:\n\n\
         -h              This message.\n\
         -d              Decompile.\n\
         -c              Compile (default).\n\
-        -b <binary>     binary db directory name, default: \"binary\"\n\
-        -t <target>     target text db, default: \"textdump\"\n\
+        -b binary       binary db directory name, default: \"binary\"\n\
+        -t target       target text db, default: \"textdump\"\n\
                         if this is \"stdin\" it will read from stdin\n\
-                        instead.  <target> may be a directory or file.\n\n\
-Anticipated Options:\n\n\
+                        instead.  <target> may be a directory or file.\n\
         -p              Partial compile, compile object(s) and insert\n\
                         into database accordingly.  Can be used with -w\n\
-                        for a ColdC verifier.\n\
+                        for a ColdC code verification program.\n\
+Anticipated Options:\n\n\
         -w              Compile for parse only, do not write output.\n\
                         This option can only be used with partial compile.\n\
 \n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, name);
 }
 
 #undef _coldcc_
+

@@ -154,8 +154,7 @@ data_t *list_elem(list_t *list, int i)
 /* This is a horrible abstraction-breaking function.  Call it just after you
  * make a list with list_new(<spaces>).  Then fill in the data slots yourself.
  * Don't manipulate <list> until you're done. */
-data_t *list_empty_spaces(list_t *list, int spaces)
-{
+data_t * list_empty_spaces(list_t *list, int spaces) {
     list->len += spaces;
     return list->el + list->start + list->len - spaces;
 }

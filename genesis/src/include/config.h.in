@@ -28,6 +28,9 @@
 /* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
 #undef HAVE_SYS_WAIT_H
 
+/* Define if your struct dirent has d_namlen */
+#undef HAVE_D_NAMLEN
+
 /* Define if your struct tm has tm_zone.  */
 #undef HAVE_TM_ZONE
 
@@ -130,5 +133,7 @@
 
 /* Define if you have the <unistd.h> header file.  */
 #undef HAVE_UNISTD_H
+
+#undef RESTRICTIVE_FILES
 
 #undef SYSTEM_TYPE

@@ -12,7 +12,7 @@
 #ifndef LOG_H
 #define LOG_H
 
-void panic(char *s);
+void panic(char *s, ...);
 void fail_to_start(char *s);
 void write_log(char *s, ...);
 void write_err(char *s, ...);

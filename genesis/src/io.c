@@ -11,13 +11,13 @@
 
 #define _io_
 
+#include "config.h"
+#include "defs.h"
+
 #include <ctype.h>
-#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include "config.h"
-#include "defs.h"
 #include "y.tab.h"
 #include "io.h"
 #include "net.h"
@@ -27,19 +27,18 @@
 #include "cdc_types.h"
 #include "data.h"
 #include "util.h"
-#include "file.h"
 #include "cache.h"
 
-internal void connection_read(connection_t *conn);
-internal void connection_write(connection_t *conn);
-internal connection_t *connection_add(int fd, long dbref);
-internal void connection_discard(connection_t *conn);
-internal void pend_discard(pending_t *pend);
-internal void server_discard(server_t *serv);
+INTERNAL void connection_read(connection_t *conn);
+INTERNAL void connection_write(connection_t *conn);
+INTERNAL connection_t *connection_add(int fd, long objnum);
+INTERNAL void connection_discard(connection_t *conn);
+INTERNAL void pend_discard(pending_t *pend);
+INTERNAL void server_discard(server_t *serv);
 
-internal connection_t * connections;  /* List of client connections. */
-internal server_t     * servers;      /* List of server sockets. */
-internal pending_t    * pendings;     /* List of pending connections. */
+INTERNAL connection_t * connections;  /* List of client connections. */
+INTERNAL server_t     * servers;      /* List of server sockets. */
+INTERNAL pending_t    * pendings;     /* List of pending connections. */
 
 /*
 // --------------------------------------------------------------------
@@ -52,7 +51,7 @@ void flush_defunct(void) {
     connection_t **connp, *conn;
     server_t     **servp, *serv;
     pending_t    **pendp, *pend;
-    filec_t       **filep, *file;
+    /* filec_t       **filep, *file; */
 
     connp = &connections;
     while (*connp) {
@@ -87,6 +86,7 @@ void flush_defunct(void) {
         }
     }
 
+#if DISABLED
     filep = &files;
     while (*filep) {
         file = *filep;
@@ -97,6 +97,7 @@ void flush_defunct(void) {
             filep = &file->next;
         }
     }
+#endif
 }
 
 /*
@@ -129,17 +130,19 @@ void handle_connection_input(void) {
 */
 void handle_connection_output(void) {
     connection_t * conn;
-    filec_t       * file;
+    /*filec_t       * file;*/
 
     for (conn = connections; conn; conn = conn->next) {
         if (conn->flags.writable)
             connection_write(conn);
     }
 
+#if DISABLED
     for (file = files; file; file = file->next) {
         if (file->flags.writable && file->wbuf)
             file_write(file);
     }
+#endif
 }
 
 /*
@@ -156,14 +159,14 @@ void handle_new_and_pending_connections(void) {
     for (serv = servers; serv; serv = serv->next) {
         if (serv->client_socket == -1)
             continue;
-        conn = connection_add(serv->client_socket, serv->dbref);
+        conn = connection_add(serv->client_socket, serv->objnum);
         serv->client_socket = -1;
         str = string_from_chars(serv->client_addr, strlen(serv->client_addr));
         d1.type = STRING;
         d1.u.str = str;
         d2.type = INTEGER;
         d2.u.val = serv->client_port;
-        task(conn, conn->dbref, connect_id, 2, &d1, &d2);
+        task(conn->objnum, connect_id, 2, &d1, &d2);
         string_discard(str);
     }
 
@@ -171,17 +174,17 @@ void handle_new_and_pending_connections(void) {
     for (pend = pendings; pend; pend = pend->next) {
         if (pend->finished) {
             if (pend->error == NOT_AN_IDENT) {
-            conn = connection_add(pend->fd, pend->dbref);
-            d1.type = INTEGER;
-            d1.u.val = pend->task_id;
-            task(conn, conn->dbref, connect_id, 1, &d1);
+                conn = connection_add(pend->fd, pend->objnum);
+                d1.type = INTEGER;
+                d1.u.val = pend->task_id;
+                task(conn->objnum, connect_id, 1, &d1);
             } else {
-            close(pend->fd);
-            d1.type = INTEGER;
-            d1.u.val = pend->task_id;
-            d2.type = ERROR;
-            d2.u.error = pend->error;
-            task(NULL, pend->dbref, failed_id, 2, &d1, &d2);
+                close(pend->fd);
+                d1.type = INTEGER;
+                d1.u.val = pend->task_id;
+                d2.type = ERROR;
+                d2.u.error = pend->error;
+                task(pend->objnum, failed_id, 2, &d1, &d2);
             }
         }
     }
@@ -207,7 +210,7 @@ void handle_new_and_pending_connections(void) {
 // away.
 */
 
-internal connection_t * find_connection(object_t * obj) {
+connection_t * find_connection(object_t * obj) {
 
     /* obj->conn is only for faster lookups */
     if (obj->conn == NULL) {
@@ -215,7 +218,7 @@ internal connection_t * find_connection(object_t * obj) {
 
         /* lets try and find the connection */
         for (conn = connections; conn; conn = conn->next) {
-            if (conn->dbref == obj->dbref && !conn->flags.dead) {
+            if (conn->objnum == obj->objnum && !conn->flags.dead) {
                 obj->conn = conn;
                 break;
             }
@@ -260,14 +263,14 @@ int boot(object_t * obj) {
 // --------------------------------------------------------------------
 */
 
-int add_server(int port, long dbref) {
+int add_server(int port, long objnum) {
     server_t *cnew;
     int server_socket;
 
     /* Check if a server already exists for this port. */
     for (cnew = servers; cnew; cnew = cnew->next) {
         if (cnew->port == port) {
-            cnew->dbref = dbref;
+            cnew->objnum = objnum;
             cnew->dead = 0;
             return 1;
         }
@@ -282,7 +285,7 @@ int add_server(int port, long dbref) {
     cnew->server_socket = server_socket;
     cnew->client_socket = -1;
     cnew->port = port;
-    cnew->dbref = dbref;
+    cnew->objnum = objnum;
     cnew->dead = 0;
     cnew->next = servers;
     servers = cnew;
@@ -309,7 +312,7 @@ int remove_server(int port) {
 /*
 // --------------------------------------------------------------------
 */
-internal void connection_read(connection_t *conn) {
+INTERNAL void connection_read(connection_t *conn) {
     unsigned char temp[BIGBUF];
     int len;
     Buffer *buf;
@@ -333,14 +336,14 @@ internal void connection_read(connection_t *conn) {
     MEMCPY(buf->s, temp, len);
     d.type = BUFFER;
     d.u.buffer = buf;
-    task(conn, conn->dbref, parse_id, 1, &d);
+    task(conn->objnum, parse_id, 1, &d);
     buffer_discard(buf);
 }
 
 /*
 // --------------------------------------------------------------------
 */
-internal void connection_write(connection_t *conn) {
+INTERNAL void connection_write(connection_t *conn) {
     Buffer *buf = conn->write_buf;
     int r;
 
@@ -362,12 +365,12 @@ internal void connection_write(connection_t *conn) {
 /*
 // --------------------------------------------------------------------
 */
-internal connection_t * connection_add(int fd, long dbref) {
+INTERNAL connection_t * connection_add(int fd, long objnum) {
     connection_t * conn;
 
-    /* clear old connections to this dbref */
+    /* clear old connections to this objnum */
     for (conn = connections; conn; conn = conn->next) {
-        if (conn->dbref == dbref && !conn->flags.dead)
+        if (conn->objnum == objnum && !conn->flags.dead)
             conn->flags.dead = 1;
     }
 
@@ -375,7 +378,7 @@ internal connection_t * connection_add(int fd, long dbref) {
     conn = EMALLOC(connection_t, 1);
     conn->fd = fd;
     conn->write_buf = buffer_new(0);
-    conn->dbref = dbref;
+    conn->objnum = objnum;
     conn->flags.readable = 0;
     conn->flags.writable = 0;
     conn->flags.dead = 0;
@@ -388,14 +391,14 @@ internal connection_t * connection_add(int fd, long dbref) {
 /*
 // --------------------------------------------------------------------
 */
-internal void connection_discard(connection_t *conn) {
+INTERNAL void connection_discard(connection_t *conn) {
     object_t * obj;
 
     /* Notify connection object that the connection is gone. */
-    task(conn, conn->dbref, disconnect_id, 0);
+    task(conn->objnum, disconnect_id, 0);
 
     /* reset the conn variable on the object */
-    obj = cache_retrieve(conn->dbref);
+    obj = cache_retrieve(conn->objnum);
     if (obj != NULL) {
         obj->conn = NULL;
         cache_discard(obj);
@@ -410,21 +413,21 @@ internal void connection_discard(connection_t *conn) {
 /*
 // --------------------------------------------------------------------
 */
-internal void pend_discard(pending_t *pend) {
+INTERNAL void pend_discard(pending_t *pend) {
     efree(pend);
 }
 
 /*
 // --------------------------------------------------------------------
 */
-internal void server_discard(server_t *serv) {
+INTERNAL void server_discard(server_t *serv) {
     close(serv->server_socket);
 }
 
 /*
 // --------------------------------------------------------------------
 */
-long make_connection(char *addr, int port, Dbref receiver) {
+long make_connection(char *addr, int port, objnum_t receiver) {
     pending_t *cnew;
     int socket;
     long result;
@@ -435,7 +438,7 @@ long make_connection(char *addr, int port, Dbref receiver) {
     cnew = TMALLOC(pending_t, 1);
     cnew->fd = socket;
     cnew->task_id = task_id;
-    cnew->dbref = receiver;
+    cnew->objnum = receiver;
     cnew->finished = 0;
     cnew->error = result;
     cnew->next = pendings;
@@ -451,7 +454,7 @@ long make_connection(char *addr, int port, Dbref receiver) {
 
 void flush_output(void) {
     connection_t  * conn;
-    filec_t        * file;
+/*    filec_t        * file; */
     unsigned char * s;
     int len, r;
 
@@ -468,9 +471,11 @@ void flush_output(void) {
         }
     }
 
+#if DISABLED
     /* do files */
     for (file = files; file; file = file->next)
         close_file(file);
+#endif
 }
 
 #undef _io_

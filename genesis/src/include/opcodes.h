@@ -15,7 +15,7 @@
 typedef struct op_info Op_info;
 
 #include "ident.h"
-#include "object.h"   /* typedef Dbref */
+#include "object.h"   /* typedef objnum_t */
 
 struct op_info {
     long opcode;
@@ -24,7 +24,7 @@ struct op_info {
     int arg1;
     int arg2;
     Ident symbol;
-    Dbref binding;  /* Brandon: 10-Mar-95 */
+    objnum_t binding;  /* Brandon: 10-Mar-95 */
 };
 
 extern Op_info op_table[LAST_TOKEN];

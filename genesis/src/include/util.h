@@ -46,7 +46,8 @@ FILE *open_scratch_file(char *name, char *type);
 void close_scratch_file(FILE *fp);
 void init_scratch_file(void);
 int parse_strcpy(char * s1, char * s2, int len);
-
+void inststr(char *dst[], int argc, char *src);
+int getarg(char * n, char ** buf, char * opt, char **argv, int * argc, void (*usage)(char *));
 
 extern char lowercase[128];
 extern char uppercase[128];

@@ -32,7 +32,7 @@ union instr {
  * interpreter. */
 struct prog {
     int m_flags;
-    int m_state;
+    int m_access;
     Arguments * args;
     Id_list *   vars;
     Stmt_list * stmts;
@@ -98,7 +98,7 @@ struct expr {
     int type;
     int lineno;
     union {
-	long num, dbref;
+	long num, objnum;
         float fnum;
 	char *name, *symbol, *error, *str;
 	Expr *expr;

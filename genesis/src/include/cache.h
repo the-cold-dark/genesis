@@ -15,11 +15,11 @@
 #include "object.h"
 
 void init_cache(void);
-object_t *cache_get_holder(long dbref);
-object_t *cache_retrieve(long dbref);
+object_t *cache_get_holder(long objnum);
+object_t *cache_retrieve(long objnum);
 object_t *cache_grab(object_t *object);
 void cache_discard(object_t *obj);
-int cache_check(long dbref);
+int cache_check(long objnum);
 void cache_sync(void);
 object_t *cache_first(void);
 object_t *cache_next(void);

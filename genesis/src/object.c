@@ -12,10 +12,9 @@
 #define _object_
 
 #include "config.h"
-
-#include <stdio.h>
-#include <string.h>
 #include "defs.h"
+
+#include <string.h>
 #include "y.tab.h"
 #include "object.h"
 #include "cdc_types.h"
@@ -29,25 +28,26 @@
 #include "decode.h"
 #include "util.h"
 #include "log.h"
+#include "lookup.h"
 
 /*
 // -----------------------------------------------------------------
 //
 // Error-checking on parents is the job of the calling function.  Also,
-// dire things may happen if an object numbered dbref already exists.
+// dire things may happen if an object numbered objnum already exists.
 //
 */
 
-object_t * object_new(long dbref, list_t * parents) {
+object_t * object_new(long objnum, list_t * parents) {
     object_t * cnew;
     int        i;
 
-    if (dbref == -1)
-	dbref = db_top++;
-    else if (dbref >= db_top)
-	db_top = dbref + 1;
+    if (objnum == -1)
+	objnum = db_top++;
+    else if (objnum >= db_top)
+	db_top = objnum + 1;
 
-    cnew = cache_get_holder(dbref);
+    cnew = cache_get_holder(objnum);
     cnew->parents = list_dup(parents);
     cnew->children = list_new(0);
 
@@ -90,6 +90,7 @@ object_t * object_new(long dbref, list_t * parents) {
     /* Add this object to the children list of parents. */
     object_update_parents(cnew, list_add);
 
+    cnew->objname = -1;
     cnew->conn = NULL;
     cnew->file = NULL;
 
@@ -165,6 +166,9 @@ void object_destroy(object_t *object) {
     /* Invalidate the method cache. */
     cur_stamp++;
 
+    /* remove the object name, if it has one */
+    object_del_objname(object);
+
     /* Tell parents we don't exist any more. */
     object_update_parents(object, list_delete_element);
 
@@ -173,10 +177,10 @@ void object_destroy(object_t *object) {
      * parents if it does. */
     children = object->children;
 
-    cthis.type = DBREF;
-    cthis.u.dbref = object->dbref;
+    cthis.type = OBJNUM;
+    cthis.u.objnum = object->objnum;
     for (d = list_first(children); d; d = list_next(children, d)) {
-	kid = cache_retrieve(d->u.dbref);
+	kid = cache_retrieve(d->u.objnum);
 	kid->parents = list_delete_element(kid->parents, &cthis);
 	if (!kid->parents->len) {
 	    list_discard(kid->parents);
@@ -191,7 +195,7 @@ void object_destroy(object_t *object) {
     boot(object);
 
     /* close the file on this object (if there is one) */
-    abort_file(object);
+    abort_file(object->file);
 
     /* Having freed all the stuff we don't normally free, free the stuff that
      * we do normally free. */
@@ -201,7 +205,7 @@ void object_destroy(object_t *object) {
 /*
 // -----------------------------------------------------------------
 */
-internal void object_update_parents(object_t * object,
+INTERNAL void object_update_parents(object_t * object,
 				    list_t *(*list_op)(list_t *, data_t *))
 {
     object_t * p;
@@ -210,13 +214,13 @@ internal void object_update_parents(object_t * object,
                cthis;
 
     /* Make a data structure for the children list. */
-    cthis.type = DBREF;
-    cthis.u.dbref = object->dbref;
+    cthis.type = OBJNUM;
+    cthis.u.objnum = object->objnum;
 
     parents = object->parents;
 
     for (d = list_first(parents); d; d = list_next(parents, d)) {
-	p = cache_retrieve(d->u.dbref);
+	p = cache_retrieve(d->u.objnum);
 	p->children = (*list_op)(p->children, &cthis);
 	p->dirty = 1;
 	cache_discard(p);
@@ -225,26 +229,65 @@ internal void object_update_parents(object_t * object,
 
 /*
 // -----------------------------------------------------------------
+//
+// Note: descendants is something which should NOT be used often, it is
+// for maintenance purposes.
+//
 */
-list_t * object_ancestors(long dbref) {
+list_t * object_descendants(long objnum) {
+    cur_search++;
+    return object_descendants_aux(objnum, list_new(0));
+}
+
+INTERNAL list_t * object_descendants_aux(long objnum, list_t * list) {
+    object_t * obj;
+    list_t   * children;
+    data_t   * d,
+               cthis;
+
+    obj = cache_retrieve(objnum);
+    if (obj->search == cur_search) {
+	cache_discard(obj);
+	return list;
+    }
+    obj->dirty = 1;
+    obj->search = cur_search;
+
+    children = list_dup(obj->children);
+
+    cache_discard(obj);
+
+    for (d = list_first(children); d; d = list_next(children, d))
+	list = object_descendants_aux(d->u.objnum, list);
+
+    list_discard(children);
+
+    cthis.type = OBJNUM;
+    cthis.u.objnum = objnum;
+    return list_add(list, &cthis);
+}
+
+/*
+// -----------------------------------------------------------------
+*/
+list_t * object_ancestors(long objnum) {
     list_t * ancestors;
 
     /* Get the ancestor list, backwards. */
     ancestors = list_new(0);
     cur_search++;
-    ancestors = object_ancestors_aux(dbref, ancestors);
+    ancestors = object_ancestors_aux(objnum, ancestors);
 
     return list_reverse(ancestors);
 }
 
 /* Modifies ancestors.  Returns a backwards list. */
-static list_t *object_ancestors_aux(long dbref, list_t *ancestors)
-{
+INTERNAL list_t *object_ancestors_aux(long objnum, list_t *ancestors) {
     object_t *object;
     list_t *parents;
     data_t *d, cthis;
 
-    object = cache_retrieve(dbref);
+    object = cache_retrieve(objnum);
     if (object->search == cur_search) {
 	cache_discard(object);
 	return ancestors;
@@ -256,29 +299,29 @@ static list_t *object_ancestors_aux(long dbref, list_t *ancestors)
     cache_discard(object);
 
     for (d = list_last(parents); d; d = list_prev(parents, d))
-	ancestors = object_ancestors_aux(d->u.dbref, ancestors);
+	ancestors = object_ancestors_aux(d->u.objnum, ancestors);
     list_discard(parents);
 
-    cthis.type = DBREF;
-    cthis.u.dbref = dbref;
+    cthis.type = OBJNUM;
+    cthis.u.objnum = objnum;
     return list_add(ancestors, &cthis);
 }
 
-int object_has_ancestor(long dbref, long ancestor)
+int object_has_ancestor(long objnum, long ancestor)
 {
-    if (dbref == ancestor)
+    if (objnum == ancestor)
 	return 1;
     cur_search++;
-    return object_has_ancestor_aux(dbref, ancestor);
+    return object_has_ancestor_aux(objnum, ancestor);
 }
 
-static int object_has_ancestor_aux(long dbref, long ancestor)
+static int object_has_ancestor_aux(long objnum, long ancestor)
 {
     object_t *object;
     list_t *parents;
     data_t *d;
 
-    object = cache_retrieve(dbref);
+    object = cache_retrieve(objnum);
 
     /* Don't search an object twice. */
     if (object->search == cur_search) {
@@ -292,14 +335,14 @@ static int object_has_ancestor_aux(long dbref, long ancestor)
     cache_discard(object);
 
     for (d = list_first(parents); d; d = list_next(parents, d)) {
-	if (d->u.dbref == ancestor) {
+	if (d->u.objnum == ancestor) {
 	    list_discard(parents);
 	    return 1;
 	}
     }
 
     for (d = list_first(parents); d; d = list_next(parents, d)) {
-	if (object_has_ancestor_aux(d->u.dbref, ancestor)) {
+	if (object_has_ancestor_aux(d->u.objnum, ancestor)) {
 	    list_discard(parents);
 	    return 1;
 	}
@@ -311,17 +354,17 @@ static int object_has_ancestor_aux(long dbref, long ancestor)
 
 int object_change_parents(object_t *object, list_t *parents)
 {
-    Dbref parent;
+    objnum_t parent;
     data_t *d;
 
     /* Make sure that all parents are valid objects, and that they don't create
      * any cycles.  If something is wrong, return the index of the parent that
      * caused the problem. */
     for (d = list_first(parents); d; d = list_next(parents, d)) {
-	if (d->type != DBREF)
+	if (d->type != OBJNUM)
 	    return d - list_first(parents);
-	parent = d->u.dbref;
-	if (!cache_check(parent) || object_has_ancestor(parent, object->dbref))
+	parent = d->u.objnum;
+	if (!cache_check(parent) || object_has_ancestor(parent, object->objnum))
 	    return d - list_first(parents);
     }
 
@@ -464,14 +507,14 @@ long object_get_ident(object_t *object, int ind) {
     return object->idents[ind].id;
 }
 
-long object_add_param(object_t *object, long name) {
-    if (object_find_var(object, object->dbref, name))
-	return paramexists_id;
-    object_create_var(object, object->dbref, name);
+long object_add_var(object_t *object, long name) {
+    if (object_find_var(object, object->objnum, name))
+	return varexists_id;
+    object_create_var(object, object->objnum, name);
     return NOT_AN_IDENT;
 }
 
-long object_del_param(object_t *object, long name)
+long object_del_var(object_t *object, long name)
 {
     int *indp;
     Var *var;
@@ -482,8 +525,8 @@ long object_del_param(object_t *object, long name)
     indp = &object->vars.hashtab[hash(ident_name(name)) % object->vars.size];
     for (; *indp != -1; indp = &object->vars.tab[*indp].next) {
 	var = &object->vars.tab[*indp];
-	if (var->name == name && var->cclass == object->dbref) {
-	/*  write_err("##object_del_param %d %s", var->name, ident_name(var->name));*/
+	if (var->name == name && var->cclass == object->objnum) {
+	/*  write_err("##object_del_var %d %s", var->name, ident_name(var->name));*/
 	    ident_discard(var->name);
 	    data_discard(&var->val);
 	    var->name = -1;
@@ -499,20 +542,20 @@ long object_del_param(object_t *object, long name)
 	}
     }
 
-    return paramnf_id;
+    return varnf_id;
 }
 
 long object_assign_var(object_t *object, object_t *cclass, long name, data_t *val) {
     Var *var;
 
     /* Make sure variable exists in cclass (method object). */
-    if (!object_find_var(cclass, cclass->dbref, name))
-	return paramnf_id;
+    if (!object_find_var(cclass, cclass->objnum, name))
+	return varnf_id;
 
     /* Get variable slot on object, creating it if necessary. */
-    var = object_find_var(object, cclass->dbref, name);
+    var = object_find_var(object, cclass->objnum, name);
     if (!var)
-	var = object_create_var(object, cclass->dbref, name);
+	var = object_create_var(object, cclass->objnum, name);
 
     data_discard(&var->val);
     data_dup(&var->val, val);
@@ -527,16 +570,16 @@ long object_delete_var(object_t *object, object_t *cclass, long name) {
     int *indp;
 
     /* find the parameter definition in cclass (method object). */
-    if (!object_find_var(cclass, cclass->dbref, name))
-        return paramnf_id;
+    if (!object_find_var(cclass, cclass->objnum, name))
+        return varnf_id;
 
     /* Get variable slot on object */
-    var = object_find_var(object, cclass->dbref, name);
+    var = object_find_var(object, cclass->objnum, name);
     if (var) {
         indp=&object->vars.hashtab[hash(ident_name(name))%object->vars.size];
         for (; *indp != -1; indp = &object->vars.tab[*indp].next) {
             var = &object->vars.tab[*indp];
-            if (var->name == name && var->cclass == cclass->dbref) {
+            if (var->name == name && var->cclass == cclass->objnum) {
                 ident_discard(var->name);
                 data_discard(&var->val);
                 var->name = -1;
@@ -553,7 +596,7 @@ long object_delete_var(object_t *object, object_t *cclass, long name) {
         }
     }
 
-    return paramnf_id;
+    return varnf_id;
 }
 
 long object_retrieve_var(object_t *object, object_t *cclass, long name, data_t *ret)
@@ -561,10 +604,10 @@ long object_retrieve_var(object_t *object, object_t *cclass, long name, data_t *
     Var *var;
 
     /* Make sure variable exists on cclass. */
-    if (!object_find_var(cclass, cclass->dbref, name))
-	return paramnf_id;
+    if (!object_find_var(cclass, cclass->objnum, name))
+	return varnf_id;
 
-    var = object_find_var(object, cclass->dbref, name);
+    var = object_find_var(object, cclass->objnum, name);
     if (var) {
 	data_dup(ret, &var->val);
     } else {
@@ -662,7 +705,7 @@ static Var *object_find_var(object_t *object, long cclass, long name)
 }
 
 /* Reference-counting kludge: on return, the method's object field has an
-   extra reference count, in order to keep it in cache.  dbref must be
+   extra reference count, in order to keep it in cache.  objnum must be
    valid. */
 /* object_find_method is now a front end that increments the
    cur_search variable and calls object_find_message_recurse,
@@ -672,7 +715,7 @@ static Var *object_find_var(object_t *object, long cclass, long name)
    fail when a parent's method sent a message to the child as
    a result of a message to teh child hanbdled by the parent
    (whew.) added 5/7/1995 Jeffrey P. kesselman */
-method_t *object_find_method(long dbref, long name) {
+method_t *object_find_method(long objnum, long name) {
     Search_params params;
     object_t *object;
     method_t *method, *local_method;
@@ -680,11 +723,11 @@ method_t *object_find_method(long dbref, long name) {
     data_t *d;
 
     /* Look for cached value. */
-    method = method_cache_check(dbref, name, -1);
+    method = method_cache_check(objnum, name, -1);
     if (method)
 	return method;
 
-    object = cache_retrieve(dbref);
+    object = cache_retrieve(objnum);
     parents = list_dup(object->parents);
     cache_discard(object);
 
@@ -692,7 +735,7 @@ method_t *object_find_method(long dbref, long name) {
         /* If the object has parents */
         if (list_length(parents) == 1) {
             /* If it has only one parent, call this function recursively. */
-            method = object_find_method(list_elem(parents, 0)->u.dbref, name);
+            method = object_find_method(list_elem(parents, 0)->u.objnum, name);
         } else {
             /* We've hit a bulge; resort to the reverse depth-first search. */
             cur_search++;
@@ -701,7 +744,7 @@ method_t *object_find_method(long dbref, long name) {
             params.done = 0;
             params.last_method_found = NULL;
             for (d = list_last(parents); d; d = list_prev(parents, d))
-                search_object(d->u.dbref, &params);
+                search_object(d->u.objnum, &params);
             method = params.last_method_found;
         }
     }
@@ -711,7 +754,7 @@ method_t *object_find_method(long dbref, long name) {
     /* If we have not found a method defined above, or the top method we
        have found is overridable */
     if (!method || !(method->m_flags & MF_NOOVER)) {
-	object = cache_retrieve(dbref);
+	object = cache_retrieve(objnum);
 	local_method = object_find_method_local(object, name);
 	if (local_method) {
 	    if (method)
@@ -723,13 +766,13 @@ method_t *object_find_method(long dbref, long name) {
     }
 
     if (method)
-	method_cache_set(dbref, name, -1, method->object->dbref);
+	method_cache_set(objnum, name, -1, method->object->objnum);
     return method;
 }
 
 /* Reference-counting kludge: on return, the method's object field has an extra
- * reference count, in order to keep it in cache.  dbref must be valid. */
-method_t *object_find_next_method(long dbref, long name, long after)
+ * reference count, in order to keep it in cache.  objnum must be valid. */
+method_t *object_find_next_method(long objnum, long name, long after)
 {
     Search_params params;
     object_t *object;
@@ -739,18 +782,18 @@ method_t *object_find_next_method(long dbref, long name, long after)
     long parent;
 
     /* Check cache. */
-    method = method_cache_check(dbref, name, after);
+    method = method_cache_check(objnum, name, after);
     if (method)
 	return method;
 
-    object = cache_retrieve(dbref);
+    object = cache_retrieve(objnum);
     parents = object->parents;
 
     if (list_length(parents) == 1) {
 	/* Object has only one parent; search recursively. */
-	parent = list_elem(parents, 0)->u.dbref;
+	parent = list_elem(parents, 0)->u.objnum;
 	cache_discard(object);
-	if (dbref == after)
+	if (objnum == after)
 	    method = object_find_method(parent, name);
 	else
 	    method = object_find_next_method(parent, name, after);
@@ -758,17 +801,17 @@ method_t *object_find_next_method(long dbref, long name, long after)
 	/* Object has more than one parent; use complicated search. */
 	cur_search++;
 	params.name = name;
-	params.stop_at = (dbref == after) ? -1 : after;
+	params.stop_at = (objnum == after) ? -1 : after;
 	params.done = 0;
 	params.last_method_found = NULL;
 	for (d = list_last(parents); d; d = list_prev(parents, d))
-	    search_object(d->u.dbref, &params);
+	    search_object(d->u.objnum, &params);
 	cache_discard(object);
 	method = params.last_method_found;
     }
 
     if (method)
-	method_cache_set(dbref, name, after, method->object->dbref);
+	method_cache_set(objnum, name, after, method->object->objnum);
     return method;
 }
 
@@ -777,14 +820,14 @@ method_t *object_find_next_method(long dbref, long name, long after)
  * searching parents right-to-left.  We will take the last method we find,
  * possibly stopping at a method if we were looking for the next method after
  * a given method. */
-static void search_object(long dbref, Search_params *params)
+static void search_object(long objnum, Search_params *params)
 {
     object_t *object;
     method_t *method;
     list_t *parents;
     data_t *d;
 
-    object = cache_retrieve(dbref);
+    object = cache_retrieve(objnum);
 
     /* Don't search an object twice. */
     if (object->search == cur_search) {
@@ -800,7 +843,7 @@ static void search_object(long dbref, Search_params *params)
 
     /* Traverse the parents list backwards. */
     for (d = list_last(parents); d; d = list_prev(parents, d))
-	search_object(d->u.dbref, params);
+	search_object(d->u.objnum, params);
     list_discard(object->parents);
 
     /* If the search is done, don't visit this object. */
@@ -809,13 +852,13 @@ static void search_object(long dbref, Search_params *params)
 
     /* If we were searching for a next method after a given object, then this
      * might be the given object, in which case we should stop. */
-    if (dbref == params->stop_at) {
+    if (objnum == params->stop_at) {
 	params->done = 1;
 	return;
     }
 
     /* Visit this object.  First, get it back from the cache. */
-    object = cache_retrieve(dbref);
+    object = cache_retrieve(objnum);
     method = object_find_method_local(object, params->name);
     if (method) {
 	/* We found a method on this object.  Discard the reference count on
@@ -850,13 +893,13 @@ static method_t *object_find_method_local(object_t *object, long name)
     return NULL;
 }
 
-static method_t *method_cache_check(long dbref, long name, long after)
+static method_t *method_cache_check(long objnum, long name, long after)
 {
     object_t *object;
     int i;
 
-    i = (10 + dbref + (name << 4) + after) % METHOD_CACHE_SIZE;
-    if (method_cache[i].stamp == cur_stamp && method_cache[i].dbref == dbref &&
+    i = (10 + objnum + (name << 4) + after) % METHOD_CACHE_SIZE;
+    if (method_cache[i].stamp == cur_stamp && method_cache[i].objnum == objnum &&
 	method_cache[i].name == name && method_cache[i].after == after &&
 	method_cache[i].loc != -1) {
 	object = cache_retrieve(method_cache[i].loc);
@@ -866,23 +909,25 @@ static method_t *method_cache_check(long dbref, long name, long after)
     }
 }
 
-static void method_cache_set(long dbref, long name, long after, long loc)
+static void method_cache_set(long objnum, long name, long after, long loc)
 {
     int i;
 
-    i = (10 + dbref + (name << 4) + after) % METHOD_CACHE_SIZE;
+    i = (10 + objnum + (name << 4) + after) % METHOD_CACHE_SIZE;
     if (method_cache[i].stamp != 0) {
  /*     write_err("##method_cache_set %d %s", method_cache[i].name, ident_name(method_cache[i].name));*/
       ident_discard(method_cache[i].name);
     }
     method_cache[i].stamp = cur_stamp;
-    method_cache[i].dbref = dbref;
+    method_cache[i].objnum = objnum;
     method_cache[i].name = ident_dup(name);
     method_cache[i].after = after;
     method_cache[i].loc = loc;
 }
 
 /* this makes me rather wary, hope it works ... */
+/* we will know native methods have changed names because the name will
+   be different from the one in the initialization table */
 int object_rename_method(object_t * object, long oname, long nname) {
     method_t * method;
 
@@ -1025,22 +1070,22 @@ int object_set_method_flags(object_t * object, long name, int flags) {
     return flags;
 }
 
-int object_get_method_state(object_t * object, long name) {
+int object_get_method_access(object_t * object, long name) {
     method_t * method;
 
     method = object_find_method_local(object, name);
-    return (method) ? method->m_state : -1;
+    return (method) ? method->m_access : -1;
 }
 
-int object_set_method_state(object_t * object, long name, int state) {
+int object_set_method_access(object_t * object, long name, int access) {
     method_t * method;
 
     method = object_find_method_local(object, name);
     if (method == NULL)
         return -1;
-    method->m_state = state;
+    method->m_access = access;
     object->dirty = 1;
-    return state;
+    return access;
 }
 
 /* Destroys a method.  Does not delete references from the method's code. */
@@ -1125,144 +1170,37 @@ void method_discard(method_t *method) {
     }
 }
 
-void object_text_dump(long dbref, FILE *fp) {
-    object_t * obj;
-    list_t * parents;
-    data_t * d;
+int object_del_objname(object_t * object) {
+    int result = 0;
 
-    obj = cache_retrieve(dbref);
-
-    /* Don't dump an object twice. */
-    if (obj->search == cur_search) {
-        cache_discard(obj);
-        return;
+    /* if it has one, remove it */
+    if (object->objname != -1) {
+        result = lookup_remove_name(object->objname);
+        ident_discard(object->objname);
     }
-    obj->dirty = 1;
-    obj->search = cur_search;
 
-    /* Pick up a copy of the dbref and parents list, and forget the object. */
-    parents = list_dup(obj->parents);
-    cache_discard(obj);
+    object->objname = -1;
 
-    /* Dump any parents which haven't already been dumped. */
-    for (d = list_first(parents); d; d = list_next(parents, d))
-        object_text_dump(d->u.dbref, fp);
-
-    /* Now discard the parents list and retrieve the object again. */
-    list_discard(parents);
-    obj = cache_retrieve(dbref);
-
-    /* Write the object out, finally. */
-    object_text_dump_aux(obj, fp);
-
-    cache_discard(obj);
+    return result;
 }
 
-#define ADD_FLAG(__bit, __str1, __str2) { \
-        if (m->m_flags & __bit) { \
-            if (flag) \
-                strcat(flags, __str1); \
-            else { \
-                strcpy(flags, __str2); \
-                flag++; \
-            } \
-        } \
-    }
+int object_set_objname(object_t * obj, Ident name) {
+    long num;
 
-internal char * method_definition(method_t * m) {
-    static char   buf[255];
-    static char   flags[50];
-    char        * s;
-    int           flag = 0;
+    /* does it already exist? */
+    if (lookup_retrieve_name(name, &num))
+        return 0;
 
-    /* method state */
-    if (m->m_state == MS_PRIVATE)
-        strcpy(buf, "private ");
-    else if (m->m_state == MS_PROTECTED)
-        strcpy(buf, "protected ");
-    else if (m->m_state == MS_ROOT)
-        strcpy(buf, "root ");
-    else if (m->m_state == MS_DRIVER)
-        strcpy(buf, "driver ");
-    else
-        strcpy(buf, "public ");
+    /* do we have a name? Axe it... */
+    object_del_objname(obj);
 
-    /* method name */
-    s = ident_name(m->name);
+    /* ok, index the new name */
+    lookup_store_name(name, obj->objnum);
 
-#if 0
-    /* this should else and use string_add_unparsed, but, ohwell */
-    if (is_valid_ident(s))
-#endif
-        strcat(buf, s);
-        
-    /* flags */
-    if (m->m_flags & MF_NOOVER) {
-        strcpy(flags, "disallow_overrides");
-        flag++;
-    }
-    ADD_FLAG(MF_SYNC, ", synchronized", "synchronized");
-    ADD_FLAG(MF_LOCK, ", locked", "locked");
-    ADD_FLAG(MF_NATIVE, ", native", "native");
+    /* and for our own purposes, lets remember it */
+    obj->objname = ident_dup(name);
 
-    if (flag) {
-        strcat(buf, ": ");
-        strcat(buf, flags);
-    }
-
-    return buf;
-}
-
-static void object_text_dump_aux(object_t *obj, FILE *fp) {
-    string_t *str;
-    list_t *code, *parents;
-    data_t *d;
-    int i;
-    Var *var;
-
-    /* define parents */
-    parents = obj->parents;
-    for (d = list_first(parents); d; d = list_next(parents, d))
-        fformat(fp, "parent #%l\n", d->u.dbref);
-
-    /* define object */
-    fformat(fp, "object #%l\n\n", obj->dbref);
-
-    /* define variables */
-    for (i = 0; i < obj->vars.size; i++) {
-        var = &obj->vars.tab[i];
-        if (var->name == -1)
-            continue;
-        if (!cache_check(var->cclass))
-            continue;
-        str = data_to_literal(&var->val);
-        fformat(fp, "var %d %I %S\n", var->cclass, var->name, str);
-        string_discard(str);
-    }
-
-    putc('\n', fp);
-
-    /* define methods */
-    for (i = 0; i < obj->methods.size; i++) {
-        if (!obj->methods.tab[i].m)
-            continue;
-
-        /* define it */
-        fputs(method_definition(obj->methods.tab[i].m), fp);
-        putc('\n', fp);
-        
-        /* list it */
-        code = decompile(obj->methods.tab[i].m, obj, 4, 1);
-        for (d = list_first(code); d; d = list_next(code, d)) {
-            fputs("    ", fp);
-            fputs(string_chars(d->u.str), fp);
-            putc('\n', fp);
-        }
-        list_discard(code);
-
-        /* end it */
-        fputs(".\n\n", fp);
-    }
+    return 1;
 }
 
 #undef _object_

@@ -21,7 +21,7 @@ typedef struct pending_s    pending_t;
 struct connection_s {
     int fd;                   /* File descriptor for input and output. */
     Buffer * write_buf;       /* Buffer for network output. */
-    Dbref    dbref;           /* Object connection is associated with. */
+    objnum_t    objnum;           /* Object connection is associated with. */
     struct {
         char readable;        /* Connection has new data pending. */
         char writable;        /* Connection can be written to. */
@@ -33,7 +33,7 @@ struct connection_s {
 struct server_s {
     int server_socket;
     unsigned short port;
-    Dbref dbref;
+    objnum_t objnum;
     int dead;
     int client_socket;
     char client_addr[20];
@@ -44,7 +44,7 @@ struct server_s {
 struct pending_s {
     int fd;
     long task_id;
-    Dbref dbref;
+    objnum_t objnum;
     long error;
     int finished;
     pending_t *next;
@@ -55,11 +55,12 @@ void handle_new_and_pending_connections(void);
 void handle_io_event_wait(int seconds);
 void handle_connection_input(void);
 void handle_connection_output(void);
+connection_t * find_connection(object_t * obj);
 connection_t * tell(object_t * obj, Buffer *buf);
 int  boot(object_t * obj);
-int  add_server(int port, long dbref);
+int  add_server(int port, long objnum);
 int  remove_server(int port);
-long make_connection(char *addr, int port, Dbref receiver);
+long make_connection(char *addr, int port, objnum_t receiver);
 void flush_output(void);
 
 #endif

@@ -41,7 +41,7 @@ void op_one(void);
 void op_integer(void);
 void op_float(void);
 void op_string(void);
-void op_dbref(void);
+void op_objnum(void);
 void op_symbol(void);
 void op_error(void);
 void op_name(void);

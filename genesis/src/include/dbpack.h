@@ -18,6 +18,7 @@
 void pack_object(object_t * obj, FILE * fp);
 void unpack_object(object_t * obj, FILE * fp);
 int  size_object(object_t * obj);
+int  size_data(data_t *data);
 
 void write_long(long n, FILE * fp);
 long read_long(FILE * fp);

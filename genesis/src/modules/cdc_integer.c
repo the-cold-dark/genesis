@@ -10,15 +10,15 @@
 */
 
 #include "config.h"
-#include <stdlib.h>
 #include "defs.h"
+
 #include "y.tab.h"
 #include "operators.h"
 #include "execute.h"
 #include "cdc_types.h"
 #include "util.h"
 
-internal void find_extreme(int which);
+INTERNAL void find_extreme(int which);
 
 void op_random(void) {
     data_t *args;
@@ -32,7 +32,7 @@ void op_random(void) {
 }
 
 /* which is 1 for max, -1 for min. */
-internal void find_extreme(int which) {
+INTERNAL void find_extreme(int which) {
     int arg_start, num_args, i, type;
     data_t *args, *extreme, d;
 

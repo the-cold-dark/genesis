@@ -19,7 +19,7 @@ typedef struct frob         Frob;
 typedef struct data         data_t;
 typedef struct dict         Dict;
 typedef        long         Ident;
-typedef        long         Dbref;
+typedef        long         objnum_t;
 typedef struct ident_entry  Ident_entry;
 typedef struct string_entry String_entry;
 typedef struct var          Var;
@@ -51,7 +51,7 @@ struct data {
     union {
         long val;
         float fval;
-        Dbref dbref;
+        objnum_t objnum;
         Ident symbol;
         Ident error;
         string_t * str;

@@ -27,7 +27,6 @@ string_t    * data_tostr(data_t * data);
 string_t    * data_to_literal(data_t * data);
 string_t    * data_add_list_literal_to_str(string_t * str, list_t * list);
 string_t    * data_add_literal_to_str(string_t * str, data_t * data);
-char        * data_from_literal(data_t * d, char * s);
 long          data_type_id(int type);
 
 #endif

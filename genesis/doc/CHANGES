@@ -6,6 +6,78 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+0.3-4~6 [Feb-96]: Brandon Gillespie
+      * many bug fixes
+0.3-3  [30-Jan-96]: Brandon Gillespie
+      * completed file ops
+            fopen()
+            fstat() => [bytes,blocks,type,mode,owner,group,last access times]
+            fchmod()
+            fmkdir()
+            frmdir()
+            files() => (files in a directory)
+            fremove()
+            frename()
+            fclose()
+            fseek()
+            feof()
+            fwrite()
+            fread()
+            file() => (basic file info on the file bound to this object)
+            fflush()
+      * tinkered with textdb.c a bit, changed how 'name' directive works.
+      * changed 'chparents()' to be object oriented (using 'this()' as the
+        object parents are changing on).
+0.3-2  [18-Jan-96]: Dancer
+      * C functions write_long()/read_long()/size_long() replaced with
+        non-byteorder caring functions -- they are a nice idea, but unstable.
+        Someone should work on a solid version of these.
+      * Fixed some problems in textdb.c (sometimes $root and $sys would
+        get axed, hacked a more standard COPY def for strings.
+      * crufted up panic()
+0.3-1  [  -Jan-96]: Brandon Gillespie
+      * Converted all occurances of 'dbref' to 'objnum' (respectively)
+        For standardization with 'objname' (change 'dbref symbols to
+        'objnum symbols).
+      * function changes:
+            get_dbref()       => lookup()
+            next_dbref()      => next_objnum()
+            todbref()         => toobjnum()
+            [new]             => objnum()
+            add_parameter()   => add_var()
+            del_parameter()   => del_var()
+            parameters()      => variables()
+            compile()         => add_method()
+            list_method()     => decompile()
+                 (Note: these last two will eventually accept and
+                  manipulate parse tree's)
+            [changed]         => compile() (currently a null function)
+            [new]             => get_method() (currently a null function)
+            method_args()     => method_info()
+            size()               (Now accepts data as well as nothing)
+            data()               (returns all data on this, or you can
+                                  specify an ancestor to get specifics).
+            callers()         => stack()
+            load()               (removed)
+            echo()            => cwrite()
+            echo_file()       => cwritef()
+            [new]             => connection() (returns [readable,writable,dead])
+            timestamp()       => (removed,
+                                  replace with strftime("%d %h %y %H:%M")
+0.3-0  [14-Dec-95]: Brandon Gillespie, Miroslav Silovic
+      * Regexp didn't release reference to the integer pairs, causing a
+        minor leak each time a match was called. Unfortunately, commands
+        like @display and @show called regexp matches hundreds of times,
+        resulting in bloat during intensive programming. (Miroslav)
+      * textdb.c completed, mostly 1.0 format compliant.  Many changes are
+        involved in this.
+      * object names are now stored in the object structure as well as
+        in the lookup table (for #num -> $name conversions) (Brandon)
+          + add_objname(symbol, dbref) removed, is now set_objname(symbol)
+            (for the current object).  For security, bind set_objname() to
+            $root and have .set_objname() handle permissions.
+          + del_objname() added, this will remove the object name.
+          + objname() added.
 0.2-10 [19-Nov-95]: Brandon Gillespie
       * cleanup of quick 2-9 release which had things wrong.  Also fixed
         a minor bug in dump.c (found by Gregory D Lewis

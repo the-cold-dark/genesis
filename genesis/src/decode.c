@@ -9,9 +9,9 @@
 // Routines to decompile a method.
 */
 
-#include <stdio.h>
 #include "config.h"
 #include "defs.h"
+
 #include "y.tab.h"
 #include "decode.h"
 #include "code_prv.h"
@@ -30,6 +30,11 @@
 #define SPANNING_IF_FLAG		0x2
 #define COMPLEX_IF_FLAG			0x4
 
+/* this hack is for the sole purpose of assignments as expressions decompiling
+   correctly */
+#define PAREN_ASSIGN 1
+#define NOPAREN_ASSIGN 0
+
 typedef struct context Context;
 
 struct context {
@@ -38,41 +43,41 @@ struct context {
     Context *enclosure;
 };
 
-internal int count_lines(int start, int end, unsigned *flags);
-internal Stmt_list *decompile_stmt_list(int start, int end);
-internal Stmt *decompile_stmt(int *pos_ptr);
-internal Stmt *decompile_body(int start, int end);
-internal Stmt *decompile_until(int *start, int marker);
-internal Stmt *body_from_stmt_list(Stmt_list *stmts);
-internal Case_list *decompile_cases(int start, int end);
-internal Case_entry *decompile_case(int *pos_ptr, int switch_end);
-internal Expr_list *decompile_case_values(int *pos_ptr, int *end_ret);
-internal Id_list *make_error_id_list(int which);
-internal Expr_list *decompile_expressions(int *pos_ptr);
-internal Expr_list *decompile_expressions_bounded(int *pos_ptr, int end);
-internal list_t *unparse_stmt_list(list_t *output, Stmt_list *stmts, int indent);
-internal list_t *unparse_stmt(list_t *output, Stmt *stmt, int indent, Stmt *last);
-internal int is_complex_if_else_stmt(Stmt *stmt);
-internal int is_complex_type(int type);
-internal list_t *unparse_body(list_t *output, Stmt *body, string_t *str, int indent);
-internal list_t *unparse_cases(list_t *output, Case_list *cases, int indent);
-internal list_t *unparse_case(list_t *output, Case_entry *case_entry, int indent);
-internal string_t *unparse_expr(string_t *str, Expr *expr);
-internal int is_this(Expr *expr);
-internal string_t *unparse_args(string_t *str, Expr_list *args);
-internal string_t *unparse_expr_prec(string_t *str, Expr *expr, int caller_type,
+INTERNAL int count_lines(int start, int end, unsigned *flags);
+INTERNAL Stmt_list *decompile_stmt_list(int start, int end);
+INTERNAL Stmt *decompile_stmt(int *pos_ptr);
+INTERNAL Stmt *decompile_body(int start, int end);
+INTERNAL Stmt *decompile_until(int *start, int marker);
+INTERNAL Stmt *body_from_stmt_list(Stmt_list *stmts);
+INTERNAL Case_list *decompile_cases(int start, int end);
+INTERNAL Case_entry *decompile_case(int *pos_ptr, int switch_end);
+INTERNAL Expr_list *decompile_case_values(int *pos_ptr, int *end_ret);
+INTERNAL Id_list *make_error_id_list(int which);
+INTERNAL Expr_list *decompile_expressions(int *pos_ptr);
+INTERNAL Expr_list *decompile_expressions_bounded(int *pos_ptr, int end);
+INTERNAL list_t *unparse_stmt_list(list_t *output, Stmt_list *stmts, int indent);
+INTERNAL list_t *unparse_stmt(list_t *output, Stmt *stmt, int indent, Stmt *last);
+INTERNAL int is_complex_if_else_stmt(Stmt *stmt);
+INTERNAL int is_complex_type(int type);
+INTERNAL list_t *unparse_body(list_t *output, Stmt *body, string_t *str, int indent);
+INTERNAL list_t *unparse_cases(list_t *output, Case_list *cases, int indent);
+INTERNAL list_t *unparse_case(list_t *output, Case_entry *case_entry, int indent);
+INTERNAL string_t *unparse_expr(string_t *str, Expr *expr, int paren);
+INTERNAL int is_this(Expr *expr);
+INTERNAL string_t *unparse_args(string_t *str, Expr_list *args);
+INTERNAL string_t *unparse_expr_prec(string_t *str, Expr *expr, int caller_type,
 				 int assoc);
-internal int prec_level(int opcode);
-internal char *binary_token(int opcode);
-internal list_t *add_and_discard_string(list_t *output, string_t *str);
-internal char *varname(int ind);
+INTERNAL int prec_level(int opcode);
+INTERNAL char *binary_token(int opcode);
+INTERNAL list_t *add_and_discard_string(list_t *output, string_t *str);
+INTERNAL char *varname(int ind);
 
 /* These globals get set at the start and are never modified. */
-internal object_t *the_object;
-internal method_t *the_method;
-internal long *the_opcodes;
-internal int the_increment;
-internal int the_parens_flag;
+INTERNAL object_t *the_object;
+INTERNAL method_t *the_method;
+INTERNAL long *the_opcodes;
+INTERNAL int the_increment;
+INTERNAL int the_parens_flag;
 
 static struct {
     int opcode;
@@ -757,8 +762,8 @@ static Expr_list *decompile_expressions_bounded(int *pos_ptr, int expr_end)
 	    pos += 2;
 	    break;
 
-	  case DBREF:
-	    stack = expr_list(dbref_expr(the_opcodes[pos + 1]), stack);
+	  case OBJNUM:
+	    stack = expr_list(objnum_expr(the_opcodes[pos + 1]), stack);
 	    pos += 2;
 
 	  case SYMBOL:
@@ -1025,7 +1030,7 @@ static list_t *unparse_stmt(list_t *output, Stmt *stmt, int indent, Stmt *last)
 
       case EXPR:
 	str = string_of_char(' ', indent);
-	str = unparse_expr(str, stmt->u.expr);
+	str = unparse_expr(str, stmt->u.expr, NOPAREN_ASSIGN);
 	str = string_addc(str, ';');
 	return add_and_discard_string(output, str);
 
@@ -1036,7 +1041,7 @@ static list_t *unparse_stmt(list_t *output, Stmt *stmt, int indent, Stmt *last)
       case IF:
 	str = string_of_char(' ', indent);
 	str = string_add_chars(str, "if (", 4);
-	str = unparse_expr(str, stmt->u.if_.cond);
+	str = unparse_expr(str, stmt->u.if_.cond, PAREN_ASSIGN);
 	str = string_addc(str, ')');
 	return unparse_body(output, stmt->u.if_.true, str, indent);
 
@@ -1057,7 +1062,7 @@ static list_t *unparse_stmt(list_t *output, Stmt *stmt, int indent, Stmt *last)
 	  /* Execute this for stmt as well as any else-ifs. */
 	  while (stmt->type == IF_ELSE) {
 	      str = string_add_chars(str, "if (", 4);
-	      str = unparse_expr(str, stmt->u.if_.cond);
+	      str = unparse_expr(str, stmt->u.if_.cond, PAREN_ASSIGN);
 	      str = string_addc(str, ')');
 
 	      if (stmt->u.if_.cond->type == NOOP) {
@@ -1087,7 +1092,7 @@ static list_t *unparse_stmt(list_t *output, Stmt *stmt, int indent, Stmt *last)
 
 	  if (stmt->type == IF) {
 	      str = string_add_chars(str, "if (", 4);
-	      str = unparse_expr(str, stmt->u.if_.cond);
+	      str = unparse_expr(str, stmt->u.if_.cond, PAREN_ASSIGN);
 	      str = string_add_chars(str, ") ", 2);
 	      stmt = stmt->u.if_.true;
 	  }
@@ -1122,9 +1127,9 @@ static list_t *unparse_stmt(list_t *output, Stmt *stmt, int indent, Stmt *last)
 	  str = string_add_chars(str, "for ", 4);
 	  str = string_add_chars(str, s, strlen(s));
 	  str = string_add_chars(str, " in [", 5);
-	  str = unparse_expr(str, stmt->u.for_range.lower);
+	  str = unparse_expr(str, stmt->u.for_range.lower, PAREN_ASSIGN);
 	  str = string_add_chars(str, " .. ", 4);
-	  str = unparse_expr(str, stmt->u.for_range.upper);
+	  str = unparse_expr(str, stmt->u.for_range.upper, PAREN_ASSIGN);
 	  str = string_addc(str, ']');
 	  return unparse_body(output, stmt->u.for_range.body, str, indent);
       }
@@ -1137,7 +1142,7 @@ static list_t *unparse_stmt(list_t *output, Stmt *stmt, int indent, Stmt *last)
 	  str = string_add_chars(str, "for ", 4);
 	  str = string_add_chars(str, s, strlen(s));
 	  str = string_add_chars(str, " in (", 5);
-	  str = unparse_expr(str, stmt->u.for_list.list);
+	  str = unparse_expr(str, stmt->u.for_list.list, PAREN_ASSIGN);
 	  str = string_addc(str, ')');
 	  return unparse_body(output, stmt->u.for_list.body, str, indent);
       }
@@ -1145,14 +1150,14 @@ static list_t *unparse_stmt(list_t *output, Stmt *stmt, int indent, Stmt *last)
       case WHILE:
 	str = string_of_char(' ', indent);
 	str = string_add_chars(str, "while (", 7);
-	str = unparse_expr(str, stmt->u.while_.cond);
+	str = unparse_expr(str, stmt->u.while_.cond, PAREN_ASSIGN);
 	str = string_addc(str, ')');
 	return unparse_body(output, stmt->u.while_.body, str, indent);
 
       case SWITCH:
 	str = string_of_char(' ', indent);
 	str = string_add_chars(str, "switch (", 8);
-	str = unparse_expr(str, stmt->u.switch_.expr);
+	str = unparse_expr(str, stmt->u.switch_.expr, PAREN_ASSIGN);
 	str = string_add_chars(str, ") {", 3);
 	output = add_and_discard_string(output, str);
 	output = unparse_cases(output, stmt->u.switch_.cases,
@@ -1179,7 +1184,7 @@ static list_t *unparse_stmt(list_t *output, Stmt *stmt, int indent, Stmt *last)
       case RETURN_EXPR:
 	str = string_of_char(' ', indent);
 	str = string_add_chars(str, "return ", 7);
-	str = unparse_expr(str, stmt->u.expr);
+	str = unparse_expr(str, stmt->u.expr, PAREN_ASSIGN);
 	str = string_addc(str, ';');
 	return add_and_discard_string(output, str);
 
@@ -1285,8 +1290,7 @@ static list_t *unparse_case(list_t *output, Case_entry *case_entry, int indent)
 			     indent + the_increment);
 }
 
-static string_t *unparse_expr(string_t *str, Expr *expr)
-{
+static string_t *unparse_expr(string_t *str, Expr *expr, int paren) {
     char *s;
 
     switch (expr->type) {
@@ -1308,11 +1312,11 @@ static string_t *unparse_expr(string_t *str, Expr *expr)
       case STRING:
 	return string_add_unparsed(str, expr->u.str, strlen(expr->u.str));
 
-      case DBREF: {
+      case OBJNUM: {
 	  Number_buf nbuf;
 
 	  str = string_addc(str, '#');
-	  s = long_to_ascii(expr->u.dbref, nbuf);
+	  s = long_to_ascii(expr->u.objnum, nbuf);
 	  return string_add_chars(str, s, strlen(s));
       }
 
@@ -1347,9 +1351,14 @@ static string_t *unparse_expr(string_t *str, Expr *expr)
         char *s;
 
         s = expr->u.assign.var;
+        if (paren)
+            str = string_addc(str, '(');
         str = string_add_chars(str, s, strlen(s));
         str = string_add_chars(str, " = ", 3);
-        return unparse_expr(str, expr->u.assign.value);
+        str = unparse_expr(str, expr->u.assign.value, PAREN_ASSIGN);
+        if (paren)
+            str = string_addc(str, ')');
+        return str;
       }
 
       case FUNCTION_CALL:
@@ -1384,7 +1393,7 @@ static string_t *unparse_expr(string_t *str, Expr *expr)
 	    str = unparse_expr_prec(str, expr->u.message.to, MESSAGE, 0);
 
 	str = string_add_chars(str, ".(", 2);
-	str = unparse_expr(str, expr->u.expr_message.message);
+	str = unparse_expr(str, expr->u.expr_message.message, PAREN_ASSIGN);
 	str = string_addc(str, ')');
 	str = string_addc(str, '(');
 	str = unparse_args(str, expr->u.expr_message.args);
@@ -1408,15 +1417,15 @@ static string_t *unparse_expr(string_t *str, Expr *expr)
       case FROB:
         /* $#$NOTE: frobs shouldn't have to have ()'s around them */
 	str = string_add_chars(str, "(<", 2);
-	str = unparse_expr(str, expr->u.frob.cclass);
+	str = unparse_expr(str, expr->u.frob.cclass, PAREN_ASSIGN);
 	str = string_add_chars(str, ", ", 2);
-	str = unparse_expr(str, expr->u.frob.rep);
+	str = unparse_expr(str, expr->u.frob.rep, PAREN_ASSIGN);
 	return string_add_chars(str, ">)", 2);
 
       case INDEX:
 	str = unparse_expr_prec(str, expr->u.index.list, INDEX, 0);
 	str = string_addc(str, '[');
-	str = unparse_expr(str, expr->u.index.offset);
+	str = unparse_expr(str, expr->u.index.offset, PAREN_ASSIGN);
 	return string_addc(str, ']');
 
       case UNARY: {
@@ -1450,18 +1459,18 @@ static string_t *unparse_expr(string_t *str, Expr *expr)
       case CONDITIONAL:
 	str = unparse_expr_prec(str, expr->u.cond.cond, CONDITIONAL, 1);
 	str = string_add_chars(str, " ? ", 3);
-	str = unparse_expr(str, expr->u.cond.true);
+	str = unparse_expr(str, expr->u.cond.true, PAREN_ASSIGN);
 	str = string_add_chars(str, " | ", 3);
 	return unparse_expr_prec(str, expr->u.cond.false, CONDITIONAL, 0);
 
       case CRITICAL:
 	str = string_add_chars(str, "(| ", 3);
-	str = unparse_expr(str, expr->u.expr);
+	str = unparse_expr(str, expr->u.expr, PAREN_ASSIGN);
 	return string_add_chars(str, " |)", 3);
 
       case PROPAGATE:
 	str = string_add_chars(str, "(> ", 3);
-	str = unparse_expr(str, expr->u.expr);
+	str = unparse_expr(str, expr->u.expr, PAREN_ASSIGN);
 	return string_add_chars(str, " <)", 3);
 
       case SPLICE:
@@ -1469,16 +1478,16 @@ static string_t *unparse_expr(string_t *str, Expr *expr)
 	if (expr->u.expr->type == BINARY) {
 	    /* Add parens around binary expressions for readability. */
 	    str = string_addc(str, '(');
-	    str = unparse_expr(str, expr->u.expr);
+	    str = unparse_expr(str, expr->u.expr, PAREN_ASSIGN);
 	    return string_addc(str, ')');
 	} else {
-	    return unparse_expr(str, expr->u.expr);
+	    return unparse_expr(str, expr->u.expr, PAREN_ASSIGN);
 	}
 
       case RANGE:
-	str = unparse_expr(str, expr->u.range.lower);
+	str = unparse_expr(str, expr->u.range.lower, PAREN_ASSIGN);
 	str = string_add_chars(str, " .. ", 4);
-	return unparse_expr(str, expr->u.range.upper);
+	return unparse_expr(str, expr->u.range.upper, PAREN_ASSIGN);
 
       default:
 	return str;
@@ -1500,7 +1509,7 @@ static string_t *unparse_args(string_t *str, Expr_list *args)
 	    str = unparse_args(str, args->next);
 	    str = string_add_chars(str, ", ", 2);
 	}
-	str = unparse_expr(str, args->expr);
+	str = unparse_expr(str, args->expr, PAREN_ASSIGN);
     }
     return str;
 }
@@ -1521,10 +1530,10 @@ static string_t *unparse_expr_prec(string_t *str, Expr *expr, int caller_type,
 
     if (prec >= 0 && (the_parens_flag || caller_prec + assoc > prec)) {
 	str = string_addc(str, '(');
-	str = unparse_expr(str, expr);
+	str = unparse_expr(str, expr, PAREN_ASSIGN);
 	return string_addc(str, ')');
     } else {
-	return unparse_expr(str, expr);
+	return unparse_expr(str, expr, PAREN_ASSIGN);
     }
 }
 

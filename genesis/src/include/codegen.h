@@ -53,7 +53,7 @@ Stmt * catch_stmt(Id_list * errors, Stmt * body, Stmt * handler);
 Expr * integer_expr(long num);
 Expr * float_expr(float fnum);
 Expr * string_expr(char * str);
-Expr * dbref_expr(long dbref);
+Expr * objnum_expr(long objnum);
 Expr * symbol_expr(char * symbol);
 Expr * error_expr(char * error);
 Expr * name_expr(char * name);

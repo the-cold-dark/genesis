@@ -9,11 +9,11 @@
 // Routines for executing ColdC tasks.
 */
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <ctype.h>
 #include "config.h"
 #include "defs.h"
+
+#include <stdarg.h>
+#include <ctype.h>
 #include "y.tab.h"
 #include "execute.h"
 #include "memory.h"
@@ -30,19 +30,18 @@
 
 extern int running;
 
-internal void execute(void);
-internal void out_of_ticks_error(void);
-internal void start_error(Ident error, string_t *explanation, data_t *arg,
+INTERNAL void execute(void);
+INTERNAL void out_of_ticks_error(void);
+INTERNAL void start_error(Ident error, string_t *explanation, data_t *arg,
                         list_t * location);
-internal list_t * traceback_add(list_t * traceback, Ident error);
-internal void fill_in_method_info(data_t *d);
+INTERNAL list_t * traceback_add(list_t * traceback, Ident error);
+INTERNAL void fill_in_method_info(data_t *d);
 
-internal Frame *frame_store = NULL;
-internal int frame_depth;
+INTERNAL Frame *frame_store = NULL;
+INTERNAL int frame_depth;
 string_t *numargs_str;
 
 Frame *cur_frame, *suspend_frame;
-connection_t *cur_conn;
 data_t *stack;
 int stack_pos, stack_size;
 int *arg_starts, arg_pos, arg_size;
@@ -129,7 +128,6 @@ VMState *suspend_vm(void) {
 
     vm->paused = 0;
     vm->cur_frame = cur_frame;
-    vm->cur_conn = cur_conn;
     vm->stack = stack;
     vm->stack_pos = stack_pos;
     vm->stack_size = stack_size;
@@ -148,7 +146,6 @@ VMState *suspend_vm(void) {
 void restore_vm(VMState *vm) {
     task_id = vm->task_id;
     cur_frame = vm->cur_frame;
-    cur_conn = vm->cur_conn;
     stack = vm->stack;
     stack_pos = vm->stack_pos;
     stack_size = vm->stack_size;
@@ -292,10 +289,15 @@ void run_paused_tasks(void) {
 
 /*
 // ---------------------------------------------------------------
+//
+// List tasks, leave out paused tasks as they exist only for a brief
+// moment in time anyway.
+//
 */
+
 list_t * task_list(void) {
     list_t  * r;
-    data_t      elem;
+    data_t    elem;
     VMState * vm = tasks;
   
     r = list_new(0);
@@ -305,9 +307,8 @@ list_t * task_list(void) {
         elem.u.val = vm->task_id;
         list_add(r, &elem); 
     }
-    
-    vm = paused;
-    for (; vm; vm = vm->next) {
+  
+    for (vm = paused; vm; vm = vm->next) {
         elem.u.val = vm->task_id;
         list_add(r, &elem); 
     }
@@ -318,30 +319,32 @@ list_t * task_list(void) {
 /*
 // ---------------------------------------------------------------
 */
-list_t *task_callers(void) {
+list_t * task_stack(void) {
     list_t * r;
-    data_t   elem,
-           * d;
+    data_t   d,
+           * list;
     Frame  * f;
   
     r = list_new(0);
-    elem.type = LIST;
+    d.type = LIST;
     for (f = cur_frame; f; f = f->caller_frame) {
-        elem.u.list = list_new(4);
-        d = list_empty_spaces(elem.u.list, 4);
-        d->type = DBREF;
-        d->u.dbref = f->object->dbref;
-        d++;
-        d->type = DBREF;
-        d->u.dbref = f->method->object->dbref;
-        d++;
-        d->type = SYMBOL;
-        d->u.symbol = f->method->name;
-        d++;
-        d->type = INTEGER;
-        d->u.val = line_number(f->method, f->pc - 1);
-        list_add(r, &elem);
+
+        d.u.list = list_new(4);
+        list = list_empty_spaces(d.u.list, 4);
+
+        list[0].type = OBJNUM;
+        list[0].u.objnum = f->object->objnum;
+        list[1].type = OBJNUM;
+        list[1].u.objnum = f->method->object->objnum;
+        list[2].type = SYMBOL;
+        list[2].u.symbol = f->method->name;
+        list[3].type = INTEGER;
+        list[3].u.val = line_number(f->method, f->pc - 1);
+
+        list_add(r, &d);
+        list_discard(d.u.list);
     }
+
     return r;
 }
 
@@ -389,7 +392,7 @@ void init_execute(void) {
 // Execute a task by sending a message to an object.
 //
 */
-void task(connection_t *conn, Dbref dbref, long message, int num_args, ...) {
+void task(objnum_t objnum, long message, int num_args, ...) {
     va_list arg;
 
     /* Don't execute if a shutdown() has occured. */
@@ -399,7 +402,6 @@ void task(connection_t *conn, Dbref dbref, long message, int num_args, ...) {
     }
 
     /* Set global variables. */
-    cur_conn = conn;
     frame_depth = 0;
 
     va_start(arg, num_args);
@@ -411,7 +413,7 @@ void task(connection_t *conn, Dbref dbref, long message, int num_args, ...) {
     /* Send the message.  If this is succesful, start the task by calling
      * execute(). */
     ident_dup(message);
-    if (send_message(dbref, message, 0, 0) == NOT_AN_IDENT) {
+    if (call_method(objnum, message, 0, 0) == CALL_OK) {
         execute();
         if (stack_pos != 0)
             panic("Stack not empty after interpretation.");
@@ -428,9 +430,9 @@ void task(connection_t *conn, Dbref dbref, long message, int num_args, ...) {
 // Execute a task by evaluating a method on an object.
 //
 */
-void task_method(connection_t *conn, object_t *obj, method_t *method) {
-    cur_conn = conn;
+void task_method(object_t *obj, method_t *method) {
     frame_start(obj, method, NOT_AN_IDENT, NOT_AN_IDENT, 0, 0);
+
     execute();
 
     if (stack_pos != 0)
@@ -440,19 +442,19 @@ void task_method(connection_t *conn, object_t *obj, method_t *method) {
 /*
 // ---------------------------------------------------------------
 */
-long frame_start(object_t * obj,
-                 method_t * method,
-                 Dbref    sender,
-                 Dbref    caller,
-                 int      stack_start,
-                 int      arg_start)
+int frame_start(object_t * obj,
+                method_t * method,
+                objnum_t    sender,
+                objnum_t    caller,
+                int      stack_start,
+                int      arg_start)
 {
     Frame      * frame;
     int          i,
                  num_args,
                  num_rest_args;
     list_t     * rest;
-    data_t       * d;
+    data_t       * d, o;
     Number_buf   nbuf1,
                  nbuf2;
 
@@ -461,18 +463,20 @@ long frame_start(object_t * obj,
                                         method->rest == -1)) {
         if (numargs_str)
             string_discard(numargs_str);
-        numargs_str = format("#%l.%s called with %s argument%s, requires %s%s",
-                             obj->dbref, ident_name(method->name),
+        o.type = OBJNUM;
+        o.u.objnum = obj->objnum;
+        numargs_str = format("%D.%s called with %s argument%s, requires %s%s",
+                             &o, ident_name(method->name),
                              english_integer(num_args, nbuf1),
                              (num_args == 1) ? "" : "s",
                              (method->num_args == 0) ? "none" :
                              english_integer(method->num_args, nbuf2),
                              (method->rest == -1) ? "." : " or more.");
-        return numargs_id;
+        return CALL_NUMARGS;
     }
 
     if (frame_depth > MAX_CALL_DEPTH)
-        return maxdepth_id;
+        return CALL_MAXDEPTH;
     frame_depth++;
 
     if (method->rest != -1) {
@@ -524,7 +528,7 @@ long frame_start(object_t * obj,
     frame->caller_frame = cur_frame;
     cur_frame = frame;
 
-    return NOT_AN_IDENT;
+    return CALL_OK;
 }
 
 /*
@@ -565,7 +569,7 @@ void frame_return(void) {
 /*
 // ---------------------------------------------------------------
 */
-internal void execute(void) {
+INTERNAL void execute(void) {
     int opcode;
 
     while (cur_frame) {
@@ -577,8 +581,8 @@ internal void execute(void) {
 
 #if DEBUG_EXECUTE
             write_err("#%d #%d.%I %d %s",
-                cur_frame->object->dbref, 
-                cur_frame->method->object->dbref,
+                cur_frame->object->objnum, 
+                cur_frame->method->object->objnum,
                 ((cur_frame->method->name != NOT_AN_IDENT) ?
                     cur_frame->method->name :
                     opcode_id),
@@ -628,19 +632,19 @@ void anticipate_assignment(void) {
 /*
 // ---------------------------------------------------------------
 */
-Ident pass_message(int stack_start, int arg_start) {
+int pass_method(int stack_start, int arg_start) {
     method_t *method;
-    Ident result;
+    int result;
 
     if (cur_frame->method->name == -1)
-        return methodnf_id;
+        return CALL_METHNF;
 
     /* Find the next method to handle the message. */
-    method = object_find_next_method(cur_frame->object->dbref,
+    method = object_find_next_method(cur_frame->object->objnum,
                                      cur_frame->method->name,
-                                     cur_frame->method->object->dbref);
+                                     cur_frame->method->object->objnum);
     if (!method)
-        return methodnf_id;
+        return CALL_METHNF;
 
     /* Start the new frame. */
     result = frame_start(cur_frame->object, method, cur_frame->sender,
@@ -652,22 +656,27 @@ Ident pass_message(int stack_start, int arg_start) {
 /*
 // ---------------------------------------------------------------
 */
-Ident send_message(Dbref dbref, Ident message, int stack_start, int arg_start) {
-    object_t *obj;
-    method_t *method;
-    Ident result;
-    Dbref sender, caller;
+int call_method(objnum_t   objnum,
+                Ident      message,
+                int        stack_start,
+                int        arg_start)
+{
+    object_t * obj;
+    method_t * method;
+    int        result;
+    objnum_t   sender,
+               caller;
 
     /* Get the target object from the cache. */
-    obj = cache_retrieve(dbref);
+    obj = cache_retrieve(objnum);
     if (!obj)
-        return objnf_id;
+        return CALL_OBJNF;
 
     /* Find the method to run. */
-    method = object_find_method(obj->dbref, message);
+    method = object_find_method(obj->objnum, message);
     if (!method) {
         cache_discard(obj);
-        return methodnf_id;
+        return CALL_METHNF;
     }
 
     /*
@@ -678,29 +687,29 @@ Ident send_message(Dbref dbref, Ident message, int stack_start, int arg_start) {
     //     driver:    only I can send to this method
     */
     if (cur_frame) {
-        switch (method->m_state) {
+        switch (method->m_access) {
             case MS_PRIVATE:
-                if (cur_frame->method->object->dbref != method->object->dbref)
-                    return private_id;
+                if (cur_frame->method->object->objnum != method->object->objnum)
+                    return CALL_PRIVATE;
                 break;
             case MS_PROTECTED:
-                if (cur_frame->object->dbref != obj->dbref)
-                    return protected_id;
+                if (cur_frame->object->objnum != obj->objnum)
+                    return CALL_PROT;
                 break;
             case MS_ROOT:
-                if (cur_frame->method->object->dbref != ROOT_DBREF)
-                    return root_id;
+                if (cur_frame->method->object->objnum != ROOT_OBJNUM)
+                    return CALL_ROOT;
                 break;
             case MS_DRIVER:
                 /* if we are here, there is a current frame,
                    and the driver didn't send this */
-                return driver_id;
+                return CALL_DRIVER;
         }
     }
 
     /* Start the new frame. */
-    sender = (cur_frame) ? cur_frame->object->dbref : NOT_AN_IDENT;
-    caller = (cur_frame) ? cur_frame->method->object->dbref : NOT_AN_IDENT;
+    sender = (cur_frame) ? cur_frame->object->objnum : NOT_AN_IDENT;
+    caller = (cur_frame) ? cur_frame->method->object->objnum : NOT_AN_IDENT;
     result = frame_start(obj, method, sender, caller, stack_start, arg_start);
 
     cache_discard(obj);
@@ -780,15 +789,15 @@ void push_string(string_t *str) {
 /*
 // ---------------------------------------------------------------
 */
-void push_dbref(Dbref dbref) {
+void push_objnum(objnum_t objnum) {
 
 #ifdef DEBUG
-    write_err("push($%d)", dbref);
+    write_err("push($%d)", objnum);
 #endif
 
     check_stack(1);
-    stack[stack_pos].type = DBREF;
-    stack[stack_pos].u.dbref = dbref;
+    stack[stack_pos].type = OBJNUM;
+    stack[stack_pos].u.objnum = objnum;
     stack_pos++;
 }
 
@@ -873,19 +882,21 @@ void push_buffer(Buffer *buf) {
     stack_pos++;
 }
 
-int func_init_0(void)
-{
+#define INVALID_BINDING \
+    (op_table[cur_frame->last_opcode].binding != INV_OBJNUM && \
+     op_table[cur_frame->last_opcode].binding != \
+     cur_frame->method->object->objnum)
+#define FUNC_NAME() (op_table[cur_frame->last_opcode].name)
+#define FUNC_BINDING() (op_table[cur_frame->last_opcode].binding)
+
+int func_init_0(void) {
     int arg_start = arg_starts[--arg_pos];
     int num_args = stack_pos - arg_start;
 
     if (num_args)
         func_num_error(num_args, "none");
-    else if (op_table[cur_frame->last_opcode].binding != INV_OBJNUM &&
-             op_table[cur_frame->last_opcode].binding
-             != cur_frame->method->object->dbref)
-        cthrow(perm_id,
-               "Caller (#%l) is not the object bound to this function.",
-               cur_frame->method->object->dbref);
+    else if (INVALID_BINDING)
+        cthrow(perm_id, "%s() is bound to %O", FUNC_NAME(), FUNC_BINDING());
     else
         return 1;
     return 0;
@@ -901,14 +912,9 @@ int func_init_1(data_t **args, int type1)
         func_num_error(num_args, "one");
     else if (type1 && stack[arg_start].type != type1)
         func_type_error("first", &stack[arg_start], english_type(type1));
-    else if (op_table[cur_frame->last_opcode].binding != INV_OBJNUM &&
-             op_table[cur_frame->last_opcode].binding
-             != cur_frame->method->object->dbref) {
-        cthrow(perm_id,
-               "Caller (#%l) is not the object bound to this function.",
-               cur_frame->method->object->dbref);
-       /* pop(1); */
-    } else
+    else if (INVALID_BINDING)
+        cthrow(perm_id, "%s() is bound to %O", FUNC_NAME(), FUNC_BINDING());
+    else
         return 1;
     return 0;
 }
@@ -925,14 +931,9 @@ int func_init_2(data_t **args, int type1, int type2)
         func_type_error("first", &stack[arg_start], english_type(type1));
     else if (type2 && stack[arg_start + 1].type != type2)
         func_type_error("second", &stack[arg_start + 1], english_type(type2));
-    else if (op_table[cur_frame->last_opcode].binding != INV_OBJNUM &&
-             op_table[cur_frame->last_opcode].binding
-             != cur_frame->method->object->dbref) {
-        cthrow(perm_id,
-               "Caller (#%l) is not the object bound to this function.",
-               cur_frame->method->object->dbref);
-       /* pop(2); */
-    } else
+    else if (INVALID_BINDING)
+        cthrow(perm_id, "%s() is bound to %O", FUNC_NAME(), FUNC_BINDING());
+    else
         return 1;
     return 0;
 }
@@ -951,14 +952,9 @@ int func_init_3(data_t **args, int type1, int type2, int type3)
         func_type_error("second", &stack[arg_start + 1], english_type(type2));
     else if (type3 && stack[arg_start + 2].type != type3)
         func_type_error("third", &stack[arg_start + 2], english_type(type3));
-    else if (op_table[cur_frame->last_opcode].binding != INV_OBJNUM &&
-             op_table[cur_frame->last_opcode].binding
-             != cur_frame->method->object->dbref) {
-        cthrow(perm_id,
-               "Caller (#%l) is not the object bound to this function.",
-               cur_frame->method->object->dbref);
-        /* pop(3); */
-    } else
+    else if (INVALID_BINDING)
+        cthrow(perm_id, "%s() is bound to %O", FUNC_NAME(), FUNC_BINDING());
+    else
         return 1;
     return 0;
 }
@@ -973,14 +969,9 @@ int func_init_0_or_1(data_t **args, int *num_args, int type1)
         func_num_error(*num_args, "at most one");
     else if (type1 && *num_args == 1 && stack[arg_start].type != type1)
         func_type_error("first", &stack[arg_start], english_type(type1));
-    else if (op_table[cur_frame->last_opcode].binding != INV_OBJNUM &&
-             op_table[cur_frame->last_opcode].binding
-             != cur_frame->method->object->dbref) {
-        cthrow(perm_id,
-               "Caller (#%l) is not the object bound to this function.",
-               cur_frame->method->object->dbref);
-        /* pop(*num_args); */
-    } else
+    else if (INVALID_BINDING)
+        cthrow(perm_id, "%s() is bound to %O", FUNC_NAME(), FUNC_BINDING());
+    else
         return 1;
     return 0;
 }
@@ -997,14 +988,9 @@ int func_init_1_or_2(data_t **args, int *num_args, int type1, int type2)
         func_type_error("first", &stack[arg_start], english_type(type1));
     else if (type2 && *num_args == 2 && stack[arg_start + 1].type != type2)
         func_type_error("second", &stack[arg_start + 1], english_type(type2));
-    else if (op_table[cur_frame->last_opcode].binding != INV_OBJNUM &&
-             op_table[cur_frame->last_opcode].binding
-             != cur_frame->method->object->dbref) {
-        cthrow(perm_id,
-               "Caller (#%l) is not the object bound to this function.",
-               cur_frame->method->object->dbref);
-        /* pop(*num_args); */
-    } else
+    else if (INVALID_BINDING)
+        cthrow(perm_id, "%s() is bound to %O", FUNC_NAME(), FUNC_BINDING());
+    else
         return 1;
     return 0;
 }
@@ -1024,14 +1010,9 @@ int func_init_2_or_3(data_t **args, int *num_args, int type1, int type2,
         func_type_error("second", &stack[arg_start + 1], english_type(type2));
     else if (type3 && *num_args == 3 && stack[arg_start + 2].type != type3)
         func_type_error("third", &stack[arg_start + 2], english_type(type3));
-    else if (op_table[cur_frame->last_opcode].binding != INV_OBJNUM &&
-             op_table[cur_frame->last_opcode].binding
-             != cur_frame->method->object->dbref) {
-        cthrow(perm_id,
-               "Caller (#%l) is not the object bound to this function.",
-               cur_frame->method->object->dbref);
-        /* pop(*num_args); */
-    } else
+    else if (INVALID_BINDING)
+        cthrow(perm_id, "%s() is bound to %O", FUNC_NAME(), FUNC_BINDING());
+    else
         return 1;
     return 0;
 }
@@ -1051,14 +1032,9 @@ int func_init_1_to_3(data_t **args, int *num_args, int type1, int type2,
         func_type_error("second", &stack[arg_start + 1], english_type(type2));
     else if (type3 && *num_args == 3 && stack[arg_start + 2].type != type3)
         func_type_error("third", &stack[arg_start + 2], english_type(type3));
-    else if (op_table[cur_frame->last_opcode].binding != INV_OBJNUM &&
-             op_table[cur_frame->last_opcode].binding
-             != cur_frame->method->object->dbref) {
-        cthrow(perm_id,
-               "Caller (#%l) is not the object bound to this function.",
-               cur_frame->method->object->dbref);
-        /* pop(*num_args); */
-    } else
+    else if (INVALID_BINDING)
+        cthrow(perm_id, "%s() is bound to %O", FUNC_NAME(), FUNC_BINDING());
+    else
         return 1;
     return 0;
 }
@@ -1141,9 +1117,9 @@ void user_error(Ident error, string_t *explanation, data_t *arg)
     list_discard(location);
 }
 
-internal void out_of_ticks_error(void)
+INTERNAL void out_of_ticks_error(void)
 {
-    internal string_t *explanation;
+    static string_t *explanation;
     list_t * location;
     data_t *d;
 
@@ -1168,7 +1144,7 @@ internal void out_of_ticks_error(void)
     list_discard(location);
 }
 
-internal void start_error(Ident error, string_t *explanation, data_t *arg,
+INTERNAL void start_error(Ident error, string_t *explanation, data_t *arg,
                         list_t * location)
 {
     list_t * error_condition, *traceback;
@@ -1213,12 +1189,12 @@ internal void start_error(Ident error, string_t *explanation, data_t *arg,
     propagate_error(traceback, error);
 }
 
-/* Requires:        traceback is a list of strings containing the traceback
- *                        information to date.  THIS FUNCTION CONSUMES TRACEBACK.
- *                id is an error id.  This function accounts for an error id
- *                        which is "owned" by a data stack frame that we will
- *                        nuke in the course of unwinding the call stack.
- *                str is a string containing an explanation of the error. */
+/* Requires:  traceback is a list of lists containing the traceback
+ *            information to date.  THIS FUNCTION CONSUMES THE INFORMATION.
+ *            id is an error id.  This function accounts for an error id
+ *            which is "owned" by a data stack frame that we will
+ *            nuke in the course of unwinding the call stack.
+ *            str is a string containing an explanation of the error. */
 void propagate_error(list_t * traceback, Ident error)
 {
     int i, ind, propagate = 0;
@@ -1318,7 +1294,7 @@ void propagate_error(list_t * traceback, Ident error)
     propagate_error(traceback, (propagate) ? error : methoderr_id);
 }
 
-internal list_t * traceback_add(list_t * traceback, Ident error)
+INTERNAL list_t * traceback_add(list_t * traceback, Ident error)
 {
     list_t * frame;
     data_t *d, frame_data;
@@ -1367,7 +1343,7 @@ void pop_handler_info(void)
     efree(old);
 }
 
-internal void fill_in_method_info(data_t *d)
+INTERNAL void fill_in_method_info(data_t *d)
 {
     Ident method_name;
 
@@ -1383,13 +1359,13 @@ internal void fill_in_method_info(data_t *d)
     d++;
 
     /* The current object. */
-    d->type = DBREF;
-    d->u.dbref = cur_frame->object->dbref;
+    d->type = OBJNUM;
+    d->u.objnum = cur_frame->object->objnum;
     d++;
 
     /* The defining object. */
-    d->type = DBREF;
-    d->u.dbref = cur_frame->method->object->dbref;
+    d->type = OBJNUM;
+    d->u.objnum = cur_frame->method->object->objnum;
     d++;
 
     /* The line number. */
@@ -1397,6 +1373,6 @@ internal void fill_in_method_info(data_t *d)
     d->u.val = line_number(cur_frame->method, cur_frame->pc);
 }
 
-void bind_opcode(int opcode, Dbref dbref) {
-    op_table[opcode].binding = dbref;
+void bind_opcode(int opcode, objnum_t objnum) {
+    op_table[opcode].binding = objnum;
 }

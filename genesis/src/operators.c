@@ -60,8 +60,8 @@ void op_set_obj_var(void) {
     val = &stack[stack_pos - 1];
     result = object_assign_var(cur_frame->object, cur_frame->method->object,
 			       id, val);
-    if (result == paramnf_id)
-	cthrow(paramnf_id, "No such parameter %I.", id);
+    if (result == varnf_id)
+	cthrow(varnf_id, "Object variable %I not found.", id);
 }
 
 void op_if(void) {
@@ -304,12 +304,12 @@ void op_continue(void) {
 }
 
 void op_return(void) {
-    long dbref;
+    long objnum;
 
-    dbref = cur_frame->object->dbref;
+    objnum = cur_frame->object->objnum;
     frame_return();
     if (cur_frame)
-	push_dbref(dbref);
+	push_objnum(objnum);
 }
 
 void op_return_expr(void) {
@@ -378,11 +378,11 @@ void op_string(void) {
     push_string(str);
 }
 
-void op_dbref(void) {
+void op_objnum(void) {
     int id;
 
     id = cur_frame->opcodes[cur_frame->pc++];
-    push_dbref(id);
+    push_objnum(id);
 }
 
 void op_symbol(void) {
@@ -403,12 +403,12 @@ void op_error(void) {
 
 void op_name(void) {
     int ind, id;
-    long dbref;
+    long objnum;
 
     ind = cur_frame->opcodes[cur_frame->pc++];
     id = object_get_ident(cur_frame->method->object, ind);
-    if (lookup_retrieve_name(id, &dbref))
-	push_dbref(dbref);
+    if (lookup_retrieve_name(id, &objnum))
+	push_objnum(objnum);
     else
 	cthrow(namenf_id, "Can't find object name %I.", id);
 }
@@ -432,8 +432,8 @@ void op_get_obj_var(void) {
     id = object_get_ident(cur_frame->method->object, ind);
     result = object_retrieve_var(cur_frame->object, cur_frame->method->object,
 				 id, &val);
-    if (result == paramnf_id) {
-	cthrow(paramnf_id, "No such parameter %I.", id);
+    if (result == varnf_id) {
+	cthrow(varnf_id, "Object variable %I not found.", id);
     } else {
 	check_stack(1);
 	stack[stack_pos] = val;
@@ -453,26 +453,65 @@ void op_start_args(void) {
     arg_pos++;
 }
 
+/* this is redundant, but 99% of the time we dont need it assigned, so
+   assigning it always would be wasteful */
+#define setobj(__o) ( d.type = OBJNUM, d.u.objnum = __o )
+
+INTERNAL void handle_method_call(int result, objnum_t objnum, Ident message) {
+    data_t d;
+
+    switch (result) {
+        case CALL_OK:
+            break;
+        case CALL_NUMARGS:
+            interp_error(numargs_id, numargs_str);
+            break;
+        case CALL_MAXDEPTH:
+            setobj(objnum);
+            cthrow(maxdepth_id, "Maximum call depth exceeded.");
+            break;
+        case CALL_OBJNF:
+            setobj(objnum);
+            cthrow(objnf_id, "Target (%D) not found.", &d);
+            break;
+        case CALL_METHNF:
+            setobj(objnum);
+            cthrow(methodnf_id, "%D.%I not found.", &d, message);
+            break;
+        case CALL_PRIVATE:
+            setobj(objnum);
+            cthrow(private_id, "%D.%I is private.", &d, message);
+            break;
+        case CALL_PROT:
+            setobj(objnum);
+            cthrow(protected_id, "%D.%I is protected.", &d, message);
+            break;
+        case CALL_ROOT:
+            setobj(objnum);
+            cthrow(root_id, "%D.%I can only be called by $root.", &d, message);
+            break;
+        case CALL_DRIVER:
+            setobj(objnum);
+            cthrow(driver_id, "%D.%I can only be by the driver.", &d, message);
+            break;
+    }
+}
+
 void op_pass(void) {
-    int arg_start, result;
+    int arg_start;
 
     arg_start = arg_starts[--arg_pos];
 
     /* Attempt to pass the message we're processing. */
-    result = pass_message(arg_start, arg_start);
-
-    if (result == numargs_id)
-	interp_error(result, numargs_str);
-    else if (result == methodnf_id)
-	cthrow(result, "No next method found.");
-    else if (result == maxdepth_id)
-	cthrow(result, "Maximum call depth exceeded.");
+    handle_method_call(pass_method(arg_start, arg_start),
+                       cur_frame->object->objnum,
+                       cur_frame->method->name);
 }
 
 void op_message(void) {
-    int arg_start, result, ind;
+    int arg_start, ind;
     data_t *target;
-    long message, dbref;
+    long message, objnum;
     Frob *frob;
 
     ind = cur_frame->opcodes[cur_frame->pc++];
@@ -481,30 +520,30 @@ void op_message(void) {
     arg_start = arg_starts[--arg_pos];
     target = &stack[arg_start - 1];
 
-#if 0
+#if DISABLED
     write_err("##message: %s[%d] #%d #%d.%I %d",
 	      ident_name(message),
               ind,
-	      cur_frame->object->dbref, 
-	      cur_frame->method->object->dbref,
+	      cur_frame->object->objnum, 
+	      cur_frame->method->object->objnum,
 	      (cur_frame->method->name != NOT_AN_IDENT)
 	       ? cur_frame->method->name
 	       : opcode_id,
 	      cur_frame->method->name);
 #endif
 
-    if (target->type == DBREF) {
-	dbref = target->u.dbref;
+    if (target->type == OBJNUM) {
+	objnum = target->u.objnum;
     } else if (target->type == FROB) {
 	/* Convert the frob to its rep and pass as first argument. */
 	frob = target->u.frob;
-	dbref = frob->cclass;
+	objnum = frob->cclass;
 	*target = frob->rep;
 	arg_start--;
 	TFREE(frob, 1);
     } else {
         /* JBB - changed to support messages to all object types */
-        if (!lookup_retrieve_name(data_type_id(target->type), &dbref)) {
+        if (!lookup_retrieve_name(data_type_id(target->type), &objnum)) {
             cthrow(objnf_id,
                    "No object for data type %I.",
                    data_type_id(target->type));
@@ -515,32 +554,17 @@ void op_message(void) {
 
     /* Attempt to send the message. */
     ident_dup(message);
-    result = send_message(dbref, message, target - stack, arg_start);
 
-    if (result == numargs_id)
-	interp_error(result, numargs_str);
-    else if (result == objnf_id)
-	cthrow(result, "Target (#%l) not found.", dbref);
-    else if (result == methodnf_id)
-	cthrow(result, "Method %I not found.", message);
-    else if (result == maxdepth_id)
-	cthrow(result, "Maximum call depth exceeded.");
-    else if (result == private_id)
-        cthrow(result, "Method %I is private.", message);
-    else if (result == protected_id)
-        cthrow(result, "Method %I is protected.", message);
-    else if (result == root_id)
-        cthrow(result, "Method %I can only be called by $root.", message);
-    else if (result == driver_id)
-        cthrow(result, "Method %I can only be by the driver.", message);
+    handle_method_call(call_method(objnum, message, target - stack, arg_start),
+                       objnum, message);
 
     ident_discard(message);
 }
 
 void op_expr_message(void) {
-    int arg_start, result;
+    int arg_start;
     data_t *target, *message_data;
-    long dbref, message;
+    long objnum, message;
 
     arg_start = arg_starts[--arg_pos];
     target = &stack[arg_start - 2];
@@ -552,10 +576,10 @@ void op_expr_message(void) {
     }
     message = ident_dup(message_data->u.symbol);
 
-    if (target->type == DBREF) {
-	dbref = target->u.dbref;
+    if (target->type == OBJNUM) {
+	objnum = target->u.objnum;
     } else if (target->type == FROB) {
-	dbref = target->u.frob->cclass;
+	objnum = target->u.frob->cclass;
 
 	/* Pass frob rep as first argument (where the message data is now). */
 	data_discard(message_data);
@@ -568,7 +592,7 @@ void op_expr_message(void) {
 	target->u.val = 0;
     } else {
         /* JBB - changed to support messages to all object types */
-        if (!lookup_retrieve_name(data_type_id(target->type), &dbref)) {
+        if (!lookup_retrieve_name(data_type_id(target->type), &objnum)) {
             cthrow(objnf_id,
                    "No object for data type %I",
                    data_type_id(target->type));
@@ -582,24 +606,9 @@ void op_expr_message(void) {
 
     /* Attempt to send the message. */
     ident_dup(message);
-    result = send_message(dbref, message, target - stack, arg_start);
-
-    if (result == numargs_id)
-	interp_error(result, numargs_str);
-    else if (result == objnf_id)
-	cthrow(result, "Target (#%l) not found.", dbref);
-    else if (result == methodnf_id)
-	cthrow(result, "Method %I not found.", message);
-    else if (result == maxdepth_id)
-	cthrow(result, "Maximum call depth exceeded.");
-    else if (result == private_id)
-        cthrow(result, "Method %I is private.", message);
-    else if (result == protected_id)
-        cthrow(result, "Method %I is protected.", message);
-    else if (result == root_id)
-        cthrow(result, "Method %I can only be called by $root.", message);
-    else if (result == driver_id)
-        cthrow(result, "Method %I can only be by the driver.", message);
+    
+    handle_method_call(call_method(objnum, message, target - stack, arg_start),
+                       objnum, message);
 
     ident_discard(message);
 }
@@ -675,15 +684,15 @@ void op_frob(void) {
 
     cclass = &stack[stack_pos - 2];
     rep = &stack[stack_pos - 1];
-    if (cclass->type != DBREF) {
-	cthrow(type_id, "Class (%D) is not a dbref.", cclass);
+    if (cclass->type != OBJNUM) {
+	cthrow(type_id, "Class (%D) is not a objnum.", cclass);
     } else if (rep->type != LIST && rep->type != DICT) {
 	cthrow(type_id, "Rep (%D) is not a list or dictionary.", rep);
     } else {
-      Dbref dbref = cclass->u.dbref;
+      objnum_t objnum = cclass->u.objnum;
       cclass->type = FROB;
       cclass->u.frob = TMALLOC(Frob, 1);
-      cclass->u.frob->cclass = dbref;
+      cclass->u.frob->cclass = objnum;
       data_dup(&cclass->u.frob->rep, rep);
       pop(1);
     }
@@ -947,6 +956,16 @@ void op_add(void)
     } else if (d1->type == INTEGER && d2->type == FLOAT) {
         d1->type = FLOAT;
         d1->u.fval = (float) d1->u.val;
+    } else if (d2->type == STRING && d1->type != STRING) {
+        string_t * str = data_to_literal(d1);
+        data_discard(d1);
+        d1->type = STRING;
+        d1->u.str = str;
+    } else if (d1->type == STRING && d2->type != STRING) {
+        string_t * str = data_to_literal(d2);;
+        data_discard(d2);
+        d2->type = STRING;
+        d2->u.str = str;
     }
 
     /* If we're adding two integers or two strings, replace d1 with

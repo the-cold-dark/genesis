@@ -9,9 +9,9 @@
 // Routines for manipulating dictionaries.
 */
 
-#include <stdio.h>
 #include "config.h"
 #include "defs.h"
+
 #include "y.tab.h"
 #include "dict.h"
 #include "memory.h"

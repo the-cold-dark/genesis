@@ -9,12 +9,12 @@
 // Coldmud signal handling.
 */
 
-#include <stdio.h>
+#include "config.h"
+#include "defs.h"
+
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include "config.h"
-#include "defs.h"
 #include "sig.h"
 #include "log.h"          /* write_err() */
 #include "execute.h"      /* task() */
@@ -31,7 +31,6 @@ void uninit_sig(void) {
     signal(SIGINT,  SIG_DFL);
     signal(SIGHUP,  SIG_DFL);
     signal(SIGTERM, SIG_DFL);
-    signal(SIGALRM, SIG_DFL);
     signal(SIGUSR1, SIG_DFL);
     signal(SIGUSR2, SIG_DFL);
     signal(SIGCHLD, SIG_DFL);
@@ -44,14 +43,16 @@ void init_sig(void) {
     signal(SIGINT,  catch_signal);
     signal(SIGHUP,  catch_signal);
     signal(SIGTERM, catch_signal);
-    signal(SIGALRM, catch_signal);
     signal(SIGUSR1, catch_signal);
     signal(SIGUSR2, catch_signal);
     signal(SIGCHLD, catch_SIGCHLD);
 }
 
 void catch_SIGCHLD(int sig) {
+    /* ah, our kiddie is done, tell it to go away */
     waitpid(-1, NULL, WNOHANG);
+
+    /* some older OS's reset the signal handler, rather annoying */
     signal(SIGCHLD, catch_SIGCHLD);
 }
 
@@ -64,7 +65,6 @@ char *sig_name(int sig) {
         case SIGINT:  return "SIGINT";
         case SIGHUP:  return "SIGHUP";
         case SIGTERM: return "SIGTERM";
-        case SIGALRM: return "SIGALRM";
         case SIGUSR1: return "SIGUSR1";
         case SIGUSR2: return "SIGUSR2";
         default:      return "Unknown";
@@ -94,20 +94,25 @@ void catch_signal(int sig) {
     arg1.u.symbol = ident_get(sig_name(sig));
     arg2.type = STRING;
     arg2.u.str = sigstr;
-    task(NULL, SYSTEM_DBREF, signal_id, 2, &arg1, &arg2);
+    task(SYSTEM_OBJNUM, signal_id, 2, &arg1, &arg2);
 
     /* figure out what to do */
     switch(sig) {
-        case SIGFPE:
-        case SIGUSR1:
-        case SIGUSR2:
         case SIGHUP:
-        case SIGALRM:
-            /* let the server do what it wants, don't shutdown */
+            atomic = 0;
+            handle_connection_output();
+            flush_files();
+        case SIGFPE:
+        case SIGUSR2:
+            /* let the db do what it wants from here */
+            break;
+        case SIGUSR1:
+            /* USR1 goes back to the main loop */
+            longjmp(main_jmp, 1);
             break;
         case SIGILL:
         case SIGSEGV:
-            /* lets panic and hopefully dump */
+            /* lets panic and hopefully shutdown without frobbing the db */
             panic(sig_name(sig));
             break;
         case SIGINT:
@@ -117,6 +122,7 @@ void catch_signal(int sig) {
             if (running) {
                 write_err("*** Attempting normal shutdown ***");
                 running = 0;
+                longjmp(main_jmp, 1);
             } else {
                 panic(sig_name(sig));
             }

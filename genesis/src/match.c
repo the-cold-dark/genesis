@@ -9,10 +9,10 @@
 // Routine for matching against a template.
 */
 
-#include <stdio.h>
-#include <string.h>
 #include "config.h"
 #include "defs.h"
+
+#include <string.h>
 #include "y.tab.h"
 #include "match.h"
 #include "memory.h"

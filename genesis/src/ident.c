@@ -9,10 +9,10 @@
 // The global identifier table.
 */
 
-#include <stdio.h>
-#include <string.h>
 #include "config.h"
 #include "defs.h"
+
+#include <string.h>
 #include "cdc_types.h"
 #include "memory.h"
 #include "util.h"
@@ -36,17 +36,17 @@ static xIdent_entry *tab;
 static long *hashtab;
 static long tab_size, blanks;
 
-Ident perm_id, type_id, div_id, integer_id, float_id, string_id, dbref_id,
+Ident perm_id, type_id, div_id, integer_id, float_id, string_id, objnum_id,
       list_id, symbol_id, error_id, frob_id, methodnf_id, methoderr_id,
-      parent_id, maxdepth_id, objnf_id, numargs_id, range_id, paramnf_id,
+      parent_id, maxdepth_id, objnf_id, numargs_id, range_id, varnf_id,
       file_id, ticks_id, connect_id, disconnect_id, startup_id, parse_id,
-      socket_id, bind_id, servnf_id, paramexists_id, dictionary_id, keynf_id,
+      socket_id, bind_id, servnf_id, varexists_id, dictionary_id, keynf_id,
       address_id, refused_id, net_id, timeout_id, other_id, failed_id,
       heartbeat_id, regexp_id, buffer_id, namenf_id, salt_id, function_id,
-      opcode_id, method_id, interpreter_id, signal_id, directory_id;
+      opcode_id, method_id, interpreter_id, signal_id, directory_id, eof_id;
 
 Ident public_id, protected_id, private_id, root_id, driver_id,
-      noover_id, sync_id, locked_id, native_id;
+      noover_id, sync_id, locked_id, native_id, fork_id, atomic_id;
 
 void init_ident(void)
 {
@@ -72,7 +72,7 @@ void init_ident(void)
     integer_id = ident_get("integer");
     float_id = ident_get("float");
     string_id = ident_get("string");
-    dbref_id = ident_get("dbref");
+    objnum_id = ident_get("objnum");
     list_id = ident_get("list");
     symbol_id = ident_get("symbol");
     error_id = ident_get("error");
@@ -84,7 +84,7 @@ void init_ident(void)
     objnf_id = ident_get("objnf");
     numargs_id = ident_get("numargs");
     range_id = ident_get("range");
-    paramnf_id = ident_get("paramnf");
+    varnf_id = ident_get("varnf");
     file_id = ident_get("file");
     ticks_id = ident_get("ticks");
     connect_id = ident_get("connect");
@@ -94,7 +94,7 @@ void init_ident(void)
     socket_id = ident_get("socket");
     bind_id = ident_get("bind");
     servnf_id = ident_get("servnf");
-    paramexists_id = ident_get("paramexists");
+    varexists_id = ident_get("varexists");
     dictionary_id = ident_get("dictionary");
     keynf_id = ident_get("keynf");
     address_id = ident_get("address");
@@ -114,15 +114,18 @@ void init_ident(void)
     interpreter_id = ident_get("interpreter");
     signal_id = ident_get("signal");
     directory_id = ident_get("directory");
+    eof_id = ident_get("eof");
     public_id = ident_get("public");
     protected_id = ident_get("protected");
     private_id = ident_get("private");
     root_id = ident_get("root");
     driver_id = ident_get("driver");
-    noover_id = ident_get("disallow_overrides");
+    noover_id = ident_get("nooverride");
+    fork_id = ident_get("fork");
     sync_id = ident_get("synchronized");
     locked_id = ident_get("locked");
     native_id = ident_get("native");
+    atomic_id = ident_get("atomic");
 }
 
 
@@ -212,7 +215,7 @@ void ident_discard(Ident id)
 	tab[id].s = NULL;
 
 	/* Find the pointer to this entry. */
-	for (p = &hashtab[ind]; *p != id; p = &tab[*p].next);
+	for (p = &hashtab[ind]; p && *p != id; p = &tab[*p].next);
 
 	/* Remove this entry and add it to blanks. */
 	*p = tab[id].next;

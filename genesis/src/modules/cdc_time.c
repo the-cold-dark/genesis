@@ -10,11 +10,10 @@
 */
 
 #include "config.h"
+#include "defs.h"
 
-#include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>    /* for mtime() */
-#include "defs.h"
 #include "y.tab.h"
 #include "cdc_types.h"
 #include "operators.h"
@@ -46,11 +45,9 @@ void op_localtime(void) {
     time(&t);
     tms = localtime(&t);
 
-#define __LSIZE__ 10
-
-    l = list_new(__LSIZE__);
-    d = list_empty_spaces(l, __LSIZE__);
-    for (x=0; x < __LSIZE__; x++)
+    l = list_new(11);
+    d = list_empty_spaces(l, 11);
+    for (x=0; x < 10; x++)
         d[x].type = INTEGER;
 
     d[0].u.val = (int) t;
@@ -64,25 +61,19 @@ void op_localtime(void) {
     d[8].u.val = tms->tm_yday;
     d[9].u.val = tms->tm_isdst;
 
-#undef __LSIZE__
+    d[10].type = STRING;
+#ifdef HAVE_TM_ZONE
+    d[10].u.str = string_from_chars(tms->tm_zone, strlen(tms->tm_zone));
+#else
+  #ifdef HAVE_TZNAME
+    d[10].u.str = string_from_chars(tzname, strlen(tzname));
+  #else
+    d[10].u.str = string_new(0);
+  #endif
+#endif
 
     push_list(l);
     list_discard(l);
-}
-
-/* May as well give it to them, the code is in the driver */
-void op_timestamp(void) { string_t * str;
-    char     * s;
-
-    /* Take no arguments. */
-    if (!func_init_0())
-        return;
-
-    s = timestamp(NULL);
-    str = string_from_chars(s, strlen(s));
-
-    push_string(str);
-    string_discard(str);
 }
 
 void op_strftime(void) {

@@ -9,16 +9,15 @@
 // Interface to dbm index of object locations.
 */
 
-#include <stdio.h>
+#include "config.h"
+#include "defs.h"
+
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <ndbm.h>
 #include <fcntl.h>
 #include <string.h>
-#include <stdlib.h>
-#include "config.h"
-#include "defs.h"
 #include "lookup.h"
 #include "log.h"
 #include "ident.h"
@@ -32,25 +31,23 @@
 #define READ_WRITE_EXECUTE 0700
 #endif
 
-#define NAME_CACHE_SIZE 503
-
-static datum dbref_key(long dbref, Number_buf nbuf);
+static datum objnum_key(long objnum, Number_buf nbuf);
 static datum name_key(long name);
 static datum offset_size_value(off_t offset, int size, Number_buf nbuf);
 static void parse_offset_size_value(datum value, off_t *offset, int *size);
-static datum dbref_value(long dbref, Number_buf nbuf);
+static datum objnum_value(long objnum, Number_buf nbuf);
 static void sync_name_cache(void);
-static int store_name(long name, long dbref);
-static int get_name(long name, long *dbref);
+static int store_name(long name, long objnum);
+static int get_name(long name, long *objnum);
 
 static DBM *dbp;
 
 struct name_cache_entry {
     long name;
-    long dbref;
+    long objnum;
     char dirty;
     char on_disk;
-} name_cache[NAME_CACHE_SIZE];
+} name_cache[NAME_CACHE_SIZE + 1];
 
 void lookup_open(char *name, int cnew) {
     int i;
@@ -84,13 +81,13 @@ void lookup_sync(void) {
 	panic("Cannot reopen dbm database file.");
 }
 
-int lookup_retrieve_dbref(long dbref, off_t *offset, int *size)
+int lookup_retrieve_objnum(long objnum, off_t *offset, int *size)
 {
     datum key, value;
     Number_buf nbuf;
 
-    /* Get the value for dbref from the database. */
-    key = dbref_key(dbref, nbuf);
+    /* Get the value for objnum from the database. */
+    key = objnum_key(objnum, nbuf);
     value = dbm_fetch(dbp, key);
     if (!value.dptr)
 	return 0;
@@ -99,48 +96,48 @@ int lookup_retrieve_dbref(long dbref, off_t *offset, int *size)
     return 1;
 }
 
-int lookup_store_dbref(long dbref, off_t offset, int size)
+int lookup_store_objnum(long objnum, off_t offset, int size)
 {
     datum key, value;
     Number_buf nbuf1, nbuf2;
 
-    key = dbref_key(dbref, nbuf1);
+    key = objnum_key(objnum, nbuf1);
     value = offset_size_value(offset, size, nbuf2);
     if (dbm_store(dbp, key, value, DBM_REPLACE)) {
-	write_err("ERROR: Failed to store key %l.", dbref);
+	write_err("ERROR: Failed to store key %l.", objnum);
 	return 0;
     }
 
     return 1;
 }
 
-int lookup_remove_dbref(long dbref)
+int lookup_remove_objnum(long objnum)
 {
     datum key;
     Number_buf nbuf;
 
     /* Remove the key from the database. */
-    key = dbref_key(dbref, nbuf);
+    key = objnum_key(objnum, nbuf);
     if (dbm_delete(dbp, key)) {
-	write_err("ERROR: Failed to delete key %l.", dbref);
+	write_err("ERROR: Failed to delete key %l.", objnum);
 	return 0;
     }
     return 1;
 }
 
-long lookup_first_dbref(void)
+long lookup_first_objnum(void)
 {
     datum key;
 
     key = dbm_firstkey(dbp);
     if (key.dptr == NULL)
-	return NOT_AN_IDENT;
+	return INV_OBJNUM;
     if (key.dsize > 1 && *key.dptr == 0)
 	return atoln(key.dptr + 1, key.dsize - 1);
-    return lookup_next_dbref();
+    return lookup_next_objnum();
 }
 
-long lookup_next_dbref(void)
+long lookup_next_objnum(void)
 {
     datum key;
 
@@ -149,47 +146,47 @@ long lookup_next_dbref(void)
 	return NOT_AN_IDENT;
     if (key.dsize > 1 && *key.dptr == 0)
 	return atoln(key.dptr + 1, key.dsize - 1);
-    return lookup_next_dbref();
+    return lookup_next_objnum();
 }
 
-int lookup_retrieve_name(long name, long *dbref)
+int lookup_retrieve_name(long name, long *objnum)
 {
     int i = name % NAME_CACHE_SIZE;
 
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
-	*dbref = name_cache[i].dbref;
+	*objnum = name_cache[i].objnum;
 	return 1;
     }
 
     /* Get it from the database. */
-    if (!get_name(name, dbref))
+    if (!get_name(name, objnum))
 	return 0;
 
     /* Discard the old cache entry if it exists. */
     if (name_cache[i].name != NOT_AN_IDENT) {
 	if (name_cache[i].dirty)
-	    store_name(name_cache[i].name, name_cache[i].dbref);
+	    store_name(name_cache[i].name, name_cache[i].objnum);
 	ident_discard(name_cache[i].name);
     }
 
     /* Make a new cache entry. */
     name_cache[i].name = ident_dup(name);
-    name_cache[i].dbref = *dbref;
+    name_cache[i].objnum = *objnum;
     name_cache[i].dirty = 0;
     name_cache[i].on_disk = 1;
 
     return 1;
 }
 
-int lookup_store_name(long name, long dbref)
+int lookup_store_name(long name, long objnum)
 {
     int i = name % NAME_CACHE_SIZE;
 
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
-	if (name_cache[i].dbref != dbref) {
-	    name_cache[i].dbref = dbref;
+	if (name_cache[i].objnum != objnum) {
+	    name_cache[i].objnum = objnum;
 	    name_cache[i].dirty = 1;
 	}
 	return 1;
@@ -198,13 +195,13 @@ int lookup_store_name(long name, long dbref)
     /* Discard the old cache entry if it exists. */
     if (name_cache[i].name != NOT_AN_IDENT) {
 	if (name_cache[i].dirty)
-	    store_name(name_cache[i].name, name_cache[i].dbref);
+	    store_name(name_cache[i].name, name_cache[i].objnum);
 	ident_discard(name_cache[i].name);
     }
 
     /* Make a new cache entry. */
     name_cache[i].name = ident_dup(name);
-    name_cache[i].dbref = dbref;
+    name_cache[i].objnum = objnum;
     name_cache[i].dirty = 1;
     name_cache[i].on_disk = 0;
 
@@ -258,17 +255,22 @@ long lookup_next_name(void)
     return lookup_next_name();
 }
 
-static datum dbref_key(long dbref, Number_buf nbuf)
+static datum objnum_key(long objnum, Number_buf nbuf)
 {
     char *s;
     datum key;
 
-    /* Set up a key for a dbref.  The first byte will be 0, distinguishing it
+    /* Set up a key for a objnum.  The first byte will be 0, distinguishing it
      * from a string. */
-    s = long_to_ascii(dbref, nbuf);
+    s = long_to_ascii(objnum, nbuf);
+#if DISABLED
     *--s = 0;
     key.dptr = s;
     key.dsize = strlen(s + 1) + 2;
+#else
+    key.dptr = s-1;
+    key.dsize = strlen(s) + 2;
+#endif
     return key;
 }
 
@@ -309,12 +311,12 @@ static datum name_key(long name)
     return key;
 }
 
-static datum dbref_value(long dbref, Number_buf nbuf)
+static datum objnum_value(long objnum, Number_buf nbuf)
 {
     char *s;
     datum value;
 
-    s = long_to_ascii(dbref, nbuf);
+    s = long_to_ascii(objnum, nbuf);
     value.dptr = s;
     value.dsize = strlen(s) + 1;
     return value;
@@ -326,20 +328,20 @@ static void sync_name_cache(void)
 
     for (i = 0; i < NAME_CACHE_SIZE; i++) {
 	if (name_cache[i].name != NOT_AN_IDENT && name_cache[i].dirty) {
-	    store_name(name_cache[i].name, name_cache[i].dbref);
+	    store_name(name_cache[i].name, name_cache[i].objnum);
 	    name_cache[i].dirty = 0;
 	    name_cache[i].on_disk = 1;
 	}
     }
 }
 
-static int store_name(long name, long dbref)
+static int store_name(long name, long objnum)
 {
     datum key, value;
     Number_buf nbuf;
 
     /* Set up the value structure. */
-    value = dbref_value(dbref, nbuf);
+    value = objnum_value(objnum, nbuf);
 
     key = name_key(name);
     if (dbm_store(dbp, key, value, DBM_REPLACE)) {
@@ -350,7 +352,7 @@ static int store_name(long name, long dbref)
     return 1;
 }
 
-static int get_name(long name, long *dbref)
+static int get_name(long name, long *objnum)
 {
     datum key, value;
 
@@ -360,7 +362,7 @@ static int get_name(long name, long *dbref)
     if (!value.dptr)
 	return 0;
 
-    *dbref = atol(value.dptr);
+    *objnum = atol(value.dptr);
     return 1;
 }
 

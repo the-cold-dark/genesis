@@ -358,25 +358,28 @@ NATIVE_METHOD(strsed) {
 
 /* Encrypt a string. */
 NATIVE_METHOD(crypt) {
-    char     * s,
-             * str;
-    string_t * crypt;
-
+    char     * s,  
+               salt[3],
+             * ss,
+             * crypted;
+    
     INIT_1_OR_2_ARGS(STRING, STRING)
-
-    s = string_chars(STR1);
+    
+    s = string_chars(STR1); 
 
     if (argc == 2) {
-        if (string_length(STR2) != 2)
-            THROW((salt_id, "Salt (%S) is not two characters.", args[1].u.str))
-        str = crypt_string(s, string_chars(args[1].u.str));
+        if (string_length(STR2) < 2)
+            THROW((salt_id, "Salt (%S) is not two characters.", STR2))
+        ss = string_chars(STR2);
+        salt[0] = ss[0];
+        salt[1] = ss[1];
+        salt[2] = (char) NULL;
+        crypted = crypt_string(s, salt);
     } else {
-        str = crypt_string(s, NULL);
+        crypted = crypt_string(s, NULL);
     }
 
-    crypt = string_from_chars(str, strlen(str));
-
-    CLEAN_RETURN_STRING(crypt);
+    CLEAN_RETURN_STRING(string_from_chars(crypted, strlen(crypted)));
 }
 
 NATIVE_METHOD(uppercase) {
@@ -411,7 +414,7 @@ NATIVE_METHOD(capitalize) {
 
     INIT_1_ARG(STRING);
 
-    str = string_dup(ARG1);
+    str = string_dup(STR1);
 
     CLEAN_STACK();
     anticipate_assignment();

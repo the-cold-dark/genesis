@@ -6,6 +6,9 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-35 [09-Jul-97] Brandon
+      * fixed a bug in compiling $names in textdumps.
+      * fixed a bug with #-xx becoming #xx again.
 1.0-34 [07-Jul-97] Brandon
       * removed descendants()--its algorithm is inherently flawed and
         may misorder objects if a parent loop exists and parents are

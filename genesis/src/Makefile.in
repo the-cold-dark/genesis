@@ -98,6 +98,7 @@ malloc.o:
 
 scrub:
 	rm -f *.o include/parse.h grammar.c *~ *.BAK *.bak y.output *.core
+	rm -f textdump*
 	rm -f $(EXES)
 	cd $(SRCDIR); rm -f $(EXES)
 	rm -rf binary binary.bak
@@ -128,9 +129,11 @@ lint:
 
 # I duplicate scrub because of the recusion involved in calling modules
 patchable:
-	rm -f include/parse.h grammar.c $(EXES) *~ *.BAK *.bak y.output
+	rm -f *.o include/parse.h grammar.c *~ *.BAK *.bak y.output *.core
 	rm -rf binary
-	rm -f *.o
+	rm -f textdump*
+	rm -f $(EXES)
+	cd $(SRCDIR); rm -f $(EXES)
 	@cd $(MODULES); make $@
 	@cd $(OPSDIR); make $@
 	@cd $(DATADIR); make $@

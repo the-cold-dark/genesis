@@ -587,23 +587,25 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
 
     objnum = parse_to_objnum(obj);
 
-    if (objnum < 0) {
-        DIEf("object: Invalid Objnum #%ld\n", (long) objnum);
-    }
-
     if (new == N_OLD) {
-        target = cache_retrieve(objnum);
-        if (!target) {
-            WARN(("old: Unable to find object \"%s\".", obj_str));
-        } else if (objnum == ROOT_OBJNUM) {
-            WARN(("old: attempt to destroy $root ignored."));
-        } else if (objnum == SYSTEM_OBJNUM) {
-            WARN(("old: attempt to destroy $sys ignored."));
+        if (objnum < 0) {
+            WARN(("old: Invalid Object \"%s\"", obj_str));
+            list_discard(parents);
+            return NULL;
         } else {
-            ERRf("old: destroying object %s.", obj_str);
-            target->dead = 1;
-            cache_discard(target);
-            target = NULL;
+            target = cache_retrieve(objnum);
+            if (!target) {
+                WARN(("old: Unable to find object \"%s\".", obj_str));
+            } else if (objnum == ROOT_OBJNUM) {
+                WARN(("old: attempt to destroy $root ignored."));
+            } else if (objnum == SYSTEM_OBJNUM) {
+                WARN(("old: attempt to destroy $sys ignored."));
+            } else {
+                ERRf("old: destroying object %s.", obj_str);
+                target->dead = 1;
+                cache_discard(target);
+                target = NULL;
+            }
         }
     } else if (new == N_NEW) {
         if (!parents->len && objnum != ROOT_OBJNUM)
@@ -615,8 +617,7 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
             /* $root and $sys should ALWAYS exist */
             target = cache_retrieve(objnum);
         } else {
-            target = cache_retrieve(objnum);
-            if (target) {
+            if ((target = cache_retrieve(objnum))) {
                 WARN(("new: destroying existing object %s.", obj_str));
                 target->dead = 1;
                 cache_discard(target);

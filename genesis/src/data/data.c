@@ -402,7 +402,7 @@ cStr *data_add_literal_to_str(cStr *str, cData *data, Bool objnames) {
               obj = cache_retrieve(data->u.objnum);
 
               if (!obj || obj->objname == -1) {
-                  if (!obj)
+                  if (!obj && data->u.objnum > 0)
                       data->u.objnum = -data->u.objnum;
                   s = long_to_ascii(data->u.objnum, nbuf);
                   pre = '#';
@@ -518,16 +518,6 @@ char * data_from_literal(cData *d, char *s) {
     } else if (*s == '"') {
 	d->type = STRING;
 	d->u.str = string_parse(&s);
-#if FROMLIT_DEBUG
-        if (*s)
-            printf("*s == '%c' *(s+1) == '%c'\n", *s, *(s+1));
-#endif
-	return s;
-    } else if (*s == '#' && (isdigit(s[1]) ||
-               ((s[1] == '-' || s[1] == '+') && isdigit(s[2])))) {
-	d->type = OBJNUM;
-	d->u.objnum = (cObjnum) atol(++s);
-	while (isdigit(*++s));
 	return s;
     } else if (*s == '$') {
         Ident      name;
@@ -566,10 +556,6 @@ char * data_from_literal(cData *d, char *s) {
 	}
 	d->type = LIST;
 	d->u.list = list;
-#if FROMLIT_DEBUG
-        if (*s)
-            printf("*s == '%c' *(s+1) == '%c'\n", *s, *(s+1));
-#endif
 	return (*s) ? s + 1 : s;
     } else if (*s == '#' && s[1] == '[') {
 	cData assocs;
@@ -589,10 +575,11 @@ char * data_from_literal(cData *d, char *s) {
 	data_discard(&assocs);
 	if (!d->u.dict)
 	    d->type = -1;
-#if FROMLIT_DEBUG
-        if (*s)
-            printf("*s == '%c' *(s+1) == '%c'\n", *s, *(s+1));
-#endif
+	return s;
+    } else if (*s == '#') {
+        s++;
+	d->type = OBJNUM;
+	d->u.objnum = (cObjnum) strtol(s, &s, 10);
 	return s;
     } else if (*s == '`' && s[1] == '[') {
 	cData *p, byte_data;

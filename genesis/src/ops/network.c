@@ -159,7 +159,7 @@ void func_cwrite(void) {
         return;
 
     /* Write the string to any connection associated with this object.  */
-    rval = tell(cur_frame->object, args[0].u.buffer) ? 1 : 0;
+    rval = ctell(cur_frame->object, args[0].u.buffer) ? 1 : 0;
 
     pop(1);
     push_int(rval);
@@ -215,10 +215,10 @@ void func_cwritef(void) {
                 return;
             } else {
                 buf->len = r;
-                tell(cur_frame->object, buf);
+                ctell(cur_frame->object, buf);
             }
         } else
-            tell(cur_frame->object, buf);
+            ctell(cur_frame->object, buf);
     }
 
     /* Discard the buffer and close the file. */

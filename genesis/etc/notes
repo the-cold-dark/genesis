@@ -74,7 +74,7 @@ RELEASE INFORMATION:
       # Add config('cleanerwait, ##) to control the number of seconds
         between cleaner thread runs (Brad)
       * Add config('cleanerignore, #[]) to give the cleaner thread objects
-        to ignore, the key is the only relevant part.
+        to ignore, the key is the only relevant part. (Brad)
       * Add config('cachewatch, $obj) and config('cachewatchcount, ##)
         to log the call stack of a specific $obj every cachewatchcount
 	dirtys. (Brad)

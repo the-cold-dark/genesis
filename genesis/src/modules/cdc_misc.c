@@ -16,12 +16,6 @@
 #include "net.h"
 #include "dns.h"
 
-#if defined(__Win32__) && !defined(__MSVC__)
-#define FTIME _lstrftime
-#else
-#define FTIME strftime
-#endif
-
 NATIVE_METHOD(strftime) {
     char        s[LINE];
     char      * fmt;
@@ -57,7 +51,7 @@ NATIVE_METHOD(strftime) {
     if (fmt[strlen(fmt)] == '%')
         fmt[strlen(fmt)] = (char) NULL;
 
-    if (FTIME(s, LINE, fmt, t) == (size_t) 0)
+    if (strftime(s, LINE, fmt, t) == (size_t) 0)
        THROW((range_id,"Format results in a string longer than 80 characters."))
 
     CLEAN_RETURN_STRING(string_from_chars(s, strlen(s)));

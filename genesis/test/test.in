@@ -1999,8 +1999,11 @@ eval {
 
 		List test 6
 		  [1], 1 -> 1
+		  ['a, 'a, 'v], 'a, 2 -> 2
 		  [1, 2, 3, 4, 5, 5], 1 -> 1
 		  [1, 2, 3, 4, 5, 5], 5 -> 5
+		  [1, 2, 3, 4, 5, 5], 3, 2 -> 3
+		  [1, 2, 3, 4, 5, 5], 5, 4 -> 5
 		  [1, 2, 3, 4, 5, 5], 5, -1 -> 6
 		  [1, 2, 3, 4, 5, 5], 5, -3 -> 0
 		  [1, 2, 3, 4, 5, 5], [5, 6] -> 0
@@ -2016,9 +2019,14 @@ eval {
     dblog("List test 6");
     dblog("  " + toliteral(a) + ", 1 -> " + toliteral(listidx(a, 1)));
 
+    a = ['a, 'a, 'v];
+    dblog("  " + toliteral(a) + ", 'a, 2 -> " + toliteral(listidx(a, 'a, 2)));
+
     a = [1, 2, 3, 4, 5, 5];
     dblog("  " + toliteral(a) + ", 1 -> " + toliteral(listidx(a, 1)));
     dblog("  " + toliteral(a) + ", 5 -> " + toliteral(listidx(a, 5)));
+    dblog("  " + toliteral(a) + ", 3, 2 -> " + toliteral(listidx(a, 3, 2)));
+    dblog("  " + toliteral(a) + ", 5, 4 -> " + toliteral(listidx(a, 5, 4)));
     dblog("  " + toliteral(a) + ", 5, -1 -> " + toliteral(listidx(a, 5, -1)));
     dblog("  " + toliteral(a) + ", 5, -3 -> " + toliteral(listidx(a, 5, -3)));
     dblog("  " + toliteral(a) + ", [5, 6] -> " + toliteral(listidx(a, [5, 6])));

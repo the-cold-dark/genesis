@@ -9,7 +9,6 @@
 
 #include "defs.h"
 #include "quickhash.h"
-#include "macros.h"
 
 /* Note that we number list elements [0..(len - 1)] internally, while the
  * user sees list elements as numbered [1..len]. */
@@ -92,7 +91,6 @@ cList * list_prep(cList *list, Int start, Int len) {
 
 cList *list_new(Int len) {
     cList * cnew;
-
     cnew = (cList *) emalloc(sizeof(cList) + (len * sizeof(cData)));
     cnew->len = 0;
     cnew->start = 0;
@@ -150,42 +148,6 @@ Int list_search(cList *list, cData *data) {
     return -1;
 }
 
-static inline Int sorted_data_cmp_helper(cData * d1, cData * d2, cData * key) {
-    cData v1, v2;
-    if (d2->type == LIST) {
-       Int offset = key->u.val - 1;
-       return data_cmp(list_elem(d1->u.list, offset),
-                       list_elem(d2->u.list, offset));
-    } else if (d2->type == DICT) {
-       dict_find(d1->u.dict, key, &v1);
-       dict_find(d2->u.dict, key, &v2);
-       return data_cmp(&v1, &v2);
-    } else
-       return data_cmp(d1, d2);
-}
-
-Int list_binary_search(cList * list, cData *data, cData *key) {
-    cData *d;
-    int start, end, middle;
-    int result;
-
-    d = list->el + list->start;
-    start = 0;
-    end = list->len - 1;
-    do {
-        middle = (end + start) / 2;
-        result = sorted_data_cmp_helper(data, d + middle, key);
-        if (result == 0)
-            return middle;
-        else if (result < 0)
-            end = middle - 1;
-        else
-            start = middle + 1;
-    } while (start <= end);
-
-    return -1;
-}
-
 /* Effects: Returns 0 if the lists l1 and l2 are equivalent, or 1 if not. */
 Int list_cmp(cList *l1, cList *l2) {
     Int i, k;
@@ -221,40 +183,6 @@ cList *list_add(cList *list, cData *elem) {
     list = list_prep(list, list->start, list->len + 1);
     data_dup(&list->el[list->start + list->len - 1], elem);
     return list;
-}
-
-cList *list_add_sorted(cList *list, cData *elem, cData *key) {
-    cData *d;
-    int start, end, middle;
-    int result, idx;
-
-    d = list->el + list->start;
-    start = 0;
-    end = list->len - 1;
-    idx = 0;
-    if (!list->len)
-        return list_insert(list, 0, elem);
-
-    do {
-        middle = (end + start) / 2;
-        result = sorted_data_cmp_helper(elem, d + middle, key);
-        if (result == 0) {
-            idx = middle;
-            break;
-        } else if (result < 0)
-            end = middle - 1;
-        else
-            start = middle + 1;
-    } while (start <= end);
-
-    if (idx == 0) {
-       if (result > 0)
-           idx = middle + 1;
-       else
-           idx = middle;
-    }
-
-    return list_insert(list, idx, elem);
 }
 
 /* Error-checking on pos is the job of the calling function. */
@@ -294,13 +222,6 @@ cList *list_delete(cList *list, Int pos) {
 /* This routine will crash if elem is not in list. */
 cList *list_delete_element(cList *list, cData *elem) {
     return list_delete(list, list_search(list, elem));
-}
-
-cList *list_delete_sorted_element(cList *list, cData *elem, cData *key) {
-    Int pos = list_binary_search(list, elem, key);
-    if (pos != -1)
-        return  list_delete(list, pos);
-    return NULL;
 }
 
 cList *list_append(cList *list1, cList *list2) {
@@ -458,8 +379,7 @@ int list_index(cList * list, cData * search, int origin) {
                 return (d - start) + 1;
         }
     } else {
-        start += origin;
-        for (d = start; d < end; d++) {
+        for (d = start + origin; d < end; d++) {
             if (data_cmp(search, d) == 0)
                 return (d - start) + 1;
         }

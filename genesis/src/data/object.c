@@ -1290,7 +1290,7 @@ Int object_rename_method(Obj * object, Long oname, Long nname) {
 }
 
 void object_add_method(Obj *object, Long name, Method *method) {
-    Int ind, hval, did_delete;
+    Int ind, hval;
 
     cache_dirty_object(object);
 
@@ -1590,5 +1590,20 @@ Int object_set_objname(Obj * obj, Ident name) {
 
     return 1;
 }
+
+#ifdef USE_PARENT_OBJS
+void object_load_parent_objs(Obj * obj)
+{
+    cData *d, cthis;
+
+    obj->parent_objs = list_new(list_length(obj->parents));
+    cthis.type = OBJECT;
+    for (d=list_first(obj->parents); d; d=list_next(obj->parents, d))
+    {
+	cthis.u.object = cache_retrieve(d->u.objnum);
+        obj->parent_objs = list_add(obj->parent_objs, &cthis);
+    }
+}
+#endif
 
 #undef _object_

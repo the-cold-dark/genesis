@@ -343,6 +343,9 @@ extern Int     object_get_method_flags(Obj * object, Long name);
 extern Int     object_get_method_access(Obj * object, Long name);
 extern Int     object_set_method_flags(Obj * object, Long name, Int flags);
 extern Int     object_set_method_access(Obj * object, Long name, Int access);
+#ifdef USE_PARENT_OBJS
+extern void    object_load_parent_objs(Obj * obj);
+#endif
 
 /* variables */
 extern Long db_top;

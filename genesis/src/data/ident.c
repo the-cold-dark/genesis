@@ -45,7 +45,7 @@ Ident datasize_id, forkdepth_id, calldepth_id, recursion_id, objswap_id;
 Ident left_id, right_id, both_id;
 
 /* config options */
-Ident cachelog_id, cachewatch_id, cachewatchcount_id, cachewait_id, cleanerignore_id;
+Ident cachelog_id, cachewatch_id, cachewatchcount_id, cleanerwait_id, cleanerignore_id;
 Ident log_malloc_size_id, log_method_cache_id, cache_history_size_id;
 
 /* cache stats options */
@@ -148,7 +148,7 @@ void init_ident(void)
     cachelog_id = ident_get("cachelog");
     cachewatch_id = ident_get("cachewatch");
     cachewatchcount_id = ident_get("cachewatchcount");
-    cachewait_id = ident_get("cachewait");
+    cleanerwait_id = ident_get("cleanerwait");
     cleanerignore_id = ident_get("cleanerignore");
 
     log_malloc_size_id = ident_get("log_malloc_size");

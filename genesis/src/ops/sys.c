@@ -289,7 +289,7 @@ COLDC_FUNC(config) {
     _CONFIG_INT(cachewatchcount_id,    cache_watch_count)
     _CONFIG_OBJNUM(cachewatch_id,      cache_watch_object)
 #ifdef USE_CLEANER_THREAD
-    _CONFIG_INT(cachewait_id,          cache_wait)
+    _CONFIG_INT(cleanerwait_id,        cleaner_wait)
     _CONFIG_DICT(cleanerignore_id,     cleaner_ignore_dict)
 #endif
     _CONFIG_INT(log_malloc_size_id,    log_malloc_size)

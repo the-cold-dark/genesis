@@ -190,7 +190,7 @@ void init_cache(Bool spawn_cleaner)
     cache_watch_object  = INV_OBJNUM;
     cache_watch_count   = 100;
 #ifdef USE_CLEANER_THREAD
-    cache_wait          = 10;
+    cleaner_wait          = 10;
     cleaner_ignore_dict = dict_new_empty();
 #endif
     active              = EMALLOC(CacheBuckets, cache_width);
@@ -359,6 +359,10 @@ Obj *cache_retrieve(Long objnum) {
 	obj = NULL;
     }
     UNLOCK_BUCKET("cache_retrieve", ind)
+#ifdef USE_PARENT_OBJS
+    if (obj)
+        object_load_parent_objs(obj);
+#endif
     return obj;
 }
 
@@ -533,7 +537,7 @@ void *cache_cleaner_worker(void *dummy)
     cData   cthis;
 
     while (running) {
-	sleep(cache_wait);
+	sleep(cleaner_wait);
 
 #ifdef DEBUG_CLEANER_LOCK
         write_err("cache_cleaner_worker: locking cleaner");

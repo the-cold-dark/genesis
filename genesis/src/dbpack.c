@@ -225,6 +225,8 @@ static cDict *unpack_dict(cBuf *buf, Long *buf_pos)
     values = unpack_list(buf, buf_pos);
     if (keys->len <= 64) {
         dict = dict_new(keys, values);
+        list_discard(keys);
+        list_discard(values);
         return dict;
     } else {
         dict = EMALLOC(cDict, 1);

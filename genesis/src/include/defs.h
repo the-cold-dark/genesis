@@ -528,14 +528,7 @@ extern Int  log_malloc_size;
 extern Int  log_method_cache;
 
 /* cache stats stuff */
-extern Int ancestor_cache_hits;
-extern Int ancestor_cache_misses;
-extern Int ancestor_cache_invalidates;
 extern cList * ancestor_cache_history;
-extern Int method_cache_hits;
-extern Int method_cache_misses;
-extern Int method_cache_partials;
-extern Int method_cache_invalidates;
 extern cList * method_cache_history;
 extern Int name_cache_hits;
 extern Int name_cache_misses;

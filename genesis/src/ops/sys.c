@@ -334,32 +334,16 @@ COLDC_FUNC(cache_stats) {
 
     if (SYM1 == ancestor_cache_id) {
         list = list_dup(ancestor_cache_history);
-        entry = list_new(3);
-        val = list_empty_spaces(entry, 3);
-        val[0].type = INTEGER;
-        val[0].u.val = ancestor_cache_invalidates;
-        val[1].type = INTEGER;
-        val[1].u.val = ancestor_cache_hits;
-        val[2].type = INTEGER;
-        val[2].u.val = ancestor_cache_misses;
+        entry = ancestor_cache_info();
         list_entry.type = LIST;
         list_entry.u.list = entry;
-	list = list_add(list, &list_entry);
+        list = list_add(list, &list_entry);
         list_discard(entry);
     } else if (SYM1 == method_cache_id) {
         list = list_dup(method_cache_history);
-        entry = list_new(4);
-        val = list_empty_spaces(entry, 4);
-        val[0].type = INTEGER;
-        val[0].u.val = method_cache_invalidates;
-        val[1].type = INTEGER;
-        val[1].u.val = method_cache_hits;
-        val[2].type = INTEGER;
-        val[2].u.val = method_cache_misses;
-        val[3].type = INTEGER;
-        val[3].u.val = method_cache_partials;
+        entry = method_cache_info();
 	list_entry.type = LIST;
-	list_entry.u.list = entry;
+        list_entry.u.list = entry;
         list = list_add(list, &list_entry);
         list_discard(entry);
     } else if (SYM1 == name_cache_id) {

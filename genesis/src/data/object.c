@@ -16,24 +16,34 @@
 static void method_cache_invalidate(cObjnum objnum);
 
 Int ancestor_cache_hits = 0;
+Int ancestor_cache_sets = 0;
 Int ancestor_cache_misses = 0;
+Int ancestor_cache_collisions = 0;
 Int ancestor_cache_invalidates = 0;
 cList * ancestor_cache_history = NULL;
 
 Int method_cache_hits = 0;
+Int method_cache_sets = 0;
 Int method_cache_misses = 0;
 Int method_cache_partials = 0;
+Int method_cache_collisions = 0;
 Int method_cache_invalidates = 0;
 cList * method_cache_history = NULL;
 
-static inline void ancestor_cache_invalidate()
+cList * ancestor_cache_info()
 {
     cList * entry;
     cData * d;
-    cData   list_entry;
+    Int used_buckets, i;
 
-    entry = list_new(3);
-    d = list_empty_spaces(entry, 3);
+    used_buckets = 0;
+    for (i = 0; i < ANCESTOR_CACHE_SIZE; i++) {
+        if (ancestor_cache[i].stamp == cur_anc_stamp)
+            used_buckets++;
+    }
+
+    entry = list_new(7);
+    d = list_empty_spaces(entry, 7);
 
     d[0].type = INTEGER;
     d[0].u.val = ancestor_cache_invalidates;
@@ -41,6 +51,24 @@ static inline void ancestor_cache_invalidate()
     d[1].u.val = ancestor_cache_hits;
     d[2].type = INTEGER;
     d[2].u.val = ancestor_cache_misses;
+    d[3].type = INTEGER;
+    d[3].u.val = ancestor_cache_sets;
+    d[4].type = INTEGER;
+    d[4].u.val = ancestor_cache_collisions;
+    d[5].type = INTEGER;
+    d[5].u.val = used_buckets;
+    d[6].type = INTEGER;
+    d[6].u.val = ANCESTOR_CACHE_SIZE;
+
+    return entry;
+}
+
+static inline void ancestor_cache_invalidate()
+{
+    cList * entry;
+    cData   list_entry;
+
+    entry = ancestor_cache_info();
 
     list_entry.type = LIST;
     list_entry.u.list = entry;
@@ -63,6 +91,8 @@ static inline void ancestor_cache_invalidate()
     ancestor_cache_invalidates++;
     ancestor_cache_hits = 0;
     ancestor_cache_misses = 0;
+    ancestor_cache_sets = 0;
+    ancestor_cache_collisions = 0;
     cur_anc_stamp++;
 }
 
@@ -440,10 +470,15 @@ static void ancestor_cache_set(cObjnum objnum, cObjnum ancestor,
 
     i = (objnum + ancestor) % ANCESTOR_CACHE_SIZE;
 
+    if (ancestor_cache[i].stamp == cur_anc_stamp)
+        ancestor_cache_collisions++;
+    
     ancestor_cache[i].stamp = cur_anc_stamp;
     ancestor_cache[i].objnum = objnum;
     ancestor_cache[i].ancestor = ancestor;
     ancestor_cache[i].is_ancestor = is_ancestor;
+
+    ancestor_cache_sets++;
 }
 
 Int object_has_ancestor(Long objnum, Long ancestor)
@@ -1187,8 +1222,9 @@ static void method_cache_set(Long objnum, Long name, Long after, Long loc, Bool 
 
     i = (10 + objnum + (name << 4) + (is_frob << 8) + after) % METHOD_CACHE_SIZE;
     if (method_cache[i].stamp != 0) {
- /*     write_err("##method_cache_set %d %s", method_cache[i].name, ident_name(method_cache[i].name));*/
       ident_discard(method_cache[i].name);
+      if (method_cache[i].stamp == cur_stamp)
+          method_cache_collisions++;
     }
     method_cache[i].stamp = cur_stamp;
     method_cache[i].objnum = objnum;
@@ -1197,6 +1233,42 @@ static void method_cache_set(Long objnum, Long name, Long after, Long loc, Bool 
     method_cache[i].loc = loc;
     method_cache[i].is_frob=(is_frob == FROB_RETRY) ? FROB_NO : is_frob;
     method_cache[i].failed = failed;
+
+    method_cache_sets++;
+}
+
+cList * method_cache_info() {
+    cList * entry;
+    cData * d;
+    Int used_buckets, i;
+
+    used_buckets = 0;
+    for (i = 0; i < METHOD_CACHE_SIZE; i++) {
+        if (method_cache[i].stamp == cur_stamp)
+            used_buckets++;
+    }
+
+    entry = list_new(8);
+    d = list_empty_spaces(entry, 8);
+
+    d[0].type = INTEGER;
+    d[0].u.val = method_cache_invalidates;
+    d[1].type = INTEGER;
+    d[1].u.val = method_cache_hits;
+    d[2].type = INTEGER;
+    d[2].u.val = method_cache_misses;
+    d[3].type = INTEGER;
+    d[3].u.val = method_cache_partials;
+    d[4].type = INTEGER;
+    d[4].u.val = method_cache_sets;
+    d[5].type = INTEGER;
+    d[5].u.val = method_cache_collisions;
+    d[6].type = INTEGER;
+    d[6].u.val = used_buckets;
+    d[7].type = INTEGER;
+    d[7].u.val = METHOD_CACHE_SIZE;
+
+    return entry;
 }
 
 static void method_cache_invalidate(cObjnum objnum) {
@@ -1228,7 +1300,6 @@ static void method_cache_invalidate(cObjnum objnum) {
 
 static void method_cache_invalidate_all() {
     cList * entry;
-    cData * d;
     cData   list_entry;
 
     if (log_method_cache) {
@@ -1236,17 +1307,7 @@ static void method_cache_invalidate_all() {
         log_current_task_stack(FALSE, write_err);
     }
 
-    entry = list_new(4);
-    d = list_empty_spaces(entry, 4);
-
-    d[0].type = INTEGER;
-    d[0].u.val = method_cache_invalidates;
-    d[1].type = INTEGER;
-    d[1].u.val = method_cache_hits;
-    d[2].type = INTEGER;
-    d[2].u.val = method_cache_misses;
-    d[3].type = INTEGER;
-    d[3].u.val = method_cache_partials;
+    entry = method_cache_info();
 
     list_entry.type = LIST;
     list_entry.u.list = entry;
@@ -1271,6 +1332,8 @@ static void method_cache_invalidate_all() {
     method_cache_hits = 0;
     method_cache_misses = 0;
     method_cache_partials = 0;
+    method_cache_sets = 0;
+    method_cache_collisions = 0;
     cur_stamp++;
 }
 

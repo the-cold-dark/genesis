@@ -228,6 +228,7 @@ static Bool    method_cache_check(Long objnum, Long name, Long after,
                                   Bool is_frob, Method **method);
 static void    method_cache_set(Long objnum, Long name, Long after,
                                 Long loc, Bool is_frob, Bool failed);
+       cList * method_cache_info();
 static void    method_cache_invalidate(cObjnum objnum);
 static void    method_cache_invalidate_all();
 static void    search_object(Long objnum, Search_params *params);
@@ -346,6 +347,9 @@ extern Int     object_set_method_access(Obj * object, Long name, Int access);
 #ifdef USE_PARENT_OBJS
 extern void    object_load_parent_objs(Obj * obj);
 #endif
+
+extern cList  *ancestor_cache_info();
+extern cList  *method_cache_info();
 
 /* variables */
 extern Long db_top;

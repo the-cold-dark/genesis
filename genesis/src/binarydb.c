@@ -335,6 +335,7 @@ static void simble_mark(off_t start, Int size)
 
 static void dump_copy (off_t start, Int blocks)
 {
+#if 0
     Int i;
     char buf[BLOCK_SIZE];
 
@@ -363,6 +364,38 @@ static void dump_copy (off_t start, Int blocks)
 	fwrite (buf, 1, BLOCK_SIZE, dump_db_file);
 	dump_bitmap[(start+i) >> 3] &= ~(1 << ((start+i)&7));
     }
+#else
+    Int block = 0, dofseek = 1;
+    char buf[BLOCK_SIZE];
+
+    block = start;
+    blocks += start;
+    if (blocks > dump_blocks)
+        blocks = dump_blocks;
+
+    while (block < blocks) {                                                                
+        if ( (dump_bitmap[block >> 3] & (1 << (block & 7))) ) {
+            if (dofseek) {
+                if (fseek(database_file, BLOCK_OFFSET (block), SEEK_SET)) {
+                    UNLOCK_DB("dump_copy")
+                    panic("fseek(\"%s\"..): %s", database_file, strerror(errno));
+                }
+                if (fseek(dump_db_file,  BLOCK_OFFSET (block), SEEK_SET)) {
+                    UNLOCK_DB("dump_copy")
+                    panic("fseek(\"%s\"..): %s", dump_db_file, strerror(errno));
+                }
+                dofseek=0;
+            }
+            fread (buf, 1, BLOCK_SIZE, database_file);
+            fwrite (buf, 1, BLOCK_SIZE, dump_db_file);
+            dump_bitmap[block >> 3] &= ~(1 << (block & 7));
+        }
+        else
+            dofseek=1;
+
+        ++block;
+    }
+#endif
 }
 
 /* open the dump database. return -1 on failure (can't open the file),

@@ -94,7 +94,7 @@ struct {
     Bool is_ancestor;
 } ancestor_cache[ANCESTOR_CACHE_SIZE];
 
-#ifdef BUILDING_COLDCC
+#ifdef USE_DEFINE_VAR_CACHE
 struct {
     cObjnum objnum;
     Ident   name;
@@ -121,8 +121,10 @@ static Bool    ancestor_cache_check(cObjnum objnum, cObjnum ancestor,
                                     Bool *is_ancestor);
 static void    ancestor_cache_set(cObjnum objnum, cObjnum ancestor,
                                   Bool is_ancestor);
+#ifdef USE_DEFINE_VAR_CACHE
 static Bool    defines_var_cache_check(cObjnum objnum, Ident name, Bool *result);
 static void    defines_var_cache_set(cObjnum objnum, Ident name, Bool result);
+#endif
 
 /* ..................................................................... */
 /* global variables */
@@ -800,7 +802,7 @@ Ident object_get_ident(Obj *object, Int ind) {
     return object->idents[ind].id;
 }
 
-#ifdef BUILDING_COLDCC
+#ifdef USE_DEFINE_VAR_CACHE
 static Bool defines_var_cache_check(cObjnum objnum, Ident name, Bool *result) {
     uLong i;
 
@@ -1037,7 +1039,7 @@ Bool object_put_var(Obj *object, cObjnum cclass, Ident name, cData *val)
 {
     Var *var;
 
-#ifdef BUILDING_COLDCC
+#ifdef USE_DEFINE_VAR_CACHE
     if ((object->objnum != cclass) && (!object_defines_var(cclass, name)))
         return FALSE;
 #endif
@@ -1104,6 +1106,20 @@ static Var *object_create_var(Obj *object, cObjnum cclass, Ident name)
     object->vars.hashtab[ind] = cnew - object->vars.tab;
 
     return cnew;
+}
+
+Bool object_has_methods(Obj *object)
+{
+    Int i = 0;
+
+    while (i < object->methods.size) {
+        if (object->methods.tab[i].m) {
+            return TRUE;
+        }
+        i++;
+    }
+
+    return FALSE;
 }
 
 /* Look for a variable on an object. */

@@ -205,10 +205,12 @@ static cBuf * pack_dict(cBuf *buf, cDict *dict)
 
     buf = pack_list(buf, dict->keys);
     buf = pack_list(buf, dict->values);
-    buf = write_long(buf, dict->hashtab_size);
-    for (i = 0; i < dict->hashtab_size; i++) {
-	buf = write_long(buf, dict->links[i]);
-	buf = write_long(buf, dict->hashtab[i]);
+    if (dict->keys->len > 64) {
+        buf = write_long(buf, dict->hashtab_size);
+        for (i = 0; i < dict->hashtab_size; i++) {
+	    buf = write_long(buf, dict->links[i]);
+	    buf = write_long(buf, dict->hashtab[i]);
+        }
     }
     return buf;
 }
@@ -216,20 +218,28 @@ static cBuf * pack_dict(cBuf *buf, cDict *dict)
 static cDict *unpack_dict(cBuf *buf, Long *buf_pos)
 {
     cDict *dict;
+    cList *keys, *values;
     Int i;
 
-    dict = EMALLOC(cDict, 1);
-    dict->keys = unpack_list(buf, buf_pos);
-    dict->values = unpack_list(buf, buf_pos);
-    dict->hashtab_size = read_long(buf, buf_pos);
-    dict->links = EMALLOC(Int, dict->hashtab_size);
-    dict->hashtab = EMALLOC(Int, dict->hashtab_size);
-    for (i = 0; i < dict->hashtab_size; i++) {
-	dict->links[i] = read_long(buf, buf_pos);
-	dict->hashtab[i] = read_long(buf, buf_pos);
+    keys = unpack_list(buf, buf_pos);
+    values = unpack_list(buf, buf_pos);
+    if (keys->len <= 64) {
+        dict = dict_new(keys, values);
+        return dict;
+    } else {
+        dict = EMALLOC(cDict, 1);
+        dict->keys = keys;
+        dict->values = values;
+        dict->hashtab_size = read_long(buf, buf_pos);
+        dict->links = EMALLOC(Int, dict->hashtab_size);
+        dict->hashtab = EMALLOC(Int, dict->hashtab_size);
+        for (i = 0; i < dict->hashtab_size; i++) {
+            dict->links[i] = read_long(buf, buf_pos);
+            dict->hashtab[i] = read_long(buf, buf_pos);
+        }
+        dict->refs = 1;
+        return dict;
     }
-    dict->refs = 1;
-    return dict;
 }
 
 static Int size_dict(cDict *dict)
@@ -238,10 +248,12 @@ static Int size_dict(cDict *dict)
 
     size += size_list(dict->keys);
     size += size_list(dict->values);
-    size += size_long(dict->hashtab_size);
-    for (i = 0; i < dict->hashtab_size; i++) {
-	size += size_long(dict->links[i]);
-	size += size_long(dict->hashtab[i]);
+    if (dict->keys->len > 64) {
+        size += size_long(dict->hashtab_size);
+        for (i = 0; i < dict->hashtab_size; i++) {
+	    size += size_long(dict->links[i]);
+	    size += size_long(dict->hashtab[i]);
+        }
     }
     return size;
 }
@@ -439,6 +451,11 @@ static cBuf * pack_methods(cBuf *buf, Obj *obj)
 {
     Int i;
 
+    if (!object_has_methods(obj)) {
+        buf = write_long(buf, -1);
+        return buf;
+    }
+
     buf = write_long(buf, obj->methods.size);
     buf = write_long(buf, obj->methods.blanks);
 
@@ -455,11 +472,27 @@ static cBuf * pack_methods(cBuf *buf, Obj *obj)
     return buf;
 }
 
+#define METHOD_STARTING_SIZE 7
+
 static void unpack_methods(cBuf *buf, Long *buf_pos, Obj *obj)
 {
-    Int i;
+    Int i, size;
 
-    obj->methods.size = read_long(buf, buf_pos);
+    size = read_long(buf, buf_pos);
+    if (size == -1) {
+        obj->methods.tab = EMALLOC(struct mptr, METHOD_STARTING_SIZE);
+        obj->methods.hashtab = EMALLOC(Int, METHOD_STARTING_SIZE);
+        obj->methods.blanks = 0;
+        obj->methods.size = METHOD_STARTING_SIZE;
+        for (i = 0; i < METHOD_STARTING_SIZE; i++) {
+            obj->methods.hashtab[i] = -1;
+            obj->methods.tab[i].m = NULL;
+            obj->methods.tab[i].next = i + 1;
+        }
+        obj->methods.tab[METHOD_STARTING_SIZE - 1].next = -1;
+        return;
+    }
+    obj->methods.size = size;
     obj->methods.blanks = read_long(buf, buf_pos);
 
     obj->methods.hashtab = EMALLOC(Int, obj->methods.size);
@@ -477,6 +510,10 @@ static void unpack_methods(cBuf *buf, Long *buf_pos, Obj *obj)
 static Int size_methods(Obj *obj)
 {
     Int size = 0, i;
+
+    if (!object_has_methods(obj)) {
+        return size_long(-1);
+    }
 
     size += size_long(obj->methods.size);
     size += size_long(obj->methods.blanks);
@@ -498,6 +535,7 @@ static cBuf * pack_strings(cBuf *buf, Obj *obj)
     Int i;
 
     if (obj->strings->tab_num > 0) {
+#if 0
         buf = write_long(buf, obj->strings->tab_size);
         buf = write_long(buf, obj->strings->tab_num);
         buf = write_long(buf, obj->strings->blanks);
@@ -510,6 +548,14 @@ static cBuf * pack_strings(cBuf *buf, Obj *obj)
         for (i = 0; i < obj->strings->tab_size; i++) {
 	    buf = string_pack(buf, obj->strings->tab[i].str);
         }
+#else
+        buf = write_long(buf, obj->strings->tab_size);
+        for (i = 0; i < obj->strings->tab_size; i++) {
+            buf = string_pack(buf, obj->strings->tab[i].str);
+            if (obj->strings->tab[i].str)
+                buf = write_long(buf, obj->strings->tab[i].refs);
+        }
+#endif
     } else {
         buf = write_long(buf, -1);
     }
@@ -519,10 +565,11 @@ static cBuf * pack_strings(cBuf *buf, Obj *obj)
 static void unpack_strings(cBuf *buf, Long *buf_pos, Obj *obj)
 {
     Int i;
-    Long size;
+    Long size, last_blank = -1;
 
     size = read_long(buf, buf_pos);
     if (size != -1) {
+#if 0
         obj->strings = string_tab_new_with_size(size);
         obj->strings->tab_num = read_long(buf, buf_pos);
         obj->strings->blanks = read_long(buf, buf_pos);
@@ -535,6 +582,28 @@ static void unpack_strings(cBuf *buf, Long *buf_pos, Obj *obj)
         for (i = 0; i < obj->strings->tab_size; i++) {
 	    obj->strings->tab[i].str = string_unpack(buf, buf_pos);
         }
+#else
+        obj->strings = string_tab_new_with_size(size);
+        obj->strings->tab_size = size;
+        obj->strings->blanks = 0;
+        for (i = 0; i < size; i++) {
+            obj->strings->tab[i].str = string_unpack(buf, buf_pos);
+            if (obj->strings->tab[i].str) {
+                obj->strings->tab_num++;
+                obj->strings->tab[i].refs = read_long(buf, buf_pos);
+                obj->strings->tab[i].hash = hash_string(obj->strings->tab[i].str);
+                if (obj->strings->blanks == i) {
+                    obj->strings->blanks = i+1;
+                    last_blank = i+1;
+                }
+            } else {
+                if (last_blank != -1)
+                    obj->strings->tab[last_blank].next = i;
+                last_blank = i;
+            }
+        }
+        string_tab_fixup_hashtab(obj->strings, obj->strings->tab_size);
+#endif
     } else {
 	obj->strings = string_tab_new();
     }
@@ -545,6 +614,7 @@ static Int size_strings(Obj *obj)
     Int size = 0, i;
 
     if (obj->strings->tab_num > 0) {
+#if 0
         size += size_long(obj->strings->tab_size);
         size += size_long(obj->strings->tab_num);
         size += size_long(obj->strings->blanks);
@@ -557,6 +627,14 @@ static Int size_strings(Obj *obj)
         for (i = 0; i < obj->strings->tab_size; i++) {
 	    size += string_packed_size(obj->strings->tab[i].str);
         }
+#else
+        size += size_long(obj->strings->tab_size);
+        for (i = 0; i < obj->strings->tab_size; i++) {
+            size += string_packed_size(obj->strings->tab[i].str);
+            if (obj->strings->tab[i].str)
+                size += size_long(obj->strings->tab[i].refs);
+        }
+#endif
     } else {
 	size += size_long(-1);
     }

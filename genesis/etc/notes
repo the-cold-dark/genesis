@@ -18,3 +18,4 @@ RELEASE INFORMATION:
       * port to Mac OS X (Bruce)
       * remove regsub references (not implemented/used) (Bruce)
       * add calling_method() (Psyclone)
+      * fixed README (Bruce)

@@ -93,7 +93,7 @@ module_t * cold_modules[] = {
 #define NATIVE_MATH_TRANSPOSE 68
 #define NATIVE_LAST 69
 
-#define MAGIC_MODNUMBER 1010637550
+#define MAGIC_MODNUMBER 0
 
 
 #ifdef _native_

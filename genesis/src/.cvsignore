@@ -1,0 +1,11 @@
+Makefile
+coldcc
+genesis
+binary
+emalloc_log.diff
+data/Makefile
+include/config.h
+include/parse.h
+modules/modbuild.last
+modules/Makefile
+ops/Makefile

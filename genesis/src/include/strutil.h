@@ -20,6 +20,7 @@ cStr * strsed(cStr * reg,      /* the regexp string */
 cStr * strfmt(cStr * str, cData * args, Int argc);
 cList   * strexplode(cStr * str, char * sep, Int sep_len, Bool blanks);
 cList   * strsplit(cStr * str, cStr * regexp, Int flags);
+cList   * strexplodequoted(cStr * str);
 
 /* string flags */
 #define RF_NONE      0

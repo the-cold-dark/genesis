@@ -953,7 +953,10 @@ INTERNAL cList * add_op_arg(cList * out, Int type, Long op, Method * method) {
             d.type = STRING;
             d.u.str = object_get_string(obj, op);
             break;
-        /* case JUMP: */ /* ignore JUMP */
+        case JUMP:
+            d.type = INTEGER;
+            d.u.val = op;
+            break;
         default:
             return out;
 #if DISABLED   /* none of these are used as args in op_table */

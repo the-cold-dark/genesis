@@ -1006,6 +1006,38 @@ cList * strexplode(cStr * str, char * sep, Int sep_len, Bool blanks) {
     return list;
 }
 
+cList * strexplodequoted(cStr * str) {
+    char     * s = string_chars(str),
+             * p = s,
+             * q;
+    cList    * list = list_new(0);
+    cStr     * word;
+    cData      d;
+
+    d.type = STRING;
+
+    while (*p) {
+        while (*p == ' ')
+            p++;
+        if (*p == '"') {
+            p++;
+            q = p;
+            while (*q && !(*q == '"' && (*(q + 1) == ' ' || !*(q + 1))))
+                q++;
+            ADD_WORD((p, q - p));
+            p = q + 1; /* after end quote */
+        } else if (*p) {
+            q = p;
+            while (*q && (*q != ' ')) /* stop on space */
+                q++;
+            ADD_WORD((p, q - p));
+            p = q;
+        }
+    }
+
+    return list;
+}
+
 #undef ADD_WORD
 
 #undef x_THROW

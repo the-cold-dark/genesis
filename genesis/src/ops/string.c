@@ -572,3 +572,20 @@ COLDC_FUNC(stridx) {
     push_int(r);
 }
 
+COLDC_FUNC(explode_quoted) {
+    cData * args;
+    cList * exploded;
+
+    /* Accept a string to explode and an optional string for the word
+     * separator. */
+    if (!func_init_1(&args, STRING))
+        return;
+
+    exploded = strexplodequoted(args[0].u.str);
+
+    /* Pop the arguments and push the list onto the stack. */
+    pop(1);
+    push_list(exploded);
+    list_discard(exploded);
+}
+

@@ -123,6 +123,46 @@ COLDC_FUNC(get_var) {
     }
 }
 
+COLDC_FUNC(default_var) {
+    cData * args,
+            d;
+    Long    result;
+
+    /* Accept a symbol argument. */
+    if (!func_init_1(&args, SYMBOL))
+        return;
+
+    result = object_default_var(cur_frame->object, cur_frame->method->object,
+                                SYM1, &d);
+    if (result == varnf_id) {
+        cthrow(varnf_id, "Object variable %I does not exist.", SYM1);
+    } else {
+        pop(1);
+        data_dup(&stack[stack_pos++], &d);
+        data_discard(&d);
+    }
+}
+
+COLDC_FUNC(inherited_var) {
+    cData * args,
+            d;
+    Long    result;
+
+    /* Accept a symbol argument. */
+    if (!func_init_1(&args, SYMBOL))
+        return;
+
+    result = object_inherited_var(cur_frame->object, 
+                                cur_frame->method->object, SYM1, &d);
+    if (result == varnf_id) {
+        cthrow(varnf_id, "Object variable %I does not exist.", SYM1);
+    } else {
+        pop(1);
+        data_dup(&stack[stack_pos++], &d);
+        data_discard(&d);
+    }
+}
+
 COLDC_FUNC(clear_var) {
     cData * args;
     Long     result = 0;
@@ -176,7 +216,7 @@ COLDC_FUNC(add_method) {
         flags = method->m_flags;
         access = method->m_access;
         native = method->native;
-        cache_discard(method->object);
+    /*    cache_discard(method->object); */
     }
 
     code = args[0].u.list;

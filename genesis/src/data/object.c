@@ -567,6 +567,116 @@ Long object_retrieve_var(Obj *object, Obj *cclass, Long name, cData *ret)
     return NOT_AN_IDENT;
 }
 
+Long object_default_var(Obj *object, Obj *cclass, Long name, cData *ret)
+{
+    Var * var,
+        * defvar;
+
+    /* Make sure variable exists on cclass. */
+    if (!(defvar = object_find_var(cclass, cclass->objnum, name)))
+        return varnf_id;
+
+    var = object_find_var(object, cclass->objnum, name);
+    if (var) {
+        data_dup(ret, &var->val);
+    } else {
+        data_dup(ret, &defvar->val);
+    }
+
+    return NOT_AN_IDENT;
+}
+
+Long object_inherited_var(Obj *object, Obj *cclass, Long name, cData *ret)
+{
+    Var   * var;
+    cList * ancestors;
+    cData * d;
+    Obj   * a;
+
+    /* Make sure variable exists on cclass. */
+    if (!object_find_var(cclass, cclass->objnum, name))
+        return varnf_id;
+
+    var = object_find_var(object, cclass->objnum, name);
+    if (var) {
+        data_dup(ret, &var->val);
+    } else {
+        /* Unless the database is corrupt, we *will* find an ancestor with
+           the var--this is a horrible and inefficient way of doing this */
+        ancestors = object_ancestors(object->objnum);
+        for (d = list_first(ancestors);
+             d->u.objnum != cclass->objnum;
+             d = list_next(ancestors, d))
+        {
+            a = cache_retrieve(d->u.objnum);
+            if ((var = object_find_var(a, cclass->objnum, name))) {
+                data_dup(ret, &var->val);
+                cache_discard(a);
+                goto DONE;
+            }
+            cache_discard(a);
+        }
+
+        /* safety net--should NEVER occur, but could */
+	ret->type = INTEGER;
+	ret->u.val = 0;
+
+        DONE:
+        list_discard(ancestors);
+    }
+
+    return NOT_AN_IDENT;
+}
+
+#if 0
+/*work started on improving inherited var searches --Brandon */
+INTERNAL Bool object_inherited_var_aux(Long objnum, Long definer,  Long name, cData * ret) {
+    Obj   * object;
+    cList * parents;
+    cData * cthis;
+    Var   * var;
+
+    object = cache_retrieve(objnum);
+    if (object->search == cur_search) {
+	cache_discard(object);
+	return ancestors;
+    }
+    object->search = cur_search;
+
+    if (var = object_find_var(object, definer, name))
+        return var;
+
+    parents = list_dup(object->parents);
+    cache_discard(object);
+
+    for (d = list_last(parents); d; d = list_prev(parents, d))
+	ancestors = object_ancestors_aux(d->u.objnum, ancestors);
+    list_discard(parents);
+
+    cthis.type = OBJNUM;
+    cthis.u.objnum = objnum;
+    return list_add(ancestors, &cthis);
+}
+*** HERE ****
+        ancestors = object_ancestors(object->objnum);
+        for (d = list_first(ancestors);
+             d->u.objnum != cclass->objnum;
+             d = list_next(ancestors, d))
+        {
+            a = cache_retrieve(d->u.objnum);
+            if (var = object_find_var(a, cclass->objnum, name)) {
+                data_dup(ret, &var->val);
+                cache_discard(a);
+                goto DONE;
+            }
+            cache_discard(a);
+        }
+
+        /* safety net--should NEVER occur, but could */
+	ret->type = INTEGER;
+	ret->u.val = 0;
+#endif
+
 /* Only the text dump reader calls this function; it assigns or creates a
  * variable as needed, and always succeeds. */
 void object_put_var(Obj *object, Long cclass, Long name, cData *val)

@@ -79,10 +79,11 @@ NOTES
 
 Verified to compile and run on:
 
-    * FreeBSD 2.1-R and 2.1.5-R, 2.2, 3.0
+    * FreeBSD (Any version after 2.0)
     * DEC OSF/1 2.0, 3.2
     * DEC Ultrix 4.4
     * Sun Solaris 2.5
+    * Linux (although problems will arise 1.2.x versions)
 
 You will get the best results in FreeBSD, as it is the development platform
 so possible problems are immediately found.

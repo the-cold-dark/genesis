@@ -94,6 +94,8 @@ COLDC_FUNC(del_var);
 COLDC_FUNC(variables);
 COLDC_FUNC(set_var);
 COLDC_FUNC(get_var);
+COLDC_FUNC(default_var);
+COLDC_FUNC(inherited_var);
 COLDC_FUNC(clear_var);
 COLDC_FUNC(add_method);
 COLDC_FUNC(rename_method);

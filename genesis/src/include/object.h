@@ -225,6 +225,10 @@ Long    object_assign_var(Obj *object, Obj *cclass, Long name, cData *val);
 Long    object_delete_var(Obj *object, Obj *cclass, Long name);
 Long    object_retrieve_var(Obj *object, Obj *cclass, Long name,
                             cData *ret);
+Long  object_default_var(Obj *object, Obj *cclass, Long name,
+                          cData *ret);
+Long  object_inherited_var(Obj *object, Obj *cclass, Long name,
+                          cData *ret);
 void    object_put_var(Obj *object, Long cclass, Long name, cData *val);
 Method * object_find_method(Long objnum, Long name, Bool is_frob);
 Method * object_find_method_local(Obj *object, Long name, Bool is_frob);
@@ -277,6 +281,10 @@ extern Long    object_assign_var(Obj *object, Obj *cclass, Long name,
 extern Long    object_delete_var(Obj *object, Obj *cclass, Long name);
 extern Long    object_retrieve_var(Obj *object, Obj *cclass, Long name,
                                    cData *ret);
+extern Long    object_default_var(Obj *object, Obj *cclass, Long name,
+                          cData *ret);
+extern Long    object_inherited_var(Obj *object, Obj *cclass, Long name,
+                          cData *ret);
 extern void    object_put_var(Obj *object, Long cclass, Long name,
                               cData *val);
 extern Method *object_find_method(Long objnum, Long name, Bool is_frob);

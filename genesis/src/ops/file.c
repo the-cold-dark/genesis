@@ -384,7 +384,7 @@ COLDC_FUNC(frename) {
 
     /* stat it seperately so that we can give a better error */
     to = build_path(STR2->s, NULL, ALLOW_DIR);
-    if (stat(to->s, &sbuf) < 0) {
+    if (stat(to->s, &sbuf) == 0) {
         cthrow(file_id, "Destination \"%s\" already exists.", to->s);
         string_discard(to);
         string_discard(from);

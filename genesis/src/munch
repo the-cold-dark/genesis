@@ -1,9 +1,0 @@
-print ((2 ** 32)-1);
-print "\n";
-print ((2 ** 31)-1);
-print "\n";
-print ((2 ** 64)-1);
-print "\n";
-print ((2 ** 63)-1);
-print "\n";
-  

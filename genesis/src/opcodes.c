@@ -118,8 +118,8 @@ static Op_info op_info[] = {
     FDEF(F_DEL_VAR,       "del_var",   del_var)
     FDEF(F_SET_VAR,       "set_var",   set_var)
     FDEF(F_GET_VAR,       "get_var",   get_var)
-    FDEF(F_INHERITED_VAR, "inherited_var", get_var)
-    FDEF(F_DEFAULT_VAR,   "default_var", get_var)
+    FDEF(F_INHERITED_VAR, "inherited_var", inherited_var)
+    FDEF(F_DEFAULT_VAR,   "default_var", default_var)
     FDEF(F_CLEAR_VAR,     "clear_var", clear_var)
     FDEF(F_VARIABLES,     "variables", variables)
 

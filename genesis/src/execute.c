@@ -379,6 +379,37 @@ void task_suspend(void) {
     cur_frame = NULL;
 }
 
+#ifdef REF_COUNT_DEBUG
+void dump_stack (void) {
+    Frame *f = cur_frame;
+
+    while (f) {
+        printf("user #%d, sender #%d, caller #%d, #%d<#%d>.%s (%d)\n",
+               f->user, f->sender, f->caller, f->object->objnum,
+               f->method->object->objnum, ident_name(f->method->name),
+               f->method->refs);
+        f = f->caller_frame;
+    }
+    printf ("---\n");
+}
+
+/* This call counts the references from the stack frames to the given object */
+int count_stack_refs (int objnum) {
+    Frame *f = cur_frame;
+    int s;
+
+    s=0;
+    while (f) {
+        if (f->object->objnum == objnum)
+            s++;
+        if (f->method->object->objnum == objnum)
+            s++;
+        f = f->caller_frame;
+    }
+    return s;
+}
+#endif
+
 /*
 // ---------------------------------------------------------------
 // Nothing calls this function - it's here as a VM debug utility
@@ -810,9 +841,20 @@ void frame_return(void) {
     stack_pos = cur_frame->stack_start;
 
     /* Let go of method and objects. */
+    
+#ifdef REF_COUNT_DEBUG
+    /* Check if any of the objects lost their refcounts */
+    if (count_stack_refs(cur_frame->method->object->objnum) >
+        cur_frame->method->object->refs)
+    {
+        printf ("EErrp!\n");
+        fflush(stdout);
+    }
+#endif
+
+    cache_discard(cur_frame->method->object);
     method_discard(cur_frame->method);
     cache_discard(cur_frame->object);
-    cache_discard(cur_frame->method->object);
 
     /* Discard any error action specifiers. */
     while (cur_frame->specifiers)
@@ -1478,19 +1520,26 @@ INTERNAL Bool is_critical (void) {
 
 void cthrow(Ident error, char *fmt, ...)
 {
-    cStr *str;
-    va_list arg;
+    cStr    * str;
+    va_list   arg;
+    Method  * method = NULL;
 
     if (!is_critical()) {
 	va_start(arg, fmt);
 	str = vformat(fmt, arg);
 
 	va_end(arg);
-    }
-    else
-	str=NULL;
+    } else
+	str = NULL;
 
+    /* protect the method in the current frame, if there is any - I
+       have no idea what can call cthrow... This will prevent unexpected
+       refcounting bombs during the frame_return sequence */
+    if (cur_frame)
+        method = method_dup(cur_frame->method);
     interp_error(error, str);
+    if (method)
+        method_discard(method);
     if (str)
 	string_discard(str);
 }
@@ -1530,9 +1579,9 @@ void interp_error(Ident error, cStr *explanation)
 
 void user_error(Ident error, cStr *explanation, cData *arg)
 {
-    cList * location;
-    cData *d;
-
+    cList  * location;
+    cData  * d;
+    Method * method;
 
     /* Construct a list giving the location. */
     location = list_new(5);
@@ -1547,16 +1596,20 @@ void user_error(Ident error, cStr *explanation, cData *arg)
     fill_in_method_info(d);
 
     /* Return from the current method, and propagate the error. */
+    /* protect the current method, so that strings live long enough */
+    method = method_dup(cur_frame->method);
     frame_return();
     start_error(error, explanation, arg, location);
+    method_discard(method);
     list_discard(location);
 }
 
 INTERNAL void out_of_ticks_error(void)
 {
     static cStr *explanation;
-    cList * location;
-    cData *d;
+    cList  * location;
+    cData  * d;
+    Method * method;
 
     /* Construct a list giving the location. */
     location = list_new(5);
@@ -1571,11 +1624,13 @@ INTERNAL void out_of_ticks_error(void)
     fill_in_method_info(d);
 
     /* Don't give the topmost frame a chance to return. */
+    method = method_dup(cur_frame->method);
     frame_return();
-
+  
     if (!explanation)
         explanation = string_from_chars("Out of ticks", 12);
     start_error(methoderr_id, explanation, NULL, location);
+    method_discard(method);
     list_discard(location);
 }
 

@@ -6,6 +6,17 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-27 [-Mar-97] Miro, Brian
+      * fixed a bug, removed an extra cache_discard that completely bombed
+        the server if the object got swapped while task still used the
+        method  (Miro)
+      * Added a traceback logging means (Miro)
+      * Fixed deallocing things in wrong order in frame_return (Miro)
+      * found minor logic bug with frename() (Brian)
+      * fixed a bug where frames were cleaning up information before the
+        traceback could be generated (Miro)
+      * wrapped up default_var() and inherited_var() -- no cacheing of
+        results occurs with inherited_var(), use it wisely (Brian)
 1.0-26 [22-Mar-97] Miro, Brandon
       * Fixed crypt() and match_crypted() for 64bit OS's (Brandon)
       * minor bug in fromliteral() fixed, in regard to handled frobs (Miro)

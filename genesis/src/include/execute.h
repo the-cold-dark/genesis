@@ -190,6 +190,7 @@ Int func_init_1(cData **args, Int type1);
 Int func_init_2(cData **args, Int type1, Int type2);
 Int func_init_3(cData **args, Int type1, Int type2, Int type3);
 Int func_init_0_or_1(cData **args, Int *num_args, Int type1);
+Int func_init_0_to_2(cData **args, Int *num_args, Int type1, Int type2);
 Int func_init_1_or_2(cData **args, Int *num_args, Int type1, Int type2);
 Int func_init_2_or_3(cData **args, Int *num_args, Int type1, Int type2,
 		     Int type3);

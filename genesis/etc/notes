@@ -42,6 +42,9 @@ RELEASE INFORMATION:
       * Also fix a bug in method_bytecode where it checks the wrong
         variable.  (Allen Noe)
       * Win32 build fix involving VRELEASE. (Allen Noe)
+      * Add func_init_0_to_2(). (Bruce)
+      * Make stack() accept parameters to specify task id and 
+        whether or not line numbers are desired. (Bruce)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

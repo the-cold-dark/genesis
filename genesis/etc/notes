@@ -10,16 +10,19 @@ Help can be found through the web site, or on the mailing list
       http://www.cold.org/info/lists
 
 RELEASE INFORMATION:
-1.1p2  [22-Dec-97]
-      * fixed problem with frame depth and forking methods (Bruce)
-      * added tz offset as 12 element to localtime() -- this was
-        unintentionally left out of the original implementation (Brandon)
-      * fixed problem with using strfmt() on large floats that may overflow
-        the number buffer (Bruce)
-      * fixed minor memory leak in strfmt() (Bruce)
-      * $time.format() fixed odd behaviour if zero-length string for
-        format was given (Bruce)
-      * bufidx() wouldn't find the last char, if origin==len; reported
-        by Kipp (Brandon)
-      * fixed a bug where the WIDTH x DEPTH settings in configure were
-        being ignored (Brandon)
+1.1p3  [2-Apr-98]
+      * fixed a few minor memory leaks (Bruce)
+      * fixed a maxint comparison problem (Brad)
+      * reduced unecessary buffer copies when reading data from a
+        connection, as well as redundant mallocs (Brandon)
+      * fixed some problems with cancelling tasks straight from the
+        driver (i.e. with kill -USR1) which caused a crash (Brandon)
+      * fixed a problem with set_method_access()--was not complaining
+        if the method did not exist (Bruce)
+      * added the ability to do `[buf] * INT like on strings (Brad)
+      * fixed a problem with the VEIL module (Brandon)
+      * added the System/OS token as an element to $sys.version() (Brandon)
+      * fixed a problem with cancelling or getting info on the currently
+        executing task (Brandon)
+      * adjusted select() to also check for file descriptors with
+        exceptions--allowing for later cleanup (Brandon)

@@ -11,6 +11,7 @@
 #include "cdc_pcode.h"
 #include "util.h"
 #include "cache.h"
+#include "net.h"
 
 INTERNAL void connection_read(Conn *conn);
 INTERNAL void connection_write(Conn *conn);
@@ -293,6 +294,7 @@ Int remove_server(Int port) {
 /*
 // --------------------------------------------------------------------
 */
+#if 0
 INTERNAL void connection_read(Conn *conn) {
     unsigned char temp[BIGBUF];
     Int len;
@@ -319,6 +321,42 @@ INTERNAL void connection_read(Conn *conn) {
     task(conn->objnum, parse_id, 1, &d);
     buffer_discard(buf);
 }
+#else
+
+/* rewrote to reduce buffer copies, by reading from the socket into a
+   pre-allocated static buffer that we re-use.  -Brandon */
+INTERNAL void connection_read(Conn *conn) {
+    Int len;
+    cData d;
+
+    /* DOH, something is still using out buffer, lets let
+       it keep it and we'll get a new sandbox to play in */
+    if (socket_buffer->refs > 1) {
+        socket_buffer->refs--;
+        socket_buffer = buffer_new(BIGBUF);
+    }
+
+    len = SOCK_READ(conn->fd, (void *) socket_buffer->s, BIGBUF);
+    if (len == SOCKET_ERROR && GETERR() == ERR_INTR)
+        return;
+
+    conn->flags.readable = 0;
+
+    if (len <= 0) {
+        /* The connection closed. */
+        conn->flags.dead = 1;
+        return;
+    }
+
+    /* We successfully read some data.  Handle it. */
+    socket_buffer->refs++;
+    socket_buffer->len = len;
+    d.type = BUFFER;
+    d.u.buffer = socket_buffer;
+    task(conn->objnum, parse_id, 1, &d);
+    socket_buffer->refs--;
+}
+#endif
 
 /*
 // --------------------------------------------------------------------

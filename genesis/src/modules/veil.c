@@ -107,13 +107,13 @@ cList * buf_to_veil_packets(cBuf * buf) {
         /* give abort precedence */
         if (flags & VEIL_P_ABORT) {
             list[1].type     = SYMBOL;
-            list[1].u.symbol = pabort_id;
+            list[1].u.symbol = ident_dup(pabort_id);
         } else if (flags & VEIL_P_CLOSE) {
             list[1].type     = SYMBOL;
-            list[1].u.symbol = pclose_id;
+            list[1].u.symbol = ident_dup(pclose_id);
         } else if (flags & VEIL_P_OPEN) {
             list[1].type     = SYMBOL;
-            list[1].u.symbol = popen_id;
+            list[1].u.symbol = ident_dup(popen_id);
         } else {
             list[1].type  = INTEGER;
             list[1].u.val = 0;

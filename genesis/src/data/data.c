@@ -48,7 +48,15 @@ Int data_cmp(cData *d1, cData *d2) {
     switch (d1->type) {
 
       case INTEGER:
-	return d1->u.val - d2->u.val;
+        /* Patch #8 -- Brad Roberts, alleviate potential problems if
+           MAX/MIN int are compared */
+        if (d1->u.val == d2->u.val)
+          return 0;
+        else
+          if (d1->u.val < d2->u.val)
+            return -1;
+          else
+            return 1;
 
       case FLOAT: {
         Float t=d1->u.fval - d2->u.fval;

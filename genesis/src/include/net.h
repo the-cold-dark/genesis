@@ -32,6 +32,11 @@ SOCKET get_udp_socket(Int port, char * addr);
 
 Bool prebind_port(int port, char * addr, int tcp);
 
+#ifdef _NET_C_
+cBuf * socket_buffer;
+#else
+extern cBuf * socket_buffer;
+#endif
 extern Long server_failure_reason;
 
 #endif

@@ -132,14 +132,16 @@ NATIVE_METHOD(version) {
     INIT_NO_ARGS();
 
     /* Construct a list of the version numbers and push it. */
-    version = list_new(4);
-    d = list_empty_spaces(version, 4);
+    version = list_new(5);
+    d = list_empty_spaces(version, 5);
     d[0].type = d[1].type = d[2].type = INTEGER;
     d[0].u.val = VERSION_MAJOR;
     d[1].u.val = VERSION_MINOR;
     d[2].u.val = VERSION_PATCH;
     d[3].type = STRING;
     d[3].u.str = string_dup(str_release);
+    d[4].type = STRING;
+    d[4].u.str = string_dup(str_system);
 
     CLEAN_RETURN_LIST(version);
 }

@@ -414,6 +414,7 @@ FILE * errfile;
 cStr * str_tzname;
 cStr * str_hostname;
 cStr * str_release;
+cStr * str_system;
 
 Bool coldcc;
 Bool running;
@@ -448,6 +449,7 @@ extern FILE * errfile;
 extern cStr * str_tzname;
 extern cStr * str_hostname;
 extern cStr * str_release;
+extern cStr * str_system;
 
 extern Bool coldcc;
 extern Bool running;

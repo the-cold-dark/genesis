@@ -379,7 +379,7 @@ COLDC_FUNC(method_access) {
 
 COLDC_FUNC(set_method_access) {
     Int       access = 0;
-    cData  * args;
+    cData   * args;
     Ident     sym;
 
     if (!func_init_2(&args, SYMBOL, SYMBOL))
@@ -401,7 +401,7 @@ COLDC_FUNC(set_method_access) {
     else
         cthrow(type_id, "Invalid method access flag.");
 
-    object_set_method_access(cur_frame->object, args[0].u.symbol, access);
+    access = object_set_method_access(cur_frame->object, args[0].u.symbol, access);
 
     if (access == -1)
         cthrow(type_id, "Method %D not found.", args[0]);

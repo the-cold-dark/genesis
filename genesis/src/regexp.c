@@ -239,8 +239,10 @@ regexp * regcomp(char * exp) {
     regnpar = 1;
     regcode = r->program;
     regc((char)MAGIC);
-    if (reg(0, &flags) == NULL)
+    if (reg(0, &flags) == NULL) {
+        efree(r); /* Patch #7 -- Bruce Mitchner */
         return(NULL);
+    }
 
     /* Dig out information for optimizations. */
     r->regstart = '\0';    /* Worst-case defaults. */

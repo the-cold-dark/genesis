@@ -5,7 +5,7 @@
 */
 
 #define _BSD 44 /* For RS6000s. */
-
+#define _NET_C_
 #include "defs.h"
 
 #include <sys/types.h>
@@ -36,11 +36,14 @@ void init_net(void) {
 
     WSAStartup(0x0101, &wsa);
 #endif
+    socket_buffer = buffer_new(BIGBUF);
 }
+
 void uninit_net(void) {
 #ifdef __Win32__
     WSACleanup();
 #endif
+    buffer_discard(socket_buffer);
 }
 
 /*
@@ -283,7 +286,7 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
     Conn *conn;
     server_t *serv;
     pending_t *pend;
-    fd_set read_fds, write_fds;
+    fd_set read_fds, write_fds, except_fds;
     Int flags, nfds, count, result, error;
     int dummy = sizeof(int);
 
@@ -301,13 +304,16 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
     /* Begin with blank file descriptor masks and an nfds of 0. */
     FD_ZERO(&read_fds);
     FD_ZERO(&write_fds);
+    FD_ZERO(&except_fds);
     nfds = 0;
 
     /* Listen for new data on connections, and also check for ability to write
      * to them if we have data to write. */
     for (conn = connections; conn; conn = conn->next) {
-	if (!conn->flags.dead)
+	if (!conn->flags.dead) {
+            FD_SET(conn->fd, &except_fds);
 	    FD_SET(conn->fd, &read_fds);
+        }
 	if (conn->write_buf->len)
 	    FD_SET(conn->fd, &write_fds);
 	if (conn->fd >= nfds)
@@ -334,7 +340,7 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
     }
 
     /* Call select(). */
-    count = select(nfds, &read_fds, &write_fds, NULL, tvp);
+    count = select(nfds, &read_fds, &write_fds, &except_fds, tvp);
 
     /* Lose horribly if select() fails on anything but an interrupted system
      * call.  On ERR_INTR, we'll return 0. */
@@ -348,6 +354,10 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
 
     /* Check if any connections are readable or writable. */
     for (conn = connections; conn; conn = conn->next) {
+	if (FD_ISSET(conn->fd, &except_fds)) {
+            conn->flags.dead = 1;
+            fprintf(stderr, "An exception occurred during select()\n");
+        }
 	if (FD_ISSET(conn->fd, &read_fds))
 	    conn->flags.readable = 1;
 	if (FD_ISSET(conn->fd, &write_fds))

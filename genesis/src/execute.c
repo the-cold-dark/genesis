@@ -291,6 +291,8 @@ void task_resume(Long tid, cData *ret) {
     VMState * vm = task_lookup(tid),
             * old_vm;
 
+    if (vm->task_id == task_id)
+        return;
     old_vm = vm_current();
     restore_vm(vm);
     REMOVE_TASK(suspended, vm);
@@ -441,18 +443,24 @@ void task_cancel(Long tid) {
     VMState * vm = task_lookup(tid),
             * old_vm;
 
-    old_vm = vm_current();
-    restore_vm(vm);
+    if (task_id == vm->task_id) {
+        old_vm = NULL;
+    } else {
+        old_vm = vm_current();
+        restore_vm(vm);
+    }
     while (cur_frame)
         frame_return();
-    if (vm->preempted)
-        REMOVE_TASK(preempted, vm)
-    else
-        REMOVE_TASK(suspended, vm)
-    store_stack();
-    ADD_TASK(vmstore, vm);
-    restore_vm(old_vm);
-    ADD_TASK(vmstore, old_vm);
+    if (old_vm != NULL) {
+        if (vm->preempted)
+            REMOVE_TASK(preempted, vm)
+        else
+            REMOVE_TASK(suspended, vm)
+        store_stack();
+        ADD_TASK(vmstore, vm);
+        restore_vm(old_vm);
+        ADD_TASK(vmstore, old_vm);
+    }
 }
 
 /*

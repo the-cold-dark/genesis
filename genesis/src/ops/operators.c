@@ -1175,6 +1175,26 @@ void op_multiply(void) {
     cData *d2 = &stack[stack_pos - 1];
 
     switch (d1->type) {
+         case BUFFER: {
+            Int n;
+            cBuf *s;
+
+            if (d2->type!=INTEGER)
+                goto error;
+            n=d2->u.val;
+            if (n<0) {
+                cthrow(range_id,
+                      "Multiplying buffer %D with negative number %D.", d1, d2);
+                return;
+            }
+            s=buffer_new(d1->u.buffer->len*n);
+            while (n--)
+                s=buffer_append(s, d1->u.buffer);
+            data_discard(d1);
+            d1->u.buffer=s;
+            break;
+        }
+
         case STRING: {
 	    Int n;
 	    cStr *s;
@@ -1183,10 +1203,11 @@ void op_multiply(void) {
 		goto error;
 	    n=d2->u.val;
 	    if (n<0) {
-		cthrow(range_id, "Multiplying string %D with negative number %D.", d1, d2);
+		cthrow(range_id,
+                      "Multiplying string %D with negative number %D.", d1, d2);
 		return;
 	    }
-	    s=string_new(d1->u.str->len*n+2); /* +2 just in case */
+	    s=string_new(d1->u.str->len*n);
 	    while (n--)
 		s=string_add(s, d1->u.str);
 	    data_discard(d1);

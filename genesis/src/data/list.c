@@ -301,7 +301,10 @@ cList *list_delete_element(cList *list, cData *elem) {
 }
 
 cList *list_delete_sorted_element(cList *list, cData *elem, cData *key) {
-    return  list_delete(list, list_binary_search(list, elem, key));
+    Int pos = list_binary_search(list, elem, key);
+    if (pos != -1)
+        return  list_delete(list, pos);
+    return NULL;
 }
 
 cList *list_append(cList *list1, cList *list2) {

@@ -458,6 +458,10 @@ NATIVE_METHOD(sorted_delete) {
     if (argc == 3)
         data_discard(&key);
 
+    if (out == NULL) {
+        THROW((range_id, "Value must be within the list"))
+    }
+
     CLEAN_RETURN_LIST(out);
 }
 

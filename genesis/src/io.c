@@ -24,6 +24,14 @@ static Conn * connections;  /* List of client connections. */
 static server_t     * servers;      /* List of server sockets. */
 static pending_t    * pendings;     /* List of pending connections. */
 
+/* it's safe to only initialize obj_extra_file in connection_add since
+ * before then, no obj->extra's will contain a connection, and a extra
+ * type of -1 can't exist so we won't accidentally find another extra's
+ * pointer.
+ */
+static int object_extra_initialized = 0;
+int object_extra_connection = -1;
+
 /*
 // --------------------------------------------------------------------
 // Flush defunct connections and files.
@@ -177,22 +185,23 @@ void handle_new_and_pending_connections(void) {
 */
 
 Conn * find_connection(Obj * obj) {
+    Conn *tmp;
 
-    /* obj->conn is only for faster lookups */
-    if (obj->conn == NULL) {
+    if ((tmp = (Conn*)object_extra_find(obj, object_extra_connection)) == NULL) {
         Conn * conn;
 
-        /* lets try and find the connection */
+        /* lets try and find the conn */
         for (conn = connections; conn; conn = conn->next) {
             if (conn->objnum == obj->objnum && !conn->flags.dead) {
-                obj->conn = conn;
+                object_extra_register(obj, object_extra_connection, conn);
+                tmp = conn;
                 break;
             }
         }
     }
 
-    /* it could still be NULL */
-    return obj->conn;
+    /* it may still be NULL */
+    return tmp;
 }
 
 /*
@@ -214,8 +223,8 @@ Conn * ctell(Obj * obj, cBuf * buf) {
 // --------------------------------------------------------------------
 */
 
-Int boot(Obj * obj) {
-    Conn * conn = find_connection(obj);
+Int boot(Obj * obj, void * ptr) {
+    Conn * conn = ptr ? (Conn*)ptr : find_connection(obj);
 
     if (conn != NULL) {
         conn->flags.dead = 1;
@@ -364,6 +373,11 @@ static void connection_write(Conn *conn) {
 static Conn * connection_add(Int fd, Long objnum) {
     Conn * conn;
 
+    if (!object_extra_initialized) {
+        object_extra_initialized = 1;
+        object_extra_connection = object_allocate_extra(flush_output, boot);
+    }
+
     /* clear old connections to this objnum */
     for (conn = connections; conn; conn = conn->next) {
         if (conn->objnum == objnum && !conn->flags.dead)
@@ -396,7 +410,7 @@ static void connection_discard(Conn *conn) {
     /* reset the conn variable on the object */
     obj = cache_retrieve(conn->objnum);
     if (obj != NULL) {
-        obj->conn = NULL;
+        object_extra_unregister(obj, object_extra_connection, conn);
         cache_discard(obj);
     }
 

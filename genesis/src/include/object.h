@@ -36,6 +36,19 @@ struct _ObjMethods {
 };
 typedef struct _ObjMethods ObjMethods;
 
+struct _ObjExtrasTable {
+    void (*cleanup_all) (void);
+    Int  (*cleanup)     (Obj * object, void * ptr);
+};
+typedef struct _ObjExtrasTable ObjExtrasTable;
+
+struct _ObjExtras {
+    Int type;
+    void *ptr;
+    struct _ObjExtras *next;
+};
+typedef struct _ObjExtras ObjExtras;
+
 struct Obj {
     /* object identifiers */
     cObjnum     objnum;
@@ -75,9 +88,8 @@ struct Obj {
     Obj        *prev_dirty;
 #endif
 
-    /* i/o pointers for faster lookup, only valid in the cache */
-    Conn       *conn;
-    filec_t    *file;
+    /* extra data for objects, ex: connection(s), files(s) */
+    ObjExtras  *extras;
 };
 
 /* The object string and identifier tables simplify storage of strings and
@@ -226,6 +238,14 @@ extern void    object_load_parent_objs(Obj * obj);
 
 extern cList  *ancestor_cache_info(void);
 extern cList  *method_cache_info(void);
+
+extern int     object_allocate_extra(
+                   void (*cleanup_all) (void),
+                   Int  (*cleanup)     (Obj * object, void * ptr));
+extern void   *object_extra_find(Obj * obj, Int flags);
+extern void    object_extra_register(Obj * obj, Int flags, void * ptr);
+extern void    object_extra_unregister(Obj * obj, Int flags, void * ptr);
+extern void    object_extra_cleanup_all(void);
 
 /* variables */
 extern Long    db_top;

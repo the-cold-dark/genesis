@@ -107,12 +107,22 @@ void lookup_open(char *name, Int cnew) {
 
     objnum_dbp->set_errfile(objnum_dbp, stderr);
 
+#if DB_VERSION_MAJOR < 4
     if (cnew)
 	ret = objnum_dbp->open(objnum_dbp, objnum_name, NULL, DB_BTREE, 
                                DB_TRUNCATE | DB_CREATE, 0664);
     else
 	ret = objnum_dbp->open(objnum_dbp, objnum_name, NULL, DB_BTREE,
                                DB_CREATE, 0664);
+#else
+    if (cnew)
+	ret = objnum_dbp->open(objnum_dbp, NULL, objnum_name, NULL, DB_BTREE, 
+                               DB_TRUNCATE | DB_CREATE, 0664);
+    else
+	ret = objnum_dbp->open(objnum_dbp, NULL, objnum_name, NULL, DB_BTREE,
+                               DB_CREATE, 0664);
+#endif
+
     if (ret != 0)
 	fail_to_start("Cannot open objnum bdb database file.");
 
@@ -134,12 +144,22 @@ void lookup_open(char *name, Int cnew) {
 
     name_dbp->set_errfile(name_dbp, stderr);
 
+#if DB_VERSION_MAJOR < 4
     if (cnew)
         ret = name_dbp->open(name_dbp, name_name, NULL, DB_BTREE,
                                DB_TRUNCATE | DB_CREATE, 0664);
     else
         ret = name_dbp->open(name_dbp, name_name, NULL, DB_BTREE,
                                DB_CREATE, 0664);
+#else
+    if (cnew)
+        ret = name_dbp->open(name_dbp, NULL, name_name, NULL, DB_BTREE,
+                               DB_TRUNCATE | DB_CREATE, 0664);
+    else
+        ret = name_dbp->open(name_dbp, NULL, name_name, NULL, DB_BTREE,
+                               DB_CREATE, 0664);
+#endif
+
     if (ret != 0)
         fail_to_start("Cannot open name bdb database file.");
 

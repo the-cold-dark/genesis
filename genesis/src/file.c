@@ -23,6 +23,14 @@
         return NULL; \
     }
 
+/* it's safe to only initialize object_extra_file in file_new since
+ * before then, no obj->extra's will contain a file, and a extra type
+ * of -1 can't exist so we won't accidentally find another extra's
+ * pointer.
+ */
+static int object_extra_initialized = 0;
+static int object_extra_file = -1;
+
 /*
 // --------------------------------------------------------------------
 // The first routines deal with file controllers, and should be system
@@ -32,6 +40,7 @@
 
 filec_t * files = NULL;
 
+/* called only from sig.c:catch_signal():case SIGHUP */
 void flush_files(void) {
     filec_t * file;
 
@@ -39,6 +48,7 @@ void flush_files(void) {
         flush_file(file);
 }
 
+/* called only from coldcc.c:shutdown_coldcc() and genesis.c:main() */
 void close_files(void) {
     filec_t * file,
             * old;
@@ -69,12 +79,12 @@ void file_discard(filec_t * file, Obj * obj) {
             Obj * obj = cache_retrieve(file->objnum);
 
             if (obj != NULL) {
-                obj->file = NULL;
+                object_extra_unregister(obj, object_extra_file, file);
                 cache_discard(obj);
             }
         }
     } else {
-        obj->file = NULL;
+        object_extra_unregister(obj, object_extra_file, file);
     }
 
     /* pull it out of the 'files' list */
@@ -100,6 +110,11 @@ void file_discard(filec_t * file, Obj * obj) {
 filec_t * file_new(void) {
     filec_t * fnew = EMALLOC(filec_t, 1);
 
+    if (!object_extra_initialized) {
+        object_extra_initialized = 1;
+        object_extra_file = object_allocate_extra(close_files, abort_file);
+    }
+
     fnew->fp = NULL;
     fnew->objnum = INV_OBJNUM;
     fnew->f.readable = 0;
@@ -118,23 +133,25 @@ void file_add(filec_t * file) {
 }
 
 filec_t * find_file_controller(Obj * obj) {
+    filec_t *tmp;
 
     /* obj->file is only for faster lookups,
        and will go away when written to disk. */
-    if (obj->file == NULL) {
+    if ((tmp = (filec_t*)object_extra_find(obj, object_extra_file)) == NULL) {
         filec_t * file;
 
         /* lets try and find the file */
         for (file = files; file; file = file->next) {
             if (file->objnum == obj->objnum && !file->f.closed) {
-                obj->file = file;
+                object_extra_register(obj, object_extra_file, file);
+                tmp = file;
                 break;
             }
         }
     }
 
     /* it may still be NULL */
-    return obj->file;
+    return tmp;
 }
 
 Int close_file(filec_t * file) {
@@ -204,7 +221,9 @@ cStr * read_file(filec_t * file) {
     return str;
 }
 
-Int abort_file(filec_t * file) {
+Int abort_file(Obj * object, void * ptr) {
+    filec_t * file = ptr ? (filec_t*)ptr : find_file_controller(object);
+
     if (file != NULL) {
         close_file(file);
         file_discard(file, NULL);
@@ -379,7 +398,7 @@ cList * open_file(cStr * name, cStr * smode, Obj * obj) {
     }
 
     file_add(fnew);
-    obj->file = fnew;
+    object_extra_register(obj, object_extra_file, fnew);
     fnew->objnum = obj->objnum;
 
     return statbuf_to_list(&sbuf);

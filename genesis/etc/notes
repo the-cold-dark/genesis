@@ -141,4 +141,6 @@ RELEASE INFORMATION:
       * Cleanup memory at exit (Brad)
       * Optimize textdump decompilation some. (Bruce)
       * Integrate changes from 1.1.10 and 1.1.11 (Brad, Bruce)
+      * Overhaul obj->file and obj->conn to use new obj->extras (Brad)
+      * Add support for db4 (Brad)
 

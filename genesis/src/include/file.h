@@ -34,7 +34,7 @@ Int close_file(filec_t * file);
 Int flush_file(filec_t * file);
 cBuf * read_binary_file(filec_t * file, Int block);
 cStr * read_file(filec_t * file);
-Int abort_file(filec_t * file);
+Int abort_file(Obj * object, void * ptr);
 Int stat_file(filec_t * file, struct stat * sbuf);
 cStr * build_path(char * fname, struct stat * sbuf, Int nodir);
 cList * statbuf_to_list(struct stat * sbuf);

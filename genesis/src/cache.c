@@ -346,8 +346,7 @@ Obj * cache_get_holder(Long objnum) {
 
     /* we may actually have a connection or file, and when
        it is used these will get set correctly */
-    obj->conn = NULL;
-    obj->file = NULL;
+    obj->extras = NULL;
 
 #if DEBUG_CACHE
     _acounter++;

@@ -102,6 +102,9 @@ struct {
 } defines_var_cache[DEFINES_VAR_CACHE_SIZE];
 #endif
 
+static ObjExtrasTable *object_extras = NULL;
+static int object_extras_count       = 0;
+
 /* ..................................................................... */
 /* function prototypes */
 static void    object_update_parents(Obj *object,
@@ -234,8 +237,7 @@ Obj * object_new(cObjnum objnum, cList * parents) {
     cnew->objname  = -1;
     cnew->children = NULL;
     cnew->methods  = NULL;
-    cnew->conn     = NULL;
-    cnew->file     = NULL;
+    cnew->extras   = NULL;
     cnew->search   = START_SEARCH_AT;
 
     cnew->parents = list_dup(parents);
@@ -358,6 +360,87 @@ void object_free(Obj *object) {
     }
 }
 
+int object_allocate_extra(
+    void (*cleanup_all) (void),
+    Int  (*cleanup)     (Obj * object, void * ptr))
+{
+    object_extras = (ObjExtrasTable*)realloc(object_extras,
+        sizeof(ObjExtrasTable) * (object_extras_count+1));
+
+    object_extras[object_extras_count].cleanup_all = cleanup_all;
+    object_extras[object_extras_count].cleanup     = cleanup;
+    return object_extras_count++;
+}
+
+void *object_extra_find(Obj * obj, Int flags)
+{
+    ObjExtras *tmp = obj->extras;
+
+    while (tmp)
+    {
+        if (tmp->type == flags)
+            return tmp->ptr;
+        tmp = tmp->next;
+    }
+    return NULL;
+}
+
+void object_extra_register(Obj * obj, Int flags, void * ptr)
+{
+    ObjExtras *tmp;
+
+    tmp = EMALLOC(ObjExtras, 1);
+
+    tmp->type = flags;
+    tmp->next = obj->extras;
+    tmp->ptr = ptr;
+    obj->extras = tmp;
+}
+
+void object_extra_unregister(Obj * obj, Int flags, void * ptr)
+{
+    ObjExtras *prev = NULL, *tmp = obj->extras;
+
+    while (tmp)
+    {
+        if (tmp->type == flags)
+        {
+            if (prev)
+                prev->next = tmp->next;
+            else
+                obj->extras = tmp->next;
+            efree(tmp);
+            return;
+        }
+        prev = tmp;
+        tmp = tmp->next;
+    }
+}
+
+void object_extra_cleanup_all(void)
+{
+    int i;
+
+    for (i=0; i<object_extras_count; i++)
+    {
+        object_extras[i].cleanup_all();
+    }
+}
+
+static void object_extra_cleanup(Obj *object)
+{
+    ObjExtras *tmp;
+
+    while (object->extras != NULL)
+    {
+        tmp = object->extras;
+        object->extras = object->extras->next;
+
+        object_extras[tmp->type].cleanup(object, tmp->ptr);
+        free(tmp);
+    }
+}
+
 /*
 // -----------------------------------------------------------------
 //
@@ -428,11 +511,7 @@ void object_destroy(Obj *object) {
         }
     }
 
-    /* boot the connection on this object (if it exists) */
-    boot(object);
-
-    /* close the file on this object (if there is one) */
-    abort_file(object->file);
+    object_extra_cleanup(object);
 
     /* Having freed all the stuff we don't normally free, free the stuff that
      * we do normally free. */

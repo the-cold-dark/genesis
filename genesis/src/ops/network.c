@@ -10,6 +10,7 @@
 #include "net.h"
 #include "util.h"
 #include "cache.h"
+#include "io.h"
 
 /*
 // -----------------------------------------------------------------
@@ -40,7 +41,7 @@ COLDC_FUNC(reassign_connection) {
         }
         c->objnum = obj->objnum;
         cache_discard(obj);
-        cur_frame->object->conn = NULL;
+        object_extra_unregister(cur_frame->object, object_extra_connection, c);
         pop(1);
         push_int(1);
     } else {
@@ -144,7 +145,7 @@ COLDC_FUNC(close_connection) {
         return;
 
     /* Kick off anyone assigned to the current object. */
-    push_int(boot(cur_frame->object));
+    push_int(boot(cur_frame->object, NULL));
 }
 
 /*

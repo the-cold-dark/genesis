@@ -51,7 +51,7 @@ void handle_connection_input(void);
 void handle_connection_output(void);
 Conn * find_connection(Obj * obj);
 Conn * ctell(Obj * obj, cBuf *buf);
-Int  boot(Obj * obj);
+Int  boot(Obj * obj, void * ptr);
 Int  tcp_server(Int port, char * addr, Long objnum);
 Int  udp_server(Int port, char * addr, Long objnum);
 Int  remove_server(Int port);
@@ -59,6 +59,8 @@ Long make_connection(char *addr, Int port, cObjnum receiver);
 Long make_udp_connection(char *addr, Int port, cObjnum receiver);
 void flush_output(void);
 Long udp_connect(char *addr, Int port, Int *socket_return);
+
+extern int object_extra_connection;
 
 #endif
 

@@ -170,3 +170,4 @@
 #  define __UNIX__
 #endif
 
+/* no endif in config.h.in on purpose, emitted by configure -- evil hack */

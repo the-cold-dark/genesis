@@ -307,7 +307,9 @@ COLDC_FUNC(config) {
 #endif
     _CONFIG_INT(log_malloc_size_id,            log_malloc_size)
     _CONFIG_INT(log_method_cache_id,           log_method_cache)
+#ifdef USE_CACHE_HISTORY
     _CONFIG_INT(cache_history_size_id,         cache_history_size)
+#endif
     THROW((type_id, "Invalid configuration name."))
 }
 
@@ -333,15 +335,23 @@ COLDC_FUNC(cache_stats) {
         return;
 
     if (SYM1 == ancestor_cache_id) {
+#ifdef USE_CACHE_HISTORY
         list = list_dup(ancestor_cache_history);
         entry = ancestor_cache_info();
+#else
+	list = list_new(0);
+#endif
         list_entry.type = LIST;
         list_entry.u.list = entry;
         list = list_add(list, &list_entry);
         list_discard(entry);
     } else if (SYM1 == method_cache_id) {
+#ifdef USE_CACHE_HISTORY
         list = list_dup(method_cache_history);
         entry = method_cache_info();
+#else
+	list = list_new(0);
+#endif
 	list_entry.type = LIST;
         list_entry.u.list = entry;
         list = list_add(list, &list_entry);

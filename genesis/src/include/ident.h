@@ -30,7 +30,7 @@ extern Ident breadth_id, depth_id, full_id, partial_id;
 extern Ident datasize_id, forkdepth_id, calldepth_id, recursion_id, objswap_id;
 
 /* driver config idents */
-extern Ident cachelog_id;
+extern Ident cachelog_id, cachewatch_id, cachewatchcount_id;
 
 /* method id's */
 extern Ident signal_id;

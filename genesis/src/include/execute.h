@@ -21,7 +21,7 @@ typedef struct task_s task_t;
 #define ARG_STACK_MALLOC_DELTA 8
 
 struct vmstack {
-    cData  * stack;
+    cData   * stack;
     Int       stack_size,
             * arg_starts,
               arg_size;
@@ -30,7 +30,7 @@ struct vmstack {
 
 struct vmstate {
     Frame   * cur_frame;
-    cData  * stack;
+    cData   * stack;
     Int       stack_pos,
               stack_size,
             * arg_starts,

@@ -79,7 +79,7 @@ Obj * object_new(Long objnum, cList * parents) {
     cnew->conn = NULL;
     cnew->file = NULL;
 
-    cnew->dirty = 1;
+    cache_dirty_object(cnew);
 
     return cnew;
 }
@@ -187,7 +187,7 @@ void object_destroy(Obj *object) {
 	    kid->parents = list_dup(object->parents);
 	    object_update_parents(kid, list_add);
 	}
-	kid->dirty = 1;
+	cache_dirty_object(kid);
 	cache_discard(kid);
     }
 
@@ -222,7 +222,7 @@ INTERNAL void object_update_parents(Obj * object,
     for (d = list_first(parents); d; d = list_next(parents, d)) {
 	p = cache_retrieve(d->u.objnum);
 	p->children = (*list_op)(p->children, &cthis);
-	p->dirty = 1;
+	cache_dirty_object(p);
 	cache_discard(p);
     }
 }
@@ -394,7 +394,7 @@ Int object_change_parents(Obj *object, cList *parents)
     /* NOTE:  is there a better way to invalidate this? */
     cur_stamp++;
 
-    object->dirty = 1;
+    cache_dirty_object(object);
 
     /* Tell our old parents that we're no longer a kid, and discard the old
      * parents list. */
@@ -415,7 +415,7 @@ Int object_add_string(Obj *object, cStr *str)
     Int i, blank = -1;
 
     /* Get the object dirty now, so we can return with a clean conscience. */
-    object->dirty = 1;
+    cache_dirty_object(object);
 
     /* Look for blanks while checking for an equivalent string. */
     for (i = 0; i < object->num_strings; i++) {
@@ -457,7 +457,7 @@ void object_discard_string(Obj *object, Int ind)
 	object->strings[ind].str = NULL;
     }
 
-    object->dirty = 1;
+    cache_dirty_object(object);
 }
 
 cStr *object_get_string(Obj *object, Int ind)
@@ -471,7 +471,7 @@ Int object_add_ident(Obj *object, char *ident)
     Long id;
 
     /* Mark the object dirty, since we will modify it in all cases. */
-    object->dirty = 1;
+    cache_dirty_object(object);
 
     /* Get an identifier for the identifier string. */
     id = ident_get(ident);
@@ -523,7 +523,7 @@ void object_discard_ident(Obj *object, Int ind)
       object->idents[ind].id = NOT_AN_IDENT;
     }
 
-    object->dirty = 1;
+    cache_dirty_object(object);
 }
 
 Long object_get_ident(Obj *object, Int ind) {
@@ -560,7 +560,7 @@ Long object_del_var(Obj *object, Long name)
 	    var->next = object->vars.blanks;
 	    object->vars.blanks = var - object->vars.tab;
 
-	    object->dirty = 1;
+            cache_dirty_object(object);
 	    return NOT_AN_IDENT;
 	}
     }
@@ -583,7 +583,7 @@ Long object_assign_var(Obj *object, Obj *cclass, Long name, cData *val) {
     data_discard(&var->val);
     data_dup(&var->val, val);
 
-    object->dirty = 1;
+    cache_dirty_object(object);
 
     return NOT_AN_IDENT;
 }
@@ -613,7 +613,7 @@ Long object_delete_var(Obj *object, Obj *cclass, Long name) {
                 var->next = object->vars.blanks;
                 object->vars.blanks = var - object->vars.tab;
 
-                object->dirty = 1;
+                cache_dirty_object(object);
                 return NOT_AN_IDENT;
             }
         }
@@ -765,7 +765,7 @@ static Var *object_create_var(Obj *object, Long cclass, Long name)
     cnew->next = object->vars.hashtab[ind];
     object->vars.hashtab[ind] = cnew - object->vars.tab;
 
-    object->dirty = 1;
+    cache_dirty_object(object);
 
     return cnew;
 }
@@ -1122,7 +1122,7 @@ void object_add_method(Obj *object, Long name, Method *method) {
     object->methods.tab[ind].next = object->methods.hashtab[hval];
     object->methods.hashtab[hval] = ind;
 
-    object->dirty = 1;
+    cache_dirty_object(object);
 }
 
 Int object_del_method(Obj *object, Long name) {
@@ -1152,7 +1152,7 @@ Int object_del_method(Obj *object, Long name) {
 	    object->methods.tab[ind].next = object->methods.blanks;
 	    object->methods.blanks = ind;
 
-	    object->dirty = 1;
+            cache_dirty_object(object);
 
             /* Invalidate the method cache. */
             cur_stamp++;
@@ -1188,7 +1188,7 @@ Int object_set_method_flags(Obj * object, Long name, Int flags) {
     if (method == NULL)
         return -1;
     method->m_flags = flags;
-    object->dirty = 1;
+    cache_dirty_object(object);
     return flags;
 }
 
@@ -1216,7 +1216,7 @@ Int object_set_method_access(Obj * object, Long name, Int access) {
         cur_stamp++;
     }
     method->m_access = access;
-    object->dirty = 1;
+    cache_dirty_object(object);
     return access;
 }
 
@@ -1323,7 +1323,7 @@ Int object_del_objname(Obj * object) {
     }
 
     object->objname = -1;
-    object->dirty++;
+    cache_dirty_object(object);
 
     return result;
 }

@@ -236,15 +236,19 @@ COLDC_FUNC(config) {
 	else if (SYM1 == recursion_id)	rval = limit_recursion;
 	else if (SYM1 == objswap_id)	rval = limit_objswap;
 	else if (SYM1 == cachelog_id)	rval = cache_log_flag;
+	else if (SYM1 == cachewatch_id)	rval = cache_watch_object;
+	else if (SYM1 == cachewatchcount_id)	rval = cache_watch_count;
 	else
 	    THROW((type_id, "Invalid configuration name."))
     } else {
-	if (SYM1 == datasize_id)	rval = limit_datasize  = INT2;
-	else if (SYM1 == forkdepth_id)	rval = limit_fork      = INT2;
-	else if (SYM1 == calldepth_id)	rval = limit_calldepth = INT2;
-	else if (SYM1 == recursion_id)	rval = limit_recursion = INT2;
-	else if (SYM1 == objswap_id)	rval = limit_objswap   = INT2;
-	else if (SYM1 == cachelog_id)	rval = cache_log_flag  = INT2;
+	if (SYM1 == datasize_id)	rval = limit_datasize     = INT2;
+	else if (SYM1 == forkdepth_id)	rval = limit_fork         = INT2;
+	else if (SYM1 == calldepth_id)	rval = limit_calldepth    = INT2;
+	else if (SYM1 == recursion_id)	rval = limit_recursion    = INT2;
+	else if (SYM1 == objswap_id)	rval = limit_objswap      = INT2;
+	else if (SYM1 == cachelog_id)	rval = cache_log_flag     = INT2;
+	else if (SYM1 == cachewatch_id)	rval = cache_watch_object = INT2;
+	else if (SYM1 == cachewatchcount_id)	rval = cache_watch_count = INT2;
 	else
 	    THROW((type_id, "Invalid configuration name."))
     }

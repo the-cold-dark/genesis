@@ -47,7 +47,7 @@ struct Obj {
     /* Information for the cache. */
     cObjnum objnum;
     Int   refs;
-    char  dirty;                 /* Flag: Object has been modified. */
+    uInt  dirty;                 /* Flag: Object has been modified. */
     char  dead;	                 /* Flag: Object has been destroyed. */
     Int   ucounter;              /* counter: Object references */
 
@@ -56,8 +56,10 @@ struct Obj {
     Ident objname;               /* object name */
 
     /* Pointers to next and previous objects in cache chain. */
-    Obj * next;
-    Obj * prev;
+    Obj * next_obj;
+    Obj * prev_obj;
+    Obj * next_dirty;
+    Obj * prev_dirty;
 
     /* i/o pointers for faster lookup, only valid in the cache */
     Conn * conn;

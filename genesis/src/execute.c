@@ -14,7 +14,7 @@
 #include "moddef.h"
 
 #define STACK_STARTING_SIZE                (256 - STACK_MALLOC_DELTA)
-#define ARG_STACK_STARTING_SIZE                (32 - ARG_STACK_MALLOC_DELTA)
+#define ARG_STACK_STARTING_SIZE            (32 - ARG_STACK_MALLOC_DELTA)
 
 extern Bool running;
 

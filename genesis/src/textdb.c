@@ -377,7 +377,7 @@ void verify_native_methods(void) {
             } else {
                 method->native = x;
                 method->m_flags |= MF_NATIVE;
-                obj->dirty = 1;
+		cache_dirty_object(obj);
 
                 if (nh != (nh_t *) NULL)
                     nh->valid = 1;
@@ -416,7 +416,7 @@ void verify_native_methods(void) {
                 method = object_find_method_local(cur_obj, name, FROB_ANY);
                 if (method) {
                     method->native = -1;
-                    cur_obj->dirty = 1;
+		    cache_dirty_object(cur_obj);
                 }
                 cache_discard(cur_obj);
             }

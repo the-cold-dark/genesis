@@ -45,7 +45,7 @@ Ident datasize_id, forkdepth_id, calldepth_id, recursion_id, objswap_id;
 Ident left_id, right_id, both_id;
 
 /* config options */
-Ident cachelog_id;
+Ident cachelog_id, cachewatch_id, cachewatchcount_id;
 
 void init_ident(void)
 {
@@ -141,6 +141,8 @@ void init_ident(void)
     calldepth_id = ident_get("calldepth");
 
     cachelog_id = ident_get("cachelog");
+    cachewatch_id = ident_get("cachewatch");
+    cachewatchcount_id = ident_get("cachewatchcount");
 
     left_id = ident_get("left");
     right_id = ident_get("right");

@@ -447,6 +447,8 @@ Int  limit_objswap;
 
 /* driver config parameters accessable through config() */
 Int  cache_log_flag;
+Int  cache_watch_count;
+cObjnum cache_watch_object;
 
 #else
 extern jmp_buf main_jmp;
@@ -485,7 +487,8 @@ extern Int  limit_objswap;
 
 /* driver config parameters accessable through config() */
 extern Int  cache_log_flag;
-
+extern Int  cache_watch_count;
+extern cObjnum cache_watch_object;
 #endif
 
 #endif

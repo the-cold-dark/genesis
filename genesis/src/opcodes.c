@@ -47,18 +47,13 @@ static Op_info op_info[] = {
     { ONE,              "ONE",             op_one },
     { INTEGER,          "INTEGER",         op_integer, INTEGER },
 
-#ifdef USE_BIG_FLOATS
-    /* Big floats are the size of two ints */
-    { FLOAT,		"FLOAT",	   op_float, INTEGER, INTEGER },
-#else
     /* By the time it examines the arg, the FLOAT has already been
        cast into an INTEGER, so we just need to let it know its an INT */
     { FLOAT,            "FLOAT",           op_float, INTEGER },
-#endif
     { STRING,           "STRING",          op_string, STRING },
     { OBJNUM,           "OBJNUM",          op_objnum, INTEGER },
     { SYMBOL,           "SYMBOL",          op_symbol, IDENT },
-    { T_ERROR,          "ERROR",           op_error, IDENT },
+    { T_ERROR,            "ERROR",         op_error, IDENT },
     { OBJNAME,          "OBJNAME",         op_objname, IDENT },
     { GET_LOCAL,        "GET_LOCAL",       op_get_local, VAR },
     { GET_OBJ_VAR,      "GET_OBJ_VAR",     op_get_obj_var, IDENT },
@@ -144,7 +139,6 @@ static Op_info op_info[] = {
     FDEF(F_METHOD_FLAGS,      "method_flags",      method_flags)
     FDEF(F_METHOD_ACCESS,     "method_access",     method_access)
     FDEF(F_METHODS,           "methods",           methods)
-    FDEF(F_HAS_METHOD,        "has_method",        has_method)
     FDEF(F_FIND_METHOD,       "find_method",       find_method)
     FDEF(F_FIND_NEXT_METHOD,  "find_next_method",  find_next_method)
 
@@ -167,11 +161,9 @@ static Op_info op_info[] = {
     /* System functions */
     { F_DBLOG,             "dblog",               func_dblog },
     { F_BACKUP,            "backup",              func_backup },
-    { F_SYNC,              "sync",                func_sync },
     { F_SHUTDOWN,          "shutdown",            func_shutdown },
     { F_SET_HEARTBEAT,     "set_heartbeat",       func_set_heartbeat },
-    { F_CACHE_INFO,        "cache_info",          func_cache_info },
-    { F_CACHE_STATS,       "cache_stats",         func_cache_stats },
+    { F_CACHE_INFO,       "cache_info",           func_cache_info },
 
     /* Task/Frame functions */
     { F_TICK,             "tick",                 func_tick },
@@ -184,7 +176,7 @@ static Op_info op_info[] = {
     { F_PAUSE,            "pause",                func_pause },
     { F_REFRESH,          "refresh",              func_refresh },
     { F_TICKS_LEFT,       "ticks_left",           func_ticks_left },
-    { F_CALLING_METHOD,   "calling_method",       func_calling_method },
+    { F_CALLINGMETHOD,    "calling_method",       func_calling_method },
     { F_METHODOP,         "method",               func_method },
     { F_THIS,             "this",                 func_this },
     { F_DEFINER,          "definer",              func_definer },
@@ -213,8 +205,6 @@ static Op_info op_info[] = {
 
     /* Exception functions */
     { F_ERROR_FUNC,       "error",                func_error },
-    { F_ERROR_MESSAGE,    "error_message",        func_error_message },
-    { F_ERROR_DATA,       "error_data",           func_error_data },
     { F_TRACEBACK,        "traceback",            func_traceback },
     { F_THROW,            "throw",                func_throw },
     { F_RETHROW,          "rethrow",              func_rethrow },
@@ -286,7 +276,6 @@ static Op_info op_info[] = {
     { F_MATCH_REGEXP,     "match_regexp",    func_match_regexp },
     { F_REGEXP,           "regexp",          func_regexp },
     { F_SPLIT,            "split",           func_split },
-    { F_EXPLODE_QUOTED,   "explode_quoted",  func_explode_quoted },
     { F_CRYPT,            "crypt",           func_crypt },
     { F_MATCH_CRYPTED,    "match_crypted",   func_match_crypted },
     { F_UPPERCASE,        "uppercase",       func_uppercase },
@@ -326,12 +315,11 @@ static Op_info op_info[] = {
     { F_STRINGS_TO_BUF,   "strings_to_buf",  func_strings_to_buf },
     { F_STR_TO_BUF,       "str_to_buf",      func_str_to_buf },
     { F_SUBBUF,           "subbuf",          func_subbuf },
-    { F_BUFSUB,           "bufsub",          func_bufsub },
     { F_BUFGRAFT,         "bufgraft",        func_bufgraft },
 };
 
 void init_op_table(void) {
-    uInt i;
+    Int i;
 
     for (i = 0; i < NUM_OPERATORS; i++) {
         op_info[i].binding = INV_OBJNUM;
@@ -349,7 +337,7 @@ void init_op_table(void) {
 }
 
 Int find_function(char *name) {
-    uInt i;
+    Int i;
 
     for (i = first_function; i < NUM_OPERATORS; i++) {
         if (strcmp(op_info[i].name, name) == 0)

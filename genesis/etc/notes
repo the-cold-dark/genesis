@@ -10,18 +10,11 @@ Help can be found through the web site, or on the mailing list
       http://www.cold.org/info/lists
 
 RELEASE INFORMATION:
-1.1.10 [xxx]
+1.1.10 [9-Jan-2002]
       * fix object size for objects without an objnum (Brad)
       * fix parent list leak in binarydb decompilation (Brad)
       * fix method_bytecode() bug with 'catch any' (Allen Noe)
       * fix gmt offset calculation on some platforms (Brandon)
       * port to Mac OS X (Bruce)
       * remove regsub references (not implemented/used) (Bruce)
-
-1.1.9  [1-Oct-100]
-      * removed phk_malloc -- modern OS mallocs are decent (Brandon)
-      * misc cleanup (Generic Bob)
-      * removed dnsserv (Brandon)
-      * fix for ctime() in Borland (Psyclone)
-      * Fixed inconsistent behavior in stridx(), listidx(), and
-        bufidx() when presented with an empty first argument. (Bruce)
+      * add calling_method() (Psyclone)

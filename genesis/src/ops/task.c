@@ -164,6 +164,17 @@ void func_stack(void) {
     list_discard(list);
 }
 
+void func_calling_method() {
+    /* Accept no arguments, and push the name of the calling method. */
+    if (!func_init_0())
+        return;
+
+    if (cur_frame->caller_frame)
+        push_symbol(cur_frame->caller_frame->method->name);
+    else
+        push_int(0);
+}
+
 void func_method(void) {
     if (!func_init_0())
         return;

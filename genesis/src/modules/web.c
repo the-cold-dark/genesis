@@ -79,7 +79,7 @@ static char tochar(char h, char l) {
      return p;
 }
 
-cStr * decode(cStr * str) {
+static cStr * decode(cStr * str) {
     char * s = string_chars(str),
          * n = s,
            h,
@@ -109,7 +109,7 @@ cStr * decode(cStr * str) {
     return str;
 }
 
-cStr * encode_full(cStr * in) {
+static cStr * encode_full(cStr * in) {
     register char * s = string_chars(in);
     cStr          * str = string_new(string_length(in));
 
@@ -129,7 +129,7 @@ cStr * encode_full(cStr * in) {
     return str;
 }
 
-cStr * encode_partial(cStr * in) {
+static cStr * encode_partial(cStr * in) {
     register char * s = string_chars(in);
     cStr          * str = string_new(string_length(in));
 
@@ -150,7 +150,7 @@ cStr * encode_partial(cStr * in) {
     return str;
 }
 
-cStr * html_escape(cStr * in) {
+static cStr * html_escape(cStr * in) {
     register char * s;
     register  int   len;
     cStr          * out;

@@ -1,0 +1,8 @@
+ * Add method/name/etc cache stats tracking and provide a way
+   to access that data from within the DB.
+ * Add config() flag for tracking object creation/destruction.
+ * Merge in DB stats gathering code for coldcc -d
+ * Add test cases for more error handling stuff
+ * Add test cases for explode_quoted()
+ * Add $string.explode_quoted() to match explode_quoted().
+ * Fix memory leak in error handling.

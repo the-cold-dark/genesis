@@ -278,6 +278,7 @@ void init_new_db(void) {
     UNLOCK_DB("init_new_db")
 }
 
+#ifdef DEBUG
 static void display_bitmap()
 {
     Int i=0, j=0;
@@ -301,6 +302,7 @@ static void display_bitmap()
 	}
     }
 }
+#endif
 
 /* Grow the bitmap to given size. */
 static void grow_bitmap(Int new_blocks)

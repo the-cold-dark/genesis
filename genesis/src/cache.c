@@ -631,7 +631,7 @@ void *cache_cleaner_worker(void *dummy)
 		        }
 		        if (cache_log_flag & CACHE_LOG_SYNC)
 		            write_err("cache_cleaner_worker: wrote object %s (size: %d bytes) (dirty: %d)",
-			              obj->objname != -1 ? ident_name(obj->objname) : "not named", obj_size, tobj->dirty);
+			              tobj->objname != -1 ? ident_name(tobj->objname) : "not named", obj_size, tobj->dirty);
 		        tobj->dirty = 0;
 		    }
 

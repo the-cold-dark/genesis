@@ -14,6 +14,7 @@ extern module_t cdc_module;
 NATIVE_METHOD(buflen);
 NATIVE_METHOD(buf_replace);
 NATIVE_METHOD(subbuf);
+NATIVE_METHOD(bufsub);
 NATIVE_METHOD(buf_to_str);
 NATIVE_METHOD(buf_to_strings);
 NATIVE_METHOD(str_to_buf);

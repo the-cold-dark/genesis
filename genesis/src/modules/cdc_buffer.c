@@ -67,6 +67,23 @@ NATIVE_METHOD(subbuf) {
     CLEAN_RETURN_BUFFER(buffer_subrange(buf, start, len));
 }
 
+NATIVE_METHOD(bufsub) {
+    cBuf *buf, *old, *new;
+
+    INIT_3_ARGS(BUFFER, BUFFER, BUFFER);
+
+    buf = buffer_dup(BUF1);
+    old = buffer_dup(BUF2);
+    new = buffer_dup(BUF3);
+
+    if (old->len == 0)
+        THROW((type_id, ""))
+    
+    anticipate_assignment();
+
+    CLEAN_RETURN_BUFFER(buffer_bufsub(buf, old, new));
+}
+
 NATIVE_METHOD(buf_to_str) {
     cBuf * buf;
 

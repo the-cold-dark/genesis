@@ -2,6 +2,7 @@
 native $buffer.length()              buflen
 native $buffer.replace()             buf_replace
 native $buffer.subrange()            subbuf
+native $buffer.bufsub()              bufsub
 native $buffer.to_string()           buf_to_str
 native $buffer.to_strings()          buf_to_strings
 native $buffer.from_string()         str_to_buf

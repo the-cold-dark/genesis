@@ -6,7 +6,13 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
-1.0-20 [16-Dec-96] Brandon, Miro, Brad Roberts, Brian Buchanan
+1.0-21 [21-Dec-96] Brandon
+      * fixed a problem with buf_to_str() -- its less efficient again, but
+        is at least stable.
+      * strsub() $string.replace() accept the same 'flags' as strsed()
+      * at William Colburn's suggested updated the way the driver figures
+        out it's own hostname.
+1.0-20 [20-Dec-96] Brandon, Miro, Brad Roberts, Brian Buchanan
       * $network.hostname()/.ip() now return the machine's primary
         hostname/ip, if no argument is given (Brandon)
       * Corrected logic in string_prep() and list_prep()--it would not

@@ -92,15 +92,22 @@ COLDC_FUNC(explode) {
 }
 
 COLDC_FUNC(strsub) {
+#if 0
     Int len, search_len, replace_len;
     cData *args;
     char *search, *replace, *s, *p, *q;
     cStr *subbed;
+#endif
+    cData * args;
+    int     argc;
+    Int     flags = RF_GLOBAL;
+    cStr  * out;
 
     /* Accept a base string, a search string, and a replacement string. */
-    if (!func_init_3(&args, STRING, STRING, STRING))
+    if (!func_init_3_or_4(&args, &argc, STRING, STRING, STRING, STRING))
 	return;
 
+#if DISABLED
     s = string_chars(args[0].u.str);
     len = string_length(args[0].u.str);
     search = string_chars(args[1].u.str);
@@ -121,11 +128,16 @@ COLDC_FUNC(strsub) {
     
         subbed = string_add_chars(subbed, p, len - (p - s));
     }
+#endif
+    if (argc == 4)
+        flags = parse_regfunc_args(string_chars(STR4), flags);
+
+    out = strsub(STR1, STR2, STR3, flags);
 
     /* Pop the arguments and push the new string onto the stack. */
-    pop(3);
-    push_string(subbed);
-    string_discard(subbed);
+    pop(argc);
+    push_string(out);
+    string_discard(out);
 }
 
 /* Pad a string on the left (positive length) or on the right (negative
@@ -335,7 +347,7 @@ COLDC_FUNC(strsed) {
                     THROW((perm_id, "You can only specify a size multiplier of 1-10, sorry!"))
         case 4: if (args[3].type != STRING)
                     THROW_TYPE_ERROR(STRING, "fourth", 3)
-                flags = parse_regfunc_args(string_chars(_STR(ARG4)));
+                flags = parse_regfunc_args(string_chars(STR4), flags);
         case 3: if (args[0].type != STRING)
                     THROW_TYPE_ERROR(STRING, "first", 0)
                 else if (args[1].type != STRING)
@@ -500,7 +512,7 @@ COLDC_FUNC(split) {
     INIT_2_OR_3_ARGS(STRING, STRING, STRING);
 
     if (argc == 3)
-        flags = parse_regfunc_args(string_chars(STR3));
+        flags = parse_regfunc_args(string_chars(STR3), flags);
 
     if (!(list = strsplit(STR1, STR2, flags)))
         return;

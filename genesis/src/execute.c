@@ -1376,6 +1376,29 @@ Int func_init_2_or_3(cData **args, Int *num_args, Int type1, Int type2,
     return 0;
 }
 
+Int func_init_3_or_4(cData **args, Int *num_args,
+                     Int type1, Int type2, Int type3, Int type4)
+{
+    Int arg_start = arg_starts[--arg_pos];
+
+    *args = &stack[arg_start];
+    *num_args = stack_pos - arg_start;
+    if (*num_args < 3 || *num_args > 4)
+        func_num_error(*num_args, "three or four");
+    else if (type1 && stack[arg_start].type != type1)
+        func_type_error("first", &stack[arg_start], english_type(type1));
+    else if (type2 && stack[arg_start + 1].type != type2)
+        func_type_error("second", &stack[arg_start + 1], english_type(type2));
+    else if (type3 && stack[arg_start + 2].type != type3)
+        func_type_error("third", &stack[arg_start + 2], english_type(type3));
+    else if (type4 && *num_args == 4 && stack[arg_start + 3].type != type4)
+        func_type_error("third", &stack[arg_start + 3], english_type(type4));
+    else if (INVALID_BINDING)
+        cthrow(perm_id, "%s() is bound to %O", FUNC_NAME(), FUNC_BINDING());
+    else
+        return 1;
+    return 0;
+}
 Int func_init_1_to_3(cData **args, Int *num_args, Int type1, Int type2,
                      Int type3)
 {

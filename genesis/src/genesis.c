@@ -74,27 +74,20 @@ int main(int argc, char **argv) {
 //
 */
 void get_my_hostname(void) {
-    FILE * cp = popen("(hostname || uname -n) 2>/dev/null", "r");
     char   cbuf[LINE];
-    char * s,
-         * e;
 
-    if (!cp)
-        fprintf(stderr, "Unable to determine hostname.\n");
-    else {
-        fgets(cbuf, LINE, cp);
-        s = cbuf;
-        while (isspace(*s))
-            s++;
-        e = &s[strlen(s)-1];
-        while (isspace(*e))
-            e--;
-        *(e+1) = (char) NULL;
-        if (strlen(s)) {
+    /* for those OS's that do not do this */
+    memset(cbuf, 0, LINE);
+    if (!gethostname(cbuf, LINE)) {
+        if (cbuf[LINE-1] != (char) NULL) { 
+            fprintf(stderr, "Unable to determine hostname: name too long.\n");
+        } else {
             string_discard(str_hostname);
-            str_hostname = string_from_chars(s, strlen(s));
-        } else
-            fprintf(stderr, "Unable to determine hostname.\n");
+            str_hostname = string_from_chars(cbuf, strlen(cbuf));
+            printf("hostname: %s\n", cbuf);
+        }
+    } else {
+        fprintf(stderr, "Unable to determine hostname.\n");
     }
 }
 

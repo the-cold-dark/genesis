@@ -458,9 +458,7 @@ cList * regexp_matches(cStr * reg, char * s, Bool sensitive, Bool * error) {
     return fields;
 }
 
-Int parse_regfunc_args(char * args) {
-    Int flags = RF_NONE;
-
+Int parse_regfunc_args(char * args, Int flags) {
     while (*args != (char) NULL) {
         switch (*args) {
             case 'b': /* keep blanks */
@@ -470,18 +468,76 @@ Int parse_regfunc_args(char * args) {
                 flags |= RF_GLOBAL;
                 break;
             case 's': /* single */
-                flags &= RF_GLOBAL;
+                flags &= ~RF_GLOBAL;
                 break;
             case 'c': /* case sensitive */
                 flags |= RF_SENSITIVE;
                 break;
             case 'i': /* case insensitive */
-                flags &= RF_SENSITIVE;
+                flags &= ~RF_SENSITIVE;
                 break;
         }
         args++; 
     }
     return flags;
+}
+
+cStr * strsub(cStr * sstr, cStr * ssearch, cStr * sreplace, Int flags) {
+    char * s,
+         * search,
+         * replace,
+         * p,
+         * q;
+    int    len,
+           slen,
+           rlen;
+    cStr * out;
+
+    len = string_length(sstr);
+    slen = string_length(ssearch);
+    rlen = string_length(sreplace);
+    s = string_chars(sstr);
+    search = string_chars(ssearch);
+    replace = string_chars(sreplace);
+
+    if (!len || !slen)
+        return string_dup(sstr);
+
+    if (flags & RF_GLOBAL) {
+        /* it'll be at least this big */
+        out = string_new(rlen);
+        p = s;
+        if (flags & RF_SENSITIVE) {
+            for (q = strstr(p, search); q; q = strstr(p, search)) {
+                out = string_add_chars(out, p, q - p);
+                out = string_add_chars(out, replace, rlen);
+                p = q + slen;
+            }
+        } else {
+            for (q = strcstr(p, search); q; q = strcstr(p, search)) {
+                out = string_add_chars(out, p, q - p);
+                out = string_add_chars(out, replace, rlen);
+                p = q + slen;
+            }
+        }
+        out = string_add_chars(out, p, len - (p - s));
+    } else {
+        if (flags & RF_SENSITIVE)
+            q = strstr(s, search);
+        else
+            q = strcstr(s, search);
+        if (q) {
+            out = string_new(rlen);
+            out = string_add_chars(out, s, q - s);
+            out = string_add_chars(out, replace, rlen);
+            q += slen;
+            out = string_add_chars(out, q, len - (q - s));
+        } else {
+            out = string_dup(sstr);
+        }
+    }
+
+    return out;
 }
 
 /*

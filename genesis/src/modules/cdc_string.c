@@ -77,6 +77,7 @@ NATIVE_METHOD(explode) {
 }
 
 NATIVE_METHOD(strsub) {
+#if DISABLED
     Int len, search_len, replace_len;
     char *search, *replace, *s, *p, *q;
     cStr *subbed;
@@ -105,6 +106,18 @@ NATIVE_METHOD(strsub) {
     }
 
     CLEAN_RETURN_STRING(subbed);
+#endif
+    Int     flags = RF_GLOBAL;
+    cStr  * out;
+
+    INIT_3_OR_4_ARGS(STRING, STRING, STRING, STRING);
+
+    if (argc == 4)
+        flags = parse_regfunc_args(string_chars(STR4), flags);
+    
+    out = strsub(STR1, STR2, STR3, flags);
+    
+    CLEAN_RETURN_STRING(out);
 }
 
 /* Pad a string on the left (positive length) or on the right (negative
@@ -292,7 +305,7 @@ NATIVE_METHOD(strsed) {
                 if (mult > 10)
                     THROW((perm_id, "You can only specify a size multiplier of 1-10, sorry!"))
         case 4:  INIT_ARG4(STRING)
-                 flags = parse_regfunc_args(string_chars(_STR(ARG4)));
+                 flags = parse_regfunc_args(string_chars(STR4), flags);
         case 3:  INIT_ARG3(STRING);
                  INIT_ARG2(STRING);
                  INIT_ARG1(STRING);
@@ -427,9 +440,11 @@ NATIVE_METHOD(trim) {
     /* if start is len set len to zero and jump past the right side */
     if (start == len) {
         len = 0;
-    } else if (how == both_id || how || right_id) {
+    } else if (how == both_id || how == right_id) {
         for (s=(ss + len-1); *s == ' '; s--);
         len = ((s+1) - start) - ss;
+    } else {
+        len -= start;
     }
 
     /* reduce references to 'str' */
@@ -447,7 +462,7 @@ NATIVE_METHOD(split) {
     INIT_2_OR_3_ARGS(STRING, STRING, STRING);
 
     if (argc == 3)  
-        flags = parse_regfunc_args(string_chars(STR3));
+        flags = parse_regfunc_args(string_chars(STR3), flags);
 
     /* if list is NULL strsplit() threw an error */
     if (!(list = strsplit(STR1, STR2, flags)))

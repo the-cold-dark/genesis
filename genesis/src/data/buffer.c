@@ -79,6 +79,7 @@ cBuf *buffer_resize(cBuf *buf, Int len) {
 
 #define VERIFY_SIZE(_STR_) \
 
+#if DISABLED
 /* new and improved */
 cStr * buf_to_string(cBuf * buf) {
     cStr                   * str;
@@ -145,6 +146,58 @@ cStr * buf_to_string(cBuf * buf) {
 
     return str;
 }
+#else
+/* VERY VERY INNEFFICIENT */
+
+cStr * buf_to_string(cBuf * buf) {
+    cStr * str, * out;
+    unsigned char * string_start, *p, *q;
+    char * s;
+    size_t len;
+
+#define SEPCHAR '\n'
+#define SEPLEN 1
+
+    out = string_new(buf->len);
+    string_start = p = buf->s;
+    while (p + SEPLEN <= buf->s + buf->len) {
+        p = (unsigned char *) memchr(p, SEPCHAR, (buf->s + buf->len) - p);
+        if (!p)
+            break;
+        str = string_new(p - string_start);
+        s = str->s;
+        for (q = string_start; q < p; q++) {
+            if (ISPRINT(*q))
+                *s++ = *q;
+        }
+        *s = 0;
+        str->len = s - str->s;
+        out = string_add(out, str);
+        out = string_add_chars(out, "\\n", 2);
+        string_discard(str);
+        string_start = p = p + SEPLEN;
+    }
+
+    if ((len = (buf->s + buf->len) - string_start)) {
+        str = string_new(len);
+        s = str->s;
+        for (q = string_start; len--; q++) {
+            if (ISPRINT(*q))
+                *s++ = *q;
+        }
+        *s = (char) NULL;
+        str->len = s - str->s;
+        out = string_add(out, str);
+        string_discard(str);
+
+    }
+
+#undef SEPCHAR
+#undef SEPLEN
+
+    return out;
+}
+#endif
 
 #undef SEPCHAR
 #undef SEPLEN

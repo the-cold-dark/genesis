@@ -121,14 +121,6 @@
             default:  THROW_NUM_ERROR(argc, "one or two") \
         }
 
-#define INIT_3_ARGS(_type1_, _type2_, _type3_) \
-        DEF_args; \
-        CHECK_BINDING \
-        INIT_ARGC(ARG_COUNT, 3, "three") \
-        INIT_ARG1(_type1_) \
-        INIT_ARG2(_type2_) \
-        INIT_ARG3(_type3_)
-
 #define INIT_2_OR_3_ARGS(_type1_, _type2_, _type3_) \
         DEF_args; \
         DEF_argc; \
@@ -139,6 +131,27 @@
                        INIT_ARG1(_type1_) \
                        break; \
             default:   THROW_NUM_ERROR(argc, "two or three") \
+        }
+
+#define INIT_3_ARGS(_type1_, _type2_, _type3_) \
+        DEF_args; \
+        CHECK_BINDING \
+        INIT_ARGC(ARG_COUNT, 3, "three") \
+        INIT_ARG1(_type1_) \
+        INIT_ARG2(_type2_) \
+        INIT_ARG3(_type3_)
+
+#define INIT_3_OR_4_ARGS(_type1_, _type2_, _type3_, _type4_) \
+        DEF_args; \
+        DEF_argc; \
+        CHECK_BINDING \
+        switch (argc) { \
+            case 4:    INIT_ARG4(_type4_) \
+            case 3:    INIT_ARG3(_type3_) \
+                       INIT_ARG2(_type2_) \
+                       INIT_ARG1(_type1_) \
+                       break; \
+            default:   THROW_NUM_ERROR(argc, "three or four") \
         }
 
 #define INIT_1_TO_3_ARGS(_type1_, _type2_, _type3_) \
@@ -301,6 +314,7 @@
 #define STR1           args[0].u.str
 #define STR2           args[1].u.str
 #define STR3           args[2].u.str
+#define STR4           args[3].u.str
 #define LIST1          args[0].u.list
 #define LIST2          args[1].u.list
 #define LIST3          args[2].u.list

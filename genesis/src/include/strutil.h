@@ -10,7 +10,8 @@ cList * match_template(char * ctemplate, char * s);
 cList * match_pattern(char * pattern, char * s);
 cList * match_regexp(cStr * reg, char * s, Bool sensitive, Bool * error);
 cList * regexp_matches(cStr * reg, char * s, Bool sensitive, Bool * error);
-Int parse_regfunc_args(char * args);
+Int parse_regfunc_args(char * args, Int flags);
+cStr * strsub(cStr * sstr, cStr * ssearch, cStr * sreplace, Int flags);
 cStr * strsed(cStr * reg,      /* the regexp string */
                   cStr * ss,   /* the string to match against */
                   cStr * rs,   /* the replacement string */

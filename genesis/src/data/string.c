@@ -119,7 +119,6 @@ cStr *string_add(cStr *str1, cStr *str2) {
 cStr *string_add_chars(cStr *str, char *s, Int len) {
     str = string_prep(str, str->start, str->len + len);
     MEMCPY(str->s + str->start + str->len - len, s, len);
-    /*str->s[str->len + str->start + len] = 0;*/
     str->s[str->start + str->len] = 0;
     return str;
 }

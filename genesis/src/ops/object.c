@@ -611,7 +611,7 @@ COLDC_FUNC(del_method) {
     if (!func_init_1(&args, SYMBOL))
         return;
 
-    status = object_del_method(cur_frame->object, args[0].u.symbol);
+    status = object_del_method(cur_frame->object, args[0].u.symbol, FALSE);
     if (status == 0) {
         cthrow(methodnf_id, "No method named %I was found.", args[0].u.symbol);
     } else if (status == -1) {

@@ -268,7 +268,7 @@ Method * object_find_method_local(Obj *object, Long name, Bool is_frob);
 Method * object_find_next_method(Long objnum, Long name, Long after, Bool is_frob);
 Int     object_rename_method(Obj * object, Long oname, Long nname);
 void    object_add_method(Obj *object, Long name, Method *method);
-Int     object_del_method(Obj *object, Long name);
+Int     object_del_method(Obj *object, Long name, Bool replacing);
 cList   *object_list_method(Obj *object, Long name, Int indent, int fflags);
 Method * method_new(void);
 void    method_free(Method *method);
@@ -328,7 +328,7 @@ extern Method *object_find_method_local(Obj * obj, Long name, Bool is_frob);
 extern Method *object_find_next_method(Long objnum, Long name, Long after, Bool is_frob);
 extern Int     object_rename_method(Obj * object, Long oname, Long nname);
 extern void    object_add_method(Obj *object, Long name, Method *method);
-extern Int     object_del_method(Obj *object, Long name);
+extern Int     object_del_method(Obj *object, Long name, Bool replacing);
 extern cList   *object_list_method(Obj *object, Long name, Int indent,
                                   int fflags);
 extern void    method_free(Method *method);

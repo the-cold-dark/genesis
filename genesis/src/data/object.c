@@ -1231,7 +1231,7 @@ Int object_rename_method(Obj * object, Long oname, Long nname) {
         return 0;
 
     method = method_dup(method);
-    object_del_method(object, oname);
+    object_del_method(object, oname, FALSE);
     object_add_method(object, nname, method);
     method_discard(method);
 
@@ -1239,21 +1239,21 @@ Int object_rename_method(Obj * object, Long oname, Long nname) {
 }
 
 void object_add_method(Obj *object, Long name, Method *method) {
-    Int ind, hval;
-
-    /* Invalidate the method cache. */
-    if (list_length(object->children) != 0) {
-        method_cache_invalidate_all();
-    } else {
-        method_cache_invalidate(object->objnum);
-    }
+    Int ind, hval, did_delete;
 
     cache_dirty_object(object);
 
     /* Delete the method if it previous existed, calling this on a
        locked method WILL CAUSE PROBLEMS, make sure you check before
        calling this. */
-    object_del_method(object, name);
+    if (object_del_method(object, name, TRUE) != 1) {
+        /* Invalidate the method cache. */
+        if (list_length(object->children) != 0) {
+            method_cache_invalidate_all();
+        } else {
+            method_cache_invalidate(object->objnum);
+        }
+    }
 
     /* If the method table is full, expand it and its corresponding hash
      * table. */
@@ -1302,7 +1302,7 @@ void object_add_method(Obj *object, Long name, Method *method) {
 
 }
 
-Int object_del_method(Obj *object, Long name) {
+Int object_del_method(Obj *object, Long name, Bool replacing) {
     Int *indp, ind;
 
     /* This is the index-thread equivalent of double pointers in a standard
@@ -1331,11 +1331,13 @@ Int object_del_method(Obj *object, Long name) {
 	    object->methods.tab[ind].next = object->methods.blanks;
 	    object->methods.blanks = ind;
 
-            /* Invalidate the method cache. */
-            if (list_length(object->children) != 0) {
-                method_cache_invalidate_all();
-            } else {
-                method_cache_invalidate(object->objnum);
+	    if (replacing == FALSE) {
+                /* Invalidate the method cache. */
+                if (list_length(object->children) != 0) {
+                    method_cache_invalidate_all();
+                } else {
+                    method_cache_invalidate(object->objnum);
+                }
             }
 
 	    /* Return one, meaning the method was successfully deleted. */

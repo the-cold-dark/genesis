@@ -77,7 +77,7 @@ VMStack *stack_store = NULL, *holder_cache = NULL;
 /*
 // ---------------------------------------------------------------
 */
-void store_stack(void) {
+static void store_stack(void) {
     VMStack * holder;
 
     if (holder_cache) {
@@ -137,7 +137,7 @@ VMState * vm_current(void) {
 /*
 // ---------------------------------------------------------------
 */
-void restore_vm(VMState *vm) {
+static void restore_vm(VMState *vm) {
     task_id = vm->task_id;
     frame_depth = vm->frame_depth;
     cur_frame = vm->cur_frame;
@@ -170,7 +170,7 @@ void restore_vm(VMState *vm) {
 /*
 // ---------------------------------------------------------------
 */
-void task_delete(VMState *list, VMState *elem) {
+static void task_delete(VMState *list, VMState *elem) {
     while (list && (list->next != elem))
         list = list->next;
     if (list)
@@ -200,7 +200,7 @@ VMState *task_lookup(Long tid) {
 //
 */
 
-cList * frame_info(Frame * frame) {
+static cList * frame_info(Frame * frame) {
     cList * list;
     cData   d;
 
@@ -316,7 +316,7 @@ void task_resume(Long tid, cData *ret) {
 /*
 // ---------------------------------------------------------------
 */
-Int fork_method(Obj * obj,
+static Int fork_method(Obj * obj,
                 Method * method,
                 cObjnum    sender,
                 cObjnum    caller,

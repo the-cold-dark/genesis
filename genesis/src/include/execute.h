@@ -223,7 +223,6 @@ Int func_init_1_to_3(cData **args, Int *num_args, Int type1, Int type2,
 		     Int type3);
 void func_num_error(Int num_args, char *required);
 void func_type_error(char *which, cData *wrong, char *required);
-/* void func_error(Ident id, char *fmt, ...); */
 void cthrow(Long id, char *fmt, ...);
 void unignorable_error(Ident id, cStr *str);
 void interp_error(Ident error, cStr *str);
@@ -234,24 +233,25 @@ void pop_error_action_specifier(void);
 void pop_handler_info(void);
 cList *generate_traceback(Traceback_info *traceback);
 
-void task_suspend(void);
-cList * task_info(Long tid);
-void task_resume(Long tid, cData *ret);
-void task_cancel(Long tid);
-void task_pause(void);
-VMState *task_lookup(Long tid);
-cList * task_list(void);
-cList * task_stack(Frame * frame_to_trace, Bool calculate_line_numbers);
-void log_task_stack(Long taskid, cList * stack, void (logroutine)(char*,...));
-void run_paused_tasks(void);
-void bind_opcode(Int opcode, cObjnum objnum);
+void      task_suspend(void);
+cList   * task_info(Long tid);
+void      task_resume(Long tid, cData *ret);
+void      task_cancel(Long tid);
+void      task_pause(void);
+VMState * task_lookup(Long tid);
+cList   * task_list(void);
+cList   * task_stack(Frame * frame_to_trace, Bool calculate_line_numbers);
+void      log_task_stack(Long taskid, cList * stack, 
+                         void (logroutine)(char*,...));
+void      run_paused_tasks(void);
+void      bind_opcode(Int opcode, cObjnum objnum);
 VMState * vm_current(void);
 
 #ifdef DRIVER_DEBUG
-void init_debug();
-void clear_debug();
-void start_debug();
-void start_full_debug();
+void init_debug(void);
+void clear_debug(void);
+void start_debug(void);
+void start_full_debug(void);
 void get_debug (cData *d);
 #endif
 

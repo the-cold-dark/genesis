@@ -90,6 +90,8 @@ RELEASE INFORMATION:
       * Add has_method() to ColdC to make up for catch ~methodnf and
         find_method() being so slow.  has_method() does and -must-
         search ancestry.  That's why it exists. (Bruce)
+      * Added defines_var checking to coldcc to catch dead variables that
+        are no longer defined on the ancestor. (Bruce)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

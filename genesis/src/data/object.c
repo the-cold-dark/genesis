@@ -94,6 +94,14 @@ struct {
     Bool is_ancestor;
 } ancestor_cache[ANCESTOR_CACHE_SIZE];
 
+#ifdef BUILDING_COLDCC
+struct {
+    cObjnum objnum;
+    Ident   name;
+    Bool    result;
+} defines_var_cache[DEFINES_VAR_CACHE_SIZE];
+#endif
+
 /* ..................................................................... */
 /* function prototypes */
 static void    object_update_parents(Obj *object,
@@ -113,7 +121,8 @@ static Bool    ancestor_cache_check(cObjnum objnum, cObjnum ancestor,
                                     Bool *is_ancestor);
 static void    ancestor_cache_set(cObjnum objnum, cObjnum ancestor,
                                   Bool is_ancestor);
-
+static Bool    defines_var_cache_check(cObjnum objnum, Ident name, Bool *result);
+static void    defines_var_cache_set(cObjnum objnum, Ident name, Bool result);
 
 /* ..................................................................... */
 /* global variables */
@@ -791,6 +800,64 @@ Ident object_get_ident(Obj *object, Int ind) {
     return object->idents[ind].id;
 }
 
+#ifdef BUILDING_COLDCC
+static Bool defines_var_cache_check(cObjnum objnum, Ident name, Bool *result) {
+    uLong i;
+
+    i = (uLong)(objnum + (name * MAGIC_NUMBER)) % DEFINES_VAR_CACHE_SIZE;
+
+    if ((defines_var_cache[i].objnum == objnum) &&
+        (defines_var_cache[i].name == name)) {
+        *result = defines_var_cache[i].result;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static void defines_var_cache_set(cObjnum objnum, Ident name, Bool result) {
+    uLong i;
+
+    i = (uLong)(objnum + (name * MAGIC_NUMBER)) % DEFINES_VAR_CACHE_SIZE;
+
+    defines_var_cache[i].objnum = objnum;
+    defines_var_cache[i].name = name;
+    defines_var_cache[i].result = result;
+}
+
+static Bool object_defines_var_worker(Obj *object, Ident name) {
+    Int *indp;
+    Var *var;
+
+    indp = &object->vars.hashtab[ident_hash(name) % object->vars.size];
+    for (; *indp != -1; indp = &object->vars.tab[*indp].next) {
+        var = &object->vars.tab[*indp];
+        if (var->name == name && var->cclass == object->objnum) {
+            defines_var_cache_set(object->objnum, name, TRUE);
+            return TRUE;
+        }
+    }
+
+    defines_var_cache_set(object->objnum, name, FALSE);
+    return FALSE;
+}
+
+Bool object_defines_var(cObjnum object, Ident name) {
+    Bool found, result;
+    Obj* obj;
+
+    found = defines_var_cache_check(object, name, &result);
+    
+    if (found) {
+        return result;
+    } else {
+        obj = cache_retrieve(object);
+        result = object_defines_var_worker(obj, name);
+        cache_discard(obj);
+        return result;
+    }
+}
+#endif
+
 Ident object_add_var(Obj *object, Ident name) {
     if (object_find_var(object, object->objnum, name))
 	return varexists_id;
@@ -966,15 +1033,21 @@ Ident object_inherited_var(Obj *object, Obj *cclass, Ident name, cData *ret)
 
 /* Only the text dump reader calls this function; it assigns or creates a
  * variable as needed, and always succeeds. */
-void object_put_var(Obj *object, cObjnum cclass, Ident name, cData *val)
+Bool object_put_var(Obj *object, cObjnum cclass, Ident name, cData *val)
 {
     Var *var;
+
+#ifdef BUILDING_COLDCC
+    if ((object->objnum != cclass) && (!object_defines_var(cclass, name)))
+        return FALSE;
+#endif
 
     var = object_find_var(object, cclass, name);
     if (!var)
 	var = object_create_var(object, cclass, name);
     data_discard(&var->val);
     data_dup(&var->val, val);
+    return TRUE;
 }
 
 /* Add a variable to an object. */

@@ -174,6 +174,7 @@ extern cStr   *object_get_string(Obj *object, Int ind);
 extern Int     object_add_ident(Obj *object, char *ident);
 extern void    object_discard_ident(Obj *object, Int ind);
 extern Ident   object_get_ident(Obj *object, Int ind);
+extern Bool    object_defines_var(cObjnum object, Ident name);
 extern Ident   object_add_var(Obj *object, Ident name);
 extern Ident   object_del_var(Obj *object, Ident name);
 extern Ident   object_assign_var(Obj *object, Obj *cclass, Ident name,
@@ -185,7 +186,7 @@ extern Ident   object_default_var(Obj *object, Obj *cclass, Ident name,
                                   cData *ret);
 extern Ident   object_inherited_var(Obj *object, Obj *cclass, Ident name,
                                     cData *ret);
-extern void    object_put_var(Obj *object, cObjnum cclass, Ident name,
+extern Bool    object_put_var(Obj *object, cObjnum cclass, Ident name,
                               cData *val);
 extern Method *object_find_method(cObjnum objnum, Ident name, Bool is_frob);
 extern Method *object_find_method_local(Obj * obj, Ident name, Bool is_frob);

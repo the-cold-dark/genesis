@@ -66,8 +66,10 @@ Int data_cmp(cData *d1, cData *d2) {
       case STRING:
 	return strccmp(string_chars(d1->u.str), string_chars(d2->u.str));
 
-      case OBJNUM:
-	return (d1->u.objnum != d2->u.objnum);
+      case OBJNUM: {
+        int d = (d1->u.objnum - d2->u.objnum);
+	return (d > 0 ? 1 : (d == 0 ? 0 : -1));
+      }
 
       case LIST:
 	return list_cmp(d1->u.list, d2->u.list);

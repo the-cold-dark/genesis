@@ -37,7 +37,7 @@ Ident perm_id, type_id, div_id, integer_id, float_id, string_id, objnum_id,
 Ident public_id, protected_id, private_id, root_id, driver_id, fpe_id, inf_id,
       noover_id, sync_id, locked_id, native_id, forked_id, atomic_id;
 
-Ident SEEK_SET_id, SEEK_CUR_id, SEEK_END_id;
+Ident SEEK_SET_id, SEEK_CUR_id, SEEK_END_id, preaddr_id, pretype_id;
 
 /* limits */
 Ident datasize_id, forkdepth_id, calldepth_id, recursion_id, objswap_id;     
@@ -127,6 +127,8 @@ void init_ident(void)
     SEEK_SET_id = ident_get("SEEK_SET");
     SEEK_CUR_id = ident_get("SEEK_CUR");
     SEEK_END_id = ident_get("SEEK_END");
+    preaddr_id = ident_get("preaddr");
+    pretype_id = ident_get("pretype");
 
     datasize_id = ident_get("datasize");
     forkdepth_id = ident_get("forkdepth");

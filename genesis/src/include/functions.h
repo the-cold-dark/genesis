@@ -9,6 +9,7 @@
 
 COLDC_FUNC(anticipate_assignment);
 COLDC_FUNC(buflen);
+COLDC_FUNC(bufidx);
 COLDC_FUNC(bufgraft);
 COLDC_FUNC(buf_replace);
 COLDC_FUNC(subbuf);
@@ -59,6 +60,7 @@ COLDC_FUNC(listgraft);
 COLDC_FUNC(sublist);
 COLDC_FUNC(insert);
 COLDC_FUNC(join);
+COLDC_FUNC(listidx);
 COLDC_FUNC(replace);
 COLDC_FUNC(delete);
 COLDC_FUNC(setadd);

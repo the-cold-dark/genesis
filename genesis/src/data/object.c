@@ -1006,12 +1006,12 @@ Int object_del_method(Obj *object, Long name) {
     return 0;
 }
 
-cList *object_list_method(Obj *object, Long name, Int indent, Int parens)
+cList *object_list_method(Obj *object, Long name, Int indent, int fflags)
 {
     Method *method;
 
     method = object_find_method_local(object, name, FROB_ANY);
-    return (method) ? decompile(method, object, indent, parens) : NULL;
+    return (method) ? decompile(method, object, indent, fflags) : NULL;
 }
 
 Int object_get_method_flags(Obj * object, Long name) {
@@ -1154,6 +1154,7 @@ Int object_del_objname(Obj * object) {
     }
 
     object->objname = -1;
+    object->dirty++;
 
     return result;
 }

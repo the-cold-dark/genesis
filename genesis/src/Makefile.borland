@@ -1,0 +1,612 @@
+#
+# Borland C++ IDE generated makefile
+# Generated 2/6/97 at 9:40:52 PM 
+#
+.AUTODEPEND
+
+
+#
+# Borland C++ tools
+#
+IMPLIB  = Implib
+BCC32   = Bcc32 +BccW32.cfg 
+BCC32I  = Bcc32i +BccW32.cfg 
+TLINK32 = TLink32
+TLIB    = TLib
+BRC32   = Brc32
+TASM32  = Tasm32
+#
+# IDE macros
+#
+
+
+#
+# Options
+#
+IDE_LinkFLAGS32 =  -LC:\BC5\LIB
+CompLocalOptsAtC32_DATAbdatadlib =  -WC
+LinkerLocalOptsAtC32_DATAbdatadlib =  -Tpe -ap -c
+ResLocalOptsAtC32_DATAbdatadlib = 
+BLocalOptsAtC32_DATAbdatadlib = 
+CompOptsAt_DATAbdatadlib = $(CompLocalOptsAtC32_DATAbdatadlib)
+CompInheritOptsAt_DATAbdatadlib = -IINCLUDE;MODULES;C:\BC5\INCLUDE -DWIN32;WIN32_LEAN_AND_MEAN
+LinkerInheritOptsAt_DATAbdatadlib = -x
+LinkerOptsAt_DATAbdatadlib = $(LinkerLocalOptsAtC32_DATAbdatadlib)
+ResOptsAt_DATAbdatadlib = $(ResLocalOptsAtC32_DATAbdatadlib)
+BOptsAt_DATAbdatadlib = $(BLocalOptsAtC32_DATAbdatadlib)
+CompLocalOptsAtC32_OPSbopsdlib =  -WC
+LinkerLocalOptsAtC32_OPSbopsdlib =  -Tpe -ap -c
+ResLocalOptsAtC32_OPSbopsdlib = 
+BLocalOptsAtC32_OPSbopsdlib = 
+CompOptsAt_OPSbopsdlib = $(CompLocalOptsAtC32_OPSbopsdlib)
+CompInheritOptsAt_OPSbopsdlib = -IINCLUDE;MODULES;C:\BC5\INCLUDE -DWIN32;WIN32_LEAN_AND_MEAN
+LinkerInheritOptsAt_OPSbopsdlib = -x
+LinkerOptsAt_OPSbopsdlib = $(LinkerLocalOptsAtC32_OPSbopsdlib)
+ResOptsAt_OPSbopsdlib = $(ResLocalOptsAtC32_OPSbopsdlib)
+BOptsAt_OPSbopsdlib = $(BLocalOptsAtC32_OPSbopsdlib)
+CompLocalOptsAtC32_MODULESbmodsdlib =  -WC
+LinkerLocalOptsAtC32_MODULESbmodsdlib =  -Tpe -ap -c
+ResLocalOptsAtC32_MODULESbmodsdlib = 
+BLocalOptsAtC32_MODULESbmodsdlib = 
+CompOptsAt_MODULESbmodsdlib = $(CompLocalOptsAtC32_MODULESbmodsdlib)
+CompInheritOptsAt_MODULESbmodsdlib = -IINCLUDE;MODULES;C:\BC5\INCLUDE -DWIN32;WIN32_LEAN_AND_MEAN
+LinkerInheritOptsAt_MODULESbmodsdlib = -x
+LinkerOptsAt_MODULESbmodsdlib = $(LinkerLocalOptsAtC32_MODULESbmodsdlib)
+ResOptsAt_MODULESbmodsdlib = $(ResLocalOptsAtC32_MODULESbmodsdlib)
+BOptsAt_MODULESbmodsdlib = $(BLocalOptsAtC32_MODULESbmodsdlib)
+CompLocalOptsAtC32_genesisdexe =  -WC
+LinkerLocalOptsAtC32_genesisdexe =  -Tpe -ap -c
+ResLocalOptsAtC32_genesisdexe = 
+BLocalOptsAtC32_genesisdexe = 
+CompOptsAt_genesisdexe = $(CompLocalOptsAtC32_genesisdexe)
+CompInheritOptsAt_genesisdexe = -IINCLUDE;MODULES;C:\BC5\INCLUDE -DWIN32;WIN32_LEAN_AND_MEAN
+LinkerInheritOptsAt_genesisdexe = -x
+LinkerOptsAt_genesisdexe = $(LinkerLocalOptsAtC32_genesisdexe)
+ResOptsAt_genesisdexe = $(ResLocalOptsAtC32_genesisdexe)
+BOptsAt_genesisdexe = $(BLocalOptsAtC32_genesisdexe)
+CompLocalOptsAtC32_coldccdexe =  -WC
+LinkerLocalOptsAtC32_coldccdexe =  -Tpe -ap -c
+ResLocalOptsAtC32_coldccdexe = 
+BLocalOptsAtC32_coldccdexe = 
+CompOptsAt_coldccdexe = $(CompLocalOptsAtC32_coldccdexe)
+CompInheritOptsAt_coldccdexe = -IINCLUDE;MODULES;C:\BC5\INCLUDE -DWIN32;WIN32_LEAN_AND_MEAN
+LinkerInheritOptsAt_coldccdexe = -x
+LinkerOptsAt_coldccdexe = $(LinkerLocalOptsAtC32_coldccdexe)
+ResOptsAt_coldccdexe = $(ResLocalOptsAtC32_coldccdexe)
+BOptsAt_coldccdexe = $(BLocalOptsAtC32_coldccdexe)
+
+#
+# Dependency List
+#
+Dep_genesis = \
+   DATA\data.lib\
+   OPS\ops.lib\
+   MODULES\mods.lib\
+   genesis.exe\
+   coldcc.exe
+
+genesis : BccW32.cfg $(Dep_genesis)
+  echo MakeNode
+
+Dep_DATAbdatadlib = \
+   DATA\buffer.obj\
+   DATA\object.obj\
+   DATA\list.obj\
+   DATA\ident.obj\
+   DATA\dict.obj\
+   DATA\data.obj\
+   DATA\string.obj\
+   data.lib
+
+DATA\data.lib : $(Dep_DATAbdatadlib)
+  $(TLIB) $< $(IDE_BFLAGS) $(BOptsAt_DATAbdatadlib) @&&|
+ -+DATA\buffer.obj &
+-+DATA\object.obj &
+-+DATA\list.obj &
+-+DATA\ident.obj &
+-+DATA\dict.obj &
+-+DATA\data.obj &
+-+DATA\string.obj
+|
+
+DATA\buffer.obj :  data\buffer.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_DATAbdatadlib) $(CompInheritOptsAt_DATAbdatadlib) -o$@ data\buffer.c
+|
+
+DATA\object.obj :  data\object.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_DATAbdatadlib) $(CompInheritOptsAt_DATAbdatadlib) -o$@ data\object.c
+|
+
+DATA\list.obj :  data\list.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_DATAbdatadlib) $(CompInheritOptsAt_DATAbdatadlib) -o$@ data\list.c
+|
+
+DATA\ident.obj :  data\ident.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_DATAbdatadlib) $(CompInheritOptsAt_DATAbdatadlib) -o$@ data\ident.c
+|
+
+DATA\dict.obj :  data\dict.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_DATAbdatadlib) $(CompInheritOptsAt_DATAbdatadlib) -o$@ data\dict.c
+|
+
+DATA\data.obj :  data\data.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_DATAbdatadlib) $(CompInheritOptsAt_DATAbdatadlib) -o$@ data\data.c
+|
+
+DATA\string.obj :  data\string.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_DATAbdatadlib) $(CompInheritOptsAt_DATAbdatadlib) -o$@ data\string.c
+|
+
+Dep_OPSbopsdlib = \
+   OPS\buffer.obj\
+   OPS\sys.obj\
+   OPS\string.obj\
+   OPS\operators.obj\
+   OPS\object.obj\
+   OPS\network.obj\
+   OPS\misc.obj\
+   OPS\math.obj\
+   OPS\list.obj\
+   OPS\file.obj\
+   OPS\error.obj\
+   OPS\dict.obj\
+   OPS\data.obj\
+   OPS\task.obj\
+   ops.lib
+
+OPS\ops.lib : $(Dep_OPSbopsdlib)
+  $(TLIB) $< $(IDE_BFLAGS) $(BOptsAt_OPSbopsdlib) @&&|
+ -+OPS\buffer.obj &
+-+OPS\sys.obj &
+-+OPS\string.obj &
+-+OPS\operators.obj &
+-+OPS\object.obj &
+-+OPS\network.obj &
+-+OPS\misc.obj &
+-+OPS\math.obj &
+-+OPS\list.obj &
+-+OPS\file.obj &
+-+OPS\error.obj &
+-+OPS\dict.obj &
+-+OPS\data.obj &
+-+OPS\task.obj
+|
+
+OPS\buffer.obj :  ops\buffer.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_OPSbopsdlib) $(CompInheritOptsAt_OPSbopsdlib) -o$@ ops\buffer.c
+|
+
+OPS\sys.obj :  ops\sys.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_OPSbopsdlib) $(CompInheritOptsAt_OPSbopsdlib) -o$@ ops\sys.c
+|
+
+OPS\string.obj :  ops\string.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_OPSbopsdlib) $(CompInheritOptsAt_OPSbopsdlib) -o$@ ops\string.c
+|
+
+OPS\operators.obj :  ops\operators.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_OPSbopsdlib) $(CompInheritOptsAt_OPSbopsdlib) -o$@ ops\operators.c
+|
+
+OPS\object.obj :  ops\object.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_OPSbopsdlib) $(CompInheritOptsAt_OPSbopsdlib) -o$@ ops\object.c
+|
+
+OPS\network.obj :  ops\network.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_OPSbopsdlib) $(CompInheritOptsAt_OPSbopsdlib) -o$@ ops\network.c
+|
+
+OPS\misc.obj :  ops\misc.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_OPSbopsdlib) $(CompInheritOptsAt_OPSbopsdlib) -o$@ ops\misc.c
+|
+
+OPS\math.obj :  ops\math.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_OPSbopsdlib) $(CompInheritOptsAt_OPSbopsdlib) -o$@ ops\math.c
+|
+
+OPS\list.obj :  ops\list.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_OPSbopsdlib) $(CompInheritOptsAt_OPSbopsdlib) -o$@ ops\list.c
+|
+
+OPS\file.obj :  ops\file.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_OPSbopsdlib) $(CompInheritOptsAt_OPSbopsdlib) -o$@ ops\file.c
+|
+
+OPS\error.obj :  ops\error.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_OPSbopsdlib) $(CompInheritOptsAt_OPSbopsdlib) -o$@ ops\error.c
+|
+
+OPS\dict.obj :  ops\dict.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_OPSbopsdlib) $(CompInheritOptsAt_OPSbopsdlib) -o$@ ops\dict.c
+|
+
+OPS\data.obj :  ops\data.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_OPSbopsdlib) $(CompInheritOptsAt_OPSbopsdlib) -o$@ ops\data.c
+|
+
+OPS\task.obj :  ops\task.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_OPSbopsdlib) $(CompInheritOptsAt_OPSbopsdlib) -o$@ ops\task.c
+|
+
+Dep_MODULESbmodsdlib = \
+   MODULES\cdc.obj\
+   MODULES\veil.obj\
+   MODULES\ext_math.obj\
+   MODULES\cdc_string.obj\
+   MODULES\cdc_misc.obj\
+   MODULES\cdc_list.obj\
+   MODULES\cdc_integer.obj\
+   MODULES\cdc_dict.obj\
+   MODULES\cdc_buffer.obj\
+   MODULES\web.obj\
+   mods.lib
+
+MODULES\mods.lib : $(Dep_MODULESbmodsdlib)
+  $(TLIB) $< $(IDE_BFLAGS) $(BOptsAt_MODULESbmodsdlib) @&&|
+ -+MODULES\cdc.obj &
+-+MODULES\veil.obj &
+-+MODULES\ext_math.obj &
+-+MODULES\cdc_string.obj &
+-+MODULES\cdc_misc.obj &
+-+MODULES\cdc_list.obj &
+-+MODULES\cdc_integer.obj &
+-+MODULES\cdc_dict.obj &
+-+MODULES\cdc_buffer.obj &
+-+MODULES\web.obj
+|
+
+MODULES\cdc.obj :  modules\cdc.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_MODULESbmodsdlib) $(CompInheritOptsAt_MODULESbmodsdlib) -o$@ modules\cdc.c
+|
+
+MODULES\veil.obj :  modules\veil.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_MODULESbmodsdlib) $(CompInheritOptsAt_MODULESbmodsdlib) -o$@ modules\veil.c
+|
+
+MODULES\ext_math.obj :  modules\ext_math.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_MODULESbmodsdlib) $(CompInheritOptsAt_MODULESbmodsdlib) -o$@ modules\ext_math.c
+|
+
+MODULES\cdc_string.obj :  modules\cdc_string.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_MODULESbmodsdlib) $(CompInheritOptsAt_MODULESbmodsdlib) -o$@ modules\cdc_string.c
+|
+
+MODULES\cdc_misc.obj :  modules\cdc_misc.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_MODULESbmodsdlib) $(CompInheritOptsAt_MODULESbmodsdlib) -o$@ modules\cdc_misc.c
+|
+
+MODULES\cdc_list.obj :  modules\cdc_list.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_MODULESbmodsdlib) $(CompInheritOptsAt_MODULESbmodsdlib) -o$@ modules\cdc_list.c
+|
+
+MODULES\cdc_integer.obj :  modules\cdc_integer.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_MODULESbmodsdlib) $(CompInheritOptsAt_MODULESbmodsdlib) -o$@ modules\cdc_integer.c
+|
+
+MODULES\cdc_dict.obj :  modules\cdc_dict.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_MODULESbmodsdlib) $(CompInheritOptsAt_MODULESbmodsdlib) -o$@ modules\cdc_dict.c
+|
+
+MODULES\cdc_buffer.obj :  modules\cdc_buffer.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_MODULESbmodsdlib) $(CompInheritOptsAt_MODULESbmodsdlib) -o$@ modules\cdc_buffer.c
+|
+
+MODULES\web.obj :  modules\web.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_MODULESbmodsdlib) $(CompInheritOptsAt_MODULESbmodsdlib) -o$@ modules\web.c
+|
+
+Dep_genesisdexe = \
+   wingdbm.lib\
+   ops\ops.lib\
+   modules\mods.lib\
+   data\data.lib\
+   binarydb.obj\
+   token.obj\
+   strutil.obj\
+   sig.obj\
+   shs.obj\
+   regexp.obj\
+   opcodes.obj\
+   net.obj\
+   native.obj\
+   memory.obj\
+   lookup.obj\
+   log.obj\
+   io.obj\
+   grammar.obj\
+   genesis.obj\
+   file.obj\
+   execute.obj\
+   defs.obj\
+   decode.obj\
+   dbpack.obj\
+   crypt.obj\
+   codegen.obj\
+   cache.obj\
+   util.obj
+
+genesis.exe : $(Dep_genesisdexe)
+  $(TLINK32) @&&|
+ /v $(IDE_LinkFLAGS32) $(LinkerOptsAt_genesisdexe) $(LinkerInheritOptsAt_genesisdexe) +
+C:\BC5\LIB\c0x32.obj+
+binarydb.obj+
+token.obj+
+strutil.obj+
+sig.obj+
+shs.obj+
+regexp.obj+
+opcodes.obj+
+net.obj+
+native.obj+
+memory.obj+
+lookup.obj+
+log.obj+
+io.obj+
+grammar.obj+
+genesis.obj+
+file.obj+
+execute.obj+
+defs.obj+
+decode.obj+
+dbpack.obj+
+crypt.obj+
+codegen.obj+
+cache.obj+
+util.obj
+$<,$*
+wingdbm.lib+
+ops\ops.lib+
+modules\mods.lib+
+data\data.lib+
+C:\BC5\LIB\bidsf.lib+
+C:\BC5\LIB\import32.lib+
+C:\BC5\LIB\cw32.lib
+
+
+
+|
+binarydb.obj :  binarydb.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ binarydb.c
+|
+
+token.obj :  token.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ token.c
+|
+
+strutil.obj :  strutil.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ strutil.c
+|
+
+sig.obj :  sig.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ sig.c
+|
+
+shs.obj :  shs.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ shs.c
+|
+
+regexp.obj :  regexp.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ regexp.c
+|
+
+opcodes.obj :  opcodes.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ opcodes.c
+|
+
+net.obj :  net.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ net.c
+|
+
+native.obj :  native.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ native.c
+|
+
+memory.obj :  memory.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ memory.c
+|
+
+lookup.obj :  lookup.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ lookup.c
+|
+
+log.obj :  log.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ log.c
+|
+
+io.obj :  io.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ io.c
+|
+
+grammar.obj :  grammar.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ grammar.c
+|
+
+genesis.obj :  genesis.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ genesis.c
+|
+
+file.obj :  file.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ file.c
+|
+
+execute.obj :  execute.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ execute.c
+|
+
+defs.obj :  defs.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ defs.c
+|
+
+decode.obj :  decode.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ decode.c
+|
+
+dbpack.obj :  dbpack.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ dbpack.c
+|
+
+crypt.obj :  crypt.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ crypt.c
+|
+
+codegen.obj :  codegen.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ codegen.c
+|
+
+cache.obj :  cache.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ cache.c
+|
+
+util.obj :  util.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_genesisdexe) $(CompInheritOptsAt_genesisdexe) -o$@ util.c
+|
+
+Dep_coldccdexe = \
+   wingdbm.lib\
+   util.obj\
+   token.obj\
+   strutil.obj\
+   sig.obj\
+   shs.obj\
+   regexp.obj\
+   opcodes.obj\
+   net.obj\
+   native.obj\
+   memory.obj\
+   lookup.obj\
+   log.obj\
+   io.obj\
+   grammar.obj\
+   file.obj\
+   execute.obj\
+   defs.obj\
+   decode.obj\
+   dbpack.obj\
+   crypt.obj\
+   codegen.obj\
+   cache.obj\
+   binarydb.obj\
+   ops\ops.lib\
+   modules\mods.lib\
+   data\data.lib\
+   coldcc.obj\
+   textdb.obj
+
+coldcc.exe : $(Dep_coldccdexe)
+  $(TLINK32) @&&|
+ /v $(IDE_LinkFLAGS32) $(LinkerOptsAt_coldccdexe) $(LinkerInheritOptsAt_coldccdexe) +
+C:\BC5\LIB\c0x32.obj+
+util.obj+
+token.obj+
+strutil.obj+
+sig.obj+
+shs.obj+
+regexp.obj+
+opcodes.obj+
+net.obj+
+native.obj+
+memory.obj+
+lookup.obj+
+log.obj+
+io.obj+
+grammar.obj+
+file.obj+
+execute.obj+
+defs.obj+
+decode.obj+
+dbpack.obj+
+crypt.obj+
+codegen.obj+
+cache.obj+
+binarydb.obj+
+coldcc.obj+
+textdb.obj
+$<,$*
+wingdbm.lib+
+ops\ops.lib+
+modules\mods.lib+
+data\data.lib+
+C:\BC5\LIB\bidsf.lib+
+C:\BC5\LIB\import32.lib+
+C:\BC5\LIB\cw32.lib
+
+
+
+|
+coldcc.obj :  coldcc.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_coldccdexe) $(CompInheritOptsAt_coldccdexe) -o$@ coldcc.c
+|
+
+textdb.obj :  textdb.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_coldccdexe) $(CompInheritOptsAt_coldccdexe) -o$@ textdb.c
+|
+
+# Compiler configuration file
+BccW32.cfg : 
+   Copy &&|
+-w
+-R
+-v
+-vi
+-H
+-H=genesis.csm
+| $@
+
+

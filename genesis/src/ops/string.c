@@ -533,8 +533,11 @@ COLDC_FUNC(stridx) {
     else
         origin = 1;
 
+    if (!string_length(STR2))
+        THROW((type_id, "No search string.")) 
+
     if ((r = string_index(STR1, STR2, origin)) == F_FAILURE)
-        return;
+        THROW((range_id, "Origin is beyond the range of the string."))
 
     pop(argc);
     push_int(r);

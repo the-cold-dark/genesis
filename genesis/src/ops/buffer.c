@@ -166,3 +166,34 @@ COLDC_FUNC(strings_to_buf) {
     buffer_discard(buf);
 }
 
+COLDC_FUNC(bufidx) {
+    int     origin;
+    int     r;
+    uChar   c;
+    int     clen;
+    uChar * cp;
+    
+    INIT_2_OR_3_ARGS(BUFFER, ANY_TYPE, INTEGER);
+    
+    if (argc == 3)
+        origin = INT3;
+    else
+        origin = 1; 
+
+    if (args[1].type == INTEGER) {
+        c = (uChar) args[1].u.val;
+        cp = &c;
+        clen = 1;
+    } else if (args[1].type == BUFFER) {
+        cp = BUF2->s;
+        clen = BUF2->len;
+    } else
+        THROW((type_id, "Second argument must be a buffer or integer."))
+
+    if ((r = buffer_index(BUF1, cp, clen, origin)) == F_FAILURE)
+        THROW((range_id, "Origin is beyond the range of the buffer."))
+
+    pop(argc); 
+    push_int(r);
+}
+

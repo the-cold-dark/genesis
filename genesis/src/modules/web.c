@@ -51,7 +51,7 @@ char * dec_2_hex[] = {
    "%79", "%7a", "%7b", "%7c", "%7d", "%7e", (char) NULL
 };
 
-#define tohex(c) (dec_2_hex[(Int) c])
+#define tohex(c) (dec_2_hex[(int) c])
 
 
 void init_web(Int argc, char ** argv) {
@@ -106,17 +106,17 @@ cStr * decode(cStr * str) {
     return str;
 }
 
-cStr * encode(char * s) {
-    cStr * str = string_new(strlen(s) * 2); /* this gives us a buffer
-                                                   to expand into */
+cStr * encode(cStr * in) {
+    register char * s = string_chars(in);
+    cStr          * str = string_new(string_length(in));
 
     for (;*s != (char) NULL; s++) {
-        if ((Int) *s == 32)
+        if ((int) *s == 32)
             str = string_addc(str, '+');
-        else if ((Int) *s > 32 && (Int) *s < 127) {
-            if (((Int) *s >= 48 && (Int) *s <= 57) ||
-                ((Int) *s >= 65 && (Int) *s <= 90) ||
-                ((Int) *s >= 97 && (Int) *s <= 122))
+        else if ((int) *s > 32 && (int) *s < 127) {
+            if (((int) *s >= 48 && (int) *s <= 57) ||
+                ((int) *s >= 65 && (int) *s <= 90) ||
+                ((int) *s >= 97 && (int) *s <= 122))
                 str = string_addc(str, *s);
             else
                 str = string_add_chars(str, tohex(*s), 3);
@@ -124,6 +124,40 @@ cStr * encode(char * s) {
     }
 
     return str;
+}
+
+cStr * html_escape(cStr * in) {
+    register char * s;
+    register  int   len;
+    cStr          * out;
+
+    s = string_chars(in);
+    len = string_length(in);
+
+    /* incase they don't need it */
+    if (!memchr(s, '<', len) && !memchr(s, '>', len) && !memchr(s, '&', len))
+        return string_dup(in);
+
+    /* doh, they do.. */
+    out = string_new(len);
+
+    for (;*s != (char) NULL; s++) {
+        switch (*s) {
+            case '<':
+                out = string_add_chars(out, "&lt;", 4);
+                break;
+            case '>':
+                out = string_add_chars(out, "&gt;", 4);
+                break;
+            case '&':
+                out = string_add_chars(out, "&amp;", 5);
+                break;
+            default:
+                out = string_addc(out, *s);
+        }
+    }
+
+    return out;
 }
 
 NATIVE_METHOD(decode) {
@@ -136,17 +170,7 @@ NATIVE_METHOD(decode) {
     CLEAN_STACK();
     anticipate_assignment();
 
-    /* decode should prep it, but its easier for us to do it */
-#if 0
-    str = string_prep(str, str->start, str->len);
-
-    str = decode(str);
-
-    RETURN_STRING(str);
-#else
     RETURN_STRING(decode(string_prep(str, str->start, str->len)));
-
-#endif
 }
 
 NATIVE_METHOD(encode) {
@@ -154,8 +178,24 @@ NATIVE_METHOD(encode) {
 
     INIT_1_ARG(STRING);
 
-    str = encode(string_chars(STR1));
+    str = encode(STR1);
 
     CLEAN_RETURN_STRING(str);
+}
+
+NATIVE_METHOD(html_escape) {
+    cStr * new, * orig;
+
+    INIT_1_ARG(STRING);
+
+    orig = string_dup(STR1);
+  
+    CLEAN_STACK();
+    anticipate_assignment();
+
+    new = html_escape(orig);
+    string_discard(orig);
+
+    RETURN_STRING(new);
 }
 

@@ -1453,7 +1453,7 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
         fputs(method_definition(meth), fp);
 
         /* list it */
-        code = decompile(meth, obj, 4, 1);
+        code = decompile(meth, obj, 4, FMT_FULL_PARENS);
         if (list_length(code) == 0) {
             fputs(";\n\n", fp);
         } else {

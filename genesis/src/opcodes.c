@@ -287,6 +287,7 @@ static Op_info op_info[] = {
     { F_UNION,            "union",           func_union },
     { F_LISTGRAFT,        "listgraft",       func_listgraft },
     { F_JOIN,             "join",            func_join },
+    { F_LISTIDX,          "listidx",         func_listidx },
 
     /* Dictionary manipulation (dictop.c). */
     { F_DICT_VALUES,      "dict_values",     func_dict_values },
@@ -298,6 +299,7 @@ static Op_info op_info[] = {
 
     /* Buffer manipulation (bufferop.c). */
     { F_BUFLEN,           "buflen",          func_buflen },
+    { F_BUFIDX,           "bufidx",          func_bufidx },
     { F_BUF_REPLACE,      "buf_replace",     func_buf_replace },
     { F_BUF_TO_STRINGS,   "buf_to_strings",  func_buf_to_strings },
     { F_BUF_TO_STR,       "buf_to_str",      func_buf_to_str },

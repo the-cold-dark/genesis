@@ -6,6 +6,34 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-24 [10-Feb-97] Brandon, Jon Lambert
+      * The third argument to list_method() now is a bitfield with
+        the following flags: 1=Full Parens, 2=Full Braces; which
+        can be OR'ed as appropriate (Brandon)
+      * updated configure scripts to handle newer OS's (Brandon)
+      * Crufted up some code segments here and there (Brandon)
+      * if the driver dies at startup it'll print to both errlog and
+        stderr (Brandon)
+      * New native $string.html_escape(), does the minimal necessary
+        (i.e. escapes '<', '>' and '&').  (Brandon)
+      * Added new (awaited) functions listidx() and bufidx() (Brandon)
+      * Fixed a bug where `[buf] in `[buf] would wrongly fail 
+        in certain situations (Brandon)
+      * Added new genesis options -u and -g to specify user and group
+        to setuid to, when running as root. (Brandon)
+      * Redid all genesis arguments to allow for easier expanding.
+        Full list is (as always) available with genesis -h.
+      * Added the ability to prebind network ports, if running as root.
+        Use the -p option, formatted as [ADDR]:PORT.  UDP ports are
+        specified as with bind_port() by specifying a negative port number.
+        ADDR must be a valid IP address--not a domain name. (Brandon)
+      * Minor bugfix where objects were not dirtied when the objname
+        was changed (Brandon)
+      * fixed a bug with fchmod() (it was getting its args confused) (Brandon)
+      * Made the path argument to fremove() required. (Brandon)
+      * Any 'stat' info returned from a file function will now format the
+        file mode as an octal number in a string (Brandon)
+      * a touch more cleanup with Win32 and Win32 docs (Jon)
 1.0-23 [4-Feb-97] Miro, Brandon, Jon Lambert
       * Wrapped up Win32 support in the source (Jon Lambert)
       * Fixed bug in task cancelling (Miro)

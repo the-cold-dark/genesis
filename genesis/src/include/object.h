@@ -226,7 +226,7 @@ Method * object_find_next_method(Long objnum, Long name, Long after, Bool is_fro
 Int     object_rename_method(Obj * object, Long oname, Long nname);
 void    object_add_method(Obj *object, Long name, Method *method);
 Int     object_del_method(Obj *object, Long name);
-cList   *object_list_method(Obj *object, Long name, Int indent, Int parens);
+cList   *object_list_method(Obj *object, Long name, Int indent, int fflags);
 Method * method_new(void);
 void    method_free(Method *method);
 Method *method_dup(Method *method);
@@ -279,7 +279,7 @@ extern Int     object_rename_method(Obj * object, Long oname, Long nname);
 extern void    object_add_method(Obj *object, Long name, Method *method);
 extern Int     object_del_method(Obj *object, Long name);
 extern cList   *object_list_method(Obj *object, Long name, Int indent,
-                                  Int parens);
+                                  int fflags);
 extern void    method_free(Method *method);
 extern Method *method_dup(Method *method);
 extern void    method_discard(Method *method);

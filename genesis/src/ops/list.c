@@ -226,3 +226,22 @@ COLDC_FUNC(join) {
     push_string(str);
     string_discard(str);
 }
+
+COLDC_FUNC(listidx) {
+    int origin;
+    int r; 
+    
+    INIT_2_OR_3_ARGS(LIST, ANY_TYPE, INTEGER);
+
+    if (argc == 3)  
+        origin = INT3;
+    else
+        origin = 1;
+    
+    if ((r = list_index(LIST1, &args[1], origin)) == F_FAILURE)
+        THROW((range_id, "Origin is beyond the range of the list."))
+    
+    pop(argc); 
+    push_int(r);
+}   
+

@@ -22,6 +22,7 @@
 #include "net.h"
 #include "util.h"
 
+INTERNAL SOCKET grab_port(Int port, char * addr, int socktype);
 static Long translate_connect_error(Int error);
 
 static struct sockaddr_in sockin;	/* An internet address. */
@@ -44,14 +45,11 @@ void uninit_net(void) {
 
 /*
 // -------------------------------------------------------------------
-// add a defined() setting for your OS if it doesnt define inet_aton()
-//
 // inet_aton() courtesy of Luc Girardin <girardin@hei.unige.ch>, I dont
 // know where he got it  8)
 */
 
 #ifndef HAVE_INET_ATON
-
 int inet_aton (const char * cp, struct in_addr * addr) {
     unsigned long parts[4];
     register unsigned long val;
@@ -121,9 +119,106 @@ int inet_aton (const char * cp, struct in_addr * addr) {
 }
 #endif
 
-SOCKET get_server_socket(Int port, char * addr) {
-    Int one=1;
+/*
+// -----------------------------------------------------------------------
+// prebind things--basically call socket() and bind() but nothing else,
+// later we can call other things ..
+*/
+
+typedef struct Prebind Prebind;
+struct Prebind {
+    SOCKET    sock;
+    uShort    port;
+    Bool      tcp;
+    char      addr[BUF];
+    Prebind * next;
+};
+Prebind * prebound = NULL;
+
+#define DIE(_reason_) { \
+        fputs(_reason_, stderr); \
+        exit(1); \
+    }
+
+Bool prebind_port(int port, char * addr, int tcp) {
+    SOCKET    sock;
+    Prebind * pb;
+
+    /* address too long? */
+    if (addr && (strlen(addr) > BUF))
+        return NO;
+
+    sock = grab_port(port, addr, tcp ? SOCK_STREAM : SOCK_DGRAM);
+    if (sock != SOCKET_ERROR) {
+        pb = (Prebind *) malloc(sizeof(Prebind));
+        pb->sock = sock;
+        pb->port = port;
+        pb->tcp = tcp;
+        if (addr)
+            strcpy(pb->addr, addr);
+        else
+            pb->addr[0] = (char) NULL;
+        pb->next = prebound;
+        prebound = pb;
+    } else if (server_failure_reason == address_id) {
+        fprintf(stderr, "** Invalid internet address: '%s'\n", addr);
+        exit(1);
+    } else if (server_failure_reason == socket_id) {
+        fprintf(stderr, "** Unable to open socket: %s\n", strerror(errno));
+        exit(1);
+    } else if (server_failure_reason == bind_id) {
+        fprintf(stderr, "** Unable to bind port: %s\n", strerror(errno));
+        exit(1);
+    }
+
+    return YES;
+}
+
+INTERNAL int use_prebound(SOCKET * sock, int port, char * addr, int socktype) {
+    Prebind  * pb,
+            ** pbp = &prebound;
+
+    while (*pbp) { 
+        pb = *pbp;
+        if (pb->port == port) {
+            if (addr) {
+                if (!pb->addr[0] || strccmp(pb->addr, addr)) {
+                    server_failure_reason = preaddr_id;
+                    return F_FAILURE;
+                }
+            } else if (pb->addr[0]) {
+                server_failure_reason = preaddr_id;
+                return F_FAILURE;
+            }
+            if ((pb->tcp && socktype == SOCK_DGRAM) ||
+                (!pb->tcp && socktype == SOCK_STREAM))
+            {
+                server_failure_reason = pretype_id;
+                return F_FAILURE;
+            }
+            *sock = pb->sock;
+            *pbp = pb->next;
+            free(pb);
+            return TRUE;
+        } else {
+            pbp = &pb->next;
+        }
+    }
+
+    return FALSE;
+}
+
+INTERNAL SOCKET grab_port(Int port, char * addr, int socktype) {
+    int    one = 1;
     SOCKET sock;
+
+    /* see if its pre-bound? */
+    switch (use_prebound(&sock, port, addr, socktype)) {
+        case F_FAILURE:
+            return SOCKET_ERROR;
+        case TRUE:
+            return sock;
+    }
 
     /* verify the address first */
     memset(&sockin, 0, sizeof(sockin));               /* zero it */
@@ -136,59 +231,44 @@ SOCKET get_server_socket(Int port, char * addr) {
     }
 
     /* Create a socket. */
-    sock = socket(AF_INET, SOCK_STREAM, 0);
+    sock = socket(AF_INET, socktype, 0);
     if (sock == SOCKET_ERROR) {
 	server_failure_reason = socket_id;
 	return SOCKET_ERROR;
     }
 
     /* Set SO_REUSEADDR option to avoid restart problems. */
-    one = 1;
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(Int));
 
     /* Bind the socket to port. */
-    if (bind(sock, (struct sockaddr *) &sockin, sizeof(sockin)) < 0) {
+    if (bind(sock, (struct sockaddr *) &sockin, sizeof(sockin)) == F_FAILURE) {
 	server_failure_reason = bind_id;
 	return SOCKET_ERROR;
     }
+
+    return sock;
+}
+
+SOCKET get_tcp_socket(Int port, char * addr) {
+    SOCKET sock;
+    
+    sock = grab_port(port, addr, SOCK_STREAM);
+
+    if (sock == SOCKET_ERROR)
+        return SOCKET_ERROR;
 
     listen(sock, 8);
 
     return sock;
 }
 
-SOCKET get_udp_server_socket(Int port, char * addr) {
-    Int one=1;
+SOCKET get_udp_socket(Int port, char * addr) {
     SOCKET sock;
+    
+    sock = grab_port(port, addr, SOCK_DGRAM);
 
-    /* verify the address first */
-    memset(&sockin, 0, sizeof(sockin));               /* zero it */
-    sockin.sin_family = AF_INET;                      /* set inet */
-    sockin.sin_port = htons((unsigned short) port);   /* set port */
-
-    if (addr && !inet_aton(addr, &sockin.sin_addr)) {
-        server_failure_reason = address_id;
+    if (sock == SOCKET_ERROR)
         return SOCKET_ERROR;
-    }
-
-    /* Create a socket. */
-    sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock == SOCKET_ERROR) {
-	server_failure_reason = socket_id;
-	return SOCKET_ERROR;
-    }
-
-    /* Set SO_REUSEADDR option to avoid restart problems. */
-    one = 1;
-    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(Int));
-
-    /* Bind the socket to port. */
-    if (bind(sock, (struct sockaddr *) &sockin, sizeof(sockin)) < 0) {
-	server_failure_reason = bind_id;
-	return SOCKET_ERROR;
-    }
-
-    /* We don't need any listen calls... */
 
     return sock;
 }

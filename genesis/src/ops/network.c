@@ -63,17 +63,28 @@ void func_bind_port(void) {
 
     addr = (argc==2 ? string_chars(STR2) : (char *) NULL);
     port=INT1;
-    if ((port>=0) ? add_server(port, addr, cur_frame->object->objnum)
+    if ((port>=0) ? tcp_server(port, addr, cur_frame->object->objnum)
 	: udp_server(-port, addr, cur_frame->object->objnum))
 	push_int(1);
     else if (server_failure_reason == address_id)
         THROW((address_id, "Invalid bind address: %s", addr))
     else if (server_failure_reason == socket_id)
         THROW((socket_id, "Couldn't create server socket."))
-    else if (addr)
-        THROW((bind_id, "Couldn't bind to port %d on address %s", INT1, addr))
+    else if (server_failure_reason == preaddr_id)
+        THROW((preaddr_id, 
+               "Couldn't bind to port %d: prebound address conflict", INT1))
+    else if (server_failure_reason == pretype_id) {
+        if (port > 0)
+            THROW((pretype_id, 
+               "Couldn't bind to TCP port %d: already prebound as UDP", INT1))
+        else
+            THROW((pretype_id, 
+               "Couldn't bind to UDP port %d: already prebound as TCP", INT1))
+    } else if (addr)
+        THROW((server_failure_reason,
+               "Couldn't bind to port %d on address %s", INT1, addr))
     else
-        THROW((bind_id, "Couldn't bind to port %d.", INT1))
+        THROW((server_failure_reason, "Couldn't bind to port %d.", INT1))
 }
 
 /*
@@ -137,16 +148,17 @@ void func_close_connection(void) {
 */
 void func_cwrite(void) {
     cData *args;
+    int rval;
 
     /* Accept a buffer to write. */
     if (!func_init_1(&args, BUFFER))
         return;
 
     /* Write the string to any connection associated with this object.  */
-    tell(cur_frame->object, args[0].u.buffer);
+    rval = tell(cur_frame->object, args[0].u.buffer) ? 1 : 0;
 
     pop(1);
-    push_int(1);
+    push_int(rval);
 }
 
 /*

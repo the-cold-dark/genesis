@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "cdc_db.h"
 #include "util.h"
@@ -57,7 +58,14 @@ static Int db_clean;
 extern Long cur_search, db_top;
 
 /* this isn't the most graceful way, but *shrug* */
-#define FAIL(__s)        { fprintf(errfile, __s, c_dir_binary); exit(1); }
+#define WARN(_s_) { \
+	fprintf(errfile, _s_, c_dir_binary); \
+	if (errfile != stderr) \
+	    fprintf(stderr, _s_, c_dir_binary); \
+    }
+
+#define FAIL(_s_) { WARN(_s_) exit(1); }
+
 #define DBFILE(__b, __f) (sprintf(__b, "%s/%s", c_dir_binary, __f))
 
 #define open_db_directory() { \
@@ -100,68 +108,100 @@ extern Long cur_search, db_top;
             FAIL("Cannot open object database file \"%s/objects\".\n"); \
     }
 
-void init_binary_db(void) {
-    struct stat   statbuf;
-    FILE        * fp;
-    char          buf[LINE],
-                  v_major[LINE],
-                  v_minor[LINE],
-                  v_patch[LINE],
-                  magicmod[LINE],
-                  fdb_clean[LINE],
-                  fdb_objects[LINE],
-                  fdb_index[LINE];
-    off_t         offset;
-    Int           size,
-                  outdated = 1;
-    Long          objnum;
+INTERNAL Bool good_perms(struct stat * sb) {
+    if (!geteuid())
+        return YES;
+    if (sb->st_uid == geteuid() && (sb->st_mode & S_IRWXU))
+        return YES;
+    else if (sb->st_gid == getegid() && (sb->st_mode & S_IRWXG))
+        return YES;
+    return NO;
+}
 
-    /* make it '.clean' because too many people were innocently creating
-       their own clean file, which then led them to use a corrupt db */
-    sprintf(c_clean_file, "%s/.clean", c_dir_binary);
-    DBFILE(fdb_clean,   ".clean");
-    DBFILE(fdb_objects, "objects");
-    DBFILE(fdb_index,   "index");
+void verify_clean(void) {
+    Bool isdirty = YES;
+    char system[LINE],
+         v_major[LINE],
+         v_minor[LINE],
+         v_patch[LINE],
+         magicmod[LINE],
+         search[LINE];
+    char * s;
+    FILE * fp;
 
-    if (stat(c_dir_binary, &statbuf) == F_FAILURE) {
-        FAIL("Cannot find binary directory \"%s\".\n");
-    } else if (!S_ISDIR(statbuf.st_mode)) {
-        FAIL("Binary db \"%s\" is not a directory.\n");
-    }
+    v_major[0] = v_minor[0] = v_patch[0] =
+     magicmod[0] = system[0] = search[0] = (char) NULL;
 
-    fp = fopen(fdb_clean, "rb");
-    if (fp) {
-        if (fgets(v_major, LINE, fp) && atoi(v_major)==VERSION_MAJOR) {
-          if (fgets(v_minor, LINE, fp) && atoi(v_minor)==VERSION_MINOR) {
-            if (fgets(v_patch, LINE, fp) && atoi(v_patch)==VERSION_PATCH) {
-              if (fgets(magicmod, LINE, fp)&&atol(magicmod)==MAGIC_MODNUMBER) {
-                  fgets(buf, LINE, fp);
-                  cur_search = atoi(buf);
-                  fgets(buf, LINE, fp);
-                  /* eat the newline */
-                  if (buf[strlen(buf) - 1] == (char) 10)
-                      buf[strlen(buf) - 1] = (char) NULL;
+    if ((fp = fopen(c_clean_file, "rb"))) {
+        fgets(system, LINE, fp);
+        fgets(v_major, LINE, fp);
+        fgets(v_minor, LINE, fp);
+        fgets(v_patch, LINE, fp);
+        fgets(magicmod, LINE, fp);
+        fgets(search, LINE, fp);
 
-                  if (!strcmp(buf, SYSTEM_TYPE))
-                      outdated = 0;
-              }
-            }
-          }
+        /* cleanup anything after the system name */
+        s = &system[strlen(system)-1];
+        while (s > system && isspace(*s)) {
+            *s = (char) NULL;
+            s--;
         }
+
+        /* do the check.. */
+        if (atoi(v_major) == VERSION_MAJOR) {
+            if (atoi(v_minor) == VERSION_MINOR) {
+                if (atoi(v_patch) == VERSION_PATCH) {
+                    if (atol(magicmod) == MAGIC_MODNUMBER) {
+                        if (strcmp(system, SYSTEM_TYPE) == 0) {
+                            isdirty = NO; /* yay */
+                            cur_search = atoi(search);
+                        }
+                    }
+                }
+            }
+        }
+
         fclose(fp);
     } else {
         FAIL("Binary database (\"%s\") is corrupted, aborting...\n");
     }
 
-    if (outdated) {
-        fprintf(errfile, "Binary database \"%s\" is incompatable.\n\
-It was compiled on %s with coldcc %d.%d-%d and module key %li\n\
-This system is %s with coldcc %d.%d-%d and module key %li\n\n",
-        c_dir_binary, buf, atoi(v_major), atoi(v_minor), atoi(v_patch),
+    if (isdirty) {
+        fprintf(stderr, "** Binary database \"%s\" is incompatable, systems:\n\
+** it:   <%s> %d.%d-%d (module key %li)\n\
+** this: <%s> %d.%d-%d (module key %li)\n",
+        c_dir_binary, system, atoi(v_major), atoi(v_minor), atoi(v_patch),
         atol(magicmod), SYSTEM_TYPE, VERSION_MAJOR, VERSION_MINOR,
         VERSION_PATCH, (long) MAGIC_MODNUMBER);
-        FAIL("Unable to load database \"%s\".\n");
+        FAIL("Unable to load database \"%s\": incompatable.\n");
     }
+}
+
+void init_binary_db(void) {
+    struct stat   statbuf;
+    char          fdb_objects[LINE],
+                  fdb_index[LINE];
+    off_t         offset;
+    Int           size;
+    Long          objnum;
+
+    sprintf(c_clean_file, "%s/.clean", c_dir_binary);
+    DBFILE(fdb_objects, "objects");
+    DBFILE(fdb_index,   "index");
+
+    if (stat(c_dir_binary, &statbuf) == F_FAILURE)
+        FAIL("Cannot find binary directory \"%s\".\n")
+    else if (!S_ISDIR(statbuf.st_mode))
+        FAIL("Binary db \"%s\" is not a directory.\n")
+    else if (!good_perms(&statbuf))
+        FAIL("Cannot write to binary directory \"%s\".\n")
+
+    /* whine a little bit */
+    if (statbuf.st_mode & S_IWOTH)
+        WARN("Binary directory \"%s\" is writable by ANYBODY\n")
+
+    /* check the clean file */
+    verify_clean();
 
     open_db_objects("rb+");
     lookup_open(fdb_index, 0);
@@ -191,90 +231,6 @@ void init_new_db(void) {
     init_bitmaps();
     sync_index();
     db_is_clean();
-}
-
-Int init_db(Int force_textdump) {
-    struct stat   statbuf;
-    FILE        * fp;
-    char          buf[LINE],
-                  fdb_clean[LINE],
-                  fdb_objects[LINE],
-                  fdb_index[LINE];
-    off_t         offset;
-    Int           cnew = 1,
-                  size;
-    Long          objnum;
-
-    sprintf(c_clean_file, "%s/.clean", c_dir_binary);
-    DBFILE(fdb_clean,   ".clean");
-    DBFILE(fdb_objects, "objects");
-    DBFILE(fdb_index,   "index");
-
-    if (force_textdump || stat(c_dir_binary, &statbuf) == F_FAILURE) {
-	if (mkdir(c_dir_binary, READ_WRITE_EXECUTE) == F_FAILURE)
-            FAIL("Cannot create binary directory \"%s\".\n");
-    } else if (!S_ISDIR(statbuf.st_mode)) {
-	if (unlink(c_dir_binary) == F_FAILURE)
-	    FAIL("Cannot delete file \"%s\".\n");
-	if (mkdir(c_dir_binary, READ_WRITE_EXECUTE) == F_FAILURE)
-	    FAIL("Cannot create directory \"%s\".\n");
-    }
-
-    /* Check if binary/clean exists and contains the right version number. */
-    if (!force_textdump) {
-        fp = fopen(fdb_clean, "rb");
-        if (fp) {
-          if (fgets(buf, 80, fp) && atoi(buf) == VERSION_MAJOR) {
-            if (fgets(buf, 80, fp) && atoi(buf) == VERSION_MINOR) {
-              if (fgets(buf, 80, fp) && atoi(buf) == VERSION_PATCH) {
-                if (fgets(buf, 80, fp) && atol(buf) == MAGIC_MODNUMBER) {
-                    cnew = 0;
-                    fgets(buf, 80, fp);
-                    cur_search = atoi(buf);
-                }
-              }
-            }
-          }
-          fclose(fp);
-        }
-    }
-
-    database_file = fopen(fdb_objects, (cnew) ? "wb+" : "rb+");
-    if (!database_file)
-	FAIL("Cannot open object database file \"%s/objects\".\n");
-
-    lookup_open(fdb_index, cnew);
-
-    if (stat(fdb_objects, &statbuf) < 0)
-	FAIL("Cannot stat database file \"%s/objects\".\n");
-
-    bitmap_blocks = ROUND_UP(LOGICAL_BLOCK(statbuf.st_size) + DB_BITBLOCK, 8);
-    bitmap = EMALLOC(char, (bitmap_blocks / 8)+1);
-    memset(bitmap, 0, (bitmap_blocks / 8)+1);
-
-    objnum = lookup_first_objnum();
-    if (objnum >= db_top)
-        db_top = objnum + 1;
-    while (objnum != NOT_AN_IDENT) {
-	if (!lookup_retrieve_objnum(objnum, &offset, &size))
-	    fail_to_start("Database index is inconsistent.");
-
-	if (objnum >= db_top)
-	    db_top = objnum + 1;
-
-	/* Mark blocks as busy in the bitmap. */
-	db_mark(LOGICAL_BLOCK(offset), size);
-
-	objnum = lookup_next_objnum();
-    }
-
-    /* If database is new, mark it as clean otherwise, it was clean already. */
-    if (cnew)
-	db_is_clean();
-    else
-	db_clean = 1;
-
-    return cnew;
 }
 
 /* Grow the bitmap to given size. */
@@ -624,10 +580,11 @@ static void db_is_clean(void) {
     fp = open_scratch_file(c_clean_file, "wb");
     if (!fp)
 	panic("Cannot create file 'clean'.");
+    fputs(SYSTEM_TYPE, fp);
+    fputc('\n', fp);
     fprintf(fp, "%d\n%d\n%d\n%li\n%li\n",
                 VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH,
                 (long) MAGIC_MODNUMBER, (long) cur_search);
-    fputs(SYSTEM_TYPE, fp);
     close_scratch_file(fp);
     db_clean = 1;
 }

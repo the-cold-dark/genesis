@@ -206,9 +206,10 @@ COLDC_FUNC(fchmod) {
 
     INIT_1_OR_2_ARGS(STRING, STRING);
 
-    /* frob the string to a mode_t, somewhat taken from FreeBSD's chmod.c */
+    /* frob the string to a mode_t */
     p = STR1->s;
 
+    /* strtol sets an error if an overflow/underflow occurs */
     SETERR(0);
     mode = strtol(p, &ep, 8);
 
@@ -234,7 +235,7 @@ COLDC_FUNC(fchmod) {
     } else {
         struct stat sbuf;
 
-        path = build_path(STR1->s, &sbuf, ALLOW_DIR);
+        path = build_path(STR2->s, &sbuf, ALLOW_DIR);
         if (path == NULL)
             return;
     }
@@ -310,31 +311,24 @@ COLDC_FUNC(fmkdir) {
 // -----------------------------------------------------------------
 */
 COLDC_FUNC(fremove) {
-    filec_t     * file;
     cStr        * path;
     Int           err;
     struct stat   sbuf;
 
-    INIT_0_OR_1_ARGS(STRING);
+    INIT_1_ARG(STRING);
 
-    if (argc) {
-        path = build_path(STR1->s, &sbuf, DISALLOW_DIR);
-        if (!path)
-            return;
-    } else {
-        GET_FILE_CONTROLLER(file)
-        path = string_dup(file->path);
-    }
+    path = build_path(STR1->s, &sbuf, DISALLOW_DIR);
+    if (!path)
+        return;
 
     err = unlink(path->s);
+
     string_discard(path);
 
     if (err != F_SUCCESS)
         THROW((file_id, strerror(GETERR())))
 
-    if (argc)
-        pop(1);
-
+    pop(1);
     push_int(1);
 }
 
@@ -382,7 +376,7 @@ COLDC_FUNC(frename) {
 
     INIT_2_ARGS(ANY_TYPE, STRING);
 
-    if (args[0].type != STRING) {
+    if (args[0].type != STRING || !string_length(STR1)) {
         GET_FILE_CONTROLLER(file)
         from = string_dup(file->path);
     } else if (!(from = build_path(args[0].u.str->s, &sbuf, ALLOW_DIR)))
@@ -424,7 +418,7 @@ COLDC_FUNC(fflush) {
 
     GET_FILE_CONTROLLER(file)
 
-    if (fflush(file->fp) == EOF) {
+    if (fflush(file->fp) == NO) {
         cthrow(file_id, strerror(GETERR()));
         return;
     }

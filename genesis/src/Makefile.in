@@ -159,4 +159,7 @@ Win32:
 	@$(YACC) $(YFLAGS) grammar.y
 	@mv -f y.tab.c grammar.c
 	@mv -f y.tab.h include/parse.h
-
+	@grep '#include' grammar.c > incs
+	@grep -v '#include' grammar.c > out
+	@cat incs out > grammar.c
+	@rm incs out

@@ -21,7 +21,6 @@ typedef Int SOCKET;
 
 #endif
 
-SOCKET get_server_socket(Int port, char * addr);
 Int io_event_wait(Int sec, Conn *connections, server_t *servers,
 		  pending_t *pendings);
 Long non_blocking_connect(char *addr, Int port, Int *socket_return);
@@ -30,7 +29,10 @@ cStr * ip(char *addr);
 void init_net(void);
 void uninit_net(void);
 
-SOCKET get_udp_server_socket(Int port, char * addr);
+SOCKET get_tcp_socket(Int port, char * addr);
+SOCKET get_udp_socket(Int port, char * addr);
+
+Bool prebind_port(int port, char * addr, int tcp);
 
 extern Long server_failure_reason;
 

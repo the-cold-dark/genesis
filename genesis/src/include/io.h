@@ -52,7 +52,7 @@ void handle_connection_output(void);
 Conn * find_connection(Obj * obj);
 Conn * tell(Obj * obj, cBuf *buf);
 Int  boot(Obj * obj);
-Int  add_server(Int port, char * addr, Long objnum);
+Int  tcp_server(Int port, char * addr, Long objnum);
 Int  udp_server(Int port, char * addr, Long objnum);
 Int  remove_server(Int port);
 Long make_connection(char *addr, Int port, cObjnum receiver);

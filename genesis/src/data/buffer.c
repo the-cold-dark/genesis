@@ -333,3 +333,97 @@ cBuf *buffer_prep(cBuf *buf) {
     return cnew;
 }
 
+INTERNAL
+int buf_rindexs(uChar * buf, int len, uChar * sub, int slen, int origin){
+    register uChar * s;
+
+    if (origin < slen)
+        origin = slen;
+
+    len -= origin;
+
+    if (len < 0)
+        return 0;
+
+    s = &buf[len];
+ 
+    while (len-- >= 0) {
+        if (*s == *sub) {
+            if (!MEMCMP(s, sub, slen))
+                return (s - buf) + 1;
+        } 
+        s--;
+    }
+    
+    return 0;
+}
+
+INTERNAL int buf_rindexc(uChar * buf, int len, uChar sub, int origin) {
+    register uChar * s;
+        
+    len -= origin;
+
+    if (len < 0)
+        return 0;
+
+    s = &buf[len];
+        
+    while (len-- >= 0) {
+        if (*s == sub)
+            return (s - buf) + 1;
+        s--;    
+    }
+    
+    return 0;
+}
+
+/*
+// returns 1..$ if item is found, 0 if it is not or -1 if an error is thrown
+*/
+
+int buffer_index(cBuf * buf, uChar * ss, int slen, int origin) {
+    int     len;
+    uChar * s,
+          * p;
+    Bool    reverse = NO;
+
+    s = buf->s;
+    len = buf->len;
+
+    if (origin < 0) {
+        reverse = YES;
+        origin = -origin;
+    }
+
+    if (origin > len || !origin)
+        return F_FAILURE;
+
+    if (origin == len)
+        return 0;
+
+    if (reverse) {
+        if (slen == 1)
+            return buf_rindexc(s, len, *ss, origin);
+        return buf_rindexs(s, len, ss, slen, origin);
+    } else {
+        origin--;
+        len -= origin;
+        if (len < slen)
+            return 0;
+        
+        p = s + origin;
+        p = (uChar *) memchr(p, *ss, len);
+        if (slen == 1) {
+            return p ? ((p - s) + 1) : 0;
+        } else {
+            slen--;
+            while (p) {
+                if (MEMCMP(p + 1, ss + 1, slen) == 0)
+                    return (p - s) + 1;
+                len -= (p - s)+1;
+                p = (uChar *) memchr(p+1, *ss, len);
+            }
+        }
+    }
+    return 0;
+}

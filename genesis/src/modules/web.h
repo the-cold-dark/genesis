@@ -13,5 +13,6 @@ extern module_t web_module;
 
 NATIVE_METHOD(decode);
 NATIVE_METHOD(encode);
+NATIVE_METHOD(html_escape);
 
 #endif

@@ -6,6 +6,7 @@
 // Routines to decompile a method.
 */
 
+#define _DECODE_C_
 #include "defs.h"
 
 #include "cdc_pcode.h"
@@ -66,7 +67,6 @@ INTERNAL Obj *the_object;
 INTERNAL Method *the_method;
 INTERNAL Long *the_opcodes;
 INTERNAL Int the_increment;
-INTERNAL Int the_parens_flag;
 
 static struct {
     Int opcode;
@@ -409,7 +409,7 @@ INTERNAL Int count_lines(Int start, Int end, unsigned *flags)
     return count;
 }
 
-cList *decompile(Method *method, Obj *object, Int increment, Int parens)
+cList *decompile(Method *method, Obj *object, Int increment, int fflags)
 {
     Stmt_list *body;
     cList *output;
@@ -422,7 +422,7 @@ cList *decompile(Method *method, Obj *object, Int increment, Int parens)
     the_method = method;
     the_opcodes = method->opcodes;
     the_increment = increment;
-    the_parens_flag = parens;
+    format_flags = fflags;
 
     /* Prepare output list. */
     output = list_new(0);
@@ -1425,7 +1425,8 @@ static Int is_complex_if_else_stmt(Stmt *stmt)
 
 static Int is_complex_type(Int type)
 {
-    return (type != NOOP && type != EXPR && type != ASSIGN && type != BREAK &&
+    return FULL_BRACES() ||
+           (type != NOOP && type != EXPR && type != ASSIGN && type != BREAK &&
 	    type != CONTINUE && type != RETURN && type != RETURN_EXPR);
 }
 
@@ -1844,7 +1845,7 @@ static cStr *unparse_expr_prec(cStr *str, Expr *expr, Int caller_type,
 	(expr->type == UNARY) ? expr->u.unary.opcode : expr->type;
     prec = prec_level(type);
 
-    if (prec >= 0 && (the_parens_flag || caller_prec + assoc > prec)) {
+    if (prec >= 0 && (FULL_PARENS() || caller_prec + assoc > prec)) {
 	str = string_addc(str, '(');
 	str = unparse_expr(str, expr, PAREN_ASSIGN);
 	return string_addc(str, ')');

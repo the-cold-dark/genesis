@@ -337,3 +337,43 @@ cStr * list_join(cList * list, cStr * sep) {
     return s;
 }
 
+int list_index(cList * list, cData * search, int origin) {
+    int     len;
+    Bool    reverse = NO;
+    cData * d,
+          * start,
+          * end;
+
+    len = list_length(list);
+    
+    if (origin < 0) {
+        reverse = YES;
+        origin = -origin;
+    }
+
+    if (origin > len || !origin)
+        return F_FAILURE;
+
+    if (origin == len)
+        return 0;
+
+    origin--;
+    start = list->el + list->start;
+    end = start + list->len;
+
+    if (reverse) {
+        end -= (origin + 1);
+        for (d = end; d >= start; d--) {
+            if (data_cmp(search, d) == 0)
+                return (d - start) + 1;
+        }
+    } else {
+        start += origin;
+        for (d = start; d < end; d++) {
+            if (data_cmp(search, d) == 0)
+                return (d - start) + 1;
+        }
+    }
+    return 0;
+}
+

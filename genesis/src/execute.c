@@ -1421,6 +1421,7 @@ Int func_init_3_or_4(cData **args, Int *num_args,
         return 1;
     return 0;
 }
+
 Int func_init_1_to_3(cData **args, Int *num_args, Int type1, Int type2,
                      Int type3)
 {

@@ -494,10 +494,8 @@ Int parse_strcpy(char * b1, char * b2, Int slen) {
                     len--;
                     break;
                 case 'n':
+                    add_char(b, '\r');
                     add_char(b, '\n');
-                    len--;
-    /*                add_char(b, '\r');
-                    len-=2; */
                     break;
                 case 'r':
                     add_char(b, '\r');
@@ -549,6 +547,19 @@ Int getarg(char * n,
     argv++;
     *buf = *argv;
     *argc -= 1;
+
+    /* we don't want spaces */
+    p = *buf;
+    while (isspace(*p)) p++;
+
+    /* not likely, but possible */
+    if (strlen(p) == 0) {
+        usage(n);
+        fprintf(stderr, "** Invalid followup argument to -%s.\n", opt);
+        exit(1);
+    }
+
+    *buf = p;
 
     return 1;
 }

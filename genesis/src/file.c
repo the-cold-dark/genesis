@@ -147,11 +147,11 @@ Int close_file(filec_t * file) {
 Int flush_file(filec_t * file) {
     if (file->f.writable) {
         if (fflush(file->fp) == EOF)
-            return GETERR();
-        return F_SUCCESS;
+            return NO;
+        return YES;
     }
 
-    return F_FAILURE;
+    return -1;
 }
 
 cBuf * read_binary_file(filec_t * file, Int block) {
@@ -269,16 +269,19 @@ cStr * build_path(char * fname, struct stat * sbuf, Int nodir) {
 }
 
 cList * statbuf_to_list(struct stat * sbuf) {
-    cList       * list;
-    cData       * d;
+    cList        * list;
+    cData        * d;
+    char           buf[LINE];
     register Int   x;
 
     list = list_new(5);
     d = list_empty_spaces(list, 5);
-    for (x=0; x < 5; x++)
+    for (x=1; x < 5; x++)
         d[x].type = INTEGER;
 
-    d[0].u.val = (Int) sbuf->st_mode;
+    sprintf(buf, "%o", sbuf->st_mode);
+    d[0].type = STRING;
+    d[0].u.str = string_from_chars(buf, strlen(buf));
     d[1].u.val = (Int) sbuf->st_size;
     d[2].u.val = (Int) sbuf->st_atime;
     d[3].u.val = (Int) sbuf->st_mtime;

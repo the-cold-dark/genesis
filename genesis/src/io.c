@@ -226,14 +226,14 @@ Int boot(Obj * obj) {
 // --------------------------------------------------------------------
 */
 
-Int add_server(Int port, char * addr, Long objnum) {
+Int tcp_server(Int port, char * ipaddr, Long objnum) {
     server_t * cnew;
     SOCKET server_socket;
 
     /* Check if a server already exists for this port and address */
     for (cnew = servers; cnew; cnew = cnew->next) {
         if (cnew->port == port) {
-            if (addr && strcmp(string_chars(cnew->addr), addr))
+            if (ipaddr && strcmp(string_chars(cnew->addr), ipaddr))
                 continue;
             cnew->objnum = objnum;
             cnew->dead = 0;
@@ -242,7 +242,7 @@ Int add_server(Int port, char * addr, Long objnum) {
     }
 
     /* Get a server socket for the port. */
-    server_socket = get_server_socket(port, addr);
+    server_socket = get_tcp_socket(port, ipaddr);
     if (server_socket == SOCKET_ERROR)
         return FALSE;
 
@@ -250,8 +250,8 @@ Int add_server(Int port, char * addr, Long objnum) {
     cnew->server_socket = server_socket;
     cnew->client_socket = -1;
     cnew->port = port;
-    if (addr)
-        cnew->addr = string_from_chars(addr, strlen(addr));
+    if (ipaddr)
+        cnew->addr = string_from_chars(ipaddr, strlen(ipaddr));
     else
         cnew->addr = string_new(0);
     cnew->objnum = objnum;
@@ -262,15 +262,15 @@ Int add_server(Int port, char * addr, Long objnum) {
     return TRUE;
 }
 
-Int udp_server(Int port, char * addr, Long objnum) {
+Int udp_server(Int port, char * ipaddr, Long objnum) {
     SOCKET server_socket;
 
     /* Get a server socket for the port. */
-    server_socket = get_udp_server_socket(port, addr);
+    server_socket = get_udp_socket(port, ipaddr);
     if (server_socket == SOCKET_ERROR)
         return FALSE;
 
-    connection_add (server_socket, objnum);
+    connection_add(server_socket, objnum);
     return TRUE;
 }
 

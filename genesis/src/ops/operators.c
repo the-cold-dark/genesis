@@ -2163,14 +2163,27 @@ void op_in(void)
                 s = (uchar *) memchr(buf->s, (uchar) d1->u.val, buf->len);
                 if (s)
                     pos = s - buf->s;
-            } else if (d2->type == BUFFER) {
-                Int    len = d1->u.buffer->len - 1;
-                uchar  * p = d1->u.buffer->s;
+            } else if (d1->type == BUFFER) {
+                uchar * p,
+                      * ss = d1->u.buffer->s;
+                int     slen = d1->u.buffer->len,
+                        len = buf->len;
 
-                s = (uchar *) memchr(buf->s, *p, buf->len);
-
-                if (s && MEMCMP(s + 1, p + 1, len) == 0)
-                    pos = s - buf->s;
+                s = buf->s;
+                p = (uchar *) memchr(s, *ss, len); 
+                if (slen == 1) {
+                    pos = p ? (p - s) : -1;
+                } else {
+                    slen--;
+                    while (p) {
+                        if (MEMCMP(p + 1, ss + 1, slen) == 0) {
+                            pos = (p - s);
+                            break;
+                        }
+                        len -= (p - s) + 1;
+                        p = (uchar *) memchr(p + 1, *ss, len);
+                    }
+                }
             } else
                 goto error;
 

@@ -21,7 +21,6 @@
 
 void   init_binary_db(void);
 void   init_new_db(void);
-Int    init_db(Int force_textdump);
 Int    db_get(Obj * object, Long name);
 Int    db_put(Obj * object, Long name);
 Int    db_check(Long name);

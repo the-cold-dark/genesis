@@ -255,6 +255,94 @@ char *regerror(char *msg) {
 }
 
 /*
+// -------------------------------------------------------------
+// index() and company
+*/
+
+INTERNAL int str_rindexs(char * str, int len, char * sub, int slen, int origin){
+    register char * s;
+
+    if (origin < slen)
+        origin = slen;
+
+    len -= origin;
+
+    if (len < 0)
+        return 0;
+
+    s = &str[len];
+ 
+    while (len-- >= 0) {
+        if (*s == *sub) {
+            if (!strncmp(s, sub, slen))
+                return (s - str) + 1;
+        } 
+        s--;
+    }
+    
+    return 0;
+}
+
+INTERNAL int str_rindexc(char * str, int len, char sub, int origin) {
+    register char * s;
+        
+    len -= origin;
+
+    if (len < 0)
+        return 0;
+
+    s = &str[len];
+        
+    while (len-- >= 0) {
+        if (*s == sub)
+            return (s - str) + 1;
+        s--;    
+    }
+    
+    return 0;
+}   
+
+/*
+// returns 1..$ if item is found, 0 if it is not or -1 if an error is thrown
+*/
+
+int string_index(cStr * str, cStr * sub, int origin) {
+    int    len,
+           slen;
+    char * s,
+         * p,
+         * ss;
+    Bool   reverse = NO;
+
+    s = string_chars(str);
+    len = string_length(str);
+    ss = string_chars(sub);
+    slen = string_length(sub);
+
+    if (origin < 0) {
+        reverse = YES;
+        origin = -origin;
+    }
+
+    if (origin > len || !origin)
+        return F_FAILURE;
+
+    if (reverse) {
+        if (slen == 1)
+            return str_rindexc(s, len, *ss, origin);
+        return str_rindexs(s, len, ss, slen, origin);
+    } else if (origin > 0) {
+        origin--;
+        if (len - origin < slen)
+            return 0;
+        p = s + origin;
+        if ((p = strcstr(p, ss)))
+            return (p - s)+1;
+    }
+    return 0;
+}
+
+/*
 // Input to this routine should be a string you want to modify, a start, and a
 // length.  The start gives the offset from str->s at which you start being
 // interested in characters; the length is the amount of characters there will

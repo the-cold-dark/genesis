@@ -19,10 +19,10 @@
 #define SIZEOF_SHORT 2
 #define SIZEOF_INT 4
 #define SIZEOF_LONG 4
-#define SIZEOF_LLONG 8
+#define SIZEOF_LLONG 4
 #define SIZEOF_FLOAT 4
 #define SIZEOF_DOUBLE 8
-#define SIZEOF_LDOUBLE 12
+#define SIZEOF_LDOUBLE 10
 
 #define HAVE_MEMMOVE 1
 #define HAVE_MKDIR 1

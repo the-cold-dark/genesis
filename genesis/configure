@@ -316,7 +316,6 @@ fi
 
 ac_aux_dir=etc
 ac_config_guess=$ac_aux_dir/config.guess
-ac_config_sub=$ac_aux_dir/config.sub
 ac_configure=$ac_aux_dir/configure # This should be Cygnus configure.
 
 # Do some error Checking and defaulting for the system.
@@ -337,11 +336,6 @@ ac_configure=$ac_aux_dir/configure # This should be Cygnus configure.
 # NONE---*---* | *---NONE---* | *---*---NONE) ;;
 # *) { echo "configure: error: can only configure for one system and one target at a time" 1>&2; exit 1; } ;;
 # esac
-
-# Make sure we can run config.sub.
-if $ac_config_sub sun4 >/dev/null 2>&1; then :
-else { echo "configure: error: can not run $ac_config_sub" 1>&2; exit 1; }
-fi
 
 #####################################################################
 echo "- System configuration"
@@ -372,18 +366,24 @@ case "$host_alias" in
 NONE)
   case $nonopt in
   NONE)
-    if host_alias=`$ac_config_guess`; then :
-    else { echo "configure: error: can not guess host type; you must specify one" 1>&2; exit 1; }
+    host_alias=`$ac_config_guess`
+    if test -x $host_alias; then
+        cat <<END
+UNABLE TO DETERMINE
+** You can specify the system type with the argument --system=TYPE
+** Make sure to email brandon@cold.org with this error and your system type.
+END
+	exit 0
     fi ;;
   *) host_alias=$nonopt ;;
   esac ;;
 esac
+system=$host_alias
 
-system=`$ac_config_sub $host_alias`
 echo "$ac_t""$system" 1>&6
-CPU=`echo $system | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\1/g;s/\./_/g'`
-VENDOR=`echo $system | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\2/g;s/\./_/g'`
-SYS=`echo $system | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\3/g;s/[0-9\.]//g'`
+CPU=`echo $system | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\1/g;s/[\.-]/_/g'`
+VENDOR=`echo $system | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\2/g;s/[\.-]/_/g'`
+SYS=`echo $system | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\3/g;s/[0-9\.-]//g'`
 echo "#define SYSTEM_TYPE \"$system\"" >> confdefs.h
 
 # Linux is either 'linux' (elf) or 'linuxaout' (a.out)
@@ -391,7 +391,7 @@ SYS=`echo $SYS | sed 's/aout$//g'`
 
 ## if they are HP-UX, lets add -Aa
 
-if [ $SYS = "hp-hpux" ]; then
+if [ $SYS = "hpux" ]; then
     CFLAGS="$CFLAGS -Aa"
 fi
 

@@ -84,19 +84,20 @@ module_t * cold_modules[] = {
 #define NATIVE_BUFFER_FROM_VEIL_PKTS 57
 #define NATIVE_HTTP_DECODE 58
 #define NATIVE_HTTP_ENCODE 59
-#define NATIVE_MATH_MINOR 60
-#define NATIVE_MATH_MAJOR 61
-#define NATIVE_MATH_ADD 62
-#define NATIVE_MATH_SUB 63
-#define NATIVE_MATH_DOT 64
-#define NATIVE_MATH_DISTANCE 65
-#define NATIVE_MATH_CROSS 66
-#define NATIVE_MATH_SCALE 67
-#define NATIVE_MATH_IS_LOWER 68
-#define NATIVE_MATH_TRANSPOSE 69
-#define NATIVE_LAST 70
+#define NATIVE_STRING_HTML_ESCAPE 60
+#define NATIVE_MATH_MINOR 61
+#define NATIVE_MATH_MAJOR 62
+#define NATIVE_MATH_ADD 63
+#define NATIVE_MATH_SUB 64
+#define NATIVE_MATH_DOT 65
+#define NATIVE_MATH_DISTANCE 66
+#define NATIVE_MATH_CROSS 67
+#define NATIVE_MATH_SCALE 68
+#define NATIVE_MATH_IS_LOWER 69
+#define NATIVE_MATH_TRANSPOSE 70
+#define NATIVE_LAST 71
 
-#define MAGIC_MODNUMBER 855073983
+#define MAGIC_MODNUMBER 855726277
 
 
 #ifdef _native_
@@ -161,6 +162,7 @@ native_t natives[NATIVE_LAST] = {
     {"buffer",       "from_veil_pkts",    native_from_veil_pkts},
     {"http",         "decode",            native_decode},
     {"http",         "encode",            native_encode},
+    {"string",       "html_escape",       native_html_escape},
     {"math",         "minor",             native_minor},
     {"math",         "major",             native_major},
     {"math",         "add",               native_add},

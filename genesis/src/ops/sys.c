@@ -141,7 +141,7 @@ void func_backup(void) {
     /* start asyncrynous backup of the object db file */
     strcat(buf, "/objects");
     if (db_start_dump(buf))
-        THROW((perm_id, "Unable to open dump db file \"%s\"", buf))
+        THROW((file_id, "Unable to open dump db file \"%s\"", buf))
 
     /* return '1' */
     push_int(1);

@@ -531,30 +531,36 @@ COLDC_FUNC(find_next_method) {
 }
 
 COLDC_FUNC(list_method) {
-    Int      num_args,
-             indent,
-             parens;
+    Int      argc,
+             indent;
+    int      format_flags = FMT_DEFAULT;
     cData * args;
     cList * code;
 
     /* Accept a symbol for the method name, an optional integer for the
      * indentation, and an optional integer to specify full
      * parenthesization. */
-    if (!func_init_1_to_3(&args, &num_args, SYMBOL, INTEGER, INTEGER))
+    if (!func_init_1_to_3(&args, &argc, SYMBOL, INTEGER, INTEGER))
         return;
 
-    indent = (num_args >= 2) ? args[1].u.val : DEFAULT_INDENT;
-    indent = (indent < 0) ? 0 : indent;
-    parens = (num_args == 3) ? (args[2].u.val != 0) : 0;
-    code = object_list_method(cur_frame->object, args[0].u.symbol, indent,
-        		      parens);
+    indent = (argc >= 2) ? INT2 : DEFAULT_INDENT;
+    if (indent < 1)
+        THROW((type_id, "Invalid indentation %d, must be one or more.", INT2))
+    if (argc == 3) {
+        if (INT3 & FMT_FULL_PARENS)
+            format_flags |= FMT_FULL_PARENS;
+        if (INT3 & FMT_FULL_BRACES)
+            format_flags |= FMT_FULL_BRACES;
+    }
+
+    code = object_list_method(cur_frame->object, SYM1, indent, format_flags);
 
     if (code) {
-        pop(num_args);
+        pop(argc);
         push_list(code);
         list_discard(code);
     } else {
-        cthrow(methodnf_id, "Method %I not found.", args[0].u.symbol);
+        cthrow(methodnf_id, "Method %I not found.", SYM1);
     }
 }
 

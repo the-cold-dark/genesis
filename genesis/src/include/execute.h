@@ -8,7 +8,6 @@
 typedef struct frame Frame;
 typedef struct error_action_specifier Error_action_specifier;
 typedef struct handler_info Handler_info;
-typedef struct traceback_info Traceback_info;
 typedef struct vmstate VMState;
 typedef struct vmstack VMStack;
 typedef struct task_s task_t;
@@ -22,7 +21,7 @@ typedef struct task_s task_t;
 #define ARG_STACK_MALLOC_DELTA 8
 
 struct vmstack {
-    cData   * stack;
+    cData  * stack;
     Int       stack_size,
             * arg_starts,
               arg_size;
@@ -31,7 +30,7 @@ struct vmstack {
 
 struct vmstate {
     Frame   * cur_frame;
-    cData   * stack;
+    cData  * stack;
     Int       stack_pos,
               stack_size,
             * arg_starts,
@@ -96,31 +95,10 @@ struct error_action_specifier {
     Error_action_specifier *next;
 };
 
-/*
- *  * type specifies interp_error, user_error or
- *   */
-struct traceback_info {
-    Int              type;
-    Ident            location;
-    union {
-        cData          * method_name;
-        Ident            opcode;
-    } u;
-    cObjnum          current_obj;
-    cObjnum          defining_obj;
-    Method         * method;
-    Int              pc;
-    Traceback_info * next;
-};
-
-
 struct handler_info {
-    cList          * cached_traceback;
-    Traceback_info * traceback;
-    Ident            error;
-    cStr           * error_message;
-    cData          * error_data;
-    Handler_info   * next;
+    cList *traceback;
+    Ident error;
+    Handler_info *next;
 };
 
 #define MF_NONE      0    /* No flags */
@@ -161,8 +139,8 @@ extern VMState * preempted;
 extern VMState * suspended;
 
 void init_execute(void);
-void task(cObjnum objnum, Long message, Int num_args, ...);
-void task_method(Obj *obj, Method *method);
+void vm_task(cObjnum objnum, Long message, Int num_args, ...);
+void vm_method(Obj *obj, Method *method);
 Int  frame_start(Obj *obj,
                  Method *method,
                  cObjnum sender,
@@ -178,7 +156,6 @@ Int pass_method(Int stack_start, Int arg_start);
 Int call_method(cObjnum objnum, Ident message, Int stack_start, Int arg_start, Bool is_frob);
 void pop(Int n);
 void check_stack(Int n);
-Traceback_info *traceback_info_dup(Traceback_info *info);
 
 #define F_PUSH(_name_, _c_type_) \
     void CAT(push_, _name_) (_c_type_ var)
@@ -213,7 +190,6 @@ Int func_init_1(cData **args, Int type1);
 Int func_init_2(cData **args, Int type1, Int type2);
 Int func_init_3(cData **args, Int type1, Int type2, Int type3);
 Int func_init_0_or_1(cData **args, Int *num_args, Int type1);
-Int func_init_0_to_2(cData **args, Int *num_args, Int type1, Int type2);
 Int func_init_1_or_2(cData **args, Int *num_args, Int type1, Int type2);
 Int func_init_2_or_3(cData **args, Int *num_args, Int type1, Int type2,
 		     Int type3);
@@ -223,35 +199,30 @@ Int func_init_1_to_3(cData **args, Int *num_args, Int type1, Int type2,
 		     Int type3);
 void func_num_error(Int num_args, char *required);
 void func_type_error(char *which, cData *wrong, char *required);
+/* void func_error(Ident id, char *fmt, ...); */
 void cthrow(Long id, char *fmt, ...);
 void unignorable_error(Ident id, cStr *str);
 void interp_error(Ident error, cStr *str);
 void user_error(Ident error, cStr *str, cData *arg);
-void propagate_error(Traceback_info *traceback, Ident error,
-                     cStr *explnation, cData *arg);
+void propagate_error(cList *traceback, Ident error);
 void pop_error_action_specifier(void);
 void pop_handler_info(void);
-cList *generate_traceback(Traceback_info *traceback);
-
-void      task_suspend(void);
-cList   * task_info(Long tid);
-void      task_resume(Long tid, cData *ret);
-void      task_cancel(Long tid);
-void      task_pause(void);
-VMState * task_lookup(Long tid);
-cList   * task_list(void);
-cList   * task_stack(Frame * frame_to_trace, Bool calculate_line_numbers);
-void      log_task_stack(Long taskid, cList * stack, 
-                         void (logroutine)(char*,...));
-void      run_paused_tasks(void);
-void      bind_opcode(Int opcode, cObjnum objnum);
-VMState * vm_current(void);
+void vm_suspend(void);
+cList * vm_info(Long tid);
+void vm_resume(Long tid, cData *ret);
+void vm_cancel(Long tid);
+void vm_pause(void);
+VMState *vm_lookup(Long tid);
+cList * vm_list(void);
+cList * vm_stack(void);
+void run_paused_tasks(void);
+void bind_opcode(Int opcode, cObjnum objnum);
 
 #ifdef DRIVER_DEBUG
-void init_debug(void);
-void clear_debug(void);
-void start_debug(void);
-void start_full_debug(void);
+void init_debug();
+void clear_debug();
+void start_debug();
+void start_full_debug();
 void get_debug (cData *d);
 #endif
 

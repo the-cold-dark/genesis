@@ -3,8 +3,11 @@
 */
 
 #include "defs.h"
-#include "functions.h"
+
+#include "lookup.h"
 #include "execute.h"
+#include "grammar.h"
+#include "opcodes.h"
 
 /* ----------------------------------------------------------------- */
 /* cancel a suspended task                                           */
@@ -15,7 +18,7 @@ COLDC_FUNC(task_info) {
     if (!func_init_1(&args, INTEGER))
         return;
 
-    list = task_info(INT1);
+    list = vm_info(INT1);
 
     if (!list)
         THROW((type_id, "No task %d.", INT1))
@@ -33,10 +36,10 @@ COLDC_FUNC(cancel) {
         return;
 
 
-    if (!task_lookup(args[0].u.val)) {
+    if (!vm_lookup(args[0].u.val)) {
         cthrow(type_id, "No task %d.", args[0].u.val);
     } else {
-        task_cancel(args[0].u.val);
+        vm_cancel(args[0].u.val);
         pop(1);
         push_int(1);
     }
@@ -44,7 +47,7 @@ COLDC_FUNC(cancel) {
 
 /* ----------------------------------------------------------------- */
 /* suspend a task                                                    */
-COLDC_FUNC(suspend) {
+void func_suspend(void) {
 
     if (!func_init_0())
         return;
@@ -54,13 +57,13 @@ COLDC_FUNC(suspend) {
         return;
     }
 
-    task_suspend();
+    vm_suspend();
 
     /* we'll let task_resume push something onto the stack for us */
 }
 
 /* ----------------------------------------------------------------- */
-COLDC_FUNC(resume) {
+void func_resume(void) {
     cData *args;
     Int nargs;
     Long tid;
@@ -70,20 +73,20 @@ COLDC_FUNC(resume) {
 
     tid = args[0].u.val;
 
-    if (!task_lookup(tid)) {
+    if (!vm_lookup(tid)) {
         cthrow(type_id, "No task %d.", args[0].u.val);
     } else {
         if (nargs == 1)
-            task_resume(tid, NULL);
+            vm_resume(tid, NULL);
         else
-            task_resume(tid, &args[1]);
+            vm_resume(tid, &args[1]);
         pop(nargs);
         push_int(1);
     }
 }
 
 /* ----------------------------------------------------------------- */
-COLDC_FUNC(pause) {
+void func_pause(void) {
     if (!func_init_0())
         return;
 
@@ -93,12 +96,12 @@ COLDC_FUNC(pause) {
         if (cur_frame->ticks <= REFRESH_METHOD_THRESHOLD)
             cur_frame->ticks = PAUSED_METHOD_TICKS;
     } else {
-        task_pause();
+        vm_pause();
     }
 }
 
 /* ----------------------------------------------------------------- */
-COLDC_FUNC(atomic) {
+void func_atomic(void) {
     cData * args;
 
     if (!func_init_1(&args, INTEGER))
@@ -112,7 +115,7 @@ COLDC_FUNC(atomic) {
 }
 
 /* ----------------------------------------------------------------- */
-COLDC_FUNC(refresh) {
+void func_refresh(void) {
 
     if (!func_init_0())
         return;
@@ -123,99 +126,66 @@ COLDC_FUNC(refresh) {
         if (atomic) {
             cur_frame->ticks = PAUSED_METHOD_TICKS;
         } else {
-            task_pause();
+            vm_pause();
         }
     }
 }
 
 /* ----------------------------------------------------------------- */
-COLDC_FUNC(tasks) {
+void func_tasks(void) {
     cList * list;
 
     if (!func_init_0())
         return;
 
-    list = task_list();
+    list = vm_list();
 
     push_list(list);
     list_discard(list);
 }
 
 /* ----------------------------------------------------------------- */
-COLDC_FUNC(tick) {
+void func_tick(void) {
     if (!func_init_0())
         return;
     push_int(tick);
 }
 
 /* ----------------------------------------------------------------- */
-COLDC_FUNC(stack) {
-    VMState * vm = NULL;
-    Frame   * frame = NULL;
-    cData   * args;
-    Int       nargs;
-    Bool      want_lineno = TRUE;
+void func_stack(void) {
+    cList * list;
 
-    if (!func_init_0_to_2(&args, &nargs, INTEGER, INTEGER))
-        return;
-
-    if ((nargs == 0) || (INT1 == task_id)) {
-        frame = cur_frame;
-    } else {
-        vm = task_lookup(INT1);
-        if (vm)
-            frame = vm->cur_frame;
-    }
-
-    if ((nargs == 2) && (args[1].u.val == 0))
-        want_lineno = FALSE;
-
-    if (frame) {
-        cList * list;
-
-        list = task_stack(cur_frame, want_lineno);
-
-        pop(nargs);
-        push_list(list);
-        list_discard(list);
-    } else {
-        cthrow(type_id, "No task %d.", args[0].u.val);
-    }
-}
-
-COLDC_FUNC(calling_method) {
-    /* Accept no arguments, and push the name of the calling method */
     if (!func_init_0())
         return;
 
-    if (cur_frame->caller_frame)
-        push_symbol(cur_frame->caller_frame->method->name);
-    else
-        push_int(0);
+    list = vm_stack();
+
+    push_list(list);
+    list_discard(list);
 }
 
-COLDC_FUNC(method) {
+void func_method(void) {
     if (!func_init_0())
         return;
 
     push_symbol(cur_frame->method->name);
 }
 
-COLDC_FUNC(this) {
+void func_this(void) {
     /* Accept no arguments, and push the objnum of the current object. */
     if (!func_init_0())
         return;
     push_objnum(cur_frame->object->objnum);
 }
 
-COLDC_FUNC(definer) {
+void func_definer(void) {
     /* Accept no arguments, and push the objnum of the method definer. */
     if (!func_init_0())
         return;
     push_objnum(cur_frame->method->object->objnum);
 }
 
-COLDC_FUNC(sender) {
+void func_sender(void) {
     /* Accept no arguments, and push the objnum of the sending object. */
     if (!func_init_0())
         return;
@@ -225,7 +195,7 @@ COLDC_FUNC(sender) {
         push_objnum(cur_frame->sender);
 }
 
-COLDC_FUNC(caller) {
+void func_caller(void) {
     /* Accept no arguments, and push the objnum of the calling method's
      * definer. */
     if (!func_init_0())
@@ -236,14 +206,14 @@ COLDC_FUNC(caller) {
         push_objnum(cur_frame->caller);
 }
 
-COLDC_FUNC(task_id) {
+void func_task_id(void) {
     /* Accept no arguments, and push the task ID. */
     if (!func_init_0())
         return;
     push_int(task_id);
 }
 
-COLDC_FUNC(ticks_left) {
+void func_ticks_left(void) {
     if (!func_init_0())
       return;
 

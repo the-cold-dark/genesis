@@ -137,7 +137,7 @@ cList * match_template(char *ctemplate, char *s) {
 
 /* Match a coupled wildcard as well as the next token, if there is one.  This
  * adds the fields that it matches. */
-static char *match_coupled_wildcard(char *ctemplate, char *s) {
+INTERNAL char *match_coupled_wildcard(char *ctemplate, char *s) {
     char *p, *q;
 
     /* Check for quoted text. */
@@ -178,7 +178,7 @@ static char *match_coupled_wildcard(char *ctemplate, char *s) {
 
 /* Match a wildcard.  Also match the next token, if there is one.  This adds
  * the fields that it matches. */
-static char * match_wildcard(char *ctemplate, char *s) {
+INTERNAL char * match_wildcard(char *ctemplate, char *s) {
     char *p, *q, *r;
 
     /* If no token follows the wildcard, then the match succeeds. */
@@ -251,7 +251,7 @@ static char * match_wildcard(char *ctemplate, char *s) {
 }
 
 /* Match a word pattern.  Do not add any fields. */
-static char * match_word_pattern(char *ctemplate, char *s) {
+INTERNAL char * match_word_pattern(char *ctemplate, char *s) {
     char *p = s;
     Int abbrev = 0;
 
@@ -303,7 +303,7 @@ static char * match_word_pattern(char *ctemplate, char *s) {
 
 /* Add a field.  strip should be true if this is a field for a wildcard not at
  * the end of the template. */
-static void add_field(char *start, char *end, Bool strip) {
+INTERNAL void add_field(char *start, char *end, Bool strip) {
     if (field_pos >= field_size) {
 	field_size = field_size * 2 + MALLOC_DELTA;
 	fields = EREALLOC(fields, Field, field_size);
@@ -386,7 +386,7 @@ cList * match_regexp(cStr * reg, char * s, Bool sensitive, Bool *error) {
     }
 
     *error = NO;
-    if (regexec(rx, s, sensitive)) {
+    if (gen_regexec(rx, s, sensitive)) {
         fields = list_new(NSUBEXP);
         for (i = 0; i < NSUBEXP; i++) {
             elemlist = list_new(2);
@@ -433,7 +433,7 @@ cList * regexp_matches(cStr * reg, char * s, Bool sensitive, Bool * error) {
     }
     *error = NO;
 
-    if (!regexec(rx, s, sensitive))
+    if (!gen_regexec(rx, s, sensitive))
         return NULL;
 
     /* size the results */
@@ -582,7 +582,7 @@ cStr * strsed(cStr * reg,  /* the regexp string */
         THROW((regexp_id, "%s", regerror(NULL)))
 
     /* initial regexp execution */
-    if (!regexec(rx, s, sensitive))
+    if (!gen_regexec(rx, s, sensitive))
         return string_dup(ss);
 
     for (; size < NSUBEXP && rx->startp[size] != (char) NULL; size++);
@@ -605,7 +605,7 @@ cStr * strsed(cStr * reg,  /* the regexp string */
                 if (rlen)
                     out = string_add(out, rs);
                 p = rx->endp[0];
-            } while (p && regexec(rx, p, sensitive));
+            } while (p && gen_regexec(rx, p, sensitive));
 
             /* add the end on */
             if ((i = (s + slen) - p))
@@ -667,7 +667,7 @@ cStr * strsed(cStr * reg,  /* the regexp string */
                     out = string_add_chars(out, p, i);
 
                 rxs = rx->endp[0];
-            } while (rxs && regexec(rx, rxs, sensitive));
+            } while (rxs && gen_regexec(rx, rxs, sensitive));
 
             if ((i = (s + slen) - rxs))
                 out = string_add_chars(out, rxs, i);
@@ -793,7 +793,7 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
     /* better more than less and having to resize */
     out = string_new(string_length(str) * 2);
 
-    for (;;) {
+    forever {
         s = strchr(fmt, '%');
 
         if (s == (char) NULL || *s == (char) NULL) {
@@ -1006,38 +1006,6 @@ cList * strexplode(cStr * str, char * sep, Int sep_len, Bool blanks) {
     return list;
 }
 
-cList * strexplodequoted(cStr * str) {
-    char     * s = string_chars(str),
-             * p = s,
-             * q;
-    cList    * list = list_new(0);
-    cStr     * word;
-    cData      d;
-
-    d.type = STRING;
-
-    while (*p) {
-        while (*p == ' ')
-            p++;
-        if (*p == '"') {
-            p++;
-            q = p;
-            while (*q && !(*q == '"' && (*(q + 1) == ' ' || !*(q + 1))))
-                q++;
-            ADD_WORD((p, q - p));
-            p = q + 1; /* after end quote */
-        } else if (*p) {
-            q = p;
-            while (*q && (*q != ' ')) /* stop on space */
-                q++;
-            ADD_WORD((p, q - p));
-            p = q;
-        }
-    }
-
-    return list;
-}
-
 #undef ADD_WORD
 
 #undef x_THROW
@@ -1080,7 +1048,7 @@ cList * strsplit(cStr * str, cStr * reg, Int flags) {
     s = p = string_chars(str);
 
     /* initial regexp execution */
-    if (!regexec(rx, s, flags & RF_SENSITIVE)) {
+    if (!gen_regexec(rx, s, flags & RF_SENSITIVE)) {
         d.u.str = str;
         list = list_add(list_new(1), &d);
         return list;
@@ -1106,7 +1074,7 @@ cList * strsplit(cStr * str, cStr * reg, Int flags) {
         }
 
         p = rx->endp[0];
-    } while (p && regexec(rx, p, flags & RF_SENSITIVE));
+    } while (p && gen_regexec(rx, p, flags & RF_SENSITIVE));
 
     if ((x = (s + len) - p) || (flags & RF_BLANKS)) {
         d.u.str = string_from_chars(p, x);

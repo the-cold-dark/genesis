@@ -15,6 +15,8 @@ RELEASE INFORMATION:
       * fix parent list leak in binarydb decompilation (Brad)
       * fix method_bytecode() bug with 'catch any' (Allen Noe)
       * fix gmt offset calculation on some platforms (Brandon)
+      * port to Mac OS X (Bruce)
+      * remove regsub references (not implemented/used) (Bruce)
 
 1.1.9  [1-Oct-100]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

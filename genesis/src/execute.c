@@ -14,20 +14,19 @@
 #include "moddef.h"
 
 #define STACK_STARTING_SIZE                (256 - STACK_MALLOC_DELTA)
-#define ARG_STACK_STARTING_SIZE            (32 - ARG_STACK_MALLOC_DELTA)
+#define ARG_STACK_STARTING_SIZE                (32 - ARG_STACK_MALLOC_DELTA)
 
 extern Bool running;
 
-static void execute(void);
-static void out_of_ticks_error(void);
-static void start_error(Ident error, cStr *explanation, cData *arg,
-                          Traceback_info * location);
-static Traceback_info * traceback_add(Traceback_info * traceback,
-                                        Ident error);
-static void fill_in_method_info(Traceback_info *d);
+INTERNAL void execute(void);
+INTERNAL void out_of_ticks_error(void);
+INTERNAL void start_error(Ident error, cStr *explanation, cData *arg,
+                        cList * location);
+INTERNAL cList * traceback_add(cList * traceback, Ident error);
+INTERNAL void fill_in_method_info(cData *d);
 
-static Frame *frame_store = NULL;
-static Int frame_depth;
+INTERNAL Frame *frame_store = NULL;
+INTERNAL Int frame_depth;
 cStr *numargs_str;
 
 Frame *cur_frame, *suspend_frame;
@@ -56,7 +55,7 @@ VMStack *stack_store = NULL, *holder_cache = NULL;
 // These two defines add and remove tasks from task lists.
 //
 */
-#define ADD_TASK(the_list, the_value) { \
+#define ADD_VM_TASK(the_list, the_value) { \
         if (!the_list) { \
             the_list = the_value; \
             the_value->next = NULL; \
@@ -66,18 +65,18 @@ VMStack *stack_store = NULL, *holder_cache = NULL;
         } \
     }
 
-#define REMOVE_TASK(the_list, the_value) { \
+#define REMOVE_VM_TASK(the_list, the_value) { \
         if (the_list == the_value) { \
             the_list = the_list->next; \
         } else { \
-            task_delete(the_list, the_value); \
+            vm_delete(the_list, the_value); \
         } \
     }
 
 /*
 // ---------------------------------------------------------------
 */
-static void store_stack(void) {
+void store_stack(void) {
     VMStack * holder;
 
     if (holder_cache) {
@@ -137,7 +136,7 @@ VMState * vm_current(void) {
 /*
 // ---------------------------------------------------------------
 */
-static void restore_vm(VMState *vm) {
+void restore_vm(VMState *vm) {
     task_id = vm->task_id;
     frame_depth = vm->frame_depth;
     cur_frame = vm->cur_frame;
@@ -170,7 +169,7 @@ static void restore_vm(VMState *vm) {
 /*
 // ---------------------------------------------------------------
 */
-static void task_delete(VMState *list, VMState *elem) {
+void vm_delete(VMState *list, VMState *elem) {
     while (list && (list->next != elem))
         list = list->next;
     if (list)
@@ -180,7 +179,7 @@ static void task_delete(VMState *list, VMState *elem) {
 /*
 // ---------------------------------------------------------------
 */
-VMState *task_lookup(Long tid) {
+VMState *vm_lookup(Long tid) {
     VMState * vm;
 
     for (vm = suspended;  vm;  vm = vm->next)
@@ -200,7 +199,7 @@ VMState *task_lookup(Long tid) {
 //
 */
 
-static cList * frame_info(Frame * frame) {
+cList * frame_info(Frame * frame) {
     cList * list;
     cData   d;
 
@@ -232,12 +231,12 @@ static cList * frame_info(Frame * frame) {
     return list;
 }
 
-cList * task_info(Long tid) {
+cList * vm_info(Long tid) {
     cList   * list;
     Frame   * frame;
     cData     d,
             * dl;
-    VMState * vm = task_lookup(tid);
+    VMState * vm = vm_lookup(tid);
 
     if (!vm)
         return NULL;
@@ -288,16 +287,16 @@ cList * task_info(Long tid) {
 // we assume tid is a non-preempted task
 //
 */
-void task_resume(Long tid, cData *ret) {
-    VMState * vm = task_lookup(tid),
+void vm_resume(Long tid, cData *ret) {
+    VMState * vm = vm_lookup(tid),
             * old_vm;
 
     if (vm->task_id == task_id)
         return;
     old_vm = vm_current();
     restore_vm(vm);
-    REMOVE_TASK(suspended, vm);
-    ADD_TASK(vmstore, vm);
+    REMOVE_VM_TASK(suspended, vm);
+    ADD_VM_TASK(vmstore, vm);
     if (ret) {
         check_stack(1);
         data_dup(&stack[stack_pos], ret);
@@ -310,13 +309,13 @@ void task_resume(Long tid, cData *ret) {
     execute();
     store_stack();
     restore_vm(old_vm);
-    ADD_TASK(vmstore, old_vm);
+    ADD_VM_TASK(vmstore, old_vm);
 }
 
 /*
 // ---------------------------------------------------------------
 */
-static Int fork_method(Obj * obj,
+Int fork_method(Obj * obj,
                 Method * method,
                 cObjnum    sender,
                 cObjnum    caller,
@@ -351,7 +350,7 @@ static Int fork_method(Obj * obj,
         pop(stack_pos);
     } else {
         /* pause it, and let system handle it later, as a normal paused task */
-        task_pause();
+        vm_pause();
         result = CALL_FORK;
         call_environ = task_id;
     }
@@ -362,7 +361,7 @@ static Int fork_method(Obj * obj,
     cache_discard(obj);
 
     restore_vm(current);
-    ADD_TASK(vmstore, current);
+    ADD_VM_TASK(vmstore, current);
 
     /* clean up the stack */
     if (result != CALL_ERROR) {
@@ -376,10 +375,10 @@ static Int fork_method(Obj * obj,
 /*
 // ---------------------------------------------------------------
 */
-void task_suspend(void) {
+void vm_suspend(void) {
     VMState * vm = vm_current();
 
-    ADD_TASK(suspended, vm);
+    ADD_VM_TASK(suspended, vm);
     init_execute();
     cur_frame = NULL;
 }
@@ -440,8 +439,8 @@ void show_queues(void) {
 /*
 // ---------------------------------------------------------------
 */
-void task_cancel(Long tid) {
-    VMState * vm = task_lookup(tid),
+void vm_cancel(Long tid) {
+    VMState * vm = vm_lookup(tid),
             * old_vm;
 
     if (vm == NULL) {
@@ -459,24 +458,24 @@ void task_cancel(Long tid) {
         frame_return();
     if (old_vm != NULL) {
         if (vm->preempted)
-            REMOVE_TASK(preempted, vm)
+            REMOVE_VM_TASK(preempted, vm)
         else
-            REMOVE_TASK(suspended, vm)
+            REMOVE_VM_TASK(suspended, vm)
         store_stack();
-        ADD_TASK(vmstore, vm);
+        ADD_VM_TASK(vmstore, vm);
         restore_vm(old_vm);
-        ADD_TASK(vmstore, old_vm);
+        ADD_VM_TASK(vmstore, old_vm);
     }
 }
 
 /*
 // ---------------------------------------------------------------
 */
-void task_pause(void) {
+void vm_pause(void) {
     VMState * vm = vm_current();
 
     vm->preempted = YES;
-    ADD_TASK(preempted, vm);
+    ADD_VM_TASK(preempted, vm);
     init_execute();
     cur_frame = NULL;  
 }
@@ -497,13 +496,13 @@ void run_paused_tasks(void) {
         cur_frame->ticks = PAUSED_METHOD_TICKS;
         last_task = task;
         task = task->next;
-        ADD_TASK(vmstore, last_task);
+        ADD_VM_TASK(vmstore, last_task);
         execute();
         store_stack();
     }
 
     restore_vm(vm);
-    ADD_TASK(vmstore, vm);
+    ADD_VM_TASK(vmstore, vm);
 }
 
 /*
@@ -513,7 +512,7 @@ void run_paused_tasks(void) {
 //
 */
 
-cList * task_list(void) {
+cList * vm_list(void) {
     cList  * r;
     cData    elem;
     VMState * vm;
@@ -538,7 +537,7 @@ cList * task_list(void) {
 /*
 // ---------------------------------------------------------------
 */
-cList * task_stack(Frame * frame_to_trace, Bool want_line_numbers) {
+cList * vm_stack(void) {
     cList * r;
     cData   d,
            * list;
@@ -546,7 +545,7 @@ cList * task_stack(Frame * frame_to_trace, Bool want_line_numbers) {
   
     r = list_new(0);
     d.type = LIST;
-    for (f = frame_to_trace; f; f = f->caller_frame) {
+    for (f = cur_frame; f; f = f->caller_frame) {
 
         d.u.list = list_new(5);
         list = list_empty_spaces(d.u.list, 5);
@@ -558,10 +557,7 @@ cList * task_stack(Frame * frame_to_trace, Bool want_line_numbers) {
         list[2].type = SYMBOL;
         list[2].u.symbol = ident_dup(f->method->name);
         list[3].type = INTEGER;
-        if (want_line_numbers)
-            list[3].u.val = line_number(f->method, f->pc - 1);
-        else
-            list[3].u.val = -1;
+        list[3].u.val = line_number(f->method, f->pc - 1);
         list[4].type = INTEGER;
         list[4].u.val = (Long) f->pc;
 
@@ -570,61 +566,6 @@ cList * task_stack(Frame * frame_to_trace, Bool want_line_numbers) {
     }
 
     return r;
-}
-
-void log_task_stack(Long taskid, cList * stack, void (logroutine)(char*,...))
-{
-    cData * frame,
-          * sender,
-          * caller,
-          * method,
-          * lineno,
-          * opcode;
-    char  * sender_name,
-          * caller_name,
-          * method_name;
-    Obj   * sender_obj,
-          * caller_obj;
-    Int     lineno_val,
-            opcode_val;
-
-    (logroutine)("Stack trace for task %l:", taskid);
-
-    for (frame = list_first(stack); frame; frame = list_next(stack, frame)) {
-        sender = list_elem(frame->u.list, 0);
-	caller = list_elem(frame->u.list, 1);
-	method = list_elem(frame->u.list, 2);
-	lineno = list_elem(frame->u.list, 3);
-	opcode = list_elem(frame->u.list, 4);
-
-        sender_obj = cache_retrieve(sender->u.objnum);
-	if (sender_obj) {
-            sender_name = ident_name(sender_obj->objname);
-            cache_discard(sender_obj);
-        } else {
-            sender_name = "*driver*";
-        }
-
-        caller_obj = cache_retrieve(caller->u.objnum);
-	caller_name = ident_name(caller_obj->objname);
-	cache_discard(caller_obj);
-
-	method_name = ident_name(method->u.symbol);
-
-        lineno_val = lineno->u.val;
-        opcode_val = opcode->u.val;
-
-	if (lineno_val == -1)
-            (logroutine)("  $%s<$%s>.%s(): opcode: %d",
-                         sender_name, caller_name, method_name,
-                         opcode_val);
-	else
-	    (logroutine)("  $%s<$%s>.%s(): line: %d opcode: %d", 
-                         sender_name, caller_name, method_name,
-                         lineno_val, opcode_val);
-    }
-
-    (logroutine)("---");
 }
 
 /*
@@ -685,7 +626,7 @@ void init_execute(void) {
 //
 // No we dont, lets just rewrite the interpreter, this sucks.
 */
-void task(cObjnum objnum, Long name, Int num_args, ...) {
+void vm_task(cObjnum objnum, Long name, Int num_args, ...) {
     va_list arg;
 
     /* Don't execute if a shutdown() has occured. */
@@ -729,7 +670,7 @@ void task(cObjnum objnum, Long name, Int num_args, ...) {
 // Execute a task by evaluating a method on an object.
 //
 */
-void task_method(Obj *obj, Method *method) {
+void vm_method(Obj *obj, Method *method) {
     clear_debug();
     frame_start(obj, method, NOT_AN_IDENT, NOT_AN_IDENT, NOT_AN_IDENT, 0, 0, FROB_NO);
 
@@ -1041,7 +982,7 @@ void dump_execute_profile(void) {
 #define MAX_NUM 2147483647
 #endif
 
-static void execute(void) {
+INTERNAL void execute(void) {
     Int opcode;
 
     while (cur_frame) {
@@ -1127,7 +1068,7 @@ void anticipate_assignment(void) {
 */
 
 #if DISABLED
-static void
+INTERNAL void
 call_native_method(Method * method,
                    Int        stack_start,
                    Int        arg_start,
@@ -1549,26 +1490,6 @@ Int func_init_3_or_4(cData **args, Int *num_args,
     return 0;
 }
 
-Int func_init_0_to_2(cData **args, Int *num_args, Int type1, Int type2)
-{
-    Int arg_start = arg_starts[--arg_pos];
-
-    *args = &stack[arg_start];
-    *num_args = stack_pos - arg_start;
-    if (*num_args < 0 || *num_args > 2)
-        func_num_error(*num_args, "zero to two");
-    else if (type1 && *num_args >= 1 && stack[arg_start].type != type1)
-        func_type_error("first", &stack[arg_start], english_type(type1));
-    else if (type2 && *num_args == 2 && stack[arg_start + 1].type != type2)
-        func_type_error("second", &stack[arg_start + 1], english_type(type2));
-    else if (INVALID_BINDING)
-        cthrow(perm_id, "%s() is bound to %O", FUNC_NAME(), FUNC_BINDING());
-    else
-	return 1;
-
-    return 0;
-}
-
 Int func_init_1_to_3(cData **args, Int *num_args, Int type1, Int type2,
                      Int type3)
 {
@@ -1605,7 +1526,7 @@ void func_type_error(char *which, cData *wrong, char *required)
     cthrow(type_id, "The %s argument (%D) is not %s.", which, wrong, required);
 }
 
-static Bool is_critical (void) {
+INTERNAL Bool is_critical (void) {
     if (cur_frame
 	&& cur_frame->specifiers
 	&& cur_frame->specifiers->type==CRITICAL)
@@ -1639,85 +1560,11 @@ void cthrow(Ident error, char *fmt, ...)
 	string_discard(str);
 }
 
-static Traceback_info *traceback_info_new() {
-    Traceback_info *new;
-
-    new = (Traceback_info *) emalloc(sizeof(Traceback_info));
-    new->type = 3;
-    new->next = NULL;
-    return new;
-}
-
-static Traceback_info *traceback_info_add(Traceback_info *now,
-                                            Traceback_info *new) {
-    Traceback_info *current;
-
-    current = now;
-
-    while (current->next != NULL) {
-        current = current->next;
-    }
-
-    current->next = new;
-
-    return now;
-}
-
-Traceback_info *traceback_info_dup(Traceback_info *info) {
-    Traceback_info *new;
-
-    new = EMALLOC(Traceback_info, 1);
-    new->type = info->type;
-    switch(info->type) {
-        case 1:
-            new->location = ident_dup(info->location);
-            new->u.opcode = ident_dup(info->u.opcode);
-            break;
-        case 2:
-        case 3:
-            new->location = ident_dup(info->location);
-            new->u.method_name = EMALLOC(cData, 1);
-            data_dup(new->u.method_name, info->u.method_name);
-            new->current_obj = info->current_obj;
-            new->defining_obj = info->defining_obj;
-            new->method = method_dup(info->method);
-            new->pc = info->pc;
-    }
-
-    if (info->next != NULL) {
-        new->next = traceback_info_dup(info->next);
-    } else {
-        new->next = NULL;
-    }
-
-    return new;
-}
-
-static void traceback_info_discard(Traceback_info *info) {
-    if (info->next != NULL) {
-        traceback_info_discard(info->next);
-        info->next = NULL;
-    }
-    switch (info->type) {
-        case 1:
-            ident_discard(info->location);
-            ident_discard(info->u.opcode);
-            break;
-        case 2:
-        case 3:
-            ident_discard(info->location);
-            data_discard(info->u.method_name);
-            efree(info->u.method_name);
-            method_discard(info->method);
-            break;
-    }
-    efree(info);
-}
-
 void interp_error(Ident error, cStr *explanation)
 {
-    Traceback_info * location;
+    cList * location;
     Ident location_type;
+    cData *d;
     char *opname;
 
     if (explanation) {
@@ -1726,35 +1573,43 @@ void interp_error(Ident error, cStr *explanation)
 	location_type = (islower(*opname)) ? function_id : opcode_id;
 
 	/* Construct a two-element list giving the location. */
-        location = traceback_info_new();
-        location->type = 1;
+	location = list_new(2);
+	d = list_empty_spaces(location, 2);
 
 	/* The first element is 'function or 'opcode. */
-        location->location = ident_dup(location_type);
+	d->type = SYMBOL;
+	d->u.symbol = ident_dup(location_type);
+	d++;
 
 	/* The second element is the symbol for the opcode. */
-	location->u.opcode = ident_dup(op_table[cur_frame->last_opcode].symbol);
+	d->type = SYMBOL;
+	d->u.symbol = ident_dup(op_table[cur_frame->last_opcode].symbol);
     }
     else
 	location = NULL;
 
     start_error(error, explanation, NULL, location);
+    if (location)
+	list_discard(location);
 }
 
 void user_error(Ident error, cStr *explanation, cData *arg)
 {
-    Traceback_info * location;
-    Method         * method;
+    cList  * location;
+    cData  * d;
+    Method * method;
 
     /* Construct a list giving the location. */
-    location = traceback_info_new();
-    location->type = 2;
+    location = list_new(5);
+    d = list_empty_spaces(location, 5);
 
     /* The first element is 'method. */
-    location->location = ident_dup(method_id);
+    d->type = SYMBOL;
+    d->u.symbol = ident_dup(method_id);
+    d++;
 
     /* The second through fifth elements are the current method info. */
-    fill_in_method_info(location);
+    fill_in_method_info(d);
 
     /* Return from the current method, and propagate the error. */
     /* protect the current method, so that strings live long enough */
@@ -1762,72 +1617,86 @@ void user_error(Ident error, cStr *explanation, cData *arg)
     frame_return();
     start_error(error, explanation, arg, location);
     method_discard(method);
+    list_discard(location);
 }
 
-static void out_of_ticks_error(void)
+INTERNAL void out_of_ticks_error(void)
 {
-    static cStr     * explanation;
-    Traceback_info  * location;
-    Method          * method;
+    static cStr *explanation;
+    cList  * location;
+    cData  * d;
+    Method * method;
 
     /* Construct a list giving the location. */
-    location = traceback_info_new();
-    location->type = 2;
+    location = list_new(5);
+    d = list_empty_spaces(location, 5);
 
     /* The first element is 'interpreter. */
-    location->location = ident_dup(interpreter_id);
+    d->type = SYMBOL;
+    d->u.symbol = ident_dup(interpreter_id);
+    d++;
 
     /* The second through fifth elements are the current method info. */
-    fill_in_method_info(location);
+    fill_in_method_info(d);
 
     /* Don't give the topmost frame a chance to return. */
     method = method_dup(cur_frame->method);
     frame_return();
-
+  
     if (!explanation)
         explanation = string_from_chars("Out of ticks", 12);
     start_error(methoderr_id, explanation, NULL, location);
     method_discard(method);
+    list_discard(location);
 }
 
-static void start_error(Ident error, cStr *explanation, cData *arg,
-                          Traceback_info * location)
+INTERNAL void start_error(Ident error, cStr *explanation, cData *arg,
+                        cList * location)
 {
-    Traceback_info *traceback;
-    cData *arg_to_pass;
+    cList * error_condition, *traceback;
+    cData *d;
 
-    arg_to_pass = (cData *)emalloc(sizeof(cData));
     if (location) {
-        /*
-         * set up arg to pass it on to propagate.  If there isn't an
-         * arg, just use integer 0.
-         */
-        if (arg) {
-            data_dup(arg_to_pass, arg);
-        } else {
-            arg_to_pass->type = INTEGER;
-            arg_to_pass->u.val = 0;
-        }
+	/* Construct a three-element list for the error condition. */
+	error_condition = list_new(3);
+	d = list_empty_spaces(error_condition, 3);
 
-        traceback = location;
+	/* The first element is the error code. */
+	d->type = T_ERROR;
+	d->u.error = ident_dup(error);
+	d++;
+
+	/* The second element is the explanation string. */
+	d->type = STRING;
+	d->u.str = string_dup(explanation);
+	d++;
+
+	/* The third element is the error arg, or 0 if there is none. */
+	if (arg) {
+	    data_dup(d, arg);
+	} else {
+	    d->type = INTEGER;
+	    d->u.val = 0;
+	}
+
+	/* Now construct a traceback, starting as a two-element list. */
+	traceback = list_new(2);
+	d = list_empty_spaces(traceback, 2);
+
+	/* The first element is the error condition. */
+	d->type = LIST;
+	d->u.list = error_condition;
+	d++;
+
+	/* The second argument is the location. */
+	d->type = LIST;
+	d->u.list = list_dup(location);
     }
-    else {
-        arg_to_pass->type = INTEGER;
-        arg_to_pass->u.val = 0;
+    else
 	traceback=NULL;
-    }
-
-    if (explanation)
-        string_dup(explanation);
 
     /* Start the error propagating.  This consumes traceback. */
-    propagate_error(traceback, ident_dup(error), explanation,
-                    arg_to_pass);
-    ident_dup(error);
-    if (explanation)
-        string_discard(explanation);
-    data_discard(arg_to_pass);
-    efree(arg_to_pass);
+    propagate_error(traceback, error);
 }
 
 /* Requires:  traceback is a list of lists containing the traceback
@@ -1836,8 +1705,7 @@ static void start_error(Ident error, cStr *explanation, cData *arg,
  *            which is "owned" by a data stack frame that we will
  *            nuke in the course of unwinding the call stack.
  *            str is a string containing an explanation of the error. */
-void propagate_error(Traceback_info * traceback, Ident error,
-                     cStr * explanation, cData * arg)
+void propagate_error(cList * traceback, Ident error)
 {
     Int i, ind, propagate = 0;
     Error_action_specifier *spec;
@@ -1846,7 +1714,7 @@ void propagate_error(Traceback_info * traceback, Ident error,
 
     /* If there's no current frame, drop all this on the floor. */
     if (!cur_frame) {
-        traceback_info_discard(traceback);
+        list_discard(traceback);
         return;
     }
 
@@ -1885,7 +1753,7 @@ void propagate_error(Traceback_info * traceback, Ident error,
              * processing. */
             pop_error_action_specifier();
             if (traceback)
-		traceback_info_discard(traceback);
+		list_discard(traceback);
             return;
 
           case PROPAGATE:
@@ -1917,15 +1785,10 @@ void propagate_error(Traceback_info * traceback, Ident error,
             /* We catch this error.  Make a handler info structure and push it
              * onto the stack. */
             hinfo = EMALLOC(Handler_info, 1);
-            hinfo->cached_traceback = NULL;
             hinfo->traceback = traceback;
             hinfo->error = ident_dup(error);
-            hinfo->error_message = string_dup(explanation);
-            hinfo->error_data = (cData*) emalloc(sizeof(cData));
-            data_dup(hinfo->error_data, arg);
             hinfo->next = cur_frame->handler_info;
             cur_frame->handler_info = hinfo;
-
 
             /* Pop the stack down to where we were at the beginning of the
              * catch statement.  This may nuke our copy of error, but we don't
@@ -1946,25 +1809,31 @@ void propagate_error(Traceback_info * traceback, Ident error,
 
     /* There was no handler in the current frame. */
     frame_return();
-    propagate_error(traceback, (propagate) ? error : methoderr_id,
-                    explanation, arg);
+    propagate_error(traceback, (propagate) ? error : methoderr_id);
 }
 
-static Traceback_info * traceback_add(Traceback_info * traceback, Ident error)
+INTERNAL cList * traceback_add(cList * traceback, Ident error)
 {
-    Traceback_info * frame;
+    cList * frame;
+    cData *d, frame_data;
 
     /* Construct a list giving information about this stack frame. */
-    frame = traceback_info_new();
+    frame = list_new(5);
+    d = list_empty_spaces(frame, 5);
 
     /* First element is the error code. */
-    frame->location = ident_dup(error);
+    d->type = T_ERROR;
+    d->u.error = ident_dup(error);
+    d++;
 
-   /* Second through fifth elements are the current method info. */
-    fill_in_method_info(frame);
+    /* Second through fifth elements are the current method info. */
+    fill_in_method_info(d);
 
     /* Add the frame to the list. */
-    traceback = traceback_info_add(traceback, frame);
+    frame_data.type = LIST;
+    frame_data.u.list = frame;
+    traceback = list_add(traceback, &frame_data);
+    list_discard(frame);
 
     return traceback;
 }
@@ -1986,176 +1855,40 @@ void pop_handler_info(void)
     /* Free the data in the first handler info specifier, and pop it off that
      * stack. */
     old = cur_frame->handler_info;
-    traceback_info_discard(old->traceback);
-    if (old->cached_traceback)
-        list_discard(old->cached_traceback);
+    list_discard(old->traceback);
     ident_discard(old->error);
-    string_discard(old->error_message);
-    data_discard(old->error_data);
-    efree(old->error_data);
     cur_frame->handler_info = old->next;
     efree(old);
 }
 
-static void fill_in_method_info(Traceback_info *d)
+INTERNAL void fill_in_method_info(cData *d)
 {
     Ident method_name;
 
     /* The method name, or 0 for eval. */
     method_name = cur_frame->method->name;
-    d->u.method_name = (cData *)emalloc(sizeof(cData));
     if (method_name == NOT_AN_IDENT) {
-        d->u.method_name->type = INTEGER;
-        d->u.method_name->u.val = 0;
+        d->type = INTEGER;
+        d->u.val = 0;
     } else {
-        d->u.method_name->type = SYMBOL;
-        d->u.method_name->u.symbol = ident_dup(method_name);
+        d->type = SYMBOL;
+        d->u.val = ident_dup(method_name);
     }
+    d++;
 
     /* The current object. */
-    d->current_obj = cur_frame->object->objnum;
+    d->type = OBJNUM;
+    d->u.objnum = cur_frame->object->objnum;
+    d++;
 
     /* The defining object. */
-    d->defining_obj = cur_frame->method->object->objnum;
-
-    /*
-     * The line number will be calculated in traceback()
-     * since it is only needed there.  Store the info
-     * that we need to calculate it now though.  Store the method
-     * now also so that should it get deleted or re-programmed,
-     * we will still get a valid line number.
-     */
-    d->method = method_dup(cur_frame->method);
-    d->pc = cur_frame->pc;
-}
-
-cList *generate_traceback(Traceback_info *traceback) {
-    cList *line, *tb;
-    Traceback_info *current;
-    cData *d, elem;
-
-    line = list_new(3);
-    d = list_empty_spaces(line, 3);
-
-    d->type = T_ERROR;
-    d->u.error = ident_dup(cur_frame->handler_info->error);
+    d->type = OBJNUM;
+    d->u.objnum = cur_frame->method->object->objnum;
     d++;
 
-    d->type = STRING;
-    d->u.str = string_dup(cur_frame->handler_info->error_message);
-    d++;
-
-    data_dup(d, cur_frame->handler_info->error_data);
-
-    tb = list_new(1);
-    d = list_empty_spaces(tb, 1);
-
-    d->type = LIST;
-    d->u.list = line;
-
-    current = traceback;
-
-    switch (current->type) {
-        case 1:
-            /* interp_error */
-            line = list_new(2);
-            d = list_empty_spaces(line, 2);
-
-            d->type = SYMBOL;
-            d->u.symbol = ident_dup(current->location);
-            d++;
-
-            d->type = SYMBOL;
-            d->u.symbol = ident_dup(current->u.opcode);
-
-            break;
-        case 2:
-            /* user_error */
-            /* out_of_ticks_error */
-            line = list_new(5);
-            d = list_empty_spaces(line, 5);
-
-            d->type = SYMBOL;
-            d->u.symbol = ident_dup(current->location);
-            d++;
-
-            break;
-        case 3:
-            line = list_new(5);
-            d = list_empty_spaces(line, 5);
-
-            d->type = T_ERROR;
-            d->u.error = ident_dup(current->location);
-            d++;
-
-            break;
-    }
-
-    if (current->type != 1) {
-        /* Second element is the method name */
-        /* This might be integer 0 in some cases instead of an ident */
-        data_dup(d, current->u.method_name);
-        d++;
-
-        /* The current object. */
-        d->type = OBJNUM;
-        d->u.objnum = current->current_obj;
-        d++;
-
-        /* The defining object. */
-        d->type = OBJNUM;
-        d->u.objnum = current->defining_obj;
-        d++;
-
-       /* The line number. */
-       d->type = INTEGER;
-       d->u.val = line_number(current->method, current->pc);
-    }
-
-    elem.type = LIST;
-    elem.u.list = line;
-
-    tb = list_add(tb, &elem);
-    data_discard(&elem);
-
-    current = current->next;
-
-    while (current != NULL) {
-        line = list_new(5);
-        d = list_empty_spaces(line, 5);
-
-        /* First element is the error code. */
-        d->type = T_ERROR;
-        d->u.error = ident_dup(current->location);
-        d++;
-
-        /* Second element is the method name */
-        /* This might be integer 0 in some cases instead of an ident */
-        data_dup(d, current->u.method_name);
-        d++;
-
-        /* The current object. */
-        d->type = OBJNUM;
-        d->u.objnum = current->current_obj;
-        d++;
-
-        /* The defining object. */
-        d->type = OBJNUM;
-        d->u.objnum = current->defining_obj;
-        d++;
-
-        /* The line number. */
-        d->type = INTEGER;
-        d->u.val = line_number(current->method, current->pc);
-
-        elem.u.list = line;
-        tb = list_add(tb, &elem);
-        data_discard(&elem);
-
-        current = current->next;
-    };
-
-    return tb;
+    /* The line number. */
+    d->type = INTEGER;
+    d->u.val = line_number(cur_frame->method, cur_frame->pc);
 }
 
 void bind_opcode(Int opcode, cObjnum objnum) {

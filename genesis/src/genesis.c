@@ -19,11 +19,6 @@
 #endif
 #include <ctype.h>
 #include <time.h>
-
-#ifdef USE_CLEANER_THREAD
-extern pthread_t cleaner;
-#endif
-
 #include "cdc_pcode.h"
 #include "cdc_db.h"
 #include "strutil.h"
@@ -32,8 +27,8 @@ extern pthread_t cleaner;
 #include "net.h"
 #include "sig.h"
 
-static void initialize(Int argc, char **argv);
-static void main_loop(void);
+INTERNAL void initialize(Int argc, char **argv);
+INTERNAL void main_loop(void);
 
 #ifdef __UNIX__
 uid_t uid;
@@ -46,7 +41,7 @@ void usage (char * name);
 // if we have a logs/genesis.run, unlink it when we exit,
 // hooked into exiting with 'atexit()'
 */
-static void unlink_runningfile(void) {
+void unlink_runningfile(void) {
     if (unlink(c_runfile)) {
         char buf[BUF];
 
@@ -61,7 +56,7 @@ static void unlink_runningfile(void) {
 // --------------------------------------------------------------------
 */
 
-static void prebind_port_with(char * str, char * name) {
+INTERNAL void prebind_port_with(char * str, char * name) {
     int port;
     char * addr = NULL, * s = str;
     Bool tcp = YES;
@@ -121,23 +116,18 @@ int main(int argc, char **argv) {
     main_loop();
 
 #ifdef PROFILE_EXECUTE
-    dump_execute_profile();
+   dump_execute_profile();
 #endif
 
     /* Flush defunct sockets, sync the cache,
      * flush output buffers, and exit normally.
      */
     flush_defunct();
-#ifdef USE_CLEANER_THREAD
-    pthread_cond_signal(&cleaner_condition);
-    pthread_join(cleaner, NULL);
-#endif
     cache_sync();
-    simble_close();
+    db_close();
     flush_output();
     close_files();
     uninit_scratch_file();
-    write_err("Genesis shutdown");
     if (errfile)
         fclose(errfile);
     if (logfile)
@@ -152,7 +142,7 @@ int main(int argc, char **argv) {
 // Initialization
 //
 */
-static void get_my_hostname(void) {
+void get_my_hostname(void) {
     char   cbuf[LINE];
 
     /* for those OS's that do not do this */
@@ -187,7 +177,7 @@ static void get_my_hostname(void) {
 // --------------------------------------------------------------------
 */
 
-static void initialize(Int argc, char **argv) {
+INTERNAL void initialize(Int argc, char **argv) {
     cList   * args;
     cStr     * str;
     cData     arg;
@@ -485,7 +475,7 @@ static void initialize(Int argc, char **argv) {
 
     /* Initialize database and network modules. */
     init_scratch_file();
-    init_cache(TRUE);
+    init_cache();
     init_binary_db();
     init_core_objects();
 
@@ -495,7 +485,7 @@ static void initialize(Int argc, char **argv) {
         cStr     * str;
         Bool       first = YES;
 
-        fprintf(errfile, "[%s] Calling $sys.startup([", timestamp(NULL));
+        fputs("Calling $sys.startup([", errfile);
         for (d=list_first(args); d; d=list_next(args, d)) {
             str = data_to_literal(d, DF_WITH_OBJNAMES);
             if (!first) {
@@ -508,13 +498,12 @@ static void initialize(Int argc, char **argv) {
             string_discard(str);
         }
         fputs("])...\n", errfile);
-        fflush(errfile);
     }
 
     /* call $sys.startup() */
     arg.type = LIST;
     arg.u.list = args;
-    task(SYSTEM_OBJNUM, startup_id, 1, &arg);
+    vm_task(SYSTEM_OBJNUM, startup_id, 1, &arg);
     list_discard(args);
 }
 
@@ -526,7 +515,7 @@ static void initialize(Int argc, char **argv) {
 // use 'gettimeofday' since most OS's simply wrap time() around it
 */
 
-static void main_loop(void) {
+INTERNAL void main_loop(void) {
     register Int     seconds;
     register time_t  next, last;
 
@@ -569,10 +558,10 @@ static void main_loop(void) {
         }
 
         /* push our dump along, diddle with the wait if we need to */
-        switch (simble_dump_some_blocks(DUMP_BLOCK_SIZE)) {
+        switch (dump_some_blocks(DUMP_BLOCK_SIZE)) {
             case DUMP_FINISHED:
-                simble_dump_finish();
-                task(SYSTEM_OBJNUM, backup_done_id, 0);
+                finish_backup();
+                vm_task(SYSTEM_OBJNUM, backup_done_id, 0);
                 break;
             case DUMP_DUMPED_BLOCKS:
                 seconds = 0; /* we are still dumping, dont wait */
@@ -587,7 +576,7 @@ static void main_loop(void) {
             GETTIME();
             if (SECS >= next) {
                 last = SECS;
-                task(SYSTEM_OBJNUM, heartbeat_id, 0);
+                vm_task(SYSTEM_OBJNUM, heartbeat_id, 0);
 #ifdef CLEAN_CACHE
                 cache_cleanup();
 #endif

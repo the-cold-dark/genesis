@@ -13,16 +13,16 @@
 #include "cache.h"
 #include "net.h"
 
-static void connection_read(Conn *conn);
-static void connection_write(Conn *conn);
-static Conn *connection_add(Int fd, Long objnum);
-static void connection_discard(Conn *conn);
-static void pend_discard(pending_t *pend);
-static void server_discard(server_t *serv);
+INTERNAL void connection_read(Conn *conn);
+INTERNAL void connection_write(Conn *conn);
+INTERNAL Conn *connection_add(Int fd, Long objnum);
+INTERNAL void connection_discard(Conn *conn);
+INTERNAL void pend_discard(pending_t *pend);
+INTERNAL void server_discard(server_t *serv);
 
-static Conn * connections;  /* List of client connections. */
-static server_t     * servers;      /* List of server sockets. */
-static pending_t    * pendings;     /* List of pending connections. */
+INTERNAL Conn * connections;  /* List of client connections. */
+INTERNAL server_t     * servers;      /* List of server sockets. */
+INTERNAL pending_t    * pendings;     /* List of pending connections. */
 
 /*
 // --------------------------------------------------------------------
@@ -130,7 +130,7 @@ void handle_new_and_pending_connections(void) {
         d2.u.str = serv->addr; /* dont dup, task() will */
         d3.type = INTEGER;
         d3.u.val = serv->client_port;
-        task(conn->objnum, connect_id, 3, &d1, &d2, &d3);
+        vm_task(conn->objnum, connect_id, 3, &d1, &d2, &d3);
         string_discard(str);
     }
 
@@ -141,14 +141,14 @@ void handle_new_and_pending_connections(void) {
                 conn = connection_add(pend->fd, pend->objnum);
                 d1.type = INTEGER;
                 d1.u.val = pend->task_id;
-                task(conn->objnum, connect_id, 1, &d1);
+                vm_task(conn->objnum, connect_id, 1, &d1);
             } else {
                 SOCK_CLOSE(pend->fd);
                 d1.type = INTEGER;
                 d1.u.val = pend->task_id;
                 d2.type = T_ERROR;
                 d2.u.error = pend->error;
-                task(pend->objnum, failed_id, 2, &d1, &d2);
+                vm_task(pend->objnum, failed_id, 2, &d1, &d2);
             }
         }
     }
@@ -296,7 +296,7 @@ Int remove_server(Int port) {
 */
 /* rewrote to reduce buffer copies, by reading from the socket into a
    pre-allocated static buffer that we re-use.  -Brandon */
-static void connection_read(Conn *conn) {
+INTERNAL void connection_read(Conn *conn) {
     Int len;
     cData d;
 
@@ -330,14 +330,14 @@ static void connection_read(Conn *conn) {
     socket_buffer->len = len;
     d.type = BUFFER;
     d.u.buffer = socket_buffer;
-    task(conn->objnum, parse_id, 1, &d);
+    vm_task(conn->objnum, parse_id, 1, &d);
     socket_buffer->refs--;
 }
 
 /*
 // --------------------------------------------------------------------
 */
-static void connection_write(Conn *conn) {
+INTERNAL void connection_write(Conn *conn) {
     cBuf *buf = conn->write_buf;
     Int r;
 
@@ -359,7 +359,7 @@ static void connection_write(Conn *conn) {
 /*
 // --------------------------------------------------------------------
 */
-static Conn * connection_add(Int fd, Long objnum) {
+INTERNAL Conn * connection_add(Int fd, Long objnum) {
     Conn * conn;
 
     /* clear old connections to this objnum */
@@ -385,7 +385,7 @@ static Conn * connection_add(Int fd, Long objnum) {
 /*
 // --------------------------------------------------------------------
 */
-static void connection_discard(Conn *conn) {
+INTERNAL void connection_discard(Conn *conn) {
     Obj    * obj;
     cObjnum  objnum;
 
@@ -404,20 +404,20 @@ static void connection_discard(Conn *conn) {
     efree(conn);
 
     /* Notify connection object that the connection is gone */
-    task(objnum, disconnect_id, 0);
+    vm_task(objnum, disconnect_id, 0);
 }
 
 /*
 // --------------------------------------------------------------------
 */
-static void pend_discard(pending_t *pend) {
+INTERNAL void pend_discard(pending_t *pend) {
     efree(pend);
 }
 
 /*
 // --------------------------------------------------------------------
 */
-static void server_discard(server_t *serv) {
+INTERNAL void server_discard(server_t *serv) {
     SOCK_CLOSE(serv->server_socket);
     string_discard(serv->addr);
     efree(serv);

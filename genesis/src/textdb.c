@@ -890,7 +890,7 @@ INTERNAL void handle_evalcmd(FILE * fp, char * s, Int new, Int access) {
     /* run it */
     method->name = name;
     method->object = cur_obj;
-    task_method(cur_obj, method);
+    vm_method(cur_obj, method);
 
     /* toss it */
     method_discard(method);

@@ -64,38 +64,37 @@ cStr *string_dup(cStr *str) {
     return str;
 }
 
-cBuf *string_pack(cBuf *buf, cStr *str) {
+void string_pack(cStr *str, FILE *fp) {
     if (str) {
-        buf = write_long(buf, str->len);
-        buf = buffer_append_uchars_single_ref(buf, (uChar *)(str->s + str->start), str->len);
+	write_long(str->len, fp);
+	fwrite(str->s + str->start, sizeof(char), str->len, fp);
     } else {
-        buf = write_long(buf, -1);
+	write_long(-1, fp);
     }
-    return buf;
 }
 
-cStr *string_unpack(cBuf *buf, Long *buf_pos) {
+cStr *string_unpack(FILE *fp) {
     cStr *str;
     Int len;
+    Int result;
 
-    len = read_long(buf, buf_pos);
+    len = read_long(fp);
     if (len == -1) {
-        /*fprintf(stderr, "string_unpack: NULL @%d\n", ftell(fp));*/
-        return NULL;
+      /*fprintf(stderr, "string_unpack: NULL @%d\n", ftell(fp));*/
+      return NULL;
     }
     str = string_new(len);
     str->len = len;
-    MEMCPY(str->s, &(buf->s[*buf_pos]), len);
-    (*buf_pos) += len;
+    result = fread(str->s, sizeof(char), len, fp);
     str->s[len] = 0;
     return str;
 }
 
 Int string_packed_size(cStr *str) {
     if (str)
-        return size_long(str->len) + str->len * sizeof(char);
+	return size_long(str->len) + str->len * sizeof(char);
     else
-        return size_long(-1);
+	return size_long(-1);
 }
 
 Int string_cmp(cStr *str1, cStr *str2) {
@@ -186,7 +185,7 @@ cStr * string_lowercase(cStr *str) {
  * it will be placed in regexp_error, and the returned regexp will be NULL. */
 regexp *string_regexp(cStr *str) {
     if (!str->reg)
-	str->reg = regcomp(str->s + str->start);
+	str->reg = gen_regcomp(str->s + str->start);
     return str->reg;
 }
 
@@ -227,7 +226,7 @@ cStr *string_add_unparsed(cStr *str, char *s, Int len) {
     str = string_addc(str, '"');
 
     /* Add characters to string, escaping quotes and backslashes. */
-    for (;;) {
+    forever {
 	for (i = 0; i < len && s[i] != '"' && s[i] != '\\'; i++);
 	str = string_add_chars(str, s, i);
 	if (i < len) {
@@ -247,7 +246,7 @@ cStr *string_add_unparsed(cStr *str, char *s, Int len) {
     return string_addc(str, '"');
 }
 
-char *regerror(char *msg) {
+char *gen_regerror(char *msg) {
     static char *regexp_error;
 
     if (msg)
@@ -260,7 +259,7 @@ char *regerror(char *msg) {
 // index() and company
 */
 
-static int str_rindexs(char * str, int len, char * sub, int slen, int origin){
+INTERNAL int str_rindexs(char * str, int len, char * sub, int slen, int origin){
     register char * s;
 
     if (origin < slen)
@@ -284,7 +283,7 @@ static int str_rindexs(char * str, int len, char * sub, int slen, int origin){
     return 0;
 }
 
-static int str_rindexc(char * str, int len, char sub, int origin) {
+INTERNAL int str_rindexc(char * str, int len, char sub, int origin) {
     register char * s;
         
     len -= origin;

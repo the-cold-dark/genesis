@@ -20,15 +20,13 @@ void catch_SIGCHLD(int sig);
 void catch_SIGPIPE(int sig);
 #endif
 
-static void uninit_sig(void) {
+void uninit_sig(void) {
     signal(SIGFPE,  SIG_DFL);
     signal(SIGILL,  SIG_DFL);
     signal(SIGINT,  SIG_DFL);
     signal(SIGTERM, SIG_DFL);
-#ifndef USING_GLIBC_2_0
     signal(SIGUSR1, SIG_DFL);
     signal(SIGUSR2, SIG_DFL);
-#endif
 #ifdef __UNIX__
     signal(SIGQUIT, SIG_DFL);
     signal(SIGHUP,  SIG_DFL);
@@ -42,10 +40,8 @@ void init_sig(void) {
     signal(SIGILL,  catch_signal);
     signal(SIGINT,  catch_signal);
     signal(SIGTERM, catch_signal);
-#ifndef USING_GLIBC_2_0
     signal(SIGUSR1, catch_signal);
     signal(SIGUSR2, catch_signal);
-#endif
     signal(SIGFPE,  catch_SIGFPE);
 #ifdef __UNIX__
     signal(SIGQUIT, catch_signal);
@@ -76,7 +72,7 @@ void catch_SIGFPE(int sig) {
     signal(SIGFPE,  catch_SIGFPE);
 }
 
-static char *sig_name(int sig) {
+char *sig_name(int sig) {
     switch(sig) {
         case SIGILL:  return "ILL";
         case SIGSEGV: return "SEGV";
@@ -86,10 +82,8 @@ static char *sig_name(int sig) {
         case SIGHUP:  return "HUP";
 #endif
         case SIGTERM: return "TERM";
-#ifndef USING_GLIBC_2_0
         case SIGUSR1: return "USR1";
         case SIGUSR2: return "USR2";
-#endif
         default:      return "Unknown";
     }
     return NULL;
@@ -120,43 +114,36 @@ void catch_signal(int sig) {
             handle_connection_output();
             flush_files();
 #endif
-#ifndef USING_GLIBC_2_0
         case SIGUSR2:
             /* let the db do what it wants from here */
             break;
-        case SIGUSR1:
-#else
-	case SIGILL:
-#endif
-        {
+        case SIGUSR1: {
             cData * d;
             cList * l;
  
             /* First cancel all preempted and suspended tasks */
-            l = task_list();
+            l = vm_list();
             for (d=list_first(l); d; d=list_next(l, d)) {
                 /* boggle */
                 if (d->type != INTEGER)
                     continue;
-                task_cancel(d->u.val);
+                vm_cancel(d->u.val);
             }
             list_discard(l);
 
             /* now cancel the current task if it is valid */
-            if (task_lookup(task_id) != NULL) {
-                task_cancel(task_id);
+            if (vm_lookup(task_id) != NULL) {
+                vm_cancel(task_id);
             }
 
             /* jump back to the main loop */
             longjmp(main_jmp, 1);
             break;
         }
-#ifndef USING_GLIBC_2_0
         case SIGILL:
             /* lets panic and hopefully shutdown without frobbing the db */
             panic(sig_name(sig));
             break;
-#endif
         case SIGTERM:
             if (running) {
                 write_err("*** Attempting normal shutdown ***");
@@ -181,7 +168,7 @@ void catch_signal(int sig) {
     /* send a message to the system object */
     arg1.type = SYMBOL;
     arg1.u.symbol = ident_get(sptr);
-    task(SYSTEM_OBJNUM, signal_id, 1, &arg1);
+    vm_task(SYSTEM_OBJNUM, signal_id, 1, &arg1);
 
     if (do_shutdown)
         running = NO;

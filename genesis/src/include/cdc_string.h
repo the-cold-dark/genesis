@@ -18,6 +18,7 @@ cStr * string_unpack(cBuf *buf, Long *buf_pos);
 Int    string_packed_size(cStr *str);
 
 Int    string_cmp(cStr * str1, cStr * str2);
+cStr * string_fread(cStr *str, Int len, FILE *fp);
 cStr * string_add(cStr * str1, cStr * str2);
 cStr * string_add_chars(cStr * str, char * s, Int len);
 cStr * string_addc(cStr * str, Int c);
@@ -34,7 +35,7 @@ void   string_discard(cStr * str);
 cStr * string_parse(char * *sptr);
 cStr * string_add_unparsed(cStr * str, char * s, Int len);
 char * regerror(char * msg);
-int string_index(cStr * str, cStr * sub, int origin);
+int    string_index(cStr * str, cStr * sub, int origin);
 cStr * string_prep(cStr *str, Int start, Int len); 
 
 #define string_length(__s) ((Int) __s->len)

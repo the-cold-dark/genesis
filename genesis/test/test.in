@@ -2780,6 +2780,62 @@ eval {
     }
 };
 
+	// task_id()
+	// Output
+
+		Task/Stack test 1
+		  task_id() -> 1
+
+eval {
+    dblog("Task/Stack test 1");
+    dblog("  task_id() -> " + toliteral(task_id()));
+};
+
+	// stack()
+	// Output
+
+		Task/Stack test 2
+		  [[$sys, $sys, 'coldcc_eval, 2, 11]]
+		  [[$sys, $sys, 'coldcc_eval, 3, 23]]
+		  [[$sys, $sys, 'coldcc_eval, -1, 36]]
+		  [[$sys, $sys, 'coldcc_eval, 5, 49]]
+
+eval {
+    dblog("Task/Stack test 2");
+    dblog("  " + toliteral(stack()));
+    dblog("  " + toliteral(stack(task_id())));
+    dblog("  " + toliteral(stack(task_id(), 0)));
+    dblog("  " + toliteral(stack(task_id(), 1)));
+};
+
+	// method()
+	// Output
+
+		Task/Stack test 3
+		  'coldcc_eval
+
+eval {
+    dblog("Task/Stack test 3");
+    dblog("  " + toliteral(method()));
+};
+
+public method .calling_method_test() {
+    dblog("  calling method: " + toliteral(calling_method()));
+};
+
+	// calling_method()
+	// Output
+
+		Task/Stack test 4
+		  calling method: 0
+		  calling method: 'coldcc_eval
+
+eval {
+    dblog("Task/Stack test 4");
+    dblog("  calling method: " + toliteral(calling_method()));
+    .calling_method_test();
+};
+
 // -------------------------------------
 // Shut down the server--leave this last
 eval {

@@ -115,7 +115,7 @@ void handle_new_and_pending_connections(void) {
     server_t *serv;
     pending_t *pend;
     cStr *str;
-    cData d1, d2, d3;
+    cData d1, d2, d3, d4;
 
     /* Look for new connections on the server sockets. */
     for (serv = servers; serv; serv = serv->next) {
@@ -130,7 +130,9 @@ void handle_new_and_pending_connections(void) {
         d2.u.str = serv->addr; /* dont dup, task() will */
         d3.type = INTEGER;
         d3.u.val = serv->client_port;
-        task(conn->objnum, connect_id, 3, &d1, &d2, &d3);
+        d4.type = INTEGER;
+        d4.u.val = serv->port;
+        task(conn->objnum, connect_id, 4, &d1, &d2, &d3, &d4);
         string_discard(str);
     }
 

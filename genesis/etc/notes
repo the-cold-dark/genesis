@@ -119,6 +119,8 @@ RELEASE INFORMATION:
         structure to increase savings. (Brad)
       * added start of sorted_* list builtins, still buggy. (Bruce)
         NOTE: may crash, loose data, fail to sort properly.  Don't use.
+      * Add extra argument for local port to callback for new incoming
+        connections. [COMPAT] (Bruce)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

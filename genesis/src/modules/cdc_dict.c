@@ -9,6 +9,8 @@
 // Dictionary manipulation module.
 */
 
+#define NATIVE_MODULE "$dictionary"
+
 #include "config.h"
 #include "defs.h"
 #include "operators.h"
@@ -16,54 +18,39 @@
 #include "cdc_types.h"
 #include "memory.h"
 
-void native_dict_keys(void) {
-    data_t * args;
-    list_t * keys;
+NATIVE_METHOD(dict_keys) {
+    INIT_1_ARG(DICT);
 
-    if (!func_init_1(&args, DICT))
-	return;
-
-    keys = dict_keys(args[0].u.dict);
-    pop(1);
-    push_list(keys);
-    list_discard(keys);
+    RETURN_LIST(dict_keys(args[0].u.dict));
 }
 
-void native_dict_add(void) {
-    data_t * args;
+NATIVE_METHOD(dict_add) {
+    DEF_args;
 
-    if (!func_init_3(&args, DICT, 0, 0))
-	return;
+    INIT_ARGC(ARG_COUNT, 3, "three");
+    INIT_ARG1(DICT);
 
-    anticipate_assignment();
-    args[0].u.dict = dict_add(args[0].u.dict, &args[1], &args[2]);
-    pop(2);
+    RETURN_DICT(dict_add(args[0].u.dict, &args[1], &args[2]));
 }
 
-void native_dict_del(void) {
-    data_t * args;
+NATIVE_METHOD(dict_del) {
+    DEF_args;
 
-    if (!func_init_2(&args, DICT, 0))
-	return;
+    INIT_ARGC(ARG_COUNT, 2, "two");
+    INIT_ARG1(DICT);
 
-    if (!dict_contains(args[0].u.dict, &args[1])) {
-	cthrow(keynf_id, "Key (%D) is not in the dictionary.", &args[1]);
-    } else {
-	anticipate_assignment();
-	args[0].u.dict = dict_del(args[0].u.dict, &args[1]);
-	pop(1);
-    }
+    if (!dict_contains(args[0].u.dict, &args[1]))
+        THROW((keynf_id, "Key (%D) is not in the dictionary.", &args[1]));
+
+    RETURN_DICT(dict_del(args[0].u.dict, &args[1]));
 }
 
-void native_dict_contains(void) {
-    data_t * args;
-    int      val;
+NATIVE_METHOD(dict_contains) {
+    DEF_args;
 
-    if (!func_init_2(&args, DICT, 0))
-	return;
+    INIT_ARGC(ARG_COUNT, 2, "two");
+    INIT_ARG1(DICT);
 
-    val = dict_contains(args[0].u.dict, &args[1]);
-    pop(2);
-    push_int(val);
+    RETURN_INTEGER(dict_contains(args[0].u.dict, &args[1]));
 }
 

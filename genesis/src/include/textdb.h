@@ -12,6 +12,8 @@
 #ifndef _textdb_h_
 #define _textdb_h_
 
+int force_natives;
+
 void compile_cdc_file(FILE * fp);
 int text_dump(void);
 

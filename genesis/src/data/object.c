@@ -932,7 +932,7 @@ int object_rename_method(object_t * object, long oname, long nname) {
     if (!method)
         return 0;
 
-    method_dup(method);
+    method = method_dup(method);
     object_del_method(object, oname);
     object_add_method(object, nname, method);
     method_discard(method);

@@ -1,3 +1,4 @@
-##  object  method   args rest function
-    $http.decode()     1   0   native_decode
-    $http.encode()     1   0   native_encode 
+##     object  method     function
+native $http.decode()     decode
+native $http.encode()     encode 
+objs web.o

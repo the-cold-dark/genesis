@@ -294,14 +294,14 @@ INTERNAL string_t *prepare_to_modify(string_t *str, int start, int len) {
     need_to_move = (str->refs > 1) || (need_to_resize && start > 0);
 
     if (need_to_move) {
-        /* Move the string's contents into a new list. */
+        /* Move the string's contents into a new string. */
         cnew = string_new(len);
         MEMCPY(cnew->s, str->s + start, (len > str->len) ? str->len : len);
         cnew->len = len;
         string_discard(str);
         return cnew;
     } else if (need_to_resize) {
-        /* Resize the list.  We can assume that list->start == start == 0. */
+        /* Resize the string.  We can assume that string->start == start == 0 */
         str->len = len;
 #if DISABLED
         size = STARTING_SIZE;

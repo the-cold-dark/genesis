@@ -122,7 +122,7 @@ char *long_to_ascii(long num, Number_buf nbuf)
 }
 
 char * float_to_ascii(float num, Number_buf nbuf) {
-    sprintf (nbuf,"%f",num);
+    sprintf (nbuf, "%f", num);
     return nbuf;
 }
 
@@ -143,8 +143,7 @@ int strnccmp(char *s1, char *s2, int n)
 }
 
 /* Look for c in s, ignoring case. */
-char *strcchr(char *s, int c)
-{
+char *strcchr(char *s, int c) {
     c = LCASE(c);
 
     for (; *s; s++) {
@@ -154,8 +153,7 @@ char *strcchr(char *s, int c)
     return (c) ? NULL : s;
 }
 
-char *strcstr(char *s, char *search)
-{
+char *strcstr(char *s, char *search) {
     char *p;
     int search_len = strlen(search);
 
@@ -170,8 +168,7 @@ char *strcstr(char *s, char *search)
 /* A random number generator.  A lot of Unix rand() implementations don't
  * produce very random low bits, so we shift by eight bits if we can do that
  * without truncating the range. */
-long random_number(long n)
-{
+long random_number(long n) {
     long num = rand();
     if (!n)
       return 0;
@@ -186,8 +183,7 @@ long random_number(long n)
 }
 
 /* Encrypt a string.  The salt can be NULL. */
-char *crypt_string(char *key, char *salt)
-{
+char *crypt_string(char *key, char *salt) {
     char rsalt[2];
 
     if (!salt) {
@@ -282,8 +278,7 @@ string_t *vformat(char *fmt, va_list arg) {
     return buf;
 }
 
-string_t *format(char *fmt, ...)
-{
+string_t *format(char *fmt, ...) {
     va_list arg;
     string_t *str;
 
@@ -323,8 +318,7 @@ char * timestamp (char * str) {
     return s;
 }
 
-void fformat(FILE *fp, char *fmt, ...)
-{
+void fformat(FILE *fp, char *fmt, ...) {
     va_list arg;
     string_t *str;
 
@@ -337,8 +331,7 @@ void fformat(FILE *fp, char *fmt, ...)
     va_end(arg);
 }
 
-string_t *fgetstring(FILE *fp)
-{
+string_t *fgetstring(FILE *fp) {
     string_t *line;
     int len;
     char buf[1000];
@@ -502,7 +495,7 @@ int getarg(char * n,
         return 0;
     }
 
-    if ((*argc - 1) < 0) {
+    if ((*argc - 1) <= 0) {
         usage(n);
         fprintf(stderr, "** No followup argument to -%s.\n", opt);
         exit(1);
@@ -523,3 +516,4 @@ int is_valid_id(char * str, int len) {
      }
      return 1;
 }
+

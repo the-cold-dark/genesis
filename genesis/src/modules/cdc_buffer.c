@@ -4,10 +4,12 @@
 // Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
 // Full details and copyright information can be found in the file doc/CREDITS
 //
-// File: modules/cdc_buffer.c
+// File: ops/buffer.c
 // ---
-// Buffer manipulation module
+// Buffer manipulation functions
 */
+
+#define NATIVE_MODULE "$buffer"
 
 #include "config.h"
 #include "defs.h"
@@ -15,199 +17,99 @@
 #include "operators.h"
 #include "execute.h"
 
-void native_buffer_len(void) {
-    data_t *args;
-    int len;
+NATIVE_METHOD(bufgraft) {
+    INIT_NO_ARGS()
 
-    if (!func_init_1(&args, BUFFER))
-	return;
-    len = buffer_len(args[0].u.buffer);
-    pop(1);
-    push_int(len);
+    RETURN_INTEGER(0)
 }
 
-void native_buffer_retrieve(void) {
-    data_t *args;
-    int c, pos;
+NATIVE_METHOD(buflen) {
+    INIT_1_ARG(BUFFER)
 
-    if (!func_init_2(&args, BUFFER, INTEGER))
-	return;
-    pos = args[1].u.val - 1;
-    if (pos < 0) {
-	cthrow(range_id, "Position (%d) is less than one.", pos + 1);
-    } else if (pos >= buffer_len(args[0].u.buffer)) {
-	cthrow(range_id, "Position (%d) is greater than buffer length (%d).",
-	      pos + 1, buffer_len(args[0].u.buffer));
-    } else {
-	c = buffer_retrieve(args[0].u.buffer, pos);
-	pop(2);
-	push_int(c);
-    }
+    RETURN_INTEGER(buffer_len(_BUF(ARG1)))
 }
 
-void native_buffer_append(void) {
-    data_t *args;
-
-    if (!func_init_2(&args, BUFFER, BUFFER))
-	return;
-    args[0].u.buffer = buffer_append(args[0].u.buffer, args[1].u.buffer);
-    pop(1);
-}
-
-void native_buffer_replace(void) {
-    data_t *args;
+NATIVE_METHOD(buf_replace) {
     int pos;
 
-    if (!func_init_3(&args, BUFFER, INTEGER, INTEGER))
-	return;
-    pos = args[1].u.val - 1;
-    if (pos < 0) {
-	cthrow(range_id, "Position (%d) is less than one.", pos + 1);
-	return;
-    } else if (pos >= buffer_len(args[0].u.buffer)) {
-	cthrow(range_id, "Position (%d) is greater than buffer length (%d).",
-	      pos + 1, buffer_len(args[0].u.buffer));
-	return;
-    }
-    args[0].u.buffer = buffer_replace(args[0].u.buffer, pos, args[2].u.val);
-    pop(2);
+    INIT_3_ARGS(BUFFER, INTEGER, INTEGER)
+
+    pos = _INT(ARG2) - 1;
+
+    if (pos < 0)
+        THROW((range_id, "Position (%d) is less than one.", pos + 1))
+    else if (pos >= buffer_len(_BUF(ARG1)))
+	THROW((range_id, "Position (%d) is greater than buffer length (%d).",
+	      pos + 1, buffer_len(_BUF(ARG1))))
+
+    RETURN_BUFFER(buffer_replace(_BUF(ARG1), pos, _INT(ARG3)));
 }
 
-void native_buffer_add(void) {
-    data_t *args;
+NATIVE_METHOD(subbuf) {
+    int      start,
+             len,
+             blen;
 
-    if (!func_init_2(&args, BUFFER, INTEGER))
-	return;
-    args[0].u.buffer = buffer_add(args[0].u.buffer, args[1].u.val);
-    pop(1);
+    INIT_2_OR_3_ARGS(BUFFER, INTEGER, INTEGER);
+
+    blen = _BUF(ARG1)->len;
+    start = _INT(ARG2) - 1;
+
+    len = (argc == 3) ? _INT(ARG3) : blen - start;
+
+    if (start < 0)
+        THROW((range_id, "Start (%d) is less than one.", start + 1))
+    else if (len < 0)
+        THROW((range_id, "Length (%d) is less than zero.", len))
+    else if (start + len > blen)
+        THROW((range_id,
+              "The subrange extends to %d, past the end of the buffer (%d).",
+              start + len, blen))
+
+    RETURN_BUFFER(buffer_subrange(_BUF(ARG1), start, len));
 }
 
-void native_buffer_truncate(void) {
-    data_t *args;
-    int pos;
+NATIVE_METHOD(buf_to_str) {
+    INIT_1_ARG(BUFFER);
 
-    if (!func_init_2(&args, BUFFER, INTEGER))
-	return;
-    pos = args[1].u.val;
-    if (pos < 0) {
-	cthrow(range_id, "Position (%d) is less than zero.", pos);
-	return;
-    } else if (pos > buffer_len(args[0].u.buffer)) {
-	cthrow(range_id, "Position (%d) is greater than buffer length (%d).",
-	      pos, buffer_len(args[0].u.buffer));
-	return;
-    }
-    args[0].u.buffer = buffer_resize(args[0].u.buffer, pos);
-    pop(1);
+    RETURN_STRING(buffer_to_string(_BUF(ARG1)));
 }
 
-void native_buffer_subrange(void) {
-    data_t *args;
-    int start, len, nargs, blen;
-
-    if (!func_init_2_or_3(&args, &nargs, BUFFER, INTEGER, INTEGER))
-	return;
-
-    blen = args[0].u.buffer->len;
-    start = args[1].u.val - 1;
-    len = (nargs == 3) ? args[2].u.val : blen - start;
-
-    if (start < 0) {
-        cthrow(range_id, "Start (%d) is less than one.", start + 1);
-    } else if (len < 0) {
-        cthrow(range_id, "Length (%d) is less than zero.", len);
-    } else if (start + len > blen) {
-        cthrow(range_id,
-              "The substring extends to %d, past the end of the string (%d).",
-              start + len, blen);
-    } else {
-        anticipate_assignment();
-        args[0].u.buffer = buffer_subrange(args[0].u.buffer, start, len);
-        pop(nargs - 1);
-    }
-}
-
-void native_buffer_tail(void) {
-    data_t *args;
-    int pos;
-
-    if (!func_init_2(&args, BUFFER, INTEGER))
-	return;
-    pos = args[1].u.val;
-    if (pos < 1) {
-        cthrow(range_id, "Position (%d) is less than one.", pos);
-        return;
-    } else if (pos > buffer_len(args[0].u.buffer)) {
-        cthrow(range_id, "Position (%d) is greater than buffer length (%d).",
-               pos, buffer_len(args[0].u.buffer));
-        return;
-    }
-    args[0].u.buffer = buffer_tail(args[0].u.buffer, pos);
-    pop(1);
-}
-
-void native_buffer_to_string(void) {
-    data_t *args;
-    string_t * str;
-
-    if (!func_init_1(&args, BUFFER))
-	return;
-    str = buffer_to_string(args[0].u.buffer);
-    pop(1);
-    push_string(str);
-    string_discard(str);
-}
-
-void native_buffer_to_strings(void) {
-    data_t *args;
-    int num_args;
+NATIVE_METHOD(buf_to_strings) {
     list_t *list;
     Buffer *sep;
 
-    if (!func_init_1_or_2(&args, &num_args, BUFFER, BUFFER))
-	return;
-    sep = (num_args == 2) ? args[1].u.buffer : NULL;
-    list = buffer_to_strings(args[0].u.buffer, sep);
-    pop(num_args);
-    push_list(list);
-    list_discard(list);
+    INIT_1_OR_2_ARGS(BUFFER, BUFFER);
+
+    sep = (argc == 2) ? _BUF(ARG2) : NULL;
+    list = buffer_to_strings(_BUF(ARG1), sep);
+
+    RETURN_LIST(list);
 }
 
-void native_buffer_from_string(void) {
-    data_t *args;
-    Buffer *buf;
+NATIVE_METHOD(str_to_buf) {
+    INIT_1_ARG(STRING);
 
-    if (!func_init_1(&args, STRING))
-	return;
-    buf = buffer_from_string(args[0].u.str);
-    pop(1);
-    push_buffer(buf);
-    buffer_discard(buf);
+    RETURN_BUFFER(buffer_from_string(_STR(ARG1)));
 }
 
 
-void native_buffer_from_strings(void) {
-    data_t *args, *d;
-    int num_args, i;
-    Buffer *buf, *sep;
-    list_t *list;
+NATIVE_METHOD(strings_to_buf) {
+    data_t * d;
+    int      i;
+    Buffer * sep;
+    list_t * list;
 
-    if (!func_init_1_or_2(&args, &num_args, LIST, BUFFER))
-	return;
+    INIT_1_OR_2_ARGS(LIST, BUFFER);
 
     list = args[0].u.list;
-    sep = (num_args == 2) ? args[1].u.buffer : NULL;
+    sep = (argc == 2) ? args[1].u.buffer : NULL;
 
     for (d = list_first(list), i=0; d; d = list_next(list, d),i++) {
-	if (d->type != STRING) {
-	    cthrow(type_id, "List element %d (%D) not a string.", i + 1, d);
-	    return;
-	}
+	if (d->type != STRING)
+            THROW((type_id, "List element %d (%D) not a string.", i + 1, d));
     }
 
-    buf = buffer_from_strings(list, sep);
-    pop(num_args);
-    push_buffer(buf);
-    buffer_discard(buf);
+    RETURN_BUFFER(buffer_from_strings(list, sep));
 }
 

@@ -2,61 +2,59 @@
 #define _cdc_h_
 
 #include "defs.h"
-#include "modules.h"
+#include "native.h"
 
 void init_cdc(int argc, char ** argv);
 void uninit_cdc(void);
 
-#ifndef _modules_
-module_t cdc_module = {init_cdc, uninit_cdc};
-#else
+#ifndef _cdc_
 extern module_t cdc_module;
 #endif
 
-void native_buffer_len(void);
-void native_buffer_retrieve(void);
-void native_buffer_append(void);
-void native_buffer_replace(void);
-void native_buffer_add(void);
-void native_buffer_truncate(void);
-void native_buffer_subrange(void);
-void native_buffer_tail(void);
-void native_buffer_to_string(void);
-void native_buffer_to_strings(void);
-void native_buffer_from_string(void);
-void native_buffer_from_strings(void);
-void native_dict_keys(void);
-void native_dict_add(void);
-void native_dict_del(void);
-void native_dict_contains(void);
-void native_listlen(void);
-void native_sublist(void);
-void native_insert(void);
-void native_replace(void);
-void native_delete(void);
-void native_setadd(void);
-void native_setremove(void);
-void native_union(void);
-void native_strftime(void);
-void native_next_objnum(void);
-void native_status(void);
-void native_version(void);
-void native_hostname(void);
-void native_ip(void);
-void native_strlen(void);
-void native_substr(void);
-void native_explode(void);
-void native_strsub(void);
-void native_pad(void);
-void native_match_begin(void);
-void native_match_template(void);
-void native_match_pattern(void);
-void native_match_regexp(void);
-void native_crypt(void);
-void native_uppercase(void);
-void native_lowercase(void);
-void native_strcmp(void);
-void native_strfmt(void);
-void native_strfmt(void);
+NATIVE_METHOD(bufgraft);
+NATIVE_METHOD(buflen);
+NATIVE_METHOD(buf_replace);
+NATIVE_METHOD(subbuf);
+NATIVE_METHOD(buf_to_str);
+NATIVE_METHOD(buf_to_strings);
+NATIVE_METHOD(str_to_buf);
+NATIVE_METHOD(strings_to_buf);
+NATIVE_METHOD(dict_keys);
+NATIVE_METHOD(dict_add);
+NATIVE_METHOD(dict_del);
+NATIVE_METHOD(dict_contains);
+NATIVE_METHOD(listlen);
+NATIVE_METHOD(sublist);
+NATIVE_METHOD(insert);
+NATIVE_METHOD(replace);
+NATIVE_METHOD(delete);
+NATIVE_METHOD(setadd);
+NATIVE_METHOD(setremove);
+NATIVE_METHOD(union);
+NATIVE_METHOD(strftime);
+NATIVE_METHOD(next_objnum);
+NATIVE_METHOD(status);
+NATIVE_METHOD(version);
+NATIVE_METHOD(hostname);
+NATIVE_METHOD(ip);
+NATIVE_METHOD(strlen);
+NATIVE_METHOD(substr);
+NATIVE_METHOD(explode);
+NATIVE_METHOD(strsub);
+NATIVE_METHOD(pad);
+NATIVE_METHOD(match_begin);
+NATIVE_METHOD(match_template);
+NATIVE_METHOD(match_pattern);
+NATIVE_METHOD(match_regexp);
+NATIVE_METHOD(crypt);
+NATIVE_METHOD(uppercase);
+NATIVE_METHOD(lowercase);
+NATIVE_METHOD(strcmp);
+NATIVE_METHOD(strfmt);
+NATIVE_METHOD(regexp);
+NATIVE_METHOD(strsed);
+NATIVE_METHOD(capitalize);
+NATIVE_METHOD(to_veil_pkts);
+NATIVE_METHOD(from_veil_pkts);
 
 #endif

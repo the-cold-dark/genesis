@@ -318,11 +318,11 @@ Expr *error_expr(char *error)
     return cnew;
 }
 
-Expr *name_expr(char *name)
+Expr *objname_expr(char *name)
 {
     Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
 
-    cnew->type = NAME;
+    cnew->type = OBJNAME;
     cnew->lineno = cur_lineno();
     cnew->u.name = name;
     return cnew;
@@ -374,7 +374,7 @@ Expr *message_expr(Expr *to, char *message, Expr_list *args)
 {
     Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
 
-    cnew->type = MESSAGE;
+    cnew->type = CALL_METHOD;
     cnew->lineno = cur_lineno();
     cnew->u.message.to = (to) ? to : function_call_expr("this", NULL);
     cnew->u.message.name = message;
@@ -386,7 +386,7 @@ Expr *expr_message_expr(Expr *to, Expr *message, Expr_list *args)
 {
     Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
 
-    cnew->type = EXPR_MESSAGE;
+    cnew->type = EXPR_CALL_METHOD;
     cnew->lineno = cur_lineno();
     cnew->u.expr_message.to = (to) ? to : function_call_expr("this", NULL);
     cnew->u.expr_message.message = message;
@@ -1087,9 +1087,9 @@ static void compile_expr(Expr *expr)
 
 	break;
 
-      case NAME:
+      case OBJNAME:
 
-	code(NAME);
+	code(OBJNAME);
 	code_str(expr->u.name);
 
 	break;
@@ -1157,23 +1157,23 @@ static void compile_expr(Expr *expr)
 
 	break;
 
-      case MESSAGE:
+      case CALL_METHOD:
 
 	compile_expr(expr->u.message.to);
 	code(START_ARGS);
 	compile_expr_list(expr->u.message.args);
-	code(MESSAGE);
+	code(CALL_METHOD);
 	code_str(expr->u.message.name);
 
 	break;
 
-      case EXPR_MESSAGE:
+      case EXPR_CALL_METHOD:
 
 	compile_expr(expr->u.expr_message.to);
 	compile_expr(expr->u.expr_message.message);
 	code(START_ARGS);
 	compile_expr_list(expr->u.expr_message.args);
-	code(EXPR_MESSAGE);
+	code(EXPR_CALL_METHOD);
 
 	break;
 

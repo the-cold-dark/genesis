@@ -15,6 +15,46 @@
 #include "execute.h"
 #include "cdc_types.h"
 #include "memory.h"
+#include "util.h" /* fformat() */
+
+void func_listgraft(void) {
+    data_t * args, * d1, * d2;
+    list_t * new, * l1, * l2;
+    int pos, x;
+
+    if (!func_init_3(&args, LIST, INTEGER, LIST))
+        return;
+
+    pos = args[1].u.val;
+    l1 = args[0].u.list;
+    l2 = args[2].u.list;
+
+    if (pos-1 > list_length(l1) || pos < 1) {
+        cthrow(range_id,
+               "Position %D is outside of the range of the list.",
+               &args[1]);
+        return;
+    } else if (pos == 1) {
+        l2 = list_append(l2, l1);
+        new = list_dup(l2);
+    } else if (pos-1 == list_length(l1)) {
+        l1 = list_append(l1, l2);
+        new = list_dup(l1);
+    } else {
+        new = list_new(list_length(l1) + list_length(l2));
+        for (x=2, d1=list_first(l1); d1; d1=list_next(l1, d1), x++) {
+            new = list_add(new, d1);
+            if (x==pos) {
+                for (d2=list_first(l2); d2; d2=list_next(l2, d2))
+                    new = list_add(new, d2);
+            }
+        }
+    }
+
+    pop(3);
+    push_list(new);
+    list_discard(new);
+}
 
 void func_listlen(void) {
     data_t *args;

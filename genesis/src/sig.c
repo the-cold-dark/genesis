@@ -22,6 +22,7 @@
 #include "data.h"
 
 void catch_SIGCHLD(int sig);
+void catch_SIGFPE(int sig);
 
 void uninit_sig(void) {
     signal(SIGFPE,  SIG_DFL);
@@ -36,7 +37,8 @@ void uninit_sig(void) {
 }
 
 void init_sig(void) {
-    signal(SIGFPE,  catch_signal);
+    caught_fpe = 0;
+    signal(SIGFPE,  catch_SIGFPE);
     signal(SIGILL,  catch_signal);
     signal(SIGQUIT, catch_signal);
     signal(SIGINT,  catch_signal);
@@ -45,6 +47,10 @@ void init_sig(void) {
     signal(SIGUSR1, catch_signal);
     signal(SIGUSR2, catch_signal);
     signal(SIGCHLD, catch_SIGCHLD);
+}
+
+void catch_SIGFPE(int sig) {
+    caught_fpe++;
 }
 
 void catch_SIGCHLD(int sig) {
@@ -57,7 +63,6 @@ void catch_SIGCHLD(int sig) {
 
 char *sig_name(int sig) {
     switch(sig) {
-        case SIGFPE:  return "SIGFPE";
         case SIGILL:  return "SIGILL";
         case SIGQUIT: return "SIGQUIT";
         case SIGSEGV: return "SIGSEGV";
@@ -88,20 +93,12 @@ void catch_signal(int sig) {
     if (!running)
         return;
 
-    /* send a message to the system object */
-    arg1.type = SYMBOL;
-    arg1.u.symbol = ident_get(sig_name(sig));
-    arg2.type = STRING;
-    arg2.u.str = sigstr;
-    task(SYSTEM_OBJNUM, signal_id, 2, &arg1, &arg2);
-
     /* figure out what to do */
     switch(sig) {
         case SIGHUP:
             atomic = 0;
             handle_connection_output();
             flush_files();
-        case SIGFPE:
         case SIGUSR2:
             /* let the db do what it wants from here */
             break;
@@ -127,5 +124,12 @@ void catch_signal(int sig) {
             }
             break;
     }
+
+    /* send a message to the system object */
+    arg1.type = SYMBOL;
+    arg1.u.symbol = ident_get(sig_name(sig));
+    arg2.type = STRING;
+    arg2.u.str = sigstr;
+    task(SYSTEM_OBJNUM, signal_id, 2, &arg1, &arg2);
 }
 

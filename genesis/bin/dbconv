@@ -10,75 +10,82 @@ if ($#ARGV == -1) {
 sub frobfile {
     local($file) = @_;
 
-open(DB, "$file") || die("Unable to open $file file.");
-open(OUT, ">$file.out") || die("Unable to open $file.out file.");
+    open(DB, "$file") || die("Unable to open $file file.");
+    open(OUT, ">$file.out") || die("Unable to open $file.out file.");
 
-$parents = "";
-$this = "";
-while (<DB>) {
-    chop;
-    if (/^(method|public|private|protected|root|driver)\s+(.*)$/i) {
-        $what = $1;
-        $rest = $2;
-        if ($what =~ /method/) {
-            $what = "public";
+    $parents = "";
+    $this = "";
+    while (<DB>) {
+        chop;
+        if (/^(method|public|private|protected|root|driver)\s+(.*)$/i) {
+            $what = $1;
+            $rest = $2;
+            if ($what =~ /method/) {
+                $what = "public";
+            }
+            $_ = "$what method";
+            if ($rest =~ /:/) {
+                $rest =~ /([^\s:]*):\s*(.*)\s*$/;
+                $name = $1;
+                $other = $2;
+                $other =~ s/disallow_overrides/nooverride/;
+                $_ = "$_ .$name(): $other {";
+            } else {
+                $rest =~ /([^\s]*)/;
+                $name = $1;
+                $_ = "$_ .$name() {";
+            }
+        } elsif (/^parent ([\$#][0-9a-z_]+)/i) {
+            if ($parents) {
+                $parents = "$parents, $1";
+            } else {
+                $parents = "$1";
+            }
+            next;
+        } elsif (/^object ([\$#][0-9a-z_]+)/i) {
+            if ($1 ne "#1" && $1 ne "#0" && $1 ne "\$root" && $1 ne "\$sys") {
+                $_ = "new object $1: $parents;";
+            } else {
+                $_ = "object $1;";
+            }
+            $this = $1;
+            $parents = "";
+        } elsif (/^var ([\$#][0-9a-z_]+) ([0-9a-z_]+) (.*)$/i) {
+            if ($1 eq $this) {
+                $_ = "var $2 = $3;";
+            } else {
+                $_ = "var $1 $2 = $3;";
+            }
+        } elsif (/^name /) {
+            next;
+        } elsif (/^\.$/) {
+            $_ = "};";
         }
-        $_ = "$what method";
-        if ($rest =~ /:/) {
-            $rest =~ /([^\s:]*):\s*(.*)\s*$/;
-            $name = $1;
-            $other = $2;
-            $other =~ s/disallow_overrides/nooverride/;
-            $_ = "$_ .$name(): $other {";
-        } else {
-            $rest =~ /([^\s]*)/;
-            $name = $1;
-            $_ = "$_ .$name() {";
-        }
-    } elsif (/^parent ([\$#][0-9a-z_]+)/i) {
-        if ($parents) {
-            $parents = "$parents, $1";
-        } else {
-            $parents = "$1";
-        }
-        next;
-    } elsif (/^object ([\$#][0-9a-z_]+)/i) {
-        if ($1 ne "#1" && $1 ne "#0" && $1 ne "\$root" && $1 ne "\$sys") {
-            $_ = "new object $1: $parents;";
-        } else {
-            $_ = "object $1;";
-        }
-        $this = $1;
-        $parents = "";
-    } elsif (/^var ([\$#][0-9a-z_]+) ([0-9a-z_]+) (.*)$/i) {
-        if ($1 eq $this) {
-            $_ = "var $2 = $3;";
-        } else {
-            $_ = "var $1 $2 = $3;";
-        }
-    } elsif (/^name /) {
-        next;
-    } elsif (/^\.$/) {
-        $_ = "};";
+
+        s/disallow_overrides\;//g;
+        s/method_state\(/method_access\(/g;
+        s/set_method_state\(/set_method_access\(/g;
+        s/method_args\(/method_info\(/g;
+        s/compile\(/add_method\(/g;
+        s/list_method\(/decompile\(/g;
+        s/parameters\(/variables\(/g;
+        s/get_dbref\(/lookup\(/g;
+        s/next_dbref\(/next_objnum\(/g;
+        s/todbref\(/toobjnum\(/g;
+        s/add_parameter\(/add_var\(/g;
+        s/del_parameter\(/del_var\(/g;
+        s/callers\(/stack\(/g;
+        s/echo\(/cwrite\(/g;
+        s/echo_file\(/cwritef\(/g;
+        s/buffer_len\(/buflen\(/g;
+        s/buffer_subrange\(/subbuf\(/g;
+        s/buffer_to_string\(/buf_to_str\(/g;
+        s/buffer_to_strings\(/buf_to_strings\(/g;
+        s/buffer_from_string\(/str_to_buf\(/g;
+        s/buffer_from_strings\(/strings_to_buf\(/g;
+        s/buffer_replace\(/buf_replace\(/g;
+        print OUT "$_\n";
     }
-
-    s/disallow_overrides\;//g;
-    s/method_state\(/method_access\(/g;
-    s/set_method_state\(/set_method_access\(/g;
-    s/method_args\(/method_info\(/g;
-    s/compile\(/add_method\(/g;
-    s/list_method\(/decompile\(/g;
-    s/parameters\(/variables\(/g;
-    s/get_dbref\(/lookup\(/g;
-    s/next_dbref\(/next_objnum\(/g;
-    s/todbref\(/toobjnum\(/g;
-    s/add_parameter\(/add_var\(/g;
-    s/del_parameter\(/del_var\(/g;
-    s/callers\(/stack\(/g;
-    s/echo\(/cwrite\(/g;
-    s/echo_file\(/cwritef\(/g;
-    print OUT "$_\n";
-}
 
     print "$file.out => $file\n";
     if (!rename("$file.out", "$file")) {
@@ -122,4 +129,36 @@ Edit your db now, and find the following functions:
 
         The object whose parents are changed is now this(), it only accepts
         a list of objects (the new parents).
+
+    bind_port()
+
+        This function has been changed to use the current object as the
+        object to bind to.  If you are using a ColdCore style database
+        a simple fix (yet insecure) is to remove all existing .bind_port()
+        methods; add a .bind_port() method to $network which calls
+        bind_port(), and to search for all calls to .bind_port() and alter
+        them accordingly.  For instance, the code:
+
+            bind_port(current_port, next_connection);
+
+        Would be changed to:
+
+            next_connection.bind_port(current_port);
+
+    buffer_retrieve()
+    buffer_append()
+    buffer_add()
+    buffer_tail()
+    buffer_truncate()
+
+        These functions have been removed, as their functionality can
+        now be aquired with the index operator (ala buffer[10]) for
+        buffer_retrieve(), with the addition operator (ala buffer +
+        `[13, 10]) for buffer_append() and buffer_add(), and with the
+        subbuf() function, for buffer_tail() and buffer_truncate()
+        (subbuf() works the same as sublist() and substr()).
+
+If you used any of the temporary functions decode()/encode() or the
+veil buffer manipulation functions they have been removed as functions,
+in anticipation of native methods.
 END

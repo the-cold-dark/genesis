@@ -23,6 +23,7 @@
 #include "opcodes.h"
 #include "log.h"
 #include "decode.h"
+#include "moddef.h"
 
 #define STACK_STARTING_SIZE                (256 - STACK_MALLOC_DELTA)
 #define ARG_STACK_STARTING_SIZE                (32 - ARG_STACK_MALLOC_DELTA)
@@ -200,79 +201,6 @@ void task_resume(long tid, data_t *ret) {
     restore_vm(old_vm);
     ADD_TASK(vmstore, old_vm);
 }
-
-/*
-// ---------------------------------------------------------------
-*/
-#if 0
-void dup_everything(void) {
-    VMState * vm;
-    Frame   * frame;
-
-    if (vmstore) {
-        vm = vmstore;
-        vmstore = vmstore->next;
-    } else {
-        vm = EMALLOC(VMState, 1);
-    }
-
-    if (frame_store) {
-        frame = frame_store;
-        frame_store = frame_store->caller_frame;
-    } else {
-        frame = EMALLOC(Frame, 1);
-    }
-
-    vm->preempted  = 0;
-    vm->cur_frame  = frame;
-    frame->object  = cache_grab(cur_frame->object);
-    frame->sender  = cur_frame->sender;
-    frame->caller  = cur_frame->caller;
-    frame->method  = method_dup(cur_frame->method);
-                     cache_grab(cur_frame->method->object);
-    frame->opcodes = cur_frame->opcodes;
-    frame->pc      = cur_frame->pc;
-    frame->ticks   = METHOD_TICKS;   /* start with fresh ticks when we fork */
-
-    frame->specifiers = NULL;        /* no forking during error conditions */
-    frame->handler_info = NULL;
-    
-    /* Set up stack indices. */
-    frame->stack_start = stack_start;
-    frame->var_start = arg_start;
-    
-        /* Initialize local variables to 0. */
-        check_stack(method->num_vars);
-        for (i = 0; i < method->num_vars; i++) {
-            stack[stack_pos + i].type = INTEGER;
-            stack[stack_pos + i].u.val = 0;
-        }
-        stack_pos += method->num_vars;
-    
-        frame->caller_frame = cur_frame;
-    vm->stack      = stack;
-    vm->stack_pos  = stack_pos;
-    vm->stack_size = stack_size;
-    vm->arg_starts = arg_starts;
-    vm->arg_pos    = arg_pos;
-    vm->arg_size   = arg_size;
-    vm->task_id    = task_id;
-    vm->next       = NULL;
-}
-
-/*
-// ---------------------------------------------------------------
-*/
-void fork_method(objnum_t objnum, Ident method) {
-    VMState * vm;
-
-    if (call_method(objnum, method) == CALL_OK) {
-    
-    ADD_TASK(suspended, vm);
-    init_execute();
-    cur_frame = NULL;
-}
-#endif
 
 /*
 // ---------------------------------------------------------------
@@ -553,49 +481,39 @@ int frame_start(object_t * obj,
         list_discard(rest);
     }
 
-#if 0
-    /* do native methods */
-    if (method->native != -1) {
-        return CALL_NATIVE;
+    if (frame_store) {
+        frame = frame_store;
+        frame_store = frame_store->caller_frame;
     } else {
-#endif
-        if (frame_store) {
-            frame = frame_store;
-            frame_store = frame_store->caller_frame;
-        } else {
-            frame = EMALLOC(Frame, 1);
-        }
-    
-        frame->object = cache_grab(obj);
-        frame->sender = sender;
-        frame->caller = caller;
-        frame->method = method_dup(method);
-        cache_grab(method->object);
-        frame->opcodes = method->opcodes;
-        frame->pc = 0;
-        frame->ticks = METHOD_TICKS;
-    
-        frame->specifiers = NULL;
-        frame->handler_info = NULL;
-    
-        /* Set up stack indices. */
-        frame->stack_start = stack_start;
-        frame->var_start = arg_start;
-    
-        /* Initialize local variables to 0. */
-        check_stack(method->num_vars);
-        for (i = 0; i < method->num_vars; i++) {
-            stack[stack_pos + i].type = INTEGER;
-            stack[stack_pos + i].u.val = 0;
-        }
-        stack_pos += method->num_vars;
-    
-        frame->caller_frame = cur_frame;
-        cur_frame = frame;
-#if 0
+        frame = EMALLOC(Frame, 1);
     }
-#endif
 
+    frame->object = cache_grab(obj);
+    frame->sender = sender;
+    frame->caller = caller;
+    frame->method = method_dup(method);
+    cache_grab(method->object);
+    frame->opcodes = method->opcodes;
+    frame->pc = 0;
+    frame->ticks = METHOD_TICKS;
+
+    frame->specifiers = NULL;
+    frame->handler_info = NULL;
+
+    /* Set up stack indices. */
+    frame->stack_start = stack_start;
+    frame->var_start = arg_start;
+
+    /* Initialize local variables to 0. */
+    check_stack(method->num_vars);
+    for (i = 0; i < method->num_vars; i++) {
+        stack[stack_pos + i].type = INTEGER;
+        stack[stack_pos + i].u.val = 0;
+    }
+    stack_pos += method->num_vars;
+
+    frame->caller_frame = cur_frame;
+    cur_frame = frame;
 
     return CALL_OK;
 }
@@ -704,6 +622,24 @@ void anticipate_assignment(void) {
 /*
 // ---------------------------------------------------------------
 */
+INTERNAL void call_native_method(method_t * method, int arg_start) {
+    data_t rval;
+
+    rval.type = -1;
+    if ((*natives[method->native].func)(arg_start, &rval)) {
+        if (rval.type == -1) {
+            pop(stack_pos - arg_start);
+        } else {
+            pop(stack_pos - arg_start + 1);
+            stack[stack_pos] = rval;
+            stack_pos++;
+        }
+    }
+}
+
+/*
+// ---------------------------------------------------------------
+*/
 int pass_method(int stack_start, int arg_start) {
     method_t *method;
     int result;
@@ -718,9 +654,28 @@ int pass_method(int stack_start, int arg_start) {
     if (!method)
         return CALL_METHNF;
 
+    if (cur_frame) {
+        switch (method->m_access) {
+            case MS_ROOT:
+                if (cur_frame->method->object->objnum != ROOT_OBJNUM)
+                    return CALL_ROOT;
+                break;
+            case MS_DRIVER:
+                /* if we are here, there is a current frame,
+                   and the driver didn't send this */
+                return CALL_DRIVER;
+        }
+    }
+
     /* Start the new frame. */
-    result = frame_start(cur_frame->object, method, cur_frame->sender,
-                         cur_frame->caller, stack_start, arg_start);
+    if (method->native == -1) {
+        result = frame_start(cur_frame->object, method, cur_frame->sender,
+                             cur_frame->caller, stack_start, arg_start);
+    } else {
+        call_native_method(method, arg_start);
+       /* method_discard(method); */
+        result = CALL_NATIVE;
+    }
     cache_discard(method->object);
     return result;
 }
@@ -780,9 +735,15 @@ int call_method(objnum_t   objnum,
     }
 
     /* Start the new frame. */
-    sender = (cur_frame) ? cur_frame->object->objnum : NOT_AN_IDENT;
-    caller = (cur_frame) ? cur_frame->method->object->objnum : NOT_AN_IDENT;
-    result = frame_start(obj, method, sender, caller, stack_start, arg_start);
+    if (method->native == -1) {
+        sender = (cur_frame) ? cur_frame->object->objnum : NOT_AN_IDENT;
+        caller = (cur_frame) ? cur_frame->method->object->objnum : NOT_AN_IDENT;
+        result = frame_start(obj,method,sender,caller,stack_start,arg_start);
+    } else {
+        call_native_method(method, arg_start);
+        /* method_discard(method); */
+        result = CALL_NATIVE;
+    }
 
     cache_discard(obj);
     cache_discard(method->object);
@@ -953,13 +914,6 @@ void push_buffer(Buffer *buf) {
     stack[stack_pos].u.buffer = buffer_dup(buf);
     stack_pos++;
 }
-
-#define INVALID_BINDING \
-    (op_table[cur_frame->last_opcode].binding != INV_OBJNUM && \
-     op_table[cur_frame->last_opcode].binding != \
-     cur_frame->method->object->objnum)
-#define FUNC_NAME() (op_table[cur_frame->last_opcode].name)
-#define FUNC_BINDING() (op_table[cur_frame->last_opcode].binding)
 
 int func_init_0(void) {
     int arg_start = arg_starts[--arg_pos];

@@ -318,7 +318,7 @@ INTERNAL void connection_read(connection_t *conn) {
     data_t d;
 
     len = read(conn->fd, (char *) temp, BIGBUF);
-    if (len < 0 && errno == EINTR) {
+    if (len == F_FAILURE && errno == EINTR) {
         /* We were interrupted; deal with this next time around. */
         return;
     }

@@ -318,12 +318,9 @@ INTERNAL void pack_method(method_t *method, FILE *fp)
 	    write_ident(method->error_lists[i].error_ids[j], fp);
     }
 
-/*
-    write_long(method->native, fp);
-*/
     write_long(method->m_access, fp);
     write_long(method->m_flags, fp);
-
+    write_long(method->native, fp);
 }
 
 INTERNAL method_t *unpack_method(FILE *fp)
@@ -372,11 +369,9 @@ INTERNAL method_t *unpack_method(FILE *fp)
 	}
     }
 
-/*
-    method->native = read_long(fp);
-*/
     method->m_access = read_long(fp);
     method->m_flags = read_long(fp);
+    method->native = read_long(fp);
 
     method->refs = 1;
     return method;
@@ -408,6 +403,7 @@ INTERNAL int size_method(method_t *method)
 	    size += size_ident(method->error_lists[i].error_ids[j]);
     }
 
+    size += size_long(method->native);
     size += size_long(method->m_access);
     size += size_long(method->m_flags);
     return size;

@@ -400,7 +400,7 @@ void op_error(void) {
     push_error(id);
 }
 
-void op_name(void) {
+void op_objname(void) {
     int ind, id;
     long objnum;
 
@@ -698,13 +698,13 @@ void op_frob(void) {
     }
 }
 
-#define CHECK_TYPE {\
+#define _CHECK_TYPE {\
         if (ind->type != INTEGER) {\
             cthrow(type_id, "Offset (%D) is not an integer.", ind);\
             return;\
         }\
     }
-#define CHECK_LENGTH(len) {\
+#define _CHECK_LENGTH(len) {\
         i = ind->u.val - 1;\
         if (i < 0) {\
             cthrow(range_id, "Index (%d) is less than one.", i + 1);\
@@ -726,16 +726,16 @@ void op_index(void) {
 
     switch (d->type) {
         case LIST:
-            CHECK_TYPE
-            CHECK_LENGTH(list_length(d->u.list))
+            _CHECK_TYPE
+            _CHECK_LENGTH(list_length(d->u.list))
 	    data_dup(&element, list_elem(d->u.list, i));
 	    pop(2);
 	    stack[stack_pos] = element;
 	    stack_pos++;
             return;
         case STRING:
-            CHECK_TYPE
-            CHECK_LENGTH(string_length(d->u.str))
+            _CHECK_TYPE
+            _CHECK_LENGTH(string_length(d->u.str))
 	    str = string_from_chars(string_chars(d->u.str) + i, 1);
 	    pop(2);
 	    push_string(str);
@@ -752,8 +752,8 @@ void op_index(void) {
             }
             return;
         case BUFFER:
-            CHECK_TYPE
-            CHECK_LENGTH(buffer_len(d->u.buffer))
+            _CHECK_TYPE
+            _CHECK_LENGTH(buffer_len(d->u.buffer))
             i = buffer_retrieve(d->u.buffer, i);
             pop(2);
             push_int(i);

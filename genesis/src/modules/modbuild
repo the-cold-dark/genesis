@@ -6,6 +6,13 @@
 ##
 ## this program should be run in the current directory.
 ##
+#
+# Note to module developers: the MAGIC_MODNUMBER is generated every time
+# this program is run.  Since it is stored in the clean file of the binary
+# db you cannot rebuild the modules and use the same binary db without
+# dumping the binary db to text.  To specify your own magic number run
+# this program with the argument '-m' followed by a number.
+#
 
 sub die {
     print "@_";
@@ -13,8 +20,47 @@ sub die {
     exit(0);
 }
 
-@mods = @ARGV;
+$nmods = 0;
+@mods = ();
+$magic = time();
+$write=1;
 
+@args = @ARGV;
+@arg_save = ();
+
+doargs:
+for ($x=0; $x <= $#args; $x++) {
+    $_ = $args[$x];
+    if (/^-m(.*)/) {
+        ## ohh, a special magic number!
+        $rest = $1;
+        if ($rest) {
+            $magic = $rest;
+        } else {
+            $x++;
+            $magic = $args[$x];
+        }
+        if ($magic !~ /[0-9]+/) {
+            &die("Invalid magic number \"$magic\"\n");
+        }
+        push(@arg_save, "-m$magic");
+    } elsif (/^-l/) {
+        open(TMP, "modbuild.last");
+        $tmp = <TMP>;
+        chop($tmp);
+        close(TMP);
+        @args = split(/ /, $tmp);
+        goto doargs;
+    } else {
+        $nmods++;
+        push(@mods, $_);
+        push(@arg_save, $_);
+    }
+}
+
+`echo @arg_save > modbuild.last`;
+
+if ($write) {
 ## open moddef.h now, add to it as we go
 open(DEF, ">moddef.h") || die("Unable to open moddef.h");
 print DEF <<END;
@@ -32,7 +78,7 @@ print DEF <<END;
 #ifndef _moddef_h_
 #define _moddef_h_
 
-#include "modules.h"
+#include "native.h"
 #include "native.h"
 
 END
@@ -40,22 +86,29 @@ END
 foreach $mod (@mods) {
     print DEF "#include \"$mod.h\"\n";
 }
-print DEF "\n#define MAGIC_MODNUMBER " . time() . "\n";
 
-print DEF "\nmodule_t * cold_modules[] = {\n";
+print DEF<<END;
+
+#define NUM_MODULES $nmods
+
+#ifdef _native_
+module_t * cold_modules[] = {
+END
 
 foreach $mod (@mods) {
     print DEF "    \&${mod}_module,\n";
 }
 
-print DEF "};\n\n";
+print DEF "};\n#endif\n\n";
+}
 
 ## now frob each module file
 $struct = "";
 $defn = 0;
+$objects = "";
 foreach $mod (@mods) {
     if (!(-f "./$mod.mod")) {
-        print "** No module found by the name of $mod.mod\n";
+        print "No module found by the name of $mod.mod\n";
         next;
     }
     open(MOD, "$mod.mod");
@@ -66,7 +119,16 @@ foreach $mod (@mods) {
         s/\s+/ /g;
         s/^\s*//g;
         s/\s*$//g;
-        ($ref, $args, $rest, $func) = split(/\s+/, $_);
+        if (/^objs\s*(.*)$/) {
+            $objects .= " " . $1;
+            next;
+        } elsif (/^native\s*(.*)$/) {
+            $_ = $1;
+        } else {
+            print "Ignoring unknown directive \"$_\".\n";
+            next;
+        }
+        ($ref, $func) = split(/\s+/, $_);
         ($ref !~ /\./) && &die("Object reference \"$ref\" is invalid.\n");
         ($obj, $name) = split(/\./, $ref);
         ($obj =~ /^#/) &&
@@ -81,20 +143,45 @@ foreach $mod (@mods) {
         $def =~ tr/[a-z]/[A-Z]/;
         $defo = $obj;
         $defo =~ tr/[a-z]/[A-Z]/;
+        if ($func !~ /^native_/) { $func = "native_$func"; }
         print DEF "#define NATIVE_${defo}_${def} $defn\n";
-        $buf = sprintf("    {%-20s %-15s %-25s %-4s %s},\n",
-                "\"$name\",", "\"$obj\",", "$func,", "$args,", "$rest");
+        $buf = sprintf("    {%-15s %-20s %s},\n",
+                "\"$obj\",", "\"$name\",", "$func");
         $struct .= $buf;
         $defn++;
     }
 }
 
-print DEF <<END;
+if ($write) {
+    print DEF <<END;
+#define NATIVE_LAST $defn
 
-native_t natives[] {
+#define MAGIC_MODNUMBER $magic\n
+
+#ifdef _native_
+native_t natives[NATIVE_LAST] = {
 $struct};
+#else
+extern native_t natives[NATIVE_LAST];
+#endif
 
 #endif
 END
 
-close(DEF);
+    close(DEF);
+}
+
+$objs = "";
+for (split(/\s+/, $objects)) {
+    s/\s+/ /g;
+    s/^\s*//g;
+    s/\s*$//g;
+    (!$_) && next;
+
+    !(/^modules\//) && ($_ = "modules/$_");
+    print "$_ ";
+}
+
+print "\n";
+
+

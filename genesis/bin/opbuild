@@ -1,0 +1,155 @@
+#!/usr/bin/perl
+
+##
+## using the given arguments, build grammar.y and opcodes.c from
+## the file "operators.conf"
+##
+
+$| = 1;
+
+$base=$ENV{GENESIS_DIR}||die("Environment variable GENESIS_DIR is not set.\n");
+$s="$base/src";
+!(-f "$s/operators")  && die("Unable to find file $s/operators.\n");
+open(OPS, "$s/operators") || die("Unable to open file $s/operators.\n");
+
+#sub die {
+#    print "@_";
+#    `rm -f grammar.y opcodes.c`;
+#    exit(0);
+#}
+
+@tokens = ();
+$struct = "";
+$x=0;
+$fpos=0;
+
+print "reading operator defs...";
+
+while (<OPS>) {
+    chomp;
+
+    !($x % 10) && print ".";
+
+    s/^\s*//;
+    s/\s*$//;
+
+    !$_ || /^#/ && next;
+
+    /^\/\*/ && ($struct .= "\n  $_\n") && next;
+
+    if (/^\s*tok\s+([^\s]*)/) {
+        $def = $1;
+        $def =~ tr/[a-z]/[A-Z]/;
+        push (@tokens, $def);
+    } elsif (/^\s*op\s+(-|\+)\s+(.*)\s*$/) {
+        $do = $1;
+        $_ = $2;
+        if (/(.*)\s*\[([^\]]+)\]/) {
+            $other = $1;
+            $rest = join(", ", split(/\s+/, $2));
+            if ($rest) { $rest = ", $rest"; }
+        } else {
+            $rest = "";
+            $other = $_;
+        }
+
+        @stuff = split(/\s+/, $other);
+        $func = shift(@stuff);
+        $def  = shift(@stuff);
+        $str = shift(@stuff);
+
+        if (!$def) {
+            $def = $func;
+            $def =~ tr/[a-z]/[A-Z]/;
+        }
+
+        if (!$str) {
+            $str = $def;
+            if ($str =~ /^"/) { $str =~ s/"//g; }
+        }
+
+        if ($def =~ /^"/)       { $def =~ s/"//g; }
+        elsif ($def =~ /^[A-Z]/) { $def = "OP_$def"; }
+        else                    { $def = "'$def'"; }
+
+        $struct .= sprintf("  { %-20s %-20s op_${func}$rest },\n",
+                   "$def,", "\"$str\",");
+
+        if ($do eq "+") {
+            push (@tokens, $def);
+        }
+
+        $x++;
+    } elsif (/^\s*func\s+([a-z_]+)/i) {
+        if (!$fpos) {
+            $fpos = $x;
+        }
+        $name = $def = $1;
+        $def =~ tr/[a-z]/[A-Z]/;
+ 
+        $def = "F_$def";
+        $struct .= sprintf("  { %-20s %-20s func_$name },\n",
+                   "$def,", "\"$name\",");
+
+        push (@tokens, $def);
+
+        $x++;
+    }
+}
+
+##
+## format the tokens
+##
+$toks = "";
+$line = "";
+foreach $token (@tokens) {
+    if (length($line) + length($token) <= 70) {
+        $line ? ($line .= " $token") : ($line = "%token $token");
+    } else {
+        $toks .= "$line\n";
+        $line = "%token $token";
+    }
+}
+
+if (length($line)) { $toks .= "$line\n"; }
+
+##
+## create grammar.y
+##
+print "\n=> grammar.y...";
+$file="$base/src/grammar.y";
+open(IN, "$file.in") || die("Unable to open $file.in\n");
+open(OUT, ">$file")  || die("Unable to open >$file\n");
+
+while (<IN>) {
+    if (/^\s*#\$#TOKENS#\$#\s*$/) {
+        print OUT $toks;
+    } else {
+        print OUT;
+    }
+}
+
+close(IN);
+close(OUT);
+
+##
+## create opcodes.c
+##
+print "\n=> opcodes.c...";
+$file="$base/src/opcodes.c";
+open(IN, "$file.in") || die("Unable to open $file.in\n");
+open(OUT, ">$file")  || die("Unable to open >$file\n");
+
+while (<IN>) {
+    if (/^\s*#\$#DEFINES#\$#\s*$/) {
+        print OUT "#define FIRST_FUNCTION $fpos\n#define LAST_OPERATOR $x\n\n";
+    } elsif (/^\s*#\$#OPERATOR_STRUCT#\$#\s*$/) {
+        print OUT $struct;
+    } else {
+        print OUT;
+    }
+}
+
+close(IN);
+close(OUT);
+print "\n";

@@ -24,6 +24,7 @@ typedef struct task_s task_t;
 #include "data.h"
 #include "object.h"
 #include "io.h"
+#include "opcodes.h"
 
 /* We use the MALLOC_DELTA defines to keep table sizes thirty-two bytes less
  * than a power of two, which is helpful on buddy systems. */
@@ -174,6 +175,15 @@ list_t * task_list(void);
 list_t * task_stack(void);
 void run_paused_tasks(void);
 void bind_opcode(int opcode, objnum_t objnum);
+
+#define INVALID_BINDING \
+    (op_table[cur_frame->last_opcode].binding != INV_OBJNUM && \
+     op_table[cur_frame->last_opcode].binding != \
+     cur_frame->method->object->objnum)
+#define FUNC_NAME() (op_table[cur_frame->last_opcode].name)
+#define FUNC_BINDING() (op_table[cur_frame->last_opcode].binding)
+
+#include "macros.h"
 
 #endif
 

@@ -9,6 +9,8 @@
 // Miscellaneous operations.
 */
 
+#define NATIVE_MODULE
+
 #include "config.h"
 #include "defs.h"
 
@@ -21,50 +23,37 @@
 #include "util.h"
 #include "net.h"
 
-void native_strftime(void) {
+NATIVE_METHOD(strftime) {
     char        s[LINE];
     char      * fmt;
-    data_t    * args;
-    string_t  * str;
-    int         nargs;
     time_t      tt;
     struct tm * t;
 
-    if (!func_init_1_or_2(&args, &nargs, STRING, INTEGER))
-	return;
+    INIT_1_OR_2_ARGS(STRING, INTEGER)
 
-    tt = ((nargs == 2) ? (time_t) args[1].u.val : time(NULL));
+    tt = ((argc == 2) ? (time_t) _INT(ARG2) : time(NULL));
     t  = localtime(&tt);
  
-    fmt = string_chars(args[0].u.str);
+    fmt = string_chars(_STR(ARG1));
 
     /* some OS's are weird and do odd things when you end in %
        (accidentally or no) */
     if (fmt[strlen(fmt)] == '%')
         fmt[strlen(fmt)] = NULL;
 
-    if (strftime(s, LINE, fmt, t) == (size_t) 0) {
-        cthrow(range_id,
-               "Format results in a string longer than 80 characters.");
-        return;
-    }
+    if (strftime(s, LINE, fmt, t) == (size_t) 0)
+       THROW((range_id,"Format results in a string longer than 80 characters."))
 
-    str = string_from_chars(s, strlen(s));
-
-    pop(nargs);
-    push_string(str);
-    string_discard(str);
+    RETURN_STRING(string_from_chars(s, strlen(s)))
 }
 
-void native_next_objnum(void) {
+NATIVE_METHOD(next_objnum) {
+    INIT_NO_ARGS()
 
-    if (!func_init_0())
-        return;
-
-    push_objnum(db_top);
+    RETURN_OBJNUM(db_top)
 }
 
-void native_status(void) {
+NATIVE_METHOD(status) {
 #ifdef HAVE_GETRUSAGE
     struct rusage r;
 #endif
@@ -72,8 +61,7 @@ void native_status(void) {
     data_t *d;
     int x;
 
-    if (!func_init_0())
-        return;
+    INIT_NO_ARGS()
 
 #define __LLENGTH__ 19
 
@@ -112,17 +100,14 @@ void native_status(void) {
     d[18].u.val = (int) atomic;
 #undef __LLENGTH__
 
-    push_list(status);
-    list_discard(status);
+    RETURN_LIST(status)
 }
 
-void native_version(void) {
+NATIVE_METHOD(version) {
     list_t *version;
     data_t *d;
 
-    /* Take no arguments. */
-    if (!func_init_0())
-        return;
+    INIT_NO_ARGS()
 
     /* Construct a list of the version numbers and push it. */
     version = list_new(3);
@@ -131,40 +116,25 @@ void native_version(void) {
     d[0].u.val = VERSION_MAJOR;
     d[1].u.val = VERSION_MINOR;
     d[2].u.val = VERSION_PATCH;
-    push_list(version);
-    list_discard(version);
+
+    RETURN_LIST(version);
 }
 
 /*
 // -----------------------------------------------------------------
 */
-void native_hostname(void) {
-    data_t *args;
-    string_t *r;
+NATIVE_METHOD(hostname) {
+    INIT_1_ARG(STRING)
 
-    /* Accept a port number. */
-    if (!func_init_1(&args, STRING))
-        return;
-
-    r = hostname(args[0].u.str->s);
-
-    pop(1);
-    push_string(r);
+    RETURN_STRING(hostname(string_chars(_STR(ARG1))))
 }
 
 /*
 // -----------------------------------------------------------------
 */
-void native_ip(void) {
-    data_t *args;
-    string_t *r;
+NATIVE_METHOD(ip) {
+    INIT_1_ARG(STRING)
 
-    /* Accept a hostname. */
-    if (!func_init_1(&args, STRING))
-        return;
-
-    r = ip(args[0].u.str->s);
-
-    pop(1);
-    push_string(r);
+    RETURN_STRING(ip(string_chars(_STR(ARG1))))
 }
+

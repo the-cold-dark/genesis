@@ -32,6 +32,8 @@
 #include "ident.h"
 #include "lookup.h"
 #include "decode.h"
+#include "native.h"
+#include "moddef.h"
 
 /*
 // ------------------------------------------------------------------------
@@ -43,7 +45,6 @@
 typedef struct idref_s {
     long objnum;            /* objnum if its an objnum */
     char str[BUF];         /* string name */
-    char ren[BUF];         /* ~ renamed name */
     int  err;
 } idref_t;
 
@@ -62,27 +63,18 @@ object_t * cur_obj;
         fputc(10, logfile); \
     }
 
-#define WARN(__s) (printf("Line %ld: WARNING: %s\n", line_count, __s))
-
-#define WARNf(__s, __x) { \
+#define WARN(_printf_) \
         printf("Line %ld: WARNING: ", line_count); \
-        printf(__s, __x); \
-        fputc(10, logfile); \
-    }
-
-#define WARNf2(__s, __a1, __a2) { \
-        printf("Line %ld: WARNING: ", line_count); \
-        printf(__s, __a1, __a2); \
-        fputc(10, logfile); \
-    }
+        printf _printf_; \
+        fputc(10, stdout)
 
 #define DIE(__s) { \
-        printf("Line %ld: ABORT: %s\n", line_count, __s); \
+        printf("Line %ld: ERROR: %s\n", line_count, __s); \
         shutdown(); \
     }
 
 #define DIEf(__fmt, __arg) { \
-        printf("Line %ld: ABORT: ", line_count); \
+        printf("Line %ld: ERROR: ", line_count); \
         printf(__fmt, __arg); \
         fputc(10, logfile); \
         shutdown(); \
@@ -139,6 +131,17 @@ INTERNAL void shutdown(void) {
 
 typedef struct holder_s holder_t;
 
+/* native holder */
+typedef struct nh_s nh_t;
+
+struct nh_s {
+    long    objnum;
+    Ident   name;
+    Ident   now;
+    int     valid;
+    nh_t  * next;
+};
+
 struct holder_s {
     long       objnum;
     string_t * str;
@@ -146,6 +149,7 @@ struct holder_s {
 };
 
 holder_t * holders = NULL;
+nh_t * nhs = NULL;
 
 INTERNAL int add_objname(char * str, long objnum) {
     Ident      id = ident_get(str);
@@ -153,8 +157,8 @@ INTERNAL int add_objname(char * str, long objnum) {
     long       num = INV_OBJNUM;
 
     if (lookup_retrieve_name(id, &num) && num != objnum) {
-        printf("Line %ld: WARNING: Attempt to rebind existing objname $%s (#%d)\n",
-                line_count, str, (int) num);
+        WARN(("Attempt to rebind existing objname $%s (#%li)",
+               str, (long) num));
         ident_discard(id);
         return 0;
     }
@@ -232,6 +236,174 @@ INTERNAL void cleanup_holders(void) {
     }
 }
 
+/* only call with a method which declars a MF_NATIVE flag */
+/* holders are redundant, but it lets us keep track of methods defined
+   native, but which are not */
+INTERNAL nh_t * find_defined_native_method(objnum_t objnum, Ident name) {
+    nh_t * nhp;
+
+    for (nhp = nhs; nhp != (nh_t *) NULL; nhp = nhp->next) {
+        if (nhp->name == name) {
+            if (nhp->objnum == objnum)
+                return nhp;
+        }
+    }
+
+    return (nh_t *) NULL;
+}
+
+INTERNAL void remember_native(method_t * method) {
+    nh_t  * nh;
+
+    nh = find_defined_native_method(method->object->objnum, method->name);
+    if (nh != (nh_t *) NULL) {
+        fformat(stdout, "Line %l: ERROR: %O.%s() overrides existing native definition.\n", line_count, nh->objnum, ident_name(nh->name));
+        shutdown();
+    } else {
+        nh = (nh_t *) malloc(sizeof(nh_t));
+
+        nh->objnum = method->object->objnum;
+        nh->valid = 0;
+        nh->next = nhs;
+        nhs = nh;
+    }
+    nh->name = ident_dup(method->name);
+    nh->now = NOT_AN_IDENT;
+}
+
+INTERNAL void frob_n_print_errstr(char * err, char * name, objnum_t objnum);
+
+void verify_native_methods(void) {
+    Ident      mname;
+    Ident      name;
+    object_t * obj;
+    method_t * method = NULL;
+    objnum_t   objnum;
+    list_t   * errors;
+    list_t   * code = list_new(0);
+    native_t * native;
+    register int x;
+    nh_t     * nh = (nh_t *) NULL;
+
+    /* check the methods we know about */
+    for (x=0; x < NATIVE_LAST; x++) {
+        native = &natives[x];
+
+        /* if they didn't define it right, ignore it */
+        if ((strlen(native->bindobj) == 0) || (strlen(native->name) == 0))  
+            continue;
+  
+        /* get the object name */
+        name = ident_get(native->bindobj);
+        if (name == NOT_AN_IDENT)
+            continue;
+
+        /* find the object */
+        objnum = INV_OBJNUM;
+        lookup_retrieve_name(name, &objnum);
+        ident_discard(name);
+  
+        if (objnum == INV_OBJNUM) {
+            printf("WARNING: Unable to find object for native $%s.%s()\n",
+                   native->bindobj, native->name);
+            continue;
+        }
+
+        obj = cache_retrieve(objnum);
+        if (obj == (object_t *) NULL) {
+            printf("WARNING: Unable to retrieve object #%li ($%s)\n",
+                   (long) objnum, native->bindobj);
+            continue;
+        }
+
+        name = ident_get(native->name);
+        mname = ident_dup(name);
+
+        /* see if we have defined it already */
+        nh = find_defined_native_method(objnum, name);
+
+        /* yup, change 'id' to be the right name */
+        if (nh != (nh_t *) NULL) {
+            if (nh->now != NOT_AN_IDENT) {
+                ident_discard(mname);
+                mname = ident_dup(nh->now);
+            }
+        }
+
+        /* find it on the object */
+        method = object_find_method(objnum, mname);
+
+        /* it does not exist, compile a blank one */
+        if (method == NULL) {
+            compile_method:
+
+            method = compile(obj, code, &errors);
+            method->native = x;
+            method->m_flags |= MF_NATIVE;
+
+            object_add_method(obj, mname, method);
+
+            if (nh != (nh_t *) NULL)
+                nh->valid = 1;
+            if (errors != NULL)
+                list_discard(errors);
+
+            method_discard(method);
+
+        /* it was prototyped, set the native structure pointer */
+        } else if (method->m_flags & MF_NATIVE) {
+            method->native = x;
+            obj->dirty = 1;
+
+            if (nh != (nh_t *) NULL)
+                nh->valid = 1;
+
+        } else {
+            if (!force_natives) {
+                fformat(stdout, "WARNING: method definition %O.%s() overrides native method.\n", obj->objnum, ident_name(mname));
+            } else {
+                object_del_method(obj, mname);
+                goto compile_method;
+            }
+        }
+
+        ident_discard(mname);
+        ident_discard(name);
+        cache_discard(obj);
+    }
+
+    list_discard(code);
+
+    /* now cleanup method holders */
+    while (nhs != (nh_t *) NULL) {
+        nh = nhs;
+        nhs = nh->next;
+
+        if (nh->now != NOT_AN_IDENT) {
+            name = nh->now;
+            ident_discard(nh->name);
+        } else {
+            name = nh->name;
+        }
+
+        if (nh->valid) {
+            ident_discard(name);
+        } else {
+            cur_obj = cache_retrieve(objnum);
+            if (cur_obj) {
+                object_del_method(cur_obj, name);
+                cache_discard(cur_obj);
+            }
+
+            printf("WARNING: discarding invalid native method .%s()\n",
+                   ident_name(name));
+            ident_discard(name);
+        }
+
+        free(nh);
+    }
+}
+
 /*
 // ------------------------------------------------------------------------
 // its small enough lets just do copies, rather than dealing with pointers
@@ -245,7 +417,6 @@ INTERNAL int get_idref(char * sp, idref_t * id, int isobj) {
 
     id->objnum = INV_OBJNUM;
     strcpy(id->str, "");
-    strcpy(id->ren, "");
 
     if (!*sp) {
         id->err = 1;
@@ -280,17 +451,6 @@ INTERNAL int get_idref(char * sp, idref_t * id, int isobj) {
 
         strcpy(id->str, p);
     }
-#if 0
-            if ((r = strchr(p, '~')) != NULL) {
-            if (!is_valid_id(p, r - p))
-                DIEf("Invalid symbol (1) \"%s\".", str);
-            COPY(id.str, p, r);
-            len = len - (r - p + 1);
-            if (!is_valid_id(r, len))
-                DIEf("Invalid symbol (2) \"%s\".", str);
-            strncpy(id.ren, p, len);
-        } else {
-#endif
 
     return x;
 }
@@ -383,8 +543,8 @@ INTERNAL object_t * handle_objcmd(char * line, char * s, int new) {
                 d.u.objnum = objnum;
                 parents = list_add(parents, &d);
             } else {
-                WARNf("Ignoring undefined parent \"%s\".", par_str);
-                WARNf("For object \"%s\".", obj_str);
+                WARN(("Ignoring undefined parent \"%s\".", par_str));
+                WARN(("For object \"%s\".", obj_str));
             }
 
             /* skip the last word, ',' and whitespace */
@@ -399,16 +559,16 @@ INTERNAL object_t * handle_objcmd(char * line, char * s, int new) {
 
     if (new == N_OLD) {
         if (objnum == INV_OBJNUM) {
-            WARNf("old: Object \"%s\" does not exist.", obj_str);
+            WARN(("old: Object \"%s\" does not exist.", obj_str));
             return NULL;
         } else {
             target = cache_retrieve(objnum);
             if (target == NULL) {
-                WARNf("old: Unable to find object \"%s\".", obj_str);
+                WARN(("old: Unable to find object \"%s\".", obj_str));
             } else if (objnum == ROOT_OBJNUM) {
-                WARN("old: attempt to destroy $root ignored.");
+                WARN(("old: attempt to destroy $root ignored."));
             } else if (objnum == SYSTEM_OBJNUM) {
-                WARN("old: attempt to destroy $sys ignored.");
+                WARN(("old: attempt to destroy $sys ignored."));
             } else {
                 ERRf("old: destroying object %s.", obj_str);
                 target->dead = 1;
@@ -420,7 +580,7 @@ INTERNAL object_t * handle_objcmd(char * line, char * s, int new) {
             DIEf("new: Attempt to define object %s without parents.", obj_str);
 
         if (objnum == ROOT_OBJNUM || objnum == SYSTEM_OBJNUM) {
-            WARNf("new: Attempt to recreate %s ignored.", obj_str);
+            WARN(("new: Attempt to recreate %s ignored.", obj_str));
 
             /* $root and $sys should ALWAYS exist */
             target = cache_retrieve(objnum);
@@ -429,7 +589,7 @@ INTERNAL object_t * handle_objcmd(char * line, char * s, int new) {
             if (objnum != INV_OBJNUM) {
                 target = cache_retrieve(objnum);
                 if (target) {
-                    WARNf("new: destroying existing object %s.", obj_str);
+                    WARN(("new: destroying existing object %s.", obj_str));
                     target->dead = 1;
                     cache_discard(target);
                 }
@@ -446,8 +606,8 @@ INTERNAL object_t * handle_objcmd(char * line, char * s, int new) {
         target = cache_retrieve(objnum);
 
         if (!target) {
-            WARNf("Creating object \"%s\".", obj_str);
-            if (parents->len == 0 && objnum == ROOT_OBJNUM)
+            WARN(("Creating object \"%s\".", obj_str));
+            if (parents->len == 0 && objnum != ROOT_OBJNUM)
                 DIEf("Attempt to define object %s without parents.", obj_str);
 #if DEBUG_TEXTDB
             printf("DEBUG: Creating %li\n", objnum);
@@ -512,12 +672,12 @@ INTERNAL void handle_parcmd(char * s, int new) {
         if (num != -1) {
             parents = list_delete(parents, num);
             if (object_change_parents(cur_obj, parents) >= 0)
-                WARN("old parent: Oops, something went wrong...");
+                WARN(("old parent: Oops, something went wrong..."));
         }
     } else {
         target = cache_retrieve(objnum);
         if (!target) {
-            WARNf("Unable to find object \"%s\" for new parent.", obj_str);
+            WARN(("Unable to find object \"%s\" for new parent.", obj_str));
             return;
         }
         cache_discard(target);
@@ -525,7 +685,7 @@ INTERNAL void handle_parcmd(char * s, int new) {
         if (list_search(parents, &d) != -1) {
             parents = list_add(parents, &d);
             if (object_change_parents(cur_obj, parents) >= 0)
-                WARN("newparent: Oops, something went wrong...");
+                WARN(("newparent: Oops, something went wrong..."));
         }
     }
 }
@@ -555,7 +715,7 @@ INTERNAL void handle_namecmd(char * line, char * s, int new) {
     id = ident_get(name);
     if (lookup_retrieve_name(id, &other)) {
         ident_discard(id);
-        WARNf2("objname $%s is already bound to objnum #%li", name, other);
+        WARN(("objname $%s is already bound to objnum #%li", name, other));
         return;
     }
 
@@ -601,12 +761,21 @@ INTERNAL void handle_varcmd(char * line, char * s, int new, int access) {
         definer = parse_to_objnum(name);
 
         if (!cache_check(definer)) {
-            WARN("Ignoring object variable with invalid parent:");
+            WARN(("Ignoring object variable with invalid parent:"));
             if (strlen(line) > 55) {
                 line[50] = line[51] = line[52] = '.';
                 line[53] = NULL;
             }
-            WARNf("\"%s\"", line);
+            WARN(("\"%s\"", line));
+            return;
+        }
+        if (!object_has_ancestor(cur_obj->objnum, definer)) {
+            WARN(("Ignoring object variable with no ancestor:"));
+            if (strlen(line) > 55) {
+                line[50] = line[51] = line[52] = '.';
+                line[53] = NULL;
+            }
+            WARN(("\"%s\"", line));
             return;
         }
 
@@ -623,8 +792,6 @@ INTERNAL void handle_varcmd(char * line, char * s, int new, int access) {
 
     s += get_idref(s, &name, NOOBJ);
 
-    if (name.ren[0] != NULL)
-        DIE("Attempt to rename variable.");
     if (name.str[0] == NULL)
         DIEf("Invalid variable name \"%s\"", p);
 
@@ -652,7 +819,7 @@ INTERNAL void handle_varcmd(char * line, char * s, int new, int access) {
             NEXT_WORD(s);
             data_from_literal(&d, s);
             if (d.type == -1)
-                WARN("data is unparsable, defaulting to '0'.");
+                WARN(("data is unparsable, defaulting to '0'."));
         }
 
         if (d.type < 0) {
@@ -694,16 +861,69 @@ INTERNAL void handle_evalcmd(FILE * fp, char * s, int new, int access) {
 /*
 // ------------------------------------------------------------------------
 */
+INTERNAL int get_method_name(char * s, idref_t * id) {
+    int    count = 0, x;
+    char * p;
+
+    if (*s == '.')
+        s++, count++;
+
+    for (x=0, p=s; *p != NULL; x++, p++) {
+        if (isalnum(*p) || *p == '_')
+            continue;
+        break;
+    }
+
+    count += x;
+    strncpy(id->str, s, x);
+    id->str[x] = (char) NULL;
+
+    return count;
+}
+
+INTERNAL void handle_bind_nativecmd(FILE * fp, char * s) {
+    idref_t    nat;
+    idref_t    now;
+    Ident      inat, inow;
+    nh_t     * n = (nh_t *) NULL;
+
+    s += get_method_name(s, &nat);
+
+    if (*s == '(')
+        s+=2;
+
+    NEXT_WORD(s);
+
+    s += get_method_name(s, &now);
+    
+    if (nat.str[0] == (char) NULL || now.str[0] == (char) NULL)
+        DIE("Invalid method name in bind_native directive.\n")
+
+    inat = ident_get(nat.str);
+    inow = ident_get(now.str);
+
+    n = find_defined_native_method(cur_obj->objnum, inow);
+    if (n != (nh_t *) NULL) {
+        if (n->now != NOT_AN_IDENT)
+            ident_discard(n->now);
+        ident_discard(n->name);
+        n->name = ident_dup(inat);
+        n->now = ident_dup(inow);
+    } else
+        DIE("Attempt to bind_native to method which is not native.\n")
+
+    ident_discard(inow);
+    ident_discard(inat);
+}
+
 INTERNAL void handle_methcmd(FILE * fp, char * s, int new, int access) {
     char     * p = NULL;
     objnum_t   definer;
-    Ident      name, nname;
-    idref_t    id = {INV_OBJNUM, "", "", 0};
+    Ident      name;
+    idref_t    id = {INV_OBJNUM, "", 0};
     method_t * method;
     object_t * obj;
-    int        flags = MF_NONE,
-               r;
-    register int x;
+    int        flags = MF_NONE;
 
     NEXT_WORD(s);
 
@@ -724,34 +944,7 @@ INTERNAL void handle_methcmd(FILE * fp, char * s, int new, int access) {
         definer = cur_obj->objnum;
     }
 
-    /* change the period to a space.. */
-    if (*s == '.')
-        s++;
-
-    /* read the name in, watch for '~' renamed name.. */
-    for (p=s, x=r=0; *p != NULL; x++, p++) {
-        if (isalnum(*p) || *p == '_')
-            continue;
-        if (*p == '~') {
-            r = x;
-            continue;
-        }
-        break;
-    }
-
-    if (r) {
-        strncpy(id.str, s, r - 1);
-        id.str[r - 1] = (char) NULL;
-        p = s + (r + 1);
-        r = x - r - 1;
-        strncpy(id.ren, p, r);
-        id.ren[r] = (char) NULL;
-    } else {
-        strncpy(id.str, s, x);
-        id.str[x] = (char) NULL;
-    }
-
-    s += x;
+    s += get_method_name(s, &id);
 
     if (id.str[0] == NULL)
         DIE("No method name.");
@@ -790,13 +983,17 @@ INTERNAL void handle_methcmd(FILE * fp, char * s, int new, int access) {
                     s--;
                 COPY(ebuf, p, s);
 
-                WARNf("Unknown flag: \"%s\".", ebuf);
+                WARN(("Unknown flag: \"%s\".", ebuf));
 
                 p = s;
             }
             if (*p == ',')
                 p++;
         }
+    } else {
+        if ((p = strchr(s, ';')) == NULL &&
+            (p = strchr(s, '{')) == NULL)
+            DIE("Un-terminted method definition.")
     }
 
     obj = cache_retrieve(definer);
@@ -804,8 +1001,19 @@ INTERNAL void handle_methcmd(FILE * fp, char * s, int new, int access) {
     if (!obj)
         DIE("Abnormal disappearance of object.");
 
-    /* get the method */
-    method = get_method(fp, obj, ident_name(name));
+    if (*p != ';') {
+        /* get the method */
+        method = get_method(fp, obj, ident_name(name));
+    } else {
+        list_t * code = list_new(0);
+        list_t * errors;
+
+        method = compile(obj, code, &errors);
+
+        list_discard(code);
+        if (errors != NULL)
+            list_discard(errors);
+    }
 
     if (!method)
         DIE("Method definition failed");
@@ -814,15 +1022,11 @@ INTERNAL void handle_methcmd(FILE * fp, char * s, int new, int access) {
     method->m_flags = flags;
 
     object_add_method(obj, name, method);
-    method_discard(method);
 
-    /* this is redundant, but it goes through the right channels */
-    if (id.ren[0] != NULL) {
-        nname = ident_get(id.ren);
-        if (!object_rename_method(obj, name, nname))
-            DIE("Abnormal disappearance of method when renaming.")
-        ident_discard(nname);
-    }
+    if (method->m_flags & MF_NATIVE)
+        remember_native(method);
+
+    method_discard(method);
 
     /* free up the remaining resources */
     ident_discard(name);
@@ -1021,12 +1225,16 @@ void compile_cdc_file(FILE * fp) {
             s += 4;
             NEXT_WORD(s);
             handle_evalcmd(fp, s, new, access);
+        } else if (MATCH(s, "bind_native", 11)) {
+            s += 11;
+            NEXT_WORD(s);
+            handle_bind_nativecmd(fp, s);
         } else if (MATCH(s, "name", 4)) {
             s += 4;
             NEXT_WORD(s);
             handle_namecmd(str->s, s, new);
         } else if (strnccmp(s, "//", 2)) {
-            WARN("parse error, unknown directive.");
+            WARN(("parse error, unknown directive."));
             ERRf("\"%s\"\n", s);
             shutdown();
         }
@@ -1034,6 +1242,8 @@ void compile_cdc_file(FILE * fp) {
         string_discard(str);
         str = NULL;
     }
+
+    verify_native_methods();
 
     printf("Cleaning up name holders...");
     cleanup_holders();
@@ -1264,6 +1474,8 @@ void dump_object(long objnum, FILE *fp) {
     Var      * var;
     int        first,
                i;
+    method_t * meth;
+    char     * s;
 
     obj = cache_retrieve(objnum);
 
@@ -1328,24 +1540,42 @@ void dump_object(long objnum, FILE *fp) {
 
     /* define methods */
     for (i = 0; i < obj->methods.size; i++) {
-        if (!obj->methods.tab[i].m)
+        meth = obj->methods.tab[i].m;
+        if (!meth)
             continue;
 
         /* define it */
-        fputs(method_definition(obj->methods.tab[i].m), fp);
-        fputs(" {\n", fp);
-        
+        fputs(method_definition(meth), fp);
+
         /* list it */
-        code = decompile(obj->methods.tab[i].m, obj, 4, 1);
-        for (d = list_first(code); d; d = list_next(code, d)) {
-            fputs("    ", fp);
-            fputs(string_chars(d->u.str), fp);
-            putc('\n', fp);
+        code = decompile(meth, obj, 4, 1);
+        if (list_length(code) == 0) {
+            fputs(";\n\n", fp);
+        } else {
+            fputs(" {\n", fp);
+            for (d = list_first(code); d; d = list_next(code, d)) {
+                fputs("    ", fp);
+                fputs(string_chars(d->u.str), fp);
+                putc('\n', fp);
+            }
+            /* end it */
+            fputs("};\n\n", fp);
         }
+
         list_discard(code);
 
-        /* end it */
-        fputs("};\n\n", fp);
+        /* if it is native, and they have renamed it, put a rename
+           directive down */
+        if (meth->m_flags & MF_NATIVE) {
+        fputs(ident_name(meth->name), stdout); fflush(stdout);
+        fprintf(stdout, " %d ", meth->native); fflush(stdout);
+SEGV:   fputs(natives[meth->native].name, stdout); fflush(stdout);
+        fputc(10, stdout); fflush(stdout);
+            if (strcmp(ident_name(meth->name), natives[meth->native].name))
+            fprintf(fp, "bind_native .%s() .%s();\n\n",
+                    natives[meth->native].name,
+                    ident_name(meth->name));
+        }
     }
 
     fputc('\n', fp);

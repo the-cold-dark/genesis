@@ -1,4 +1,12 @@
-Note: textdumping with 'coldcc -d' is still ignoring random objects
+Verified to compile on:
+
+    * FreeBSD 2.1
+    * DEC OSF/1 2.0 (Note: it will have problems on a DEC alpha processor)
+    * DEC Ultrix 4.4
+    * Sun Solaris 2.5
+
+You will get the best results in FreeBSD, as it is the development platform
+so possible problems are immediately found.
 
 POST 1.0:
     * overridable methods: change searching to take the first method
@@ -11,13 +19,14 @@ POST 1.0:
     * execute to use files (shag code from apache CGI)
 
 PRE 1.0:
-    * Native methods
+    * methods 'defined' native but which are not need to have the 'native'
+      flag removed when compiled, or they need to be removed.
     * decompiling bugs
 
 Possiblilities:
 
     * servers bound to dead objects (what happens?)
-    * regexp replacing, s/.../.../ etc, good native function on $string :)
+    * sed style regexp replacing via strsed()
     * forking
     * send_to() builtin, this would be equivalent to the simple loop:
 
@@ -30,3 +39,7 @@ Possiblilities:
           send_to(.contents(), 'tell, ["you are all silly"]);
 
       This could be a native method.
+
+    * 'retry' jump (ala continue, etc, for catch statements)
+    * "\n" in strings should be character '10', not '\' and 'n'.
+    * POSIX regexps vs our own

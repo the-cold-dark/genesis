@@ -126,7 +126,7 @@ static struct {
     { P_DECREMENT,	10 },
     { INCREMENT,	10 },
     { DECREMENT,	10 },
-    { MESSAGE,		11 },
+    { CALL_METHOD,		11 },
     { INDEX,		12 }
 };
 
@@ -785,9 +785,9 @@ static Expr_list *decompile_expressions_bounded(int *pos_ptr, int expr_end)
 	    pos += 2;
 	    break;
 
-	  case NAME:
+	  case OBJNAME:
 	    s = ident_name(object_get_ident(the_object, the_opcodes[pos + 1]));
-	    stack = expr_list(name_expr(s), stack);
+	    stack = expr_list(objname_expr(s), stack);
 	    pos += 2;
 	    break;
 
@@ -849,14 +849,14 @@ static Expr_list *decompile_expressions_bounded(int *pos_ptr, int expr_end)
 		  pos++;
 		  break;
 
-		case MESSAGE:
+		case CALL_METHOD:
 		  s = ident_name(object_get_ident(the_object,
 						  the_opcodes[pos + 1]));
 		  stack->expr = message_expr(stack->expr, s, args);
 		  pos += 2;
 		  break;
 
-		case EXPR_MESSAGE:
+		case EXPR_CALL_METHOD:
 		  stack->next->expr = expr_message_expr(stack->next->expr,
 							stack->expr, args);
 		  stack = stack->next;
@@ -1375,7 +1375,7 @@ static string_t *unparse_expr(string_t *str, Expr *expr, int paren) {
 	else
 	    return string_add_unparsed(str, s, strlen(s));
 
-      case NAME:
+      case OBJNAME:
 	s = expr->u.name;
 	str = string_addc(str, '$');
 	if (is_valid_ident(expr->u.name))
@@ -1453,12 +1453,12 @@ static string_t *unparse_expr(string_t *str, Expr *expr, int paren) {
 	str = unparse_args(str, expr->u.args);
 	return string_addc(str, ')');
 
-      case MESSAGE:
+      case CALL_METHOD:
 	s = expr->u.message.name;
 
 	/* Only include target if it's not this(). */
 	if (!is_this(expr->u.message.to))
-	    str = unparse_expr_prec(str, expr->u.message.to, MESSAGE, 0);
+	    str = unparse_expr_prec(str, expr->u.message.to, CALL_METHOD, 0);
 
 	str = string_addc(str, '.');
 	str = string_add_chars(str, s, strlen(s));
@@ -1467,10 +1467,10 @@ static string_t *unparse_expr(string_t *str, Expr *expr, int paren) {
 	str = string_addc(str, ')');
 	return str;
 
-      case EXPR_MESSAGE:
+      case EXPR_CALL_METHOD:
 	/* Only include target if it's not this(). */
 	if (!is_this(expr->u.expr_message.to))
-	    str = unparse_expr_prec(str, expr->u.message.to, MESSAGE, 0);
+	    str = unparse_expr_prec(str, expr->u.message.to, CALL_METHOD, 0);
 
 	str = string_add_chars(str, ".(", 2);
 	str = unparse_expr(str, expr->u.expr_message.message, PAREN_ASSIGN);

@@ -497,34 +497,6 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
-# Extract the first word of "ranlib", so it can be a program name with args.
-set dummy ranlib; ac_word=$2
-echo $ac_n "  Checking for $ac_word""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_prog_RANLIB'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  if test -n "$RANLIB"; then
-  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
-else
-  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${IFS}:"
-  for ac_dir in $PATH; do
-    test -z "$ac_dir" && ac_dir=.
-    if test -f $ac_dir/$ac_word; then
-      ac_cv_prog_RANLIB="ranlib"
-      break
-    fi
-  done
-  IFS="$ac_save_ifs"
-  test -z "$ac_cv_prog_RANLIB" && ac_cv_prog_RANLIB=":"
-fi
-fi
-RANLIB="$ac_cv_prog_RANLIB"
-if test -n "$RANLIB"; then
-  echo "$ac_t""$RANLIB" 1>&6
-else
-  echo "$ac_t""no" 1>&6
-fi
-
 for ac_prog in 'bison -y' byacc
 do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -1803,6 +1775,38 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
+# lib -lm
+echo $ac_n "  Checking for -lm""... $ac_c" 1>&6
+if eval "test \"`echo '$''{'ac_cv_lib_m'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  ac_save_LIBS="$LIBS"
+LIBS="-lm $LIBS"
+cat > conftest.$ac_ext <<EOF
+#line 1793 "configure"
+#include "confdefs.h"
+
+int main() { return 0; }
+EOF
+
+if eval $ac_link; then
+  rm -rf conftest*
+  eval "ac_cv_lib_m=yes"
+else
+  rm -rf conftest*
+  eval "ac_cv_lib_m=no"
+fi
+rm -f conftest*
+LIBS="$ac_save_LIBS"
+
+fi
+if eval "test \"`echo '$ac_cv_lib_'m`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
+  LIBS="-lm $LIBS"
+else
+  echo "$ac_t""no" 1>&6
+fi
+
 # lib -lsocket (Solaris)
 echo $ac_n "  Checking for -lsocket""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_lib_socket'+set}'`\" = set"; then
@@ -2108,26 +2112,16 @@ EOF
 
 fi
 
-modules="core cdc web"
-ac_cv_mod_core=${ac_cv_mod_core='yes'}
+modules=" cdc veil web"
+ac_cv_mod_veil=${ac_cv_mod_veil='yes'}
 ac_cv_mod_cdc=${ac_cv_mod_cdc='yes'}
 ac_cv_mod_web=${ac_cv_mod_web='yes'}
-moduledef="src/modules/moduledef.h"
+moddir="src/modules"
+modfile="src/modules/moddef.h"
 inc="module.inc"
 defs="module.defs"
 
 trap "rm -f $inc $defs $moduledef; exit" 1 2 15
-
-printconfig() {
-    cat <<END
-# Your current configuration is:
-#
-#           ColdCore Module (core): $ac_cv_mod_core
-#           ColdC Module (cdc):     $ac_cv_mod_cdc
-#           Web Module (web):       $ac_cv_mod_web
-
-END
-}
 
 cat <<END
 
@@ -2136,83 +2130,101 @@ cat <<END
 # to one or more objects.  For more information on adding your own
 # native methods, refer to the documentation.
 #
-# By default, you should always have the ColdC Module
-#
 END
 
 if test -z "$PERL"; then
-    printconfig
     cat <<END
+# Your current configuration is:
+#
+#           ColdC Module (cdc):  $ac_cv_mod_cdc
+#           Veil Module (veil):  $ac_cv_mod_veil
+#           Web Module (web):    $ac_cv_mod_web
+
 !!
 !! configure was unable to find 'perl' in your PATH.  The programs which
 !! reconfigure your modules use perl.  If you wish to reconfigure your
-!! modules you will have to get perl version 4 or higher.
+!! modules you will have to get perl version 5 or higher.
 !!
 
 END
-else
-
-query=no
-while true; do
-    printconfig
-    echo $ac_n "Reconfigure Modules? [$query] $ac_c" 1>&6
-    read inp
-    inp=`echo $inp | tr '[A-Z]' '[a-z]'`
-    if [ \( -z "$inp" -a "$query" = "no" \) -o "$inp" = "n" -o "$inp" = "no" ]
-    then
-        break
-    fi
-
-    echo
-
-    for ac_mod in $modules; do
-    echo $ac_n "Use $ac_mod module? [`eval echo '$ac_cv_mod_'$ac_mod`] $ac_c" 1>&6
-    read inp
-    inp=`echo $inp | tr '[A-Z]' '[a-z]'`
-    if [ -n "$inp" -a \( "$inp" = "y" -o "$inp" = "yes" \) ]; then
-        eval "ac_cv_mod_${ac_mod}=yes"
-    elif [ -n "$inp" -a \( "$inp" = "n" -o "$inp" = "no" \) ]; then
-        eval "ac_cv_mod_${ac_mod}=no"
-    fi
-
+    objs=""
+    for i in $modules; do
+        if test -r "src/modules/$i.mod"; then
+            objs="$objs `grep '^objs ' src/modules/$i.mod|sed -e 's/^objs //'`"
+        fi
     done
 
-    echo
+    MOD_O=""
+    for i in $objs; do
+        MOD_O="$MOD_O modules/$i"
+    done
+
+else
+
     query=no
-done
+    while true; do
+        cat <<END
+# Your current configuration is:
+#
+#           ColdC Module (cdc):  $ac_cv_mod_cdc
+#           Veil Module (veil):  $ac_cv_mod_veil
+#           Web Module (web):    $ac_cv_mod_web
 
-## now setup the modules
-#echo "- Creating $moduledef"
-for ac_mod in $modules; do
+END
+        echo $ac_n "Reconfigure Modules? [$query] $ac_c" 1>&6
+        read inp
+        inp=`echo $inp | tr '[A-Z]' '[a-z]'`
+        if test \( -z "$inp" -a "$query" = "no" \) \
+                   -o "$inp" = "n" -o "$inp" = "no"; then
+            break
+        fi
 
-if eval "test \"`echo '$ac_cv_mod_'$ac_mod`\" = yes"; then
+        for ac_mod in $modules; do
+        echo $ac_n "Use $ac_mod module? [`eval echo '$ac_cv_mod_'$ac_mod`] $ac_c" 1>&6
+        read inp
+        inp=`echo $inp | tr '[A-Z]' '[a-z]'`
+        if [ -n "$inp" -a \( "$inp" = "y" -o "$inp" = "yes" \) ]; then
+            eval "ac_cv_mod_${ac_mod}=yes"
+        elif [ -n "$inp" -a \( "$inp" = "n" -o "$inp" = "no" \) ]; then
+            eval "ac_cv_mod_${ac_mod}=no"
+        fi
 
-COLDLIBS="$COLDLIBS -l$ac_mod"
+        done
 
-#echo "#include \"$ac_mod.h\"" >> $inc
-#echo "    &${ac_mod}_module," >> $defs
+        echo
+        query=no
+    done
 
+    ## now setup the modules
+    mod_config=""
+    for ac_mod in $modules; do
+        if eval "test \"`echo '$ac_cv_mod_'$ac_mod`\" = yes"; then
+            mod_config="$mod_config $ac_mod"
+        fi
+    done
+
+    if test "$mod_config" != "$modules" -o ! -f $modfile; then
+        echo "- Generating module files for $mod_config"
+        owd=`pwd`
+        cd $moddir
+        objs=`./modbuild $mod_config`;
+        MOD_O=`echo $objs`
+        cd $owd
+    else
+        objs=""
+        for i in $modules; do
+          if test -r "src/modules/$i.mod"; then
+            objs="$objs `grep '^objs ' src/modules/$i.mod|sed -e 's/^objs //'`"
+          fi
+        done
+
+        MOD_O=""
+        for i in $objs; do
+          MOD_O="$MOD_O modules/$i"
+        done
+    fi
 fi
 
-done
-
-#cat ${moduledef}.in > $moduledef
-#cat $inc >> $moduledef
-#cat <<END >> $moduledef
-#
-#module_t * cold_modules[] = {
-#END
-#cat $defs >> $moduledef
-#
-#cat <<END >> $moduledef
-#    NULL
-#};
-#
-#endif
-#END
-#
-#rm -f $defs $inc
-fi
 
 ######################################################################
 trap '' 1 2 15
@@ -2314,7 +2326,7 @@ s%@CPPFLAGS@%$CPPFLAGS%g
 s%@CXXFLAGS@%$CXXFLAGS%g
 s%@DEFS@%$DEFS%g
 s%@LDFLAGS@%$LDFLAGS%g
-s%@COLDLIBS@%$COLDLIBS%g
+s%@MOD_O@%$MOD_O%g
 s%@LIBS@%$LIBS%g
 s%@exec_prefix@%$exec_prefix%g
 s%@prefix@%$prefix%g
@@ -2346,6 +2358,7 @@ s%@VPATCH@%$VERSION_PATCH%g
 
 CEOF
 EOF
+
 cat >> $CONFIG_STATUS <<EOF
 
 CONFIG_FILES=\${CONFIG_FILES-"src/Makefile src/modules/Makefile src/ops/Makefile src/data/Makefile"}

@@ -49,16 +49,16 @@ struct buffer {
 struct data {
     int type;
     union {
-        long val;
-        float fval;
-        objnum_t objnum;
-        Ident symbol;
-        Ident error;
+        long       val;
+        float      fval;
+        objnum_t   objnum;
+        Ident      symbol;
+        Ident      error;
         string_t * str;
-        list_t * list;
-        Frob * frob;
-        Dict * dict;
-        Buffer * buffer;
+        list_t   * list;
+        Frob     * frob;
+        Dict     * dict;
+        Buffer   * buffer;
     } u;
 };
 

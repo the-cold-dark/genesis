@@ -18,6 +18,8 @@
 #include "functions.h"
 #include "util.h"
 
+#define FDEF(_def_, _str_, _name_)  { _def_, _str_, CAT(func_, _name_) },       
+
 #define NUM_OPERATORS (sizeof(op_info) / sizeof(*op_info))
 
 Op_info op_table[LAST_TOKEN];
@@ -58,13 +60,13 @@ static Op_info op_info[] = {
     { OBJNUM,           "OBJNUM",          op_objnum, INTEGER },
     { SYMBOL,           "SYMBOL",          op_symbol, IDENT },
     { ERROR,            "ERROR",           op_error, IDENT },
-    { NAME,             "NAME",            op_name, IDENT },
+    { OBJNAME,          "OBJNAME",         op_objname, IDENT },
     { GET_LOCAL,        "GET_LOCAL",       op_get_local, VAR },
     { GET_OBJ_VAR,      "GET_OBJ_VAR",     op_get_obj_var, IDENT },
     { START_ARGS,       "START_ARGS",      op_start_args },
     { PASS,             "PASS",            op_pass },
-    { MESSAGE,          "MESSAGE",         op_message, IDENT },
-    { EXPR_MESSAGE,     "EXPR_MESSAGE",    op_expr_message },
+    { CALL_METHOD,          "CALL_METHOD",         op_message, IDENT },
+    { EXPR_CALL_METHOD,     "EXPR_CALL_METHOD",    op_expr_message },
     { LIST,             "LIST",            op_list },
     { DICT,             "DICT",            op_dict },
     { BUFFER,           "BUFFER",          op_buffer },
@@ -105,100 +107,100 @@ static Op_info op_info[] = {
     { MINUS_EQ,         "MINUS_EQ",        op_doeq_subtract },
 
     /* Object variable functions */
-    { ADD_VAR,           "add_var",             func_add_var },
-    { DEL_VAR,           "del_var",             func_del_var },
-    { SET_VAR,           "set_var",             func_set_var },
-    { GET_VAR,           "get_var",             func_get_var },
-    { CLEAR_VAR,         "clear_var",           func_clear_var },
-    { VARIABLES,         "variables",           func_variables },
+    FDEF(F_ADD_VAR,    "add_var",   add_var)
+    FDEF(F_DEL_VAR,    "del_var",   del_var)
+    FDEF(F_SET_VAR,    "set_var",   set_var)
+    FDEF(F_GET_VAR,    "get_var",   get_var)
+    FDEF(F_CLEAR_VAR,  "clear_var", clear_var)
+    FDEF(F_VARIABLES,  "variables", variables)
 
     /* Object method functions */
-    { COMPILE,           "compile",             func_compile },
-    { DECOMPILE,         "decompile",           func_decompile },
-    { ADD_METHOD,        "add_method",          func_add_method },
-    { DEL_METHOD,        "del_method",          func_del_method },
-    { GET_METHOD,        "get_method",          func_get_method },
-    { RENAME_METHOD,     "rename_method",       func_rename_method },
-    { SET_METHOD_FLAGS,  "set_method_flags",    func_set_method_flags },
-    { SET_METHOD_ACCESS, "set_method_access",   func_set_method_access },
-    { METHOD_INFO,       "method_info",         func_method_info },
-    { METHOD_FLAGS,      "method_flags",        func_method_flags },
-    { METHOD_ACCESS,     "method_access",       func_method_access },
-    { METHODS,           "methods",             func_methods },
-    { FIND_METHOD,       "find_method",         func_find_method },
-    { FIND_NEXT_METHOD,  "find_next_method",    func_find_next_method },
-    
+    FDEF(F_COMPILE,           "compile",           compile)
+    FDEF(F_DECOMPILE,         "decompile",         decompile)
+    FDEF(F_ADD_METHOD,        "add_method",        add_method)
+    FDEF(F_DEL_METHOD,        "del_method",        del_method)
+    FDEF(F_GET_METHOD,        "get_method",        get_method)
+    FDEF(F_RENAME_METHOD,     "rename_method",     rename_method)
+    FDEF(F_SET_METHOD_FLAGS,  "set_method_flags",  set_method_flags)
+    FDEF(F_SET_METHOD_ACCESS, "set_method_access", set_method_access)
+    FDEF(F_METHOD_INFO,       "method_info",       method_info)
+    FDEF(F_METHOD_FLAGS,      "method_flags",      method_flags)
+    FDEF(F_METHOD_ACCESS,     "method_access",     method_access)
+    FDEF(F_METHODS,           "methods",           methods)
+    FDEF(F_FIND_METHOD,       "find_method",       find_method)
+    FDEF(F_FIND_NEXT_METHOD,  "find_next_method",  find_next_method)
+
     /* Object functions */
-    { PARENTS,           "parents",             func_parents },
-    { CHILDREN,          "children",            func_children },
-    { ANCESTORS,         "ancestors",           func_ancestors },
-    { HAS_ANCESTOR,      "has_ancestor",        func_has_ancestor },
-    { DESCENDANTS,       "descendants",         func_descendants },
-    { SIZE,              "size",                func_size },
-    { CREATE,            "create",              func_create },
-    { CHPARENTS,         "chparents",           func_chparents },
-    { DESTROY,           "destroy",             func_destroy },
-    { SET_OBJNAME,       "set_objname",         func_set_objname },
-    { DEL_OBJNAME,       "del_objname",         func_del_objname },
-    { OBJNAME,           "objname",             func_objname },
-    { F_OBJNUM,          "objnum",              func_objnum },
-    { LOOKUP,            "lookup",              func_lookup },
-    { DATA,              "data",                func_data },
+    FDEF(F_PARENTS,      "parents",      parents)
+    FDEF(F_CHILDREN,     "children",     children)
+    FDEF(F_ANCESTORS,    "ancestors",    ancestors)
+    FDEF(F_HAS_ANCESTOR, "has_ancestor", has_ancestor)
+    FDEF(F_DESCENDANTS,  "descendants",  descendants)
+    FDEF(F_SIZE,         "size",         size)
+    FDEF(F_CREATE,       "create",       create)
+    FDEF(F_CHPARENTS,    "chparents",    chparents)
+    FDEF(F_DESTROY,      "destroy",      destroy)
+    FDEF(F_SET_OBJNAME,  "set_objname",  set_objname)
+    FDEF(F_DEL_OBJNAME,  "del_objname",  del_objname)
+    FDEF(F_OBJNAME,      "objname",      objname)
+    FDEF(F_OBJNUM,       "objnum",       objnum)
+    FDEF(F_LOOKUP,       "lookup",       lookup)
+    FDEF(F_DATA,         "data",         data)
 
     /* System functions */
-    { LOG,               "log",                 func_log },
-    { BACKUP,            "backup",              func_backup },
-    { SHUTDOWN,          "shutdown",            func_shutdown },
-    { SET_HEARTBEAT,     "set_heartbeat",       func_set_heartbeat },
+    { F_LOG,               "log",                 func_log },
+    { F_BACKUP,            "backup",              func_backup },
+    { F_SHUTDOWN,          "shutdown",            func_shutdown },
+    { F_SET_HEARTBEAT,     "set_heartbeat",       func_set_heartbeat },
 
     /* Task/Frame functions */
     { F_TICK,           "tick",                 func_tick },
-    { RESUME,           "resume",               func_resume },
-    { SUSPEND,          "suspend",              func_suspend },
-    { TASKS,            "tasks",                func_tasks },
-    { TASK_ID,          "task_id",              func_task_id },
-    { CANCEL,           "cancel",               func_cancel },
-    { PAUSE,            "pause",                func_pause },
-    { REFRESH,          "refresh",              func_refresh },
-    { TICKS_LEFT,       "ticks_left",           func_ticks_left },
-    { METHOD,           "method",               func_method },
-    { THIS,             "this",                 func_this },
-    { DEFINER,          "definer",              func_definer },
-    { SENDER,           "sender",               func_sender },
-    { CALLER,           "caller",               func_caller },
-    { STACK,            "stack",                func_stack },
-    { ATOMIC,           "atomic",               func_atomic },
+    { F_RESUME,           "resume",               func_resume },
+    { F_SUSPEND,          "suspend",              func_suspend },
+    { F_TASKS,            "tasks",                func_tasks },
+    { F_TASK_ID,          "task_id",              func_task_id },
+    { F_CANCEL,           "cancel",               func_cancel },
+    { F_PAUSE,            "pause",                func_pause },
+    { F_REFRESH,          "refresh",              func_refresh },
+    { F_TICKS_LEFT,       "ticks_left",           func_ticks_left },
+    { F_METHODOP,         "method",               func_method },
+    { F_THIS,             "this",                 func_this },
+    { F_DEFINER,          "definer",              func_definer },
+    { F_SENDER,           "sender",               func_sender },
+    { F_CALLER,           "caller",               func_caller },
+    { F_STACK,            "stack",                func_stack },
+    { F_ATOMIC,           "atomic",               func_atomic },
 
     /* Data/Conversion functions */
-    { VALID,            "valid",                func_valid },
-    { TYPE,             "type",                 func_type },
-    { CLASS,            "class",                func_class },
-    { TOINT,            "toint",                func_toint },
-    { TOFLOAT,          "tofloat",              func_tofloat },
-    { TOSTR,            "tostr",                func_tostr },
-    { TOLITERAL,        "toliteral",            func_toliteral },
-    { TOOBJNUM,         "toobjnum",             func_toobjnum },
-    { TOSYM,            "tosym",                func_tosym },
-    { TOERR,            "toerr",                func_toerr },
+    { F_VALID,            "valid",                func_valid },
+    { F_TYPE,             "type",                 func_type },
+    { F_CLASS,            "class",                func_class },
+    { F_TOINT,            "toint",                func_toint },
+    { F_TOFLOAT,          "tofloat",              func_tofloat },
+    { F_TOSTR,            "tostr",                func_tostr },
+    { F_TOLITERAL,        "toliteral",            func_toliteral },
+    { F_TOOBJNUM,         "toobjnum",             func_toobjnum },
+    { F_TOSYM,            "tosym",                func_tosym },
+    { F_TOERR,            "toerr",                func_toerr },
 
     /* Exception functions */
-    { ERROR_FUNC,       "error",                func_error },
-    { TRACEBACK,        "traceback",            func_traceback },
-    { THROW,            "throw",                func_throw },
-    { RETHROW,          "rethrow",              func_rethrow },
+    { F_ERROR_FUNC,       "error",                func_error },
+    { F_TRACEBACK,        "traceback",            func_traceback },
+    { F_THROW,          "throw",                func_throw },
+    { F_RETHROW,          "rethrow",              func_rethrow },
 
     /* Network control functions */
-    { REASSIGN_CONNECTION,"reassign_connection",func_reassign_connection },
-    { BIND_PORT,        "bind_port",            func_bind_port },
-    { UNBIND_PORT,      "unbind_port",          func_unbind_port },
-    { OPEN_CONNECTION,  "open_connection",      func_open_connection },
-    { CLOSE_CONNECTION, "close_connection",     func_close_connection },
-    { CWRITE,           "cwrite",               func_cwrite },
-    { CWRITEF,          "cwritef",              func_cwritef },
-    { CONNECTION,       "connection",           func_connection },
+    { F_REASSIGN_CONNECTION,"reassign_connection",func_reassign_connection },
+    { F_BIND_PORT,        "bind_port",            func_bind_port },
+    { F_UNBIND_PORT,      "unbind_port",          func_unbind_port },
+    { F_OPEN_CONNECTION,  "open_connection",      func_open_connection },
+    { F_CLOSE_CONNECTION, "close_connection",     func_close_connection },
+    { F_CWRITE,           "cwrite",               func_cwrite },
+    { F_CWRITEF,          "cwritef",              func_cwritef },
+    { F_CONNECTION,       "connection",           func_connection },
 
     /* File control functions */
-    { EXECUTE,          "execute",              func_execute },
+    { F_EXECUTE,          "execute",              func_execute },
     { F_FSTAT,          "fstat",                func_fstat },
     { F_FREAD,          "fread",                func_fread },
     { F_FCHMOD,         "fchmod",               func_fchmod },
@@ -216,75 +218,63 @@ static Op_info op_info[] = {
     { F_FFLUSH,         "fflush",               func_fflush },
 
     /* Miscellaneous functions */
-    { LOCALTIME,        "localtime",       func_localtime },
-    { TIME,             "time",            func_time },
-    { MTIME,            "mtime",           func_mtime },
-    { CTIME,            "ctime",           func_ctime },
-    { BIND_FUNCTION,    "bind_function",   func_bind_function },
-    { UNBIND_FUNCTION,  "unbind_function", func_unbind_function },
-    { RANDOM,           "random",          func_random },
+    { F_LOCALTIME,        "localtime",       func_localtime },
+    { F_TIME,             "time",            func_time },
+    { F_MTIME,            "mtime",           func_mtime },
+    { F_CTIME,            "ctime",           func_ctime },
+    { F_BIND_FUNCTION,    "bind_function",   func_bind_function },
+    { F_UNBIND_FUNCTION,  "unbind_function", func_unbind_function },
+    { F_RANDOM,           "random",          func_random },
     { F_MIN,            "min",             func_min },
     { F_MAX,            "max",             func_max },
     { F_ABS,            "abs",             func_abs },
 
     /* -------- from here on are native functions -------- */
     /* Operations on strings (stringop.c). */
-    { STRFMT,           "strfmt",          func_strfmt },
-    { STRLEN,           "strlen",          func_strlen },
-    { SUBSTR,           "substr",          func_substr },
-    { EXPLODE,          "explode",         func_explode },
-    { STRSUB,           "strsub",          func_strsub },
-    { PAD,              "pad",             func_pad },
-    { MATCH_BEGIN,      "match_begin",     func_match_begin },
-    { MATCH_TEMPLATE,   "match_template",  func_match_template },
-    { MATCH_PATTERN,    "match_pattern",   func_match_pattern },
-    { MATCH_REGEXP,     "match_regexp",    func_match_regexp },
-    { CRYPT,            "crypt",           func_crypt },
-    { UPPERCASE,        "uppercase",       func_uppercase },
-    { LOWERCASE,        "lowercase",       func_lowercase },
-    { STRCMP,           "strcmp",          func_strcmp },
-    { STRSED,           "strsed",          func_strsed },
+    { F_STRFMT,           "strfmt",          func_strfmt },
+    { F_STRLEN,           "strlen",          func_strlen },
+    { F_SUBSTR,           "substr",          func_substr },
+    { F_EXPLODE,          "explode",         func_explode },
+    { F_STRSUB,           "strsub",          func_strsub },
+    { F_PAD,              "pad",             func_pad },
+    { F_MATCH_BEGIN,      "match_begin",     func_match_begin },
+    { F_MATCH_TEMPLATE,   "match_template",  func_match_template },
+    { F_MATCH_PATTERN,    "match_pattern",   func_match_pattern },
+    { F_MATCH_REGEXP,     "match_regexp",    func_match_regexp },
+    { F_REGEXP,         "regexp",          func_regexp },
+    { F_CRYPT,            "crypt",           func_crypt },
+    { F_UPPERCASE,        "uppercase",       func_uppercase },
+    { F_LOWERCASE,        "lowercase",       func_lowercase },
+    { F_STRCMP,           "strcmp",          func_strcmp },
+    { F_STRSED,           "strsed",          func_strsed },
+    { F_STRGRAFT,         "strgraft",        func_strgraft },
 
     /* List manipulation (listop.c). */
-    { LISTLEN,          "listlen",         func_listlen },
-    { SUBLIST,          "sublist",         func_sublist },
-    { INSERT,           "insert",          func_insert },
-    { REPLACE,          "replace",         func_replace },
-    { DELETE,           "delete",          func_delete },
-    { SETADD,           "setadd",          func_setadd },
-    { SETREMOVE,        "setremove",       func_setremove },
-    { UNION,            "union",           func_union },
+    { F_LISTLEN,          "listlen",         func_listlen },
+    { F_SUBLIST,          "sublist",         func_sublist },
+    { F_INSERT,           "insert",          func_insert },
+    { F_REPLACE,          "replace",         func_replace },
+    { F_DELETE,           "delete",          func_delete },
+    { F_SETADD,           "setadd",          func_setadd },
+    { F_SETREMOVE,        "setremove",       func_setremove },
+    { F_UNION,            "union",           func_union },
+    { F_LISTGRAFT,        "listgraft",       func_listgraft },
 
     /* Dictionary manipulation (dictop.c). */
-    { DICT_KEYS,        "dict_keys",       func_dict_keys },
-    { DICT_ADD,         "dict_add",        func_dict_add },
-    { DICT_DEL,         "dict_del",        func_dict_del },
-    { DICT_CONTAINS,    "dict_contains",   func_dict_contains },
+    { F_DICT_KEYS,        "dict_keys",       func_dict_keys },
+    { F_DICT_ADD,         "dict_add",        func_dict_add },
+    { F_DICT_DEL,         "dict_del",        func_dict_del },
+    { F_DICT_CONTAINS,    "dict_contains",   func_dict_contains },
 
     /* Buffer manipulation (bufferop.c). */
-#if 0
-    { BUF_RETRIEVE,  "buffer_retrieve", func_buffer_retrieve },
-    { BUF_APPEND,    "buffer_append",   func_buffer_append },
-    { BUF_ADD,       "buffer_add",      func_buffer_add },
-    { BUF_TRUNCATE,  "buffer_truncate", func_buffer_truncate },
-    { BUF_TAIL,      "buffer_tail",     func_buffer_tail },
-#endif
-    { BUFLEN,           "buflen",          func_buflen },
-    { BUF_REPLACE,      "buf_replace",     func_buf_replace },
-    { BUF_TO_STRINGS,   "buf_to_strings",  func_buf_to_strings },
-    { BUF_TO_STR,       "buf_to_str",      func_buf_to_str },
-    { STRINGS_TO_BUF,   "strings_to_buf",  func_strings_to_buf },
-    { STR_TO_BUF,       "str_to_buf",      func_str_to_buf },
-    { SUBBUF,           "subbuf",          func_subbuf },
-
-#if 1  /* remove these once native methods are fully functional */
-    { HOSTNAME,         "hostname",             native_hostname },
-    { IP,               "ip",                   native_ip },
-    { STATUS,           "status",                native_status },
-    { NEXT_OBJNUM,      "next_objnum",                native_next_objnum },
-    { VERSION,          "version",         native_version },
-    { STRFTIME,         "strftime",        native_strftime },
-#endif
+    { F_BUFLEN,           "buflen",          func_buflen },
+    { F_BUF_REPLACE,      "buf_replace",     func_buf_replace },
+    { F_BUF_TO_STRINGS,   "buf_to_strings",  func_buf_to_strings },
+    { F_BUF_TO_STR,       "buf_to_str",      func_buf_to_str },
+    { F_STRINGS_TO_BUF,   "strings_to_buf",  func_strings_to_buf },
+    { F_STR_TO_BUF,       "str_to_buf",      func_str_to_buf },
+    { F_SUBBUF,           "subbuf",          func_subbuf },
+    { F_BUFGRAFT,         "bufgraft",        func_bufgraft },
 };
 
 void init_op_table(void) {

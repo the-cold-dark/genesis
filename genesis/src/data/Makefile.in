@@ -28,9 +28,10 @@ SRCS = `echo $(CDC_OBJS) $(COLDCORE_O) | sed -e 's/\.o/.c/g'`
 all: $(OBJS)
 
 clean:
-	rm -f lib*.a *~ *.BAK *.bak *.o
+	rm -f *~ *.BAK *.bak
 
-scrub: clean
+scrub:
+	rm -f *.o *~ *.BAK *.bak
 
 makefile:
 	@cd $(prefix); configure -q

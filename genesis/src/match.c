@@ -6,19 +6,21 @@
 //
 // File: match.c
 // ---
-// Routine for matching against a template.
+// generic string frobbing and matching routines
 */
 
 #include "config.h"
 #include "defs.h"
 
 #include <string.h>
+#include <ctype.h>
 #include "match.h"
 #include "memory.h"
 #include "cdc_types.h"
 #include "data.h"
 #include "cdc_string.h"
 #include "util.h"
+#include "execute.h"
 
 /* We use MALLOC_DELTA to keep the memory allocated in fields thirty-two bytes
  * less than a power of two, assuming fields are twelve bytes. */
@@ -36,17 +38,15 @@ static char *match_wildcard(char *ctemplate, char *s);
 static char *match_word_pattern(char *ctemplate, char *s);
 static void add_field(char *start, char *end, int strip);
 
-static Field *fields;
+static Field * fields;
 static int field_pos, field_size;
     
-void init_match(void)
-{
+void init_match(void) {
     fields = EMALLOC(Field, FIELD_STARTING_SIZE);
     field_size = FIELD_STARTING_SIZE;
 }
 
-list_t *match_template(char *ctemplate, char *s)
-{
+list_t * match_template(char *ctemplate, char *s) {
     char *p;
     int i, coupled;
     list_t *l;
@@ -147,8 +147,7 @@ list_t *match_template(char *ctemplate, char *s)
 
 /* Match a coupled wildcard as well as the next token, if there is one.  This
  * adds the fields that it matches. */
-static char *match_coupled_wildcard(char *ctemplate, char *s)
-{
+INTERNAL char *match_coupled_wildcard(char *ctemplate, char *s) {
     char *p, *q;
 
     /* Check for quoted text. */
@@ -189,8 +188,7 @@ static char *match_coupled_wildcard(char *ctemplate, char *s)
 
 /* Match a wildcard.  Also match the next token, if there is one.  This adds
  * the fields that it matches. */
-static char *match_wildcard(char *ctemplate, char *s)
-{
+INTERNAL char * match_wildcard(char *ctemplate, char *s) {
     char *p, *q, *r;
 
     /* If no token follows the wildcard, then the match succeeds. */
@@ -263,8 +261,7 @@ static char *match_wildcard(char *ctemplate, char *s)
 }
 
 /* Match a word pattern.  Do not add any fields. */
-static char *match_word_pattern(char *ctemplate, char *s)
-{
+INTERNAL char * match_word_pattern(char *ctemplate, char *s) {
     char *p = s;
     int abbrev = 0;
 
@@ -316,8 +313,7 @@ static char *match_word_pattern(char *ctemplate, char *s)
 
 /* Add a field.  strip should be true if this is a field for a wildcard not at
  * the end of the template. */
-static void add_field(char *start, char *end, int strip)
-{
+INTERNAL void add_field(char *start, char *end, int strip) {
     if (field_pos >= field_size) {
 	field_size = field_size * 2 + MALLOC_DELTA;
 	fields = EREALLOC(fields, Field, field_size);
@@ -328,10 +324,9 @@ static void add_field(char *start, char *end, int strip)
     field_pos++;
 }
 
-/* Returns a backwards list of fields if <s> matches the pattern <pattern>, or
- * NULL if it doesn't. */
-list_t *match_pattern(char *pattern, char *s)
-{
+/* Returns a backwards list of fields if <s> matches the
+   pattern <pattern>, or NULL if it doesn't. */
+list_t * match_pattern(char *pattern, char *s) {
     char *p, *q;
     list_t *list;
     string_t *str;
@@ -385,5 +380,498 @@ list_t *match_pattern(char *pattern, char *s)
 
     /* Return failure. */
     return NULL;
+}
+
+list_t * match_regexp(string_t * reg, char * s, int sensitive) {
+    list_t * fields = (list_t *) NULL,
+           * elemlist; 
+    regexp * rx;
+    data_t   d;
+    int      i;
+
+    if ((rx = string_regexp(reg)) == (regexp *) NULL) {
+        cthrow(regexp_id, "%s", regerror(NULL));
+        return NULL;
+    }
+
+    if (regexec(rx, s, sensitive)) {
+        /* Build the list of fields. */
+        fields = list_new(NSUBEXP);
+        for (i = 0; i < NSUBEXP; i++) {
+            elemlist = list_new(2);
+    
+            d.type = INTEGER; 
+            if (!rx->startp[i]) {
+                d.u.val = 0;
+                elemlist = list_add(elemlist, &d);
+                elemlist = list_add(elemlist, &d);
+            } else {
+                d.u.val = rx->startp[i] - s + 1;
+                elemlist = list_add(elemlist, &d);
+                d.u.val = rx->endp[i] - rx->startp[i];
+                elemlist = list_add(elemlist, &d);
+            }   
+
+            d.type = LIST;
+            d.u.list = elemlist;
+            fields = list_add(fields, &d);
+            list_discard(elemlist);
+        }    
+    }        
+             
+    return fields;
+}
+
+/* similar to match_regexp, except for it returns the string(s)
+   which actually matched. */
+
+#define REGSTR(rx, pos) (string_from_chars(rx->startp[pos], \
+                                    rx->endp[pos] - rx->startp[pos]))
+
+list_t * regexp_matches(string_t * reg, char * s, int sensitive) {
+    list_t * fields;
+    regexp * rx;
+    data_t   d;
+    int      i,
+             size;
+
+    if ((rx = string_regexp(reg)) == (regexp *) NULL) {
+        cthrow(regexp_id, "%s", regerror(NULL));
+        return NULL;
+    }
+
+    if (!regexec(rx, s, sensitive))
+        return NULL;
+
+    /* size the results */
+    for (size=1; size < NSUBEXP && rx->startp[size] != NULL; size++);
+
+    d.type = STRING;
+    
+    if (size == 1) {
+        fields = list_new(1);
+        d.u.str = REGSTR(rx, 0); 
+        fields = list_add(fields, &d);
+        string_discard(d.u.str); 
+    } else {
+        fields = list_new(size-1);
+        for (i = 1; i < size && rx->startp[i] != NULL; i++) {
+            d.u.str = REGSTR(rx, i);
+            fields = list_add(fields, &d);
+            string_discard(d.u.str);
+        }
+    }
+
+    return fields;
+}
+
+int parse_strsed_args(char * args, int * global, int * sensitive) {
+    while (*args != (char) NULL) {
+        switch (*args) {
+            case 'g': /* global */
+                *global=1;
+                break;
+            case 's': /* single */
+                *global=0;
+                break;
+            case 'c': /* case sensitive */
+                *sensitive=1;
+                break;
+            case 'i': /* case insensitive */
+                *sensitive=0;
+                break;
+            default:
+                return 0;
+        }
+        args++; 
+    }
+    return 1;
+}
+
+#define x_THROW(_cthrow_) {\
+        *err=1;\
+        cthrow _cthrow_;\
+        return NULL;\
+    }
+
+string_t * strsed(string_t * reg,  /* the regexp string */
+                  string_t * ss,   /* the string to match against */
+                  string_t * rs,   /* the replacement string */
+                  int global,      /* globally match? */
+                  int sensitive,   /* case sensitive? */
+                  int mult,        /* size multiplier */
+                  int * err)       /* did we have a boo boo? */
+{
+    register regexp * rx;
+    string_t * out;
+    char     * s = string_chars(ss),/* start */
+             * p,                   /* pointer */
+             * q,                   /* couldn't think of anything better */
+             * r;                   /* replace */
+    register int i, x;
+    int      size=1,
+             slen = string_length(ss),
+             rlen = string_length(rs);
+
+    err = 0;
+
+    /* Compile the regexp, note: it is free'd by string_discard() */
+    if ((rx = string_regexp(reg)) == (regexp *) NULL)
+        x_THROW((regexp_id, "%s", regerror(NULL)))
+
+    /* initial regexp execution */
+    if (!regexec(rx, s, sensitive))
+        return NULL;
+
+    for (; size < NSUBEXP && rx->startp[size] != (char) NULL; size++);
+
+    if (size == 1) { /* a constant, this is the easy one */
+        if (global) {
+            /* die after 100 subs, magic numbers yay */
+            int depth = 100;
+            p = s;
+            out = string_new(slen+(rlen*mult)-(string_length(ss)*mult));
+
+            /* the sub loop; see, do/while loops can be useful */
+            do {
+                if (!--depth) {
+                    string_discard(out);
+                    x_THROW((maxdepth_id, "Max substitution depth exceeded"))
+                }
+                if ((i = rx->startp[0] - p))
+                    out = string_add_chars(out, p, i);
+                if (rlen)
+                    out = string_add(out, rs);
+                p = rx->endp[0];
+            } while (p && regexec(rx, p, sensitive));
+
+            /* add the end on */
+            if ((i = (s + slen) - p))
+                out = string_add_chars(out, p, i);
+
+        } else {
+            /* new string, exact size */
+            out = string_new(slen + rlen - (rx->endp[0] - rx->startp[0]));
+
+            if ((i = rx->startp[0] - s))
+                out = string_add_chars(out, s, i);
+            if (rlen)
+                out = string_add(out, rs);
+            if ((i = (s + slen) - rx->endp[0]))
+                out = string_add_chars(out, rx->endp[0], i);
+        }
+    } else { /* rrg, now we have fun */
+        if (global) {  /* they would, the bastards */
+            int depth = 100;
+            char * rxs = s;
+    
+            out = string_new(slen + (rlen * mult));
+    
+            if ((i = rx->startp[0] - s))
+                out = string_add_chars(out, s, i);
+
+            r = string_chars(rs);
+
+            rxs = rx->startp[0];
+            do {
+                if (!--depth) {
+                    string_discard(out);
+                    x_THROW((maxdepth_id, "Max substitution depth exceeded"))
+                }
+
+                if ((i = rx->startp[0] - rxs))
+                    out = string_add_chars(out, rxs, i);
+
+                for (p = r, q = strchr(p, '%'); q; q = strchr(p, '%')) {
+                    out = string_add_chars(out, p, q - p);
+
+                    q++;
+
+                    x = *q - (int) '0';
+
+                    if (!x || x > 9) {
+                        string_discard(out);
+                        x_THROW((perm_id, "Subs can only be 1-9"))
+                    }
+
+                    if (rx->startp[x] != NULL && (i=rx->endp[x]-rx->startp[x]))
+                        out = string_add_chars(out, rx->startp[x], i);
+
+                    q++;
+                    p = q;
+                }
+
+                if ((i = (r + rlen) - p))
+                    out = string_add_chars(out, p, i);
+
+                rxs = rx->endp[0];
+            } while (rxs && regexec(rx, rxs, sensitive));
+
+            if ((i = (s + slen) - rxs))
+                out = string_add_chars(out, rxs, i);
+
+        } else {
+            out = string_new(rlen + slen);
+
+            if ((i = rx->startp[0] - s))
+                out = string_add_chars(out, s, i);
+
+            p = r = string_chars(rs);
+
+            for (q = strchr(p, '%'); q; q = strchr(p, '%')) {
+                out = string_add_chars(out, p, q - p);
+
+                q++;
+
+                x = *q - (int) '0';
+
+                if (!x || x > 9) {
+                    string_discard(out);
+                    x_THROW((perm_id, "Subs can only be 1-9"))
+                }
+
+                if (rx->startp[x] != NULL && (i=rx->endp[x]-rx->startp[x]))
+                    out = string_add_chars(out, rx->startp[x], i);
+
+                q++; 
+                p = q;
+            }
+
+            if ((i = (r + rlen) - p))
+                out = string_add_chars(out, p, i);
+
+            if ((i = (s + slen) - rx->endp[0]))
+                out = string_add_chars(out, rx->endp[0], i);
+        }
+    }
+
+    return out;
+}
+
+#undef x_THROW
+
+/*
+// -------------------------------------------------------------
+// %<fmt_type>
+//
+// %<pad>.<precision>{fill}<fmt_type>
+//
+// Format Types:
+//
+//     d,D       literal data
+//     s,S,l,L   any data, align left
+//     r,R       any data, align right
+//     c,C       any data, align centered
+//     e         any data, align left with an elipse
+//
+// Caplitalized types will crop the string if/when it reaches the 'pad'
+// length, otherwise the string will overflow past the pad length.
+//
+// Examples:
+//
+//    "%r", "test"        => "test"
+//    "%l", "test"        => "test"
+//    "%c", "test"        => "test"
+//    "%d", "test"        => "\"test\""
+//    "%10r", "test"      => "      test"
+//    "%10l", "test"      => "test      "
+//    "%10c", "test"      => "   test   "
+//    "%10{|>}r", "test"  => "|>|>|>test"
+//    "%10{|>}l", "test"  => "test|>|>|>"
+//    "%10{|>}c", "test"  => "|>|test|>|"
+//    "%.2l", 1.1214      => "1.12"
+//    "%10.3{0}r", 1.1214 => "000001.121"
+//    "%10.3{0}l", 1.1214 => "1.12100000"
+//    "%5e", "testing"    => "te..."
+//
+// -------------------------------------------------------------
+*/
+
+#define NEXT_VALUE() \
+    switch (args[cur].type) {\
+        case STRING:\
+            value = string_dup(args[cur].u.str);\
+            break;\
+        case SYMBOL:\
+            tmp = ident_name(args[cur].u.symbol);\
+            value = string_from_chars(tmp, strlen(tmp));\
+            break;\
+        case FLOAT:\
+            sprintf(buf, "%.*f", prec, (double) args[cur].u.fval); \
+            value = string_from_chars(buf, strlen(buf));\
+            break;\
+        default:\
+            value = data_to_literal(&args[cur]);\
+            break;\
+    }
+
+#define x_THROW(_what_) \
+    cthrow _what_; return NULL;
+
+string_t * strfmt(string_t * str, data_t * args, int argc) {
+    string_t * out,
+             * value;
+    char     * fmt,
+             * s,
+             * tmp,
+               buf[LINE],
+               fill[LINE];
+    int        len, pad, prec, trunc;
+    int        cur = -1;
+
+    fmt = string_chars(str);
+    len = string_length(str);
+    out = string_new(len * 2); /* better more than less and having to resize */
+
+    for (;;) {
+        s = strchr(fmt, '%');
+        if (s == (char) NULL || s[1] == (char) NULL) {
+            out = string_add_chars(out, fmt, strlen(fmt));
+            break;
+        }
+
+        out = string_add_chars(out, fmt, s - fmt);
+        s++;
+
+        len -= (s - fmt);
+
+        if (*s == '%') {
+            out = string_addc(out, '%');
+            continue;
+        }
+
+        if (++cur > argc) {
+            string_discard(out);
+            x_THROW((type_id, "No argument for format."))
+        }
+
+        pad = prec = trunc = 0;
+        while (isdigit(*s) && len--)
+            pad = pad * 10 + *s++ - '0';
+
+        if (*s == '.') {
+            s++;
+            while (isdigit(*s) && len--)
+                prec = prec * 10 + *s++ - '0';
+        }
+
+        /* get the pad char */
+        if (*s == '{') {
+            int    x = 0;
+
+            s++, len--;
+            for (; *s != '}' && len; s++, len--) {
+                if (s[0] == '\\' && (s[1] == '\\' || s[1] == '}'))
+                    s++, len--;
+                fill[x++] = *s;
+            }
+            fill[x] = (char) NULL;
+            s++, len--;
+        } else {
+            fill[0] = ' ';
+            fill[1] = (char) NULL;
+        }
+
+        /* invalid format, just abort, they need to know when it is wrong */
+        if (len <= 0) {
+            string_discard(out);
+            x_THROW((type_id, "Invalid format"))
+        }
+
+        switch (*s) {
+            case 'D':
+                trunc++;
+            case 'd':
+                value = data_to_literal(&args[cur]);
+                goto fmt_left;
+            case 'S':
+            case 'L':
+                trunc++;
+            case 's':
+            case 'l':
+                NEXT_VALUE()
+
+                fmt_left:
+
+                if (pad) {
+                    if (trunc && string_length(value) > pad)
+                        value = string_truncate(value, pad);
+                    else if (string_length(value) < pad)
+                        value=string_add_padding(value,fill,strlen(fill),pad-string_length(value));
+                }
+
+                break;
+
+            case 'R':
+                trunc++;
+            case 'r':
+                NEXT_VALUE()
+
+                if (pad) {
+                    if (trunc && string_length(value) > pad)
+                        value = string_truncate(value, pad);
+                    else if (string_length(value) < pad) {
+                        string_t * new = string_new(pad + string_length(value));
+                        new = string_add_padding(new, fill, strlen(fill), pad-string_length(value));
+                        new = string_add(new, value);
+                        string_discard(value);
+                        value = new;
+                    }
+                }
+
+                break;
+            case 'C':
+                trunc++;
+            case 'c':
+                NEXT_VALUE()
+
+                if (pad) {
+                    if (trunc && string_length(value) > pad)
+                        value = string_truncate(value, pad);
+                    else if (string_length(value) < pad) {
+                        int size = (pad - string_length(value)) / 2;
+                        string_t * new = string_new(pad + string_length(value));
+                        new = string_add_padding(new, fill, strlen(fill),size);
+                        new = string_add(new, value);
+                        new = string_add_padding(new, fill, strlen(fill),size);
+                        if ((pad - string_length(value))%2)
+                            new = string_addc(new, fill[0]);
+                        string_discard(value);
+                        value = new;
+                    }
+                }
+
+                break;
+            case 'e':
+                NEXT_VALUE();
+                if (pad) {
+                    if (pad <= 3) {
+                        string_discard(out);
+                        x_THROW((type_id,
+                           "Elipse pad length must be at least 4 or more."))
+                    }
+                    if (string_length(value) > pad) {
+                        value = string_truncate(value, pad - 3);
+                        value = string_add_chars(value, "...", 3);
+                    } else if (string_length(value) < pad) {
+                        value=string_add_padding(value,fill,strlen(fill),pad);
+                    }
+                }
+                break;
+            default: {
+                char rrk[] = {NULL, NULL};
+                rrk[0] = *s;
+                x_THROW((error_id, "Unknown format type '%s'.", rrk))
+            }
+        }
+
+        out = string_add(out, value);
+        string_discard(value);
+
+        fmt = ++s;
+        len--;
+    }
+
+    return out;
 }
 

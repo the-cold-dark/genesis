@@ -36,7 +36,7 @@
 #include "log.h"
 #include "execute.h"
 #include "token.h"
-#include "modules.h"
+#include "native.h"
 #include "memory.h"
 
 INTERNAL void initialize(int argc, char **argv);

@@ -32,9 +32,9 @@ void  pfree(Pile *pile);
 void efree(void * block);
 
 #if DISABLED
-  #define DOFUNC_FREE
+#define DOFUNC_FREE
 #else
-  #define efree(what) free(what)
+#define efree(what) free(what)
 #endif
 
 #define EMALLOC(type, num)	 ((type *) emalloc((num) * sizeof(type)))

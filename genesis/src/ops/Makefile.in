@@ -19,7 +19,7 @@ SRCDIR=$(prefix)/src
 VERSION=@VERSION@
 
 OBJS = operators.o buffer.o error.o list.o object.o dict.o string.o\
-       data.o sys.o misc.o task.o file.o network.o
+       data.o sys.o misc.o task.o file.o network.o math.o
 
 SRCS = `echo $(OBJS) | sed -e 's/\.o/.c/g'`              
 
@@ -29,9 +29,10 @@ SRCS = `echo $(OBJS) | sed -e 's/\.o/.c/g'`
 all: $(OBJS)
 
 clean:
-	rm -f lib*.a *~ *.BAK *.bak *.o
+	rm -f *~ *.BAK *.bak
 
-scrub: clean
+scrub:
+	rm -f *.o *~ *.BAK *.bak
 
 makefile:
 	@cd $(prefix); configure -q

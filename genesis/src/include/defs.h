@@ -12,6 +12,22 @@
 #ifndef _defs_h_
 #define _defs_h_
 
+/* fun with defines */
+#ifndef CAT
+  #ifdef __BORLANDC__
+    #undef  _CAT
+    #define _CAT(x)         x
+    #define CAT(a,b)        _CAT(a)_CAT(b)
+  #else
+    #ifdef __WATCOMC__
+      #define _CAT(a,b)     a ## b
+      #define CAT(a,b)      _CAT(a,b)
+    #else
+      #define CAT(a,b)      a ## b
+    #endif
+  #endif
+#endif
+
 /* GRR linux; just get FreeBSD, it is faster */
 #ifdef sys_linux
 #undef NULL
@@ -24,6 +40,7 @@
 #ifndef _grammar_y_
 #include "parse.h"
 #endif
+#include "cdc_types.h"
 
 jmp_buf main_jmp;
 
@@ -37,6 +54,7 @@ char * c_pidfile;
 
 FILE * logfile;
 FILE * errfile;
+string_t * str_tzname;
 
 int  c_interactive;
 int  running;
@@ -106,5 +124,8 @@ void init_defs(void);
 #define SERVER_NAME "Genesis (the ColdX driver)"
 
 #define DEF_BLOCKSIZE 512
+
+/* eventually allow double */
+#define FLOAT_TYPE float
 
 #endif

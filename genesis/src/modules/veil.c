@@ -4,10 +4,12 @@
 // Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
 // Full details and copyright information can be found in the file doc/CREDITS
 //
-// File: modules/coldcore_veil.c
+// File: modules/veil.c
 // ---
 // Veil packets buffer manipulation module
 */
+
+#define NATIVE_MODULE "$buffer"
 
 #include "config.h"
 #include "defs.h"
@@ -15,6 +17,10 @@
 #include "operators.h"
 #include "execute.h"
 #include "memory.h"
+#include "veil.h"
+#include "native.h"
+
+module_t veil_module = {init_veil, uninit_veil};
 
 extern Ident pabort_id, pclose_id, popen_id;
 
@@ -47,6 +53,18 @@ typedef struct header_s {
     unsigned short len;
 } header_t;
 #endif
+
+void init_veil(int argc, char ** argv) {
+    pabort_id = ident_get("abort");
+    pclose_id = ident_get("close");
+    popen_id  = ident_get("open");
+}
+
+void uninit_veil(void) {
+    ident_discard(pabort_id);
+    ident_discard(pclose_id);
+    ident_discard(popen_id);
+}
 
 /*
 // -------------------------------------------------------------------
@@ -152,25 +170,24 @@ list_t * buffer_to_veil_packets(Buffer * buf) {
 // -------------------------------------------------------------------
 // Convert from a buffer to the standard 'VEIL packet' format
 */
-void op_buf_to_veil_packets(void) {
-    data_t * args;
-    int      numargs;
+NATIVE_METHOD(to_veil_pkts) {
     Buffer * buf;
     list_t * packets;
 
-    if (!func_init_1_or_2(&args, &numargs, BUFFER, BUFFER))
-        return;
+    INIT_1_OR_2_ARGS(BUFFER, BUFFER);
 
-    /* if they sent us a second argument, concatenate it on the end */
-    buf = buffer_dup(args[0].u.buffer);
-    if (numargs == 2)
-        buffer_append(buf, args[1].u.buffer);
+    if (argc == 1) {
+        buf = buffer_dup(_BUF(ARG1));
+    } else {
+        /* if they sent us a second argument, concatenate it on the end */
+        buf = buffer_append(buffer_dup(_BUF(ARG1)), _BUF(ARG2));
+    }
+
     packets = buffer_to_veil_packets(buf);
+
     buffer_discard(buf);
 
-    pop(numargs);
-    push_list(packets);
-    list_discard(packets);
+    RETURN_LIST(packets);
 }
 
 /*
@@ -180,17 +197,15 @@ void op_buf_to_veil_packets(void) {
 // in leiu of speed, we do not do COMPLETE checking on every argument
 // sent to the packet, just make sure you do it right
 */
-void op_buf_from_veil_packets(void) {
+NATIVE_METHOD(from_veil_pkts) {
     data_t        * d,
-                  * pa,
-                  * args;
+                  * pa;
     Buffer        * out,
                   * header;
     list_t        * p, * packets;
     int             len;
 
-    if (!func_init_1(&args, LIST))
-        return;
+    INIT_1_ARG(LIST);
 
     header = buffer_new(HEADER_SIZE);
     header->s[1] = (unsigned char) 0;
@@ -198,29 +213,23 @@ void op_buf_from_veil_packets(void) {
     header->s[5] = (unsigned char) 0;
 
     out = buffer_new(0);
-    packets = args[0].u.list;
+    packets = _LIST(ARG1);
 
     for (d = list_first(packets); d; d = list_next(packets, d)) {
-        if (d->type != LIST) {
-            cthrow(type_id, "Packets submitted in an invalid format");
-            return;
-        }
+        if (d->type != LIST)
+            THROW((type_id, "Packets submitted in an invalid format"));
         p = d->u.list;
         pa = list_first(p);
-        if (!pa || pa->type != INTEGER) {
-            cthrow(type_id, "Packet submitted in an invalid format");
-            return;
-        }
+        if (!pa || pa->type != INTEGER)
+            THROW((type_id, "Packet submitted in an invalid format"));
 
         header->s[0] = (unsigned char) 0;
         if (pa->u.val)
             header->s[0] |= VEIL_P_PUSH;
 
         pa = list_next(p, pa);
-        if (!pa) {
-            cthrow(type_id, "Not enough elements in the packet!");
-            return;
-        }
+        if (!pa)
+            THROW((type_id, "Not enough elements in the packet!"));
         if (pa->type == SYMBOL) {
             if (pa->u.symbol == pabort_id)
                 header->s[0] |= VEIL_P_ABORT;
@@ -231,19 +240,15 @@ void op_buf_from_veil_packets(void) {
         }
 
         pa = list_next(p, pa);
-        if (!pa || pa->type != INTEGER) {
-            cthrow(type_id, "Packet submitted in an invalid format");
-            return;
-        }
+        if (!pa || pa->type != INTEGER)
+            THROW((type_id, "Packet submitted in an invalid format"));
 
         header->s[2] = (unsigned char) pa->u.val/256;
         header->s[3] = (unsigned char) pa->u.val%256;
 
         pa = list_next(p, pa);
-        if (!pa || pa->type != BUFFER) {
-            cthrow(type_id, "Packet submitted in an invalid format");
-            return;
-        }
+        if (!pa || pa->type != BUFFER)
+            THROW((type_id, "Packet submitted in an invalid format"));
 
         header->s[6] = (unsigned char) pa->u.buffer->len/256;
         header->s[7] = (unsigned char) pa->u.buffer->len%256;
@@ -256,8 +261,6 @@ void op_buf_from_veil_packets(void) {
         out->len += pa->u.buffer->len;
     }
 
-    pop(1);
-    push_buffer(out);
-    buffer_discard(out);
+    RETURN_BUFFER(out);
 }
 

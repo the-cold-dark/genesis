@@ -35,6 +35,16 @@ void init_defs(void) {
 
     logfile = stdout;
     errfile = stderr;
+
+#ifdef HAVE_TM_ZONE
+    str_tzname = string_from_chars(tms->tm_zone, strlen(tms->tm_zone));
+#else
+  #ifdef HAVE_TZNAME 
+    str_tzname = string_from_chars(tzname[0], strlen(tzname[0]));
+  #else 
+    str_tzname = string_new(0);
+  #endif
+#endif
 }
 
 #undef INIT_VAR

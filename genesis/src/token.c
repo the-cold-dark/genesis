@@ -32,7 +32,6 @@ static struct {
 } reserved_words[] = {
     { "any",			ANY },
     { "arg",			ARG },
-/*    { "atomic",			ATOMIC }, */
     { "break",			BREAK },
     { "case",			CASE },
     { "catch",			CATCH },
@@ -45,7 +44,6 @@ static struct {
     { "handler",		HANDLER },
     { "if",			IF },
     { "in",			IN },
-    { "non_atomic",		NON_ATOMIC },
     { "pass",			PASS },
     { "return",			RETURN },
     { "switch",			SWITCH },
@@ -247,7 +245,7 @@ int yylex(void)
 
     /* Check if it's an object literal, symbol, or error code. */
     if ((*s == '$' || *s == '\'' || *s == '~')) {
-	type = ((*s == '$') ? NAME : ((*s == '\'') ? SYMBOL : ERROR));
+	type = ((*s == '$') ? OBJNAME : ((*s == '\'') ? SYMBOL : ERROR));
 	if (len > 1 && s[1] == '"') {
 	    yylval.s = string_token(s + 1, len - 1, &i);
 	    cur_pos += i + 1;

@@ -40,8 +40,10 @@
 extern int socket(), bind(), listen(), getdtablesize(void), select(), accept();
 extern int connect(), getpeername(), getsockopt(), setsockopt();
 
+#if 0
 #if !defined(sys_linux) && !defined(sys_freebsd)
 extern void bzero(char *, int);
+#endif
 #endif
 
 static long translate_connect_error(int error);

@@ -30,15 +30,19 @@
 //   valid ascii: 48-57 (0-9) 65-90 (A-Z) 97-122 (a-z)
 */
 
+#define NATIVE_MODULE "$http"
+
 #include "config.h"
 #include "defs.h"
 #include "util.h"
 #include "operators.h"
-#include "execute.h"
 #include "cdc_string.h"
 #include "web.h"
+#include "execute.h"
 
 /* valid ascii: 48-57 (0-9) 65-90 (A-Z) 97-122 (a-z) */
+
+module_t web_module = {init_web, uninit_web};
 
 char * dec_2_hex[] = {
    (char) NULL, (char) NULL, (char) NULL, (char) NULL, (char) NULL,
@@ -132,34 +136,28 @@ string_t * encode(char * s) {
     return str;
 }
 
-void native_decode(void) {
-    data_t   * args;
+NATIVE_METHOD(decode) {
     string_t * str;
 
     /* Accept a string to take the length of. */
-    if (!func_init_1(&args, STRING))
-        return;
+    INIT_1_ARG(STRING);
 
-    /* decode directly munches the string, so simply duplicate it */
+    /* decode directly munches the string, so force duplicate it, we should
+       actually just have prepare_to_modify here, but its a string only func */
     str = decode(string_from_chars(args[0].u.str->s, args[0].u.str->len));
 
-    pop(1);
-    push_string(str);
-    string_discard(str);
+    RETURN_STRING(str);
 }
 
-void native_encode(void) {
-    data_t   * args;
+NATIVE_METHOD(encode) {
     string_t * str;
 
-    /* Accept a string to take the length of. */
-    if (!func_init_1(&args, STRING))
-        return;
+    INIT_1_ARG(STRING);
+
+    THROW((perm_id, "TWIT"));
 
     str = encode(string_chars(args[0].u.str));
 
-    pop(1);
-    push_string(str);
-    string_discard(str);
+    RETURN_STRING(str);
 }
 

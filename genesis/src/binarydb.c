@@ -30,6 +30,7 @@
 #include "dbpack.h"
 #include "memory.h"
 #include "ident.h"
+#include "moddef.h"
 
 #define NEEDED(n, b)		(((n) % (b)) ? (n) / (b) + 1 : (n) / (b))
 #define ROUND_UP(a, m)		(((a) - 1) + (m) - (((a) - 1) % (m)))
@@ -117,6 +118,7 @@ void init_binary_db(void) {
                   v_major[WORD],
                   v_minor[WORD],
                   v_patch[WORD],
+                  magicmod[LINE],
                   fdb_clean[LINE],
                   fdb_objects[LINE],
                   fdb_index[LINE];
@@ -139,19 +141,21 @@ void init_binary_db(void) {
     fp = fopen(fdb_clean, "rb");
     if (fp) {
         if (fgets(v_major, WORD, fp) && atoi(v_major)==VERSION_MAJOR) {
-            if (fgets(v_minor, WORD, fp) && atoi(v_minor)==VERSION_MINOR) {
-                if (fgets(v_patch, WORD, fp) && atoi(v_patch)==VERSION_PATCH) {
-                    fgets(buf, LINE, fp);
-                    cur_search = atoi(buf);
-                    fgets(buf, LINE, fp);
-                    /* eat the newline */
-                    if (buf[strlen(buf) - 1] == (char) 10)
-                        buf[strlen(buf) - 1] = (char) NULL;
-
-                    if (!strcmp(buf, SYSTEM_TYPE))
-                        outdated = 0;
-                }
+          if (fgets(v_minor, WORD, fp) && atoi(v_minor)==VERSION_MINOR) {
+            if (fgets(v_patch, WORD, fp) && atoi(v_patch)==VERSION_PATCH) {
+              if (fgets(magicmod, LINE, fp)&&atol(magicmod)==MAGIC_MODNUMBER) {
+                  fgets(buf, LINE, fp);
+                  cur_search = atoi(buf);
+                  fgets(buf, LINE, fp);
+                  /* eat the newline */
+                  if (buf[strlen(buf) - 1] == (char) 10)
+                      buf[strlen(buf) - 1] = (char) NULL;
+  
+                  if (!strcmp(buf, SYSTEM_TYPE))
+                      outdated = 0;
+              }
             }
+          }
         }
         fclose(fp);
     } else {
@@ -160,10 +164,11 @@ void init_binary_db(void) {
 
     if (outdated) {
         fprintf(errfile, "Binary database \"%s\" is incompatable.\n\
-It was compiled on %s with coldcc %d.%d-%d\n\
-This system is %s with coldcc %d.%d-%d\n\n",
+It was compiled on %s with coldcc %d.%d-%d and module code %li\n\
+This system is %s with coldcc %d.%d-%d and module code %li\n\n",
         c_dir_binary, buf, atoi(v_major), atoi(v_minor), atoi(v_patch),
-        SYSTEM_TYPE, VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
+        atol(magicmod), SYSTEM_TYPE, VERSION_MAJOR, VERSION_MINOR,
+        VERSION_PATCH, (long) MAGIC_MODNUMBER);
         FAIL("Unable to load database \"%s\".\n");
     }
 
@@ -226,16 +231,18 @@ int init_db(int force_textdump) {
     if (!force_textdump) {
         fp = fopen(fdb_clean, "rb");
         if (fp) {
-            if (fgets(buf, 80, fp) && atoi(buf) == VERSION_MAJOR) {
-                if (fgets(buf, 80, fp) && atoi(buf) == VERSION_MINOR) {
-                    if (fgets(buf, 80, fp) && atoi(buf) == VERSION_PATCH) {
-                        cnew = 0;
-                        fgets(buf, 80, fp);
-                        cur_search = atoi(buf);
-                    }
+          if (fgets(buf, 80, fp) && atoi(buf) == VERSION_MAJOR) {
+            if (fgets(buf, 80, fp) && atoi(buf) == VERSION_MINOR) {
+              if (fgets(buf, 80, fp) && atoi(buf) == VERSION_PATCH) {
+                if (fgets(buf, 80, fp) && atol(buf) == MAGIC_MODNUMBER) {
+                    cnew = 0;
+                    fgets(buf, 80, fp);
+                    cur_search = atoi(buf);
                 }
+              }
             }
-            fclose(fp);
+          }
+          fclose(fp);
         }
     }
 
@@ -281,7 +288,7 @@ int init_db(int force_textdump) {
 static void grow_bitmap(int new_blocks)
 {
     new_blocks = ROUND_UP(new_blocks, 8);
-    bitmap = EREALLOC(bitmap, char, new_blocks / 8);
+    bitmap = EREALLOC(bitmap, char, (new_blocks / 8) + 1);
     memset(&bitmap[bitmap_blocks / 8], 0,
 	   (new_blocks / 8) - (bitmap_blocks / 8));
     bitmap_blocks = new_blocks;
@@ -467,8 +474,9 @@ static void db_is_clean(void)
     if (!fp)
 	panic("Cannot create file 'clean'.");
 
-    fformat(fp, "%d\n%d\n%d\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
-    fformat(fp, "%l\n", cur_search);
+    fprintf(fp, "%d\n%d\n%d\n%li\n%li\n",
+                VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH,
+                (long) MAGIC_MODNUMBER, cur_search);
     fputs(SYSTEM_TYPE, fp);
     close_scratch_file(fp);
     db_clean = 1;

@@ -6,6 +6,22 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+0.4-3  [16-Apr-96] Brandon Gillespie
+      * This release is 1.0 alpha
+      * The following functions have been removed, because their native
+        counterparts now work:
+            hostname()
+            ip()
+            status()
+            next_objnum()
+            version()
+            strftime()
+            encode()
+            decode()
+0.4-2  [] Brandon Gillespie
+      * Native methods
+0.4-1  [] Brandon Gillespie
+0.4-0  [] Brandon Gillespie
 0.3-9  [8-Mar-96] Brandon Gillespie
         more, but I forget, lots of bug squishing
 0.3-8  [20-Feb-96] Brandon Gillespie

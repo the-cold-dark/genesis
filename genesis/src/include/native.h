@@ -15,26 +15,30 @@
 #include "cdc_types.h"
 #include "io.h"
 #include "file.h"
+#include "execute.h"
 
 /* this structure is used only to initialize methods */
 /* we pull the name symbol and put it in the actual method definition */
 /* we need num_args defined here so we can drop it into the method def */
 typedef struct native_s {
-    char     * name;
     char     * bindobj;
-    void (*func)(void);
+    char     * name;
+    int       (*func)(int stack_pos, data_t * rval);
+#if 0
     int        args;
     int        rest;
+#endif
 } native_t;
 
-#ifdef _modules_
+typedef struct module_s {
+    void (*init)(int argc, char ** argv);
+    void (*uninit)();
+} module_t;
 
-native_t ** native_methods;
+int init_modules(int argc, char ** argv);
+int uninit_modules(void);
+int add_native_methods(void);
 
-#else
-
-extern native_t ** native_methods;
-
-#endif
+#include "macros.h"
 
 #endif

@@ -27,7 +27,7 @@
 #include "sig.h"
 #include "execute.h"
 #include "token.h"
-#include "modules.h"
+#include "native.h"
 #include "binarydb.h"
 #include "textdb.h"
 #include "cache.h"
@@ -35,6 +35,7 @@
 #include "data.h"
 #include "io.h"
 #include "file.h"
+#include "native.h"
 
 #if DISABLED
 #include <unistd.h>
@@ -201,6 +202,8 @@ INTERNAL void initialize(int argc, char **argv) {
     init_modules(argc, argv);
     init_cache();
 
+    force_natives = 0;
+
     argv++;
     argc--;
 
@@ -215,6 +218,9 @@ INTERNAL void initialize(int argc, char **argv) {
                            VERSION_MINOR,
                            VERSION_PATCH);
                     exit(0);
+                case 'f':
+                    force_natives = 1;
+                    break;
                 case 'c':
                     c_opt = OPT_COMP;
                     break;
@@ -261,12 +267,13 @@ void usage (char * name) {
 Usage: %s [options]\n\
 \n\
 Options:\n\n\
+        -f              force native methods to override existing methods.\n\
         -v              version\n\
         -h              This message.\n\
         -d              Decompile.\n\
         -c              Compile (default).\n\
-        -b binary       binary db directory name, default: \"binary\"\n\
-        -t target       target text db, default: \"textdump\"\n\
+        -b binary       binary db directory name, default: \"%s\"\n\
+        -t target       target text db, default: \"%s\"\n\
                         if this is \"stdin\" it will read from stdin\n\
                         instead.  <target> may be a directory or file.\n\
         -p              Partial compile, compile object(s) and insert\n\
@@ -275,7 +282,7 @@ Options:\n\n\
 Anticipated Options:\n\n\
         -w              Compile for parse only, do not write output.\n\
                         This option can only be used with partial compile.\n\
-\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, name);
+\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, name, c_dir_binary, c_dir_textdump);
 }
 
 #undef _coldcc_

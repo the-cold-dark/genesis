@@ -2,7 +2,6 @@
 
 CFLAGS=@CFLAGS@ -Iinclude -Imodules
 LIBS=@LIBS@
-COLDLIBS=@COLDLIBS@
 LDFLAGS=@LDFLAGS@ -Lmodules
 CC=@CC@
 RANLIB=@RANLIB@
@@ -26,20 +25,19 @@ VERSION=@VERSION@
 DATA_O     = data/data.o data/buffer.o data/dict.o data/ident.o\
              data/list.o data/object.o data/string.o
 GRAMMAR_O  = grammar.o
-DB_CACHE_O = cache.o binarydb.o dbpack.o decode.o lookup.o
+DB_O       = cache.o binarydb.o dbpack.o decode.o lookup.o
 IO_O       = io.o log.o net.o file.o
 MISC_O     = match.o memory.o sig.o util.o regexp.o defs.o
 OPS_O      = ops/operators.o ops/buffer.o ops/error.o ops/list.o\
              ops/object.o ops/dict.o ops/string.o ops/data.o ops/sys.o\
-             ops/misc.o ops/task.o ops/file.o ops/network.o
-
-PCODE_O    = codegen.o execute.o opcodes.o token.o modules.o
-
-COMMON_O   = $(DATA_O) $(DB_CACHE_O) $(IO_O) $(MISC_O) $(PCODE_O) $(OPS_O)
-
+             ops/misc.o ops/task.o ops/file.o ops/network.o ops/math.o
+PCODE_O    = codegen.o execute.o opcodes.o token.o native.o
+MOD_O      = @MOD_O@
+OMOD_O     = `echo $(MOD_O) | sed -e 's/modules\///g'`
+COMMON_O   = $(DATA_O) $(DB_O) $(IO_O) $(MISC_O) $(PCODE_O) $(OPS_O) $(MOD_O)
 DRIVER_O   = $(GRAMMAR_O) genesis.o $(COMMON_O)
 COMPILER_O = $(GRAMMAR_O) coldcc.o textdb.o $(COMMON_O)
-CONTROL_O = control.o
+CONTROL_O  = control.o
 
 EVERYTHING_O = genesis.o control.o coldcc.o $(COMMON_O)
 EVERYTHING_C = `echo $(EVERYTHING_O) | sed -e 's/\.o/.c/g'`
@@ -48,18 +46,21 @@ DRIVER = genesis
 COMPILER = coldcc
 CONTROL = control
 
-EXES = $(DRIVER) $(COMPILER) $(CONTROL)
+EXES = $(DRIVER) $(COMPILER)
 
-all: $(GRAMMAR_O) Modules Ops Data $(EXES)
+all: $(GRAMMAR_O) include/parse.h Data Modules Ops $(EXES)
 
 Data:
-	cd $(DATADIR); make
+	@echo "data objects..."
+	@cd $(DATADIR); make
 
 Modules:
-	cd $(MODULES); make
+	@echo "module objects..."
+	@cd $(MODULES); make $(OMOD_O)
 
 Ops:
-	cd $(OPSDIR); make
+	@echo "operator and function objects..."
+	@cd $(OPSDIR); make
 
 $(DRIVER): $(DRIVER_O)
 	$(CC) $(LDFLAGS) $(DRIVER_O) $(LIBS) $(COLDLIBS) -o $@
@@ -74,12 +75,13 @@ clean:
 	rm -f include/parse.h grammar.c $(EXES) *~ *.BAK *.bak y.output
 	@cd $(MODULES); make $@
 	@cd $(OPSDIR); make $@
+	@cd $(DATADIR); make $@
 
 scrub:
-	rm -f include/parse.h grammar.c $(EXES) *~ *.BAK *.bak y.output
-	rm -f *.o
+	rm -f *.o include/parse.h grammar.c $(EXES) *~ *.BAK *.bak y.output
 	@cd $(MODULES); make $@
 	@cd $(OPSDIR); make $@
+	@cd $(DATADIR); make $@
 
 makefile:
 	@cd ..; configure
@@ -107,6 +109,7 @@ patchable:
 	rm -f $(prefix)/etc/config.cache
 	rm -f $(prefix)/etc/config.log
 	rm -f $(prefix)/etc/config.status
+	rm -f $(MODULES)/modbuild.last
 	rm -f $(SRCDIR)/Makefile
 	rm -f $(SRCDIR)/modules/Makefile
 	rm -f $(SRCDIR)/include/config.h
@@ -125,7 +128,7 @@ genesis.o: include/dict.h include/data.h include/io.h include/file.h
 genesis.o: include/memory.h include/opcodes.h
 genesis.o: include/match.h include/cache.h include/sig.h include/binarydb.h
 genesis.o: include/util.h include/log.h
-genesis.o: include/execute.h include/token.h include/modules.h
+genesis.o: include/execute.h include/token.h include/native.h
 control.o: include/config.h include/defs.h 
 control.o: include/parse.h
 coldcc.o: include/config.h include/defs.h 
@@ -136,7 +139,7 @@ coldcc.o: include/object.h include/io.h include/file.h include/data.h
 coldcc.o: include/codegen.h include/memory.h 
 coldcc.o: include/match.h include/opcodes.h include/util.h
 coldcc.o: include/sig.h include/execute.h
-coldcc.o: include/token.h include/modules.h include/binarydb.h
+coldcc.o: include/token.h include/native.h include/binarydb.h
 coldcc.o: include/textdb.h include/cache.h
 data.o: include/config.h include/defs.h 
 data.o: include/parse.h 
@@ -327,5 +330,5 @@ modules.o: include/parse.h include/cdc_types.h
 modules.o: include/regexp.h include/ident.h include/list.h
 modules.o: include/cdc_string.h include/buffer.h include/dict.h
 modules.o: include/object.h include/io.h include/file.h
-modules.o: include/data.h include/modules.h
+modules.o: include/data.h include/native.h
 modules.o: modules/moddef.h modules/core.h modules/cdc.h modules/web.h

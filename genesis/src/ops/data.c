@@ -14,7 +14,7 @@
 #include "token.h"
 #include "cache.h"
 
-void func_size(void) {
+COLDC_FUNC(size) {
     data_t * args;
     int      nargs,
              size;
@@ -33,7 +33,7 @@ void func_size(void) {
     push_int(size);
 }
 
-void func_type(void) {
+COLDC_FUNC(type) {
     data_t *args;
     int type;
 
@@ -47,7 +47,7 @@ void func_type(void) {
     push_symbol(data_type_id(type));
 }
 
-void func_class(void) {
+COLDC_FUNC(class) {
     data_t *args;
     long cclass;
 
@@ -61,7 +61,7 @@ void func_class(void) {
     push_objnum(cclass);
 }
 
-void func_toint(void) {
+COLDC_FUNC(toint) {
     data_t *args;
     long val = 0;
 
@@ -89,7 +89,7 @@ void func_toint(void) {
     push_int(val);
 }
 
-void func_tofloat(void) {
+COLDC_FUNC(tofloat) {
       data_t * args;
       float val = 0;
   
@@ -116,7 +116,7 @@ void func_tofloat(void) {
       push_float(val);
 }
 
-void func_tostr(void) {
+COLDC_FUNC(tostr) {
     data_t *args;
     string_t *str;
 
@@ -131,7 +131,7 @@ void func_tostr(void) {
     string_discard(str);
 }
 
-void func_toliteral(void) {
+COLDC_FUNC(toliteral) {
     data_t *args;
     string_t *str;
 
@@ -146,7 +146,7 @@ void func_toliteral(void) {
     string_discard(str);
 }
 
-void func_toobjnum(void) {
+COLDC_FUNC(toobjnum) {
     data_t *args;
 
     /* Accept an integer to convert into a objnum. */
@@ -160,7 +160,7 @@ void func_toobjnum(void) {
     args[0].type = OBJNUM;
 }
 
-void func_tosym(void) {
+COLDC_FUNC(tosym) {
     data_t *args;
     long sym;
 
@@ -182,7 +182,7 @@ void func_tosym(void) {
     push_symbol(sym);
 }
 
-void func_toerr(void) {
+COLDC_FUNC(toerr) {
     data_t *args;
     long error;
 
@@ -195,7 +195,7 @@ void func_toerr(void) {
     push_error(error);
 }
 
-void func_valid(void) {
+COLDC_FUNC(valid) {
     data_t *args;
     int is_valid;
 

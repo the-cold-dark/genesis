@@ -37,13 +37,12 @@ void func_add_var(void) {
 	return;
 
     result = object_add_var(cur_frame->object, args[0].u.symbol);
-    if (result == varexists_id) {
-	cthrow(varexists_id,
-	      "Object variable %I already exists.", args[0].u.symbol);
-    } else {
-	pop(1);
-	push_int(1);
-    }
+    if (result == varexists_id)
+	THROW((varexists_id,
+	      "Object variable %I already exists.", args[0].u.symbol))
+
+    pop(1);
+    push_int(1);
 }
 
 void func_del_var(void) {
@@ -273,8 +272,6 @@ void func_method_flags(void) {
     list_discard(list);
 }
 
-#define _THROW_(__e, __m) { cthrow(__e, __m); return; }
-
 void func_set_method_flags(void) {
     data_t  * args,
             * d;
@@ -287,30 +284,26 @@ void func_set_method_flags(void) {
 
     flags = object_get_method_flags(cur_frame->object, args[0].u.symbol);
     if (flags == -1)
-        _THROW_(methodnf_id, "Method not found.");
+        THROW((methodnf_id, "Method not found."))
     if (flags & MF_LOCK)
-        _THROW_(perm_id, "Method is locked and cannot be changed.");
+        THROW((perm_id, "Method is locked and cannot be changed."))
     if (flags & MF_NATIVE)
-        _THROW_(perm_id,"Method is native and cannot be changed.");
+        THROW((perm_id,"Method is native and cannot be changed."))
 
     list = args[1].u.list;
     for (d = list_first(list); d; d = list_next(list, d)) {
-	if (d->type != SYMBOL) {
-	    cthrow(type_id, "Invalid method flag (%D).", d);
-	    return;
-	}
-        if (d->u.symbol == noover_id) {
+	if (d->type != SYMBOL)
+	    THROW((type_id, "Invalid method flag (%D).", d))
+        if (d->u.symbol == noover_id)
             new_flags |= MF_NOOVER;
-        } else if (d->u.symbol == sync_id) {
+        else if (d->u.symbol == sync_id)
             new_flags |= MF_SYNC;
-        } else if (d->u.symbol == locked_id) {
+        else if (d->u.symbol == locked_id)
             new_flags |= MF_LOCK;
-        } else if (d->u.symbol == native_id) {
-            _THROW_(perm_id, "Native flag can only be set by the driver.");
-        } else {
-            cthrow(perm_id, "Unknown method flag (%D).", d);
-            return;
-        }
+        else if (d->u.symbol == native_id)
+            THROW((perm_id, "Native flag can only be set by the driver."))
+        else
+            THROW((perm_id, "Unknown method flag (%D).", d))
     }
 
     object_set_method_flags(cur_frame->object, args[0].u.symbol, new_flags);

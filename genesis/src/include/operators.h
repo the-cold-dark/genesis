@@ -44,7 +44,7 @@ void op_string(void);
 void op_objnum(void);
 void op_symbol(void);
 void op_error(void);
-void op_name(void);
+void op_objname(void);
 void op_get_local(void);
 void op_get_obj_var(void);
 void op_start_args(void);

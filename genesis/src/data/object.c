@@ -15,6 +15,44 @@
 
 static void method_cache_invalidate(cObjnum objnum);
 
+Int ancestor_cache_hits = 0;
+Int ancestor_cache_misses = 0;
+Int ancestor_cache_invalidates = 0;
+cList * ancestor_cache_history = NULL;
+
+Int method_cache_hits = 0;
+Int method_cache_misses = 0;
+Int method_cache_partials = 0;
+Int method_cache_invalidates = 0;
+cList * method_cache_history = NULL;
+
+static inline void ancestor_cache_invalidate()
+{
+    cList * entry;
+    cData * d;
+    cData   list_entry;
+
+    entry = list_new(3);
+    d = list_empty_spaces(entry, 3);
+
+    d[0].type = INTEGER;
+    d[0].u.val = ancestor_cache_invalidates;
+    d[1].type = INTEGER;
+    d[1].u.val = ancestor_cache_hits;
+    d[2].type = INTEGER;
+    d[2].u.val = ancestor_cache_misses;
+
+    list_entry.type = LIST;
+    list_entry.u.list = entry;
+
+    ancestor_cache_history = list_add(ancestor_cache_history, &list_entry);
+
+    ancestor_cache_invalidates++;
+    ancestor_cache_hits = 0;
+    ancestor_cache_misses = 0;
+    cur_anc_stamp++;
+}
+
 /*
 // -----------------------------------------------------------------
 //
@@ -160,7 +198,7 @@ void object_destroy(Obj *object) {
 
     /* Invalidate the ancestor cache if the object has any children */
     if (list_length(object->children) != 0) {
-        cur_anc_stamp++;
+        ancestor_cache_invalidate();
     }
 
     /* remove the object name, if it has one */
@@ -338,9 +376,11 @@ static Bool ancestor_cache_check(cObjnum objnum, cObjnum ancestor,
         (ancestor_cache[i].ancestor == ancestor))
     {
         *is_ancestor = ancestor_cache[i].is_ancestor;
+        ancestor_cache_hits++;
         return TRUE;
     }
 
+    ancestor_cache_misses++;
     return FALSE;
 }
 
@@ -429,7 +469,7 @@ Int object_change_parents(Obj *object, cList *parents)
     cData *d;
 
     /* If the new and old parent lists are equal, then do no work */
-    if (list_cmp(object->parents, parents) != 0)
+    if (list_cmp(object->parents, parents) == 0)
         return -1;
 
     /* Make sure that all parents are valid objects, and that they don't create
@@ -448,7 +488,7 @@ Int object_change_parents(Obj *object, cList *parents)
     method_cache_invalidate_all();
 
     /* Invalidate the ancestor cache */
-    cur_anc_stamp++;
+    ancestor_cache_invalidate();
 
     cache_dirty_object(object);
 
@@ -1057,6 +1097,7 @@ static Bool method_cache_check(Long objnum, Long name, Long after, Bool is_frob,
     if (method_cache[i].stamp == cur_stamp && method_cache[i].objnum == objnum &&
 	method_cache[i].name == name && method_cache[i].after == after &&
 	method_cache[i].loc != -1 && method_cache[i].is_frob==is_frob) {
+        method_cache_hits++;
         if (!method_cache[i].failed) {
             object = cache_retrieve(method_cache[i].loc);
             *method = object_find_method_local(object, name, is_frob);
@@ -1066,6 +1107,7 @@ static Bool method_cache_check(Long objnum, Long name, Long after, Bool is_frob,
             return TRUE;
         }
     } else {
+        method_cache_misses++;
 	*method = NULL;
 	return FALSE;
     }
@@ -1107,6 +1149,9 @@ static void method_cache_invalidate(cObjnum objnum) {
             method_cache[i].stamp = 1;
         }
     }
+
+    method_cache_partials++;
+    
     if (log_method_cache == 2) {
         write_err("Method cache partially invalidated for obj #%l", objnum);
         log_current_task_stack(FALSE, write_err);
@@ -1114,10 +1159,36 @@ static void method_cache_invalidate(cObjnum objnum) {
 }
 
 static void method_cache_invalidate_all() {
+    cList * entry;
+    cData * d;
+    cData   list_entry;
+
     if (log_method_cache) {
         write_err("Method cache entirely invalidated:");
         log_current_task_stack(FALSE, write_err);
     }
+
+    entry = list_new(4);
+    d = list_empty_spaces(entry, 4);
+
+    d[0].type = INTEGER;
+    d[0].u.val = method_cache_invalidates;
+    d[1].type = INTEGER;
+    d[1].u.val = method_cache_hits;
+    d[2].type = INTEGER;
+    d[2].u.val = method_cache_misses;
+    d[3].type = INTEGER;
+    d[3].u.val = method_cache_partials;
+
+    list_entry.type = LIST;
+    list_entry.u.list = entry;
+
+    method_cache_history = list_add(method_cache_history, &list_entry);
+
+    method_cache_invalidates++;
+    method_cache_hits = 0;
+    method_cache_misses = 0;
+    method_cache_partials = 0;
     cur_stamp++;
 }
 

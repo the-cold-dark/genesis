@@ -466,6 +466,10 @@ cObjnum cache_watch_object;
 Int  log_malloc_size;
 Int  log_method_cache;
 
+/* cache stats stuff */
+extern cList * ancestor_cache_history;
+extern cList * method_cache_history;
+
 #else
 extern jmp_buf main_jmp;
 
@@ -510,6 +514,12 @@ extern Int  cache_watch_count;
 extern cObjnum cache_watch_object;
 extern Int  log_malloc_size;
 extern Int  log_method_cache;
+
+/* cache stats stuff */
+extern cList * ancestor_cache_history;
+extern cList * method_cache_history;
+extern Int name_cache_hits;
+extern Int name_cache_misses;
 #endif
 
 #endif

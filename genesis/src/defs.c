@@ -56,6 +56,9 @@ void init_defs(void) {
 
     log_malloc_size = 0;
     log_method_cache = 0;
+
+    ancestor_cache_history = list_new(0);
+    method_cache_history = list_new(0);
 }
 
 #undef INIT_VAR

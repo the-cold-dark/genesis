@@ -291,3 +291,32 @@ COLDC_FUNC(cache_info) {
     push_list(list);
     list_discard(list);
 }
+
+COLDC_FUNC(cache_stats) {
+    cData * args;
+    cList * list;
+    cData * val;
+
+    if (!func_init_1(&args, SYMBOL))
+        return;
+
+    if (SYM1 == ancestor_cache_id) {
+        list = ancestor_cache_history;
+    } else if (SYM1 == method_cache_id) {
+        list = method_cache_history;
+    } else if (SYM1 == name_cache_id) {
+        list = list_new(2);
+        val = list_empty_spaces(list, 2);
+	val[0].type = INTEGER;
+	val[0].u.val = name_cache_hits;
+        val[1].type = INTEGER;
+        val[1].u.val = name_cache_misses;
+    } else if (SYM1 == object_cache_id) {
+        THROW((type_id, "Object cache stats not yet supported."))
+    } else {
+        THROW((type_id, "Invalid cache type."))
+    }
+
+    pop(1);
+    push_list(list);
+}

@@ -58,6 +58,9 @@ pthread_mutex_t lookup_mutex;
 #define READ_WRITE_EXECUTE 0700
 #endif
 
+Int name_cache_hits = 0;
+Int name_cache_misses = 0;
+
 INTERNAL datum objnum_key(Long objnum, Number_buf nbuf);
 INTERNAL datum name_key(Long name);
 INTERNAL datum offset_size_value(off_t offset, Int size, Number_buf nbuf);
@@ -206,10 +209,13 @@ Int lookup_retrieve_name(Long name, Long *objnum)
     LOCK_LOOKUP("lookup_retrieve_name")
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
+        name_cache_hits++;
 	*objnum = name_cache[i].objnum;
         UNLOCK_LOOKUP("lookup_retrieve_name")
 	return 1;
     }
+
+    name_cache_misses++;
 
     /* Get it from the database. */
     if (!get_name(name, objnum)) {

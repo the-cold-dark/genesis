@@ -6,7 +6,7 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $Id: malloc.c,v 1.27 1998/07/22 06:16:08 braddr Exp $
+ * $Id: malloc.c,v 1.28 1998/07/22 06:20:31 braddr Exp $
  *
  */
 
@@ -48,6 +48,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef sys_linux
+#undef __gnu_malloc /* old linux boxes define this--dumb */
+#endif
+
 #include <memory.h>
 #include <errno.h>
 

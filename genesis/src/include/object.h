@@ -51,7 +51,7 @@ struct Obj {
     char  dead;	                 /* Flag: Object has been destroyed. */
     Int   ucounter;              /* counter: Object references */
 
-    Long search;                 /* Last search to visit object. */
+    uLong search;                /* Last cache search to visit this */
 
     Ident objname;               /* object name */
 
@@ -147,8 +147,23 @@ struct error_list {
     Int *error_ids;
 };
 
-#define START_SEARCH() cur_search++
+#define START_SEARCH_AT 0 /* zero is the 'unsearched' number */
+#define RESET_SEARCH_AT MAX_ULONG
+#define SEARCHED(_obj__)      (_obj__->search == cache_search)
+#define HAVE_SEARCHED(_obj__) (_obj__->search = cache_search)
+
+#define START_SEARCH() \
+    if (cache_search == RESET_SEARCH_AT) \
+        cache_search = START_SEARCH_AT; \
+    cache_search++
 #define END_SEARCH()
+#define RETRIEVE_ONCE_OR_RETURN(_obj__, _objnum__) \
+    _obj__ = cache_retrieve(_objnum__); \
+    if (SEARCHED(_obj__)) { \
+        cache_discard(_obj__); \
+        return; \
+    } \
+    HAVE_SEARCHED(_obj__)
 
 /* ..................................................................... */
 /* function prototypes */
@@ -193,7 +208,6 @@ struct {
 /* function prototypes */
 static void    object_update_parents(Obj *object,
                                   cList *(*list_op)(cList *, cData *));
-static cList   *object_ancestors_aux(Long objnum, cList *ancestors);
 static Int     object_has_ancestor_aux(Long objnum, Long ancestor);
 static Var    *object_create_var(Obj *object, Long cclass, Long name);
 static Var    *object_find_var(Obj *object, Long cclass, Long name);
@@ -207,7 +221,9 @@ void    object_free(Obj *object);
 void    object_destroy(Obj *object);
 void    object_construct_ancprec(Obj *object);
 Int     object_change_parents(Obj *object, cList *parents);
-cList *object_ancestors(Long objnum);
+cList * object_ancestors_breadth(Long objnum);
+cList * object_ancestors_depth(Long objnum);
+cList * object_descendants(Long objnum);
 Int     object_has_ancestor(Long objnum, Long ancestor);
 void    object_reconstruct_descendent_ancprec(Long objnum);
 Int     object_add_string(Obj *object, cStr *string);
@@ -245,8 +261,7 @@ Int     object_del_objname(Obj * object);
 /* global variables */
 
 /* Count for keeping track of of already-searched objects during searches. */
-Long cur_search;
-Long last_search;
+uLong cache_search;
 
 /* Keeps track of objnum for next object in database. */
 Long db_top;
@@ -262,7 +277,9 @@ extern void    object_free(Obj *object);
 extern void    object_destroy(Obj *object);
 extern void    object_construct_ancprec(Obj *object);
 extern Int     object_change_parents(Obj *object, cList *parents);
-extern cList   *object_ancestors(Long objnum);
+extern cList  *object_ancestors_breadth(Long objnum);
+extern cList  *object_ancestors_depth(Long objnum);
+extern cList  *object_descendants(Long objnum);
 extern Int     object_has_ancestor(Long objnum, Long ancestor);
 extern void    object_reconstruct_descendent_ancprec(Long objnum);
 extern Int     object_add_string(Obj *object, cStr *string);
@@ -304,8 +321,7 @@ extern Int     object_set_method_access(Obj * object, Long name, Int access);
 
 /* variables */
 extern Long db_top;
-extern Long cur_search;
-extern Long last_search;
+extern uLong cache_search;
 
 #endif /* _object_ */
 

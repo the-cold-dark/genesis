@@ -340,22 +340,23 @@ int buffer_index(cBuf * buf, uChar * ss, int slen, int origin) {
         len -= origin;
         if (len < slen)
             return 0;
-        
+
         p = s + origin;
         p = (uChar *) memchr(p, *ss, len);
         if (slen == 1) {
             return p ? ((p - s) + 1) : 0;
         } else {
             slen--;
-            lastp = s - 1;
+            lastp = p - 1;
             while (p) {
                 if (MEMCMP(p + 1, ss + 1, slen) == 0)
                     return (p - s) + 1;
-                    len -= p - lastp;
-                    lastp = p;
+                len -= (p - lastp);
+                lastp = p;
                 p = (uChar *) memchr(p+1, *ss, len);
             }
         }
     }
     return 0;
 }
+

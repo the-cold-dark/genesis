@@ -113,6 +113,7 @@ COLDC_FUNC(del_method);
 COLDC_FUNC(parents);
 COLDC_FUNC(children);
 COLDC_FUNC(ancestors);
+COLDC_FUNC(descendants);
 COLDC_FUNC(has_ancestor);
 COLDC_FUNC(create);
 COLDC_FUNC(chparents);

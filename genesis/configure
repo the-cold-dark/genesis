@@ -342,6 +342,17 @@ ac_configure=$ac_aux_dir/configure # This should be Cygnus configure.
 # esac
 
 #####################################################################
+## print notes?
+
+if [ -f etc/notes ]; then
+    echo ""
+    cat etc/notes
+    echo ""
+    echo $ac_n "[Return to Continue] $ac_c"
+    read ignore
+fi 
+
+#####################################################################
 echo "- System configuration"
 
 echo $ac_n "  Getting hostname""... $ac_c" 1>&6

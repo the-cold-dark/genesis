@@ -11,6 +11,7 @@
 #include "cdc_db.h"
 #include "util.h"
 #include "log.h"
+#include "quickhash.h"
 
 /*
 // -----------------------------------------------------------------
@@ -67,7 +68,7 @@ Obj * object_new(Long objnum, cList * parents) {
     cnew->idents_size = IDENTS_STARTING_SIZE;
     cnew->num_idents = 0;
 
-    cnew->search = -1;
+    cnew->search = START_SEARCH_AT;
 
     /* Add this object to the children list of parents. */
     object_update_parents(cnew, list_add);
@@ -212,43 +213,137 @@ INTERNAL void object_update_parents(Obj * object,
 /*
 // -----------------------------------------------------------------
 */
-cList * object_ancestors(Long objnum) {
-    cList * ancestors;
 
-    /* Get the ancestor list, backwards. */
-    ancestors = list_new(0);
+INTERNAL Hash * object_ancestors_depth_aux(Long objnum, Hash * h) {
+    Obj    * obj;
+    cData  * d;
+    cData    this;
+    cList  * parents;
 
-    START_SEARCH();
-    ancestors = object_ancestors_aux(objnum, ancestors);
-    END_SEARCH();
-
-    return list_reverse(ancestors);
-}
-
-/* Modifies ancestors.  Returns a backwards list. */
-INTERNAL cList *object_ancestors_aux(Long objnum, cList *ancestors) {
-    Obj *object;
-    cList *parents;
-    cData *d, cthis;
-
-    object = cache_retrieve(objnum);
-    if (object->search == cur_search) {
-	cache_discard(object);
-	return ancestors;
+    obj = cache_retrieve(objnum);
+    if (SEARCHED(obj)) {
+        cache_discard(obj);
+        return h;
     }
-    object->dirty = 1;
-    object->search = cur_search;
+    HAVE_SEARCHED(obj);
 
-    parents = list_dup(object->parents);
-    cache_discard(object);
+    parents = list_dup(obj->parents);
+    cache_discard(obj);
 
     for (d = list_last(parents); d; d = list_prev(parents, d))
-	ancestors = object_ancestors_aux(d->u.objnum, ancestors);
+	h = object_ancestors_depth_aux(d->u.objnum, h);
+
     list_discard(parents);
 
-    cthis.type = OBJNUM;
-    cthis.u.objnum = objnum;
-    return list_add(ancestors, &cthis);
+    this.type = OBJNUM;
+    this.u.objnum = objnum;
+    return hash_add(h, &this);
+}
+
+cList * object_ancestors_depth(Long objnum) {
+    Hash   * h;
+    cList  * list;
+
+    h = hash_new(0);
+
+    /* short circut root */
+    if (objnum != ROOT_OBJNUM) {
+        START_SEARCH();
+        h = object_ancestors_depth_aux(objnum, h);
+        END_SEARCH();
+    }
+
+    list = list_dup(h->keys);
+    hash_discard(h);
+    return list_reverse(list);
+}
+
+cList * object_ancestors_breadth(Long objnum) {
+    Hash   * h;
+    Obj    * obj;
+    Obj    * parent;
+    int      pos;
+    cList  * list;
+    cData  * key,
+           * c,
+             this;
+
+    h = hash_new(1);
+    this.type = OBJNUM;
+    this.u.objnum = objnum;
+    h = hash_add(h, &this);
+
+    /* short circut root */
+    if (objnum == ROOT_OBJNUM)
+        goto END_LABEL;
+
+    START_SEARCH();
+
+    obj = cache_retrieve(objnum);
+    for (pos=0; list_length(h->keys) > pos; pos++) {
+        c = list_elem(h->keys, pos);
+        parent = cache_retrieve(c->u.objnum);
+
+        if (SEARCHED(parent)) {
+            cache_discard(parent);
+            continue;
+        }
+        HAVE_SEARCHED(parent);
+
+        list = parent->parents;
+        for (key = list_first(list); key; key = list_next(list, key)) {
+            if (hash_find(h, key) == F_FAILURE)
+                h = hash_add(h, key);
+        }
+        cache_discard(parent);
+    }
+
+    END_SEARCH();
+
+    END_LABEL:
+
+    list = list_dup(h->keys);
+    hash_discard(h);
+    return list;
+}
+
+/* slight variation for descendants */
+cList * object_descendants(Long objnum) {
+    Hash   * h;
+    Obj    * obj;
+    Obj    * child;
+    int      pos;
+    cList  * list;
+    cData  * key,
+           * c;
+
+    START_SEARCH();
+
+    obj = cache_retrieve(objnum);
+    h = hash_new_with(obj->children);
+    for (pos=0; list_length(h->keys) > pos; pos++) {
+        c = list_elem(h->keys, pos);
+        child = cache_retrieve(c->u.objnum);
+
+        if (SEARCHED(child)) {
+            cache_discard(child);
+            continue;
+        }
+        HAVE_SEARCHED(child);
+
+        list = child->children;
+        for (key = list_first(list); key; key = list_next(list, key)) {
+            if (hash_find(h, key) == F_FAILURE)
+                h = hash_add(h, key);
+        }
+        cache_discard(child);
+    }
+
+    END_SEARCH();
+
+    list = list_dup(h->keys);
+    hash_discard(h);
+    return list;
 }
 
 Int object_has_ancestor(Long objnum, Long ancestor)
@@ -270,15 +365,13 @@ static Int object_has_ancestor_aux(Long objnum, Long ancestor)
     cList *parents;
     cData *d;
 
-    object = cache_retrieve(objnum);
-
     /* Don't search an object twice. */
-    if (object->search == cur_search) {
+    object = cache_retrieve(objnum);
+    if (SEARCHED(object)) {
 	cache_discard(object);
 	return 0;
     }
-    object->dirty = 1;
-    object->search = cur_search;
+    HAVE_SEARCHED(object);
 
     parents = list_dup(object->parents);
     cache_discard(object);
@@ -603,7 +696,7 @@ Long object_inherited_var(Obj *object, Obj *cclass, Long name, cData *ret)
     } else {
         /* Unless the database is corrupt, we *will* find an ancestor with
            the var--this is a horrible and inefficient way of doing this */
-        ancestors = object_ancestors(object->objnum);
+        ancestors = object_ancestors_breadth(object->objnum);
         for (d = list_first(ancestors);
              d->u.objnum != cclass->objnum;
              d = list_next(ancestors, d))
@@ -626,56 +719,6 @@ Long object_inherited_var(Obj *object, Obj *cclass, Long name, cData *ret)
 
     return NOT_AN_IDENT;
 }
-
-#if 0
-/*work started on improving inherited var searches --Brandon */
-INTERNAL Bool object_inherited_var_aux(Long objnum, Long definer,  Long name, cData * ret) {
-    Obj   * object;
-    cList * parents;
-    cData * cthis;
-    Var   * var;
-
-    object = cache_retrieve(objnum);
-    if (object->search == cur_search) {
-	cache_discard(object);
-	return ancestors;
-    }
-    object->dirty = 1;
-    object->search = cur_search;
-
-    if (var = object_find_var(object, definer, name))
-        return var;
-
-    parents = list_dup(object->parents);
-    cache_discard(object);
-
-    for (d = list_last(parents); d; d = list_prev(parents, d))
-	ancestors = object_ancestors_aux(d->u.objnum, ancestors);
-    list_discard(parents);
-
-    cthis.type = OBJNUM;
-    cthis.u.objnum = objnum;
-    return list_add(ancestors, &cthis);
-}
-*** HERE ****
-        ancestors = object_ancestors(object->objnum);
-        for (d = list_first(ancestors);
-             d->u.objnum != cclass->objnum;
-             d = list_next(ancestors, d))
-        {
-            a = cache_retrieve(d->u.objnum);
-            if (var = object_find_var(a, cclass->objnum, name)) {
-                data_dup(ret, &var->val);
-                cache_discard(a);
-                goto DONE;
-            }
-            cache_discard(a);
-        }
-
-        /* safety net--should NEVER occur, but could */
-	ret->type = INTEGER;
-	ret->u.val = 0;
-#endif
 
 /* Only the text dump reader calls this function; it assigns or creates a
  * variable as needed, and always succeeds. */
@@ -767,7 +810,7 @@ static Var *object_find_var(Obj *object, Long cclass, Long name)
    extra reference count, in order to keep it in cache.  objnum must be
    valid. */
 /* object_find_method is now a front end that increments the
-   cur_search variable and calls object_find_message_recurse,
+   cache_search variable and calls object_find_message_recurse,
    the recursive routine.  This is necessary to make single-
    inheritance lineage obejct re-entrant.  It fixes a bug in
    the circular-definition catching logic that caused it to
@@ -890,15 +933,7 @@ static void search_object(Long objnum, Search_params *params)
     cList *parents;
     cData *d;
 
-    object = cache_retrieve(objnum);
-
-    /* Don't search an object twice. */
-    if (object->search == cur_search) {
-	cache_discard(object);
-	return;
-    }
-    object->dirty = 1;
-    object->search = cur_search;
+    RETRIEVE_ONCE_OR_RETURN(object, objnum);
 
     /* Grab the parents list and discard the object. */
     parents = list_dup(object->parents);

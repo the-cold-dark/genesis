@@ -96,6 +96,7 @@ Dep_DATAbdatadlib = \
    DATA\dict.obj\
    DATA\data.obj\
    DATA\string.obj\
+   DATA\quickhash.obj\
    data.lib
 
 DATA\data.lib : $(Dep_DATAbdatadlib)
@@ -105,6 +106,7 @@ DATA\data.lib : $(Dep_DATAbdatadlib)
 -+DATA\list.obj &
 -+DATA\ident.obj &
 -+DATA\dict.obj &
+-+DATA\quickhash.obj &
 -+DATA\data.obj &
 -+DATA\string.obj
 |
@@ -132,6 +134,11 @@ DATA\ident.obj :  data\ident.c
 DATA\dict.obj :  data\dict.c
   $(BCC32) -P- -c @&&|
  $(CompOptsAt_DATAbdatadlib) $(CompInheritOptsAt_DATAbdatadlib) -o$@ data\dict.c
+|
+
+DATA\quickhash.obj :  data\quickhash.c
+  $(BCC32) -P- -c @&&|
+ $(CompOptsAt_DATAbdatadlib) $(CompInheritOptsAt_DATAbdatadlib) -o$@ data\quickhash.c
 |
 
 DATA\data.obj :  data\data.c

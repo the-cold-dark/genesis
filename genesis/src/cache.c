@@ -105,6 +105,7 @@ Obj * cache_get_holder(Long objnum) {
     obj->next = active[ind].next;
     obj->prev->next = obj->next->prev = obj;
 
+    obj->search = START_SEARCH_AT;
     obj->dirty = 0;
     obj->dead = 0;
     obj->refs = 1;

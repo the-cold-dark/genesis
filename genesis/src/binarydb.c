@@ -55,7 +55,7 @@ char c_clean_file[255];
 
 static Int db_clean;
 
-extern Long cur_search, db_top;
+extern Long db_top;
 
 /* this isn't the most graceful way, but *shrug* */
 #define WARN(_s_) { \
@@ -154,7 +154,6 @@ void verify_clean(void) {
                     if (atol(magicmod) == MAGIC_MODNUMBER) {
                         if (strcmp(system, SYSTEM_TYPE) == 0) {
                             isdirty = NO; /* yay */
-                            cur_search = atoi(search);
                         }
                     }
                 }
@@ -558,9 +557,9 @@ void db_flush(void)
 }
 
 #define write_clean_file(_fp_) \
-    fprintf(_fp_, "%s\n%d\n%d\n%d\n%li\n%li\n", SYSTEM_TYPE, \
+    fprintf(_fp_, "%s\n%d\n%d\n%d\n%li\n", SYSTEM_TYPE, \
                 VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH,\
-                (long) MAGIC_MODNUMBER, (long) cur_search)\
+                (long) MAGIC_MODNUMBER)\
 
 void finish_backup(void) {
     FILE * fp;

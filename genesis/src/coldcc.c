@@ -29,7 +29,7 @@ Int    c_opt = OPT_COMP;
 Bool   print_objs = YES;
 Bool   print_names = NO;
 Bool   print_invalid = YES;
-Bool   print_warn = YES;
+Bool   print_warn = NO;
 
 #define NEW_DB       1
 #define EXISTING_DB  0
@@ -61,11 +61,10 @@ int main(int argc, char **argv) {
 
     if (setjmp(main_jmp) == 0) {
         if (c_opt == OPT_DECOMP) {
-            fprintf(stderr, "Decompiling database...\n");
             init_binary_db();
             init_core_objects();
-            if (text_dump(print_names))
-               fprintf(stderr,"\nDatabase decompiled to \"%s\"\n",c_dir_textdump);
+            fprintf(stderr, "Writing to \"%s\"..\n", c_dir_textdump);
+            text_dump(print_names);
         } else if (c_opt == OPT_COMP) {
             fprintf(stderr, "Compiling database...\n");
             compile_db(NEW_DB);

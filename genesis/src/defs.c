@@ -23,7 +23,7 @@ void init_defs(void) {
     running = YES;
     atomic = NO;
     heartbeat_freq = 5;
-    cur_search = last_search = 0;
+    cache_search = START_SEARCH_AT;
 
     INIT_VAR(c_dir_binary, "binary", 6);
     INIT_VAR(c_dir_textdump, "textdump", 8);

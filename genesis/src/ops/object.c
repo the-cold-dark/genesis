@@ -643,15 +643,35 @@ COLDC_FUNC(children) {
 
 COLDC_FUNC(ancestors) {
     cList * ancestors;
+    cData * args;
+    Int     argc;
+
+    /* Accept no arguments. */
+    if (!func_init_0_or_1(&args, &argc, SYMBOL))
+        return;
+
+    /* breadth order? */
+    if (argc == 1 && SYM1 == breadth_id)
+        ancestors = object_ancestors_breadth(cur_frame->object->objnum);
+    else
+        ancestors = object_ancestors_depth(cur_frame->object->objnum);
+    if (argc)
+        pop(1);
+    push_list(ancestors);
+    list_discard(ancestors);
+}
+
+COLDC_FUNC(descendants) {
+    cList * descendants;
 
     /* Accept no arguments. */
     if (!func_init_0())
         return;
 
-    /* Get an ancestors list from the object. */
-    ancestors = object_ancestors(cur_frame->object->objnum);
-    push_list(ancestors);
-    list_discard(ancestors);
+    /* Get an descendants list from the object. */
+    descendants = object_descendants(cur_frame->object->objnum);
+    push_list(descendants);
+    list_discard(descendants);
 }
 
 COLDC_FUNC(has_ancestor) {

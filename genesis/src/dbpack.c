@@ -794,7 +794,9 @@ void pack_object(Obj *obj, FILE *fp)
     pack_strings(obj, fp);
     pack_idents(obj, fp);
     write_ident(obj->objname, fp);
+#if 0
     write_long(obj->search, fp);
+#endif
 }
 
 void unpack_object(Obj *obj, FILE *fp)
@@ -806,7 +808,9 @@ void unpack_object(Obj *obj, FILE *fp)
     unpack_strings(obj, fp);
     unpack_idents(obj, fp);
     obj->objname = read_ident(fp);
+#if 0
     obj->search = read_long(fp);
+#endif
 }
 
 Int size_object(Obj *obj)
@@ -821,7 +825,9 @@ Int size_object(Obj *obj)
     size += size_idents(obj);
     if (obj->objname != -1)
         size += size_ident(obj->objname);
+#if 0
     size += size_long(obj->search);
+#endif
     return size;
 }
 

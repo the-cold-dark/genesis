@@ -28,7 +28,7 @@ VPATCH=@VPATCH@
 
 DATA_O     = data/data.o data/buffer.o data/dict.o data/ident.o\
              data/list.o data/object.o data/string.o \
-	     data/handled_frob.o
+	     data/handled_frob.o data/quickhash.o
 GRAMMAR_O  = grammar.o
 DB_O       = cache.o binarydb.o dbpack.o decode.o lookup.o
 IO_O       = io.o log.o net.o file.o

@@ -6,6 +6,25 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-31 [26-Jun-97] Brandon
+      * fixed bug with bufidx().. was using the wrong var and reading
+        out of its memory bounds (Brandon)
+      * fixed float parsing a bit, [1..2] is now functional again,
+        bad floats '2.' now throw ~parse, and ints ending a line
+        will not become a float (Brandon)
+      * searching no longer guarantee's redundancy checks--it only
+        guarantee's it in the cache--if an object is swapped to disk
+        its search counter is reset.  Before now searching was making
+        objects dirty, and causing a lot of unecessary writing.  This
+        will effect anything which uses searching as a means to only
+        check an object once.  (Brandon)
+      * added an internal data type Hash which is a stripped version
+        of the Dict, without keys (Brandon)
+      * rewrote ancestors() because of the searching change (using Hash
+        instead), also added in breadth ordered as well--send a symbol
+        argument of 'depth or 'breadth to specify which order.  Added
+        descendants(), which is always breadth (Brandon).
+      * changed textdump to use descendants() instead of search (Brandon)
 1.0-30 [26-Jun-97] Brandon
       * fixed bug with [un]bind_port() and open_connection(): stack wasn't
         cleaning up correctly (Brandon)

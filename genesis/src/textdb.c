@@ -1329,20 +1329,30 @@ INTERNAL void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames) {
 Int text_dump(Bool objnames) {
     FILE      * fp;
     char        buf[BUF];
+    cList     * heirarchy;
+    cData     * o;
 
     /* Open the output file. */
     sprintf(buf, "%s.out", c_dir_textdump);
 
     fp = open_scratch_file(buf, "w");
     if (!fp) {
-        fprintf(stderr, "\rUnable to open temporary file \"%s\".\n", buf);
+        fprintf(stderr, "Unable to open temporary file \"%s\".\n", buf);
         return 0;
     }
 
+    fprintf(stderr, "Traversing object heirarchy..");
+    heirarchy = object_descendants(ROOT_OBJNUM);
+    fprintf(stderr, "done, %d objects.\n", list_length(heirarchy));
+    fprintf(stderr, "Decompiling Objects..");
+
     last_length = 0;
-    START_SEARCH();
     dump_object(ROOT_OBJNUM, fp, objnames);
-    END_SEARCH();
+    for (o = list_first(heirarchy); o; o = list_next(heirarchy, o))
+        dump_object(o->u.objnum, fp, objnames);
+
+    fprintf(stderr, "\n");
+    list_discard(heirarchy);
 
     close_scratch_file(fp);
 
@@ -1352,15 +1362,13 @@ Int text_dump(Bool objnames) {
         return 0;
     }
 
-    fputc('\r', stdout);
     return 1;
 }
 #define is_system(__n) (__n == ROOT_OBJNUM || __n == SYSTEM_OBJNUM)
 
 void dump_object(Long objnum, FILE *fp, Bool objnames) {
     Obj    * obj;
-    cList  * objs,
-           * code;
+    cList  * code;
     cData  * d;
     cStr   * str;
     Var    * var;
@@ -1376,34 +1384,8 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
         return;
     }
 
-    /* have we looked at this object yet? */
-    if (obj->search == cur_search) {
-        cache_discard(obj);
-        return;
-    }
-
-    /* grab the parents list */
-    objs = list_dup(obj->parents);
-    cache_discard(obj); 
-
-    /* first dump any parents which haven't already been dumped. */
-    if (list_length(objs) != 0) {
-        for (d = list_first(objs); d; d = list_next(objs, d))
-            dump_object(d->u.objnum, fp, objnames);
-    }
-
     /* ok, get this object now */
     obj = cache_retrieve(objnum);
-
-    /* did we get written out since the last check? */
-    if (obj->search == cur_search) {
-        cache_discard(obj);
-        return;
-    }
-
-    /* ok, lets do it then, mark it dirty and update cur_search */
-    obj->dirty = 1;
-    obj->search = cur_search;
 
     /* let them know? */
     if (print_objs)
@@ -1418,18 +1400,17 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
     print_dbref(obj, obj->objnum, fp, objnames);
 
     /* add the parents */
-    if (objs->len != 0) {
+    if (list_length(obj->parents) != 0) {
         fputc(':', fp);
         fputc(' ', fp);
         first = 1;
-        for (d = list_first(objs); d; d = list_next(objs, d)) {
+        for (d = list_first(obj->parents); d; d = list_next(obj->parents, d)) {
             if (!first)
                 fputs(", ", fp);
             first = 0;
             print_dbref(NULL, d->u.objnum, fp, objnames);
         }
     }
-    list_discard(objs);
     fputs(";\n", fp);
 
     /* if we are doing number-only, put a name definition in */
@@ -1495,15 +1476,7 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
 
     fputc('\n', fp);
 
-    /* now dump it's children */
-    objs = list_dup(obj->children);
     cache_discard(obj);
-
-    if (objs->len) {
-        for (d = list_first(objs); d; d = list_next(objs, d))
-            dump_object(d->u.objnum, fp, objnames);
-    }
-    list_discard(objs);
 }
 
 #define ADD_FLAG(__bit, __str1, __str2) { \

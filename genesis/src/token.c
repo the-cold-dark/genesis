@@ -239,12 +239,7 @@ Int yylex(void)
 	    s++, cur_pos++, len--;
 	}
 
-        if (len && *s!='.' && *s!='e') {
-            string_discard(float_buf);
-	    return INTEGER;
-        }
-
-	{
+        if ((*s == '.' && isdigit(*(s+1))) || *s == 'e') {
 	    Float f=yylval.num;
 
             f = atof(string_chars(float_buf));
@@ -284,7 +279,10 @@ Int yylex(void)
 	    }
 	    yylval.fnum=f;
 	    return FLOAT;
-	}	
+	} else {	
+            string_discard(float_buf);
+	    return INTEGER;
+        }
     }
 
     /* Check if it's a string. */

@@ -21,7 +21,7 @@ typedef Int SOCKET;
 
 #endif
 
-SOCKET get_server_socket(Int port);
+SOCKET get_server_socket(Int port, char * addr);
 Int io_event_wait(Int sec, Conn *connections, server_t *servers,
 		  pending_t *pendings);
 Long non_blocking_connect(char *addr, Int port, Int *socket_return);

@@ -6,6 +6,20 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-11 [2-Aug-96] Brandon Gillespie, Miroslav Silovic
+      * Added the ability to bind to seperate and multiple IP addresses
+        with 'bind_port()' (Brandon)
+        Because of this, the following has changed:
+            bind_port() accepts a second argument (the ip addr to bind to)
+            connection.connect() is called with the arguments:
+
+                client_ip, server_ip, socket;
+
+            Before now it was just client_ip and socket.  This will require
+            a change to existing databases.
+      * Found an old bug which was hanging objects, if a method
+        threw an error due to method protection object references
+        were not cleaned up in the cache. (Miro)
 1.0-10 [26-Jul-96] Miroslav Silovic, Brad Roberts, Brandon Gillespie
       * Fixed a problem where natives would get frobbed if you
         recompiled them. (Brandon)

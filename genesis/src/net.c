@@ -20,11 +20,6 @@
 #include "net.h"
 #include "util.h"
 
-#if 0
-extern Int socket(), bind(), listen(), getdtablesize(void), select(), accept();
-extern Int connect(), getpeername(), getsockopt(), setsockopt();
-#endif
-
 static Long translate_connect_error(Int error);
 
 static struct sockaddr_in sockin;	/* An internet address. */
@@ -45,32 +40,39 @@ void uninit_net(void) {
 #endif
 }
 
-SOCKET get_server_socket(Int port) {
-    Int fd, one;
+SOCKET get_server_socket(Int port, char * addr) {
+    Int one=1;
+    SOCKET sock;
+
+    /* verify the address first */
+    memset(&sockin, 0, sizeof(sockin));               /* zero it */
+    sockin.sin_family = AF_INET;                      /* set inet */
+    sockin.sin_port = htons((unsigned short) port);   /* set port */
+    if (addr && !inet_aton(addr, &sockin.sin_addr)) { /* set optional addr */
+        server_failure_reason = address_id;
+        return SOCKET_ERROR;
+    }
 
     /* Create a socket. */
-    fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd == SOCKET_ERROR) {
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock == SOCKET_ERROR) {
 	server_failure_reason = socket_id;
 	return SOCKET_ERROR;
     }
 
     /* Set SO_REUSEADDR option to avoid restart problems. */
     one = 1;
-    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(Int));
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(Int));
 
     /* Bind the socket to port. */
-    memset(&sockin, 0, sizeof(sockin));
-    sockin.sin_family = AF_INET;
-    sockin.sin_port = htons((unsigned short) port);
-    if (bind(fd, (struct sockaddr *) &sockin, sizeof(sockin)) < 0) {
+    if (bind(sock, (struct sockaddr *) &sockin, sizeof(sockin)) < 0) {
 	server_failure_reason = bind_id;
 	return SOCKET_ERROR;
     }
 
-    listen(fd, 8);
+    listen(sock, 8);
 
-    return fd;
+    return sock;
 }
 
 /* Wait for I/O events.  sec is the number of seconds we can wait before

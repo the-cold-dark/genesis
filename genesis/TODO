@@ -1,10 +1,9 @@
 -----------------------
+Bugs:
+
+
+-----------------------
 Cleanup:
-
-* Add notes about operating environment (disk space and RAM) in the
-  genesis man pages on the web.
-
-* fix declaration for gettimeofday() to be quiet
 
 * overridable methods: change searching to take the first method
   found.  Do the check for !overridable methods at the time the method

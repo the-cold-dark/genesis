@@ -54,17 +54,25 @@ void func_reassign_connection(void) {
 */
 void func_bind_port(void) {
     cData * args;
+    Int     argc;
+    char  * addr;
 
     /* Accept a port to bind to, and a objnum to handle connections. */
-    if (!func_init_1(&args, INTEGER))
+    if (!func_init_1_or_2(&args, &argc, INTEGER, STRING))
         return;
 
-    if (add_server(args[0].u.val, cur_frame->object->objnum))
+    addr = (argc==2 ? string_chars(STR2) : (char *) NULL);
+
+    if (add_server(INT1, addr, cur_frame->object->objnum))
         push_int(1);
+    else if (server_failure_reason == address_id)
+        cthrow(address_id, "Invalid bind address: %s", addr);
     else if (server_failure_reason == socket_id)
         cthrow(socket_id, "Couldn't create server socket.");
-    else /* (server_failure_reason == bind_id) */
-        cthrow(bind_id, "Couldn't bind to port %d.", args[0].u.val);
+    else if (addr)
+        cthrow(bind_id, "Couldn't bind to port %d on address %s", INT1, addr);
+    else
+        cthrow(bind_id, "Couldn't bind to port %d.", INT1);
 }
 
 /*

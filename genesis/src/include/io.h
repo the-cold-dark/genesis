@@ -24,14 +24,15 @@ struct Conn {
 };
 
 struct server_s {
-    SOCKET server_socket;
+    SOCKET         server_socket;
     unsigned short port;
-    cObjnum objnum;
-    Int dead;
-    SOCKET client_socket;
-    char client_addr[20];
+    cStr         * addr;
+    cObjnum        objnum;
+    Int            dead;
+    SOCKET         client_socket;
+    char           client_addr[20];
     unsigned short client_port;
-    server_t *next;
+    server_t     * next;
 };
 
 struct pending_s {
@@ -51,7 +52,7 @@ void handle_connection_output(void);
 Conn * find_connection(Obj * obj);
 Conn * tell(Obj * obj, cBuf *buf);
 Int  boot(Obj * obj);
-Int  add_server(Int port, Long objnum);
+Int  add_server(Int port, char * addr, Long objnum);
 Int  remove_server(Int port);
 Long make_connection(char *addr, Int port, cObjnum receiver);
 void flush_output(void);

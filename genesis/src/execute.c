@@ -867,9 +867,6 @@ Int call_method(cObjnum objnum,    /* the object */
                 Ident name,         /* the method name */
                 Int stack_start,    /* start of the stack .. */
                 Int arg_start)      /* start of the args */
-#if 0
-                short isdata)       /* was this a call from data? */
-#endif
 {
     Obj * obj;
     Method * method;
@@ -903,20 +900,31 @@ Int call_method(cObjnum objnum,    /* the object */
     if (cur_frame) {
         switch (method->m_access) {
             case MS_PRIVATE:
-                if (cur_frame->method->object->objnum != method->object->objnum)
+                if (cur_frame->method->object->objnum!=method->object->objnum){
+                    cache_discard(obj);
+                    cache_discard(method->object);
                     return CALL_PRIVATE;
+                }
                 break;
             case MS_PROTECTED:
-                if (cur_frame->object->objnum != objnum)
+                if (cur_frame->object->objnum != objnum) {
+                    cache_discard(obj);
+                    cache_discard(method->object);
                     return CALL_PROT;
+                }
                 break;
             case MS_ROOT:
-                if (cur_frame->method->object->objnum != ROOT_OBJNUM)
+                if (cur_frame->method->object->objnum != ROOT_OBJNUM) {
+                    cache_discard(obj);
+                    cache_discard(method->object);
                     return CALL_ROOT;
+                }
                 break;
             case MS_DRIVER:
                 /* if we are here, there is a current frame,
                    and the driver didn't send this */
+                cache_discard(obj);
+                cache_discard(method->object);
                 return CALL_DRIVER;
         }
     }

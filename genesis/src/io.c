@@ -114,7 +114,7 @@ void handle_new_and_pending_connections(void) {
     server_t *serv;
     pending_t *pend;
     cStr *str;
-    cData d1, d2;
+    cData d1, d2, d3;
 
     /* Look for new connections on the server sockets. */
     for (serv = servers; serv; serv = serv->next) {
@@ -125,9 +125,11 @@ void handle_new_and_pending_connections(void) {
         str = string_from_chars(serv->client_addr, strlen(serv->client_addr));
         d1.type = STRING;
         d1.u.str = str;
-        d2.type = INTEGER;
-        d2.u.val = serv->client_port;
-        task(conn->objnum, connect_id, 2, &d1, &d2);
+        d2.type = STRING;
+        d2.u.str = serv->addr; /* dont dup, task() will */
+        d3.type = INTEGER;
+        d3.u.val = serv->client_port;
+        task(conn->objnum, connect_id, 3, &d1, &d2, &d3);
         string_discard(str);
     }
 
@@ -224,34 +226,40 @@ Int boot(Obj * obj) {
 // --------------------------------------------------------------------
 */
 
-Int add_server(Int port, Long objnum) {
-    server_t *cnew;
+Int add_server(Int port, char * addr, Long objnum) {
+    server_t * cnew;
     SOCKET server_socket;
 
-    /* Check if a server already exists for this port. */
+    /* Check if a server already exists for this port and address */
     for (cnew = servers; cnew; cnew = cnew->next) {
         if (cnew->port == port) {
+            if (addr && strcmp(string_chars(cnew->addr), addr))
+                continue;
             cnew->objnum = objnum;
             cnew->dead = 0;
-            return 1;
+            return TRUE;
         }
     }
 
     /* Get a server socket for the port. */
-    server_socket = get_server_socket(port);
+    server_socket = get_server_socket(port, addr);
     if (server_socket == SOCKET_ERROR)
-        return 0;
+        return FALSE;
 
     cnew = EMALLOC(server_t, 1);
     cnew->server_socket = server_socket;
     cnew->client_socket = -1;
     cnew->port = port;
+    if (addr)
+        cnew->addr = string_from_chars(addr, strlen(addr));
+    else
+        cnew->addr = string_new(0);
     cnew->objnum = objnum;
     cnew->dead = 0;
     cnew->next = servers;
     servers = cnew;
 
-    return 1;
+    return TRUE;
 }
 
 /*
@@ -382,6 +390,7 @@ INTERNAL void pend_discard(pending_t *pend) {
 */
 INTERNAL void server_discard(server_t *serv) {
     SOCK_CLOSE(serv->server_socket);
+    string_discard(serv->addr);
 }
 
 /*

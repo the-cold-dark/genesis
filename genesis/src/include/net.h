@@ -24,8 +24,6 @@ typedef Int SOCKET;
 Int io_event_wait(Int sec, Conn *connections, server_t *servers,
 		  pending_t *pendings);
 Long non_blocking_connect(char *addr, Int port, Int *socket_return);
-cStr * hostname(char *addr);
-cStr * ip(char *addr);
 void init_net(void);
 void uninit_net(void);
 

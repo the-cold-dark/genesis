@@ -27,11 +27,11 @@ void write_long(Long n, FILE *fp)
 
     if (n == LONG_MIN)
     {
-        putc(0xA0, fp);
-        putc(0x00, fp);
-        putc(0x00, fp);
-        putc(0x00, fp);
-        putc(0x08, fp);
+        fputc((int) 0xA0, fp);
+        fputc((int) 0x00, fp);
+        fputc((int) 0x00, fp);
+        fputc((int) 0x00, fp);
+        fputc((int) 0x08, fp);
         return;
     }
     sign = n<0 ? 1 : 0;
@@ -45,25 +45,25 @@ void write_long(Long n, FILE *fp)
     }
     buf[0] += (h << 5) + (sign << 4);
     for (i=0; i<h; i++)
-      putc(buf[i], fp);
+      fputc((int) buf[i], fp);
 #else
 #  if ORDER_BYTES
     /* Since first byte is special, special-case 0 as well. */
     if (!n) {
-	putc(96, fp);
+	fputc((int) 96, fp);
 	return;
     }
 
     /* First byte depends on sign. */
-    putc((n > 0) ? 64 + (n % 32) : 32 + (-n % 32), fp);
+    fputc((int) (n > 0) ? 64 + (n % 32) : 32 + (-n % 32), fp);
     n = (n > 0) ? n / 32 : -n / 32;
 
     while (n) {
-	putc(32 + (n % 64), fp);
+	fputc((int) 32 + (n % 64), fp);
 	n /= 64;
     }
 
-    putc(96, fp);
+    fputc((int) 96, fp);
 #  else
     fwrite(&n, sizeof(Long), 1, fp);
 #  endif

@@ -18,9 +18,12 @@ typedef struct native_s {
     Int       (*func)(Int stack_start, Int arg_start);
 } native_t;
 
+ /* ANSI doesn't want us to us NULL pointers to functions */
 typedef struct module_s {
-    void (*init)(Int argc, char ** argv);
-    void (*uninit)(void);
+    Bool   init;
+    void (*init_func)(Int argc, char ** argv);
+    Bool   uninit;
+    void (*uninit_func)(void);
 } module_t;
 
 Int init_modules(Int argc, char ** argv);

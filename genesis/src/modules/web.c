@@ -29,7 +29,7 @@
 
 /* valid ascii: 48-57 (0-9) 65-90 (A-Z) 97-122 (a-z) */
 
-module_t web_module = {init_web, uninit_web};
+module_t web_module = {YES, init_web, YES, uninit_web};
 
 /* we pre-define this for speed */
 char * dec_2_hex[] = {

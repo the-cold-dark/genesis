@@ -6,6 +6,18 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-32 [26-Jun-97] Miro
+      * Cleaned up some ANSI incompatabilities (Brandon)
+      * Added 'dnsserv' which is a seperate server running on port 1153,
+        A cold server can connect to this and have it do DNS lookups.
+        This allows for asynchronous lookups direct from the database
+        using network sockets, instead of hacking a fork/pipe system
+        directly into the driver--for db implementation help, see:
+            http://ice.cold.org/bin/display?target=dns
+        (Brandon)
+      * fixed bug in scatter assignments (Patrick, Miro, Brad)
+      * updated list_union() to use Hash in the top-end situations
+        where more than twelve elements exist overall (Miro)
 1.0-31 [26-Jun-97] Brandon
       * fixed bug with bufidx().. was using the wrong var and reading
         out of its memory bounds (Brandon)

@@ -4,7 +4,7 @@
 #include "ext_math.h"
 #include "list.h"
 
-module_t ext_math_module = {NULL, NULL};
+module_t ext_math_module = {NO, NULL, NO, NULL};
 
 static int check_one_vector(cList *l1, Int *len_ret)
 {

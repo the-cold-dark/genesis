@@ -13,7 +13,7 @@
 
 #include "veil.h"
 
-module_t veil_module = {init_veil, uninit_veil};
+module_t veil_module = {YES, init_veil, YES, uninit_veil};
 
 #define VEIL_P_PUSH      1
 #define VEIL_P_ABORT     2

@@ -18,7 +18,7 @@
 # check the following variables and make sure they are appropriate to
 # your system.
 
-$base = "/mud1/cold";
+$base = "~/cold";
 $logs = "${base}/logs";
 $bdir = "${base}/backups";
 

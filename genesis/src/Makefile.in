@@ -15,6 +15,8 @@ CPU=@CPU@
 VENDOR=@VENDOR@
 
 prefix=@prefix@
+MODE=@MODE@
+USER=@USER@
 BINDIR=$(prefix)/bin
 SRCDIR=$(prefix)/src
 MODULES=$(SRCDIR)/modules
@@ -25,6 +27,7 @@ VERSION=@VERSION@
 VMAJOR=@VMAJOR@
 VMINOR=@VMINOR@
 VPATCH=@VPATCH@
+INSTALL=@INSTALL@
 
 DATA_O     = data/data.o data/buffer.o data/dict.o data/ident.o\
              data/list.o data/object.o data/string.o \
@@ -32,7 +35,7 @@ DATA_O     = data/data.o data/buffer.o data/dict.o data/ident.o\
 GRAMMAR_O  = grammar.o
 DB_O       = cache.o binarydb.o dbpack.o decode.o lookup.o
 IO_O       = io.o log.o net.o file.o
-MISC_O     = strutil.o memory.o sig.o util.o regexp.o defs.o
+MISC_O     = strutil.o memory.o sig.o util.o regexp.o defs.o dns.o
 OPS_O      = ops/operators.o ops/buffer.o ops/error.o ops/list.o\
              ops/object.o ops/dict.o ops/string.o ops/data.o ops/sys.o\
              ops/misc.o ops/task.o ops/file.o ops/network.o ops/math.o
@@ -46,15 +49,17 @@ COMMON_O   = $(MALLOC_O) $(DATA_O) $(DB_O) $(IO_O) $(MISC_O) \
 DRIVER_O   = $(GRAMMAR_O) genesis.o $(COMMON_O)
 COMPILER_O = $(GRAMMAR_O) coldcc.o textdb.o $(COMMON_O)
 CONTROL_O  = control.o
+DNSSERV_O  = dnsserv.o dns.o
 
-EVERYTHING_O = genesis.o control.o coldcc.o $(COMMON_O)
+EVERYTHING_O = genesis.o control.o coldcc.o $(COMMON_O) $(DNSSERV_O)
 EVERYTHING_C = `echo $(EVERYTHING_O) | sed -e 's/\.o/.c/g'`
 
 DRIVER = genesis
 COMPILER = coldcc
 CONTROL = control
+DNSSERV = dnsserv
 
-EXES = $(COMPILER) $(DRIVER)
+EXES = $(COMPILER) $(DRIVER) $(DNSSERV)
 
 all: $(GRAMMAR_O) include/parse.h Data Modules Ops $(EXES)
 
@@ -71,13 +76,13 @@ Ops:
 	@cd $(OPSDIR); make
 
 $(DRIVER): $(DRIVER_O)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(DRIVER_O) $(LIBS) $(COLDLIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(DRIVER_O) $(LIBS) -o $@
 
 $(COMPILER): $(COMPILER_O)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(COMPILER_O) $(LIBS) $(COLDLIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(COMPILER_O) $(LIBS) -o $@
 
-$(CONTROL): $(CONTROL_O)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(CONTROL_O) $(LIBS) $(COLDLIBS) -o $@
+$(DNSSERV): $(DNSSERV_O)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(DNSSERV_O) $(LIBS) -o $@
 
 clean:
 	rm -f include/parse.h grammar.c *~ *.BAK *.bak y.output
@@ -106,10 +111,7 @@ makefile:
 	@cd ..; etc/config.status
 
 install: all
-	for i in $(EXES); do \
-		cp -f \$i $(BINDIR); \
-		chmod 700 $(BINDIR)/\$i; \
-	done
+	@$(SRCDIR)/install $(USER) $(MODE) $(INSTALL) $(prefix)
 
 depend: $(GRAMMAR_O) include/parse.h
 	@echo modules..

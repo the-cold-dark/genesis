@@ -1971,7 +1971,7 @@ static void scatter_loop (void)
 	    data_dup(&stack[stack_pos++],list_elem(l, list_index));
 	    c = cur_frame->pc;
 	    (*op_table[opcodes[c-1]].func)();
-	    if (cur_frame->pc != c+1)
+            if (!cur_frame || cur_frame->pc != c+1)
 		return;
 	    pop(1);
 	    break;
@@ -1989,7 +1989,7 @@ static void scatter_loop (void)
 		check_stack(1);
 		data_dup(&stack[stack_pos++],list_elem(l, list_index));
 		(*op_table[opcodes[c-1]].func)();
-		if (cur_frame->pc != c+1)
+		if (!cur_frame || cur_frame->pc != c+1)
 		    return;
 		cur_frame->pc++; /* skip OPTIONAL_END */
 		pop(1);
@@ -2032,7 +2032,7 @@ static void scatter_loop (void)
             push_list(sublist);
             list_discard(sublist);
 	    (*op_table[opcodes[c-1]].func)();
-	    if (cur_frame->pc != c+1)
+	    if (!cur_frame || cur_frame->pc != c+1)
 		return;
 	    pop(1);
 	    break;

@@ -1,5 +1,18 @@
-all:
+all: config install
+
+config:
 	@if test ! -f src/Makefile; then ./configure; fi
-	cd src/; make
-	mv -f src/genesis genesis
-	mv -f src/coldcc coldcc
+
+clean:
+	@cd src; make $@
+
+scrub:
+	@cd src; make $@
+
+patchable:
+	@cd src; make $@
+
+install:
+	@cd src; make $@
+
+

@@ -14,6 +14,7 @@
 #endif
 #include "util.h"
 #include "net.h"
+#include "dns.h"
 
 #ifdef __Win32__
 #define FTIME _lstrftime
@@ -143,13 +144,23 @@ NATIVE_METHOD(version) {
 */
 NATIVE_METHOD(hostname) {
     cStr * name;
+    char   buf[DNS_MAXLEN+1];
 
     INIT_0_OR_1_ARGS(STRING);
 
-    if (!argc)
+    if (!argc) {
         name = string_dup(str_hostname);
-    else
-        name = hostname(string_chars(STR1));
+    } else {
+        switch (lookup_name_by_ip(string_chars(STR1), buf)) {
+            case DNS_INVADDR:
+                THROW((address_id, "Invalid IP Address: %S", STR1))
+            case DNS_NORESOLV:
+                THROW((failed_id, "No name for IP Address %S", STR1))
+            case DNS_OVERFLOW:
+                THROW((range_id, "DNS Response overflows DNS_MAXLEN!"))
+        }
+        name = string_from_chars(buf, strlen(buf));
+    }
 
     CLEAN_RETURN_STRING(name);
 }
@@ -159,13 +170,23 @@ NATIVE_METHOD(hostname) {
 */
 NATIVE_METHOD(ip) {
     cStr * sip;
+    char   buf[DNS_MAXLEN+1];
+    char * p;
 
     INIT_0_OR_1_ARGS(STRING);
 
     if (!argc)
-        sip = ip(string_chars(str_hostname));
+        p = string_chars(str_hostname);
     else
-        sip = ip(string_chars(STR1));
+        p = string_chars(STR1);
+
+    switch (lookup_ip_by_name(string_chars(STR1), buf)) {
+        case DNS_NORESOLV:
+            THROW((failed_id, "Address %S does not resolv", STR1))
+        case DNS_OVERFLOW:
+            THROW((range_id, "DNS Response overflows DNS_MAXLEN!"))
+    }
+    sip = string_from_chars(buf, strlen(buf));
 
     CLEAN_RETURN_STRING(sip);
 }

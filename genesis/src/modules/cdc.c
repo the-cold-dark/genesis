@@ -4,5 +4,5 @@
 
 #include "cdc.h"
 
-module_t cdc_module = {NULL, NULL};
+module_t cdc_module = {NO, NULL, NO, NULL};
 

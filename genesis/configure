@@ -2279,9 +2279,15 @@ if test -z "$pager"; then
     pager=cat
 fi
 
+##########################################
+## malloc
+
 cat <<END
 
-# 
+###
+### MALLOC()
+### 
+#
 # We provide a malloc implementation by Poul-Henning Kamp.  Using this
 # malloc is suggested, as designs take it into consideration, and because
 # it is integrated into the functionality of genesis for better error
@@ -2305,8 +2311,13 @@ if [ "$input" = y -o "$input" = yes -o "$input" = Y -o "$input" = YES ]; then
     MALLOC_O=malloc.o
 fi
 
+##########################################
+## crypt
 cat <<END
 
+###
+### CRYPT()
+###
 # 
 # The ColdC builtin function crypt() uses SHA-1 encryption based off FreeBSD's
 # MD5 crypt().  If your OS has its own crypt() (likely DES based), and your
@@ -2341,8 +2352,13 @@ EOF
     fi
 fi
 
+##########################################
+## file ops
 cat <<END
 
+###
+### FILES
+###
 # 
 # File operations may be restricted.  Restrictions include paths
 # (all files must stay within the 'root' subdirectory), as well as
@@ -2365,8 +2381,91 @@ EOF
 
 fi
 
+##########################################
+## install directory
 cat <<END
 
+###
+### INSTALL
+###
+# 
+# Where do you want to install Genesis?  This is the database/world
+# directory, and should be seperate from the Genesis release directory,
+# so you can delete the entire Genesis release directory when finished.
+#
+
+END
+
+loop=yes
+INSTALL="~/cold"
+
+while [ "$loop" = "yes" ]; do
+    echo $ac_n "Install Directory [$INSTALL] $ac_c"
+
+    read input
+
+    if [ x$input = x ]; then
+        INSTALL=~/cold
+    else
+        INSTALL=$input
+    fi
+
+    if [ ! -d "$INSTALL" ]; then
+        echo "Warning: $INSTALL does not exist"
+        echo $ac_n "Specify alternate directory? [yes] $ac_c"
+        read input
+
+        if [ "$input" = "n" -o \
+             "$input" = "no" -o \
+             "$input" = "N" -o \
+             "$input" = "NO" ]; then
+            loop=no
+        fi
+    else
+        loop=no
+    fi
+done
+
+cat <<END
+
+# Which install mode?
+#
+# Do not change this unless you understand the implications.
+
+END
+
+I_MODE=755
+
+echo $ac_n "Install Mode [$I_MODE] $ac_c"
+
+read i_mode
+
+if [ "$i_mode" = "" ]; then
+    i_mode=$I_MODE
+fi
+
+cat <<END
+
+# Which User to install as?  Do not change this unless you are root,
+# or are aware of the implications.
+
+END
+
+echo $ac_n "Install User [$USER] $ac_c"
+
+read i_user
+
+if [ "$i_user" = "" ]; then
+    i_user=$USER
+fi
+
+##########################################
+## compile optimization flags
+cat <<END
+
+###
+### COMPILER FLAGS
+###
 #
 # Specify compiler optimization flags (if you are unsure which to use,
 # simply select the default).
@@ -2381,7 +2480,7 @@ if test "$ac_cv_prog_gcc" = yes; then
 #
 #  -O3                       -- full optimization, good for basic compilation
 END
-    if test $ac_cv_prog_gcc_g = yes; then
+    if test "$ac_cv_prog_gcc_g" = yes; then
         cat <<END
 #  -ggdb -O -Wall -pedantic  -- use this for driver development
 END
@@ -2677,7 +2776,9 @@ s%@VMAJOR@%$VMAJOR%g
 s%@VMINOR@%$VMINOR%g
 s%@VPATCH@%$VPATCH%g
 s%@VRELEASE@%"$VRELEASE"%g
-
+s%@INSTALL@%$INSTALL%g
+s%@USER@%$i_user%g
+s%@MODE@%$i_mode%g
 CEOF
 EOF
 

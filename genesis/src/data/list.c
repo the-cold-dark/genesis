@@ -8,6 +8,7 @@
 */
 
 #include "defs.h"
+#include "quickhash.h"
 
 /* Note that we number list elements [0..(len - 1)] internally, while the
  * user sees list elements as numbered [1..len]. */
@@ -268,13 +269,23 @@ cList *list_setremove(cList *list, cData *d) {
 cList *list_union(cList *list1, cList *list2) {
     cData *start, *end, *d;
 
-    /* Simplistic O(len1 * len2) implementation for now.  Later, use lengths to
-     * decide whether to use a O(len1 + len2) hash table algorithm. */
     start = list2->el + list2->start;
     end = start + list2->len;
-    for (d = start; d < end; d++) {
-        if (list_search(list1, d) == -1)
-            list1 = list_add(list1, d);
+    if (list1->len + list2->len < 12) {
+        for (d = start; d < end; d++) {
+            if (list_search(list1, d) == -1)
+                list1 = list_add(list1, d);
+        }
+    } else {
+        Hash * tmp;
+        
+        tmp = hash_new_with(list1);
+        list_discard(list1);
+        for (d = start; d < end; d++) {
+            tmp = hash_add(tmp, d);
+        }
+        list1 = list_dup(tmp->keys);
+        hash_discard(tmp);
     }
     return list1;
 }

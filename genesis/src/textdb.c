@@ -1678,7 +1678,11 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
                           ((objnames ? DF_WITH_OBJNAMES : 0) | DF_INV_OBJNUMS));
         fputs("var ", fp);
         print_dbref(NULL, var->cclass, fp, objnames);
-        fformat(fp, " %I = %S;\n", var->name, str);
+        fputc(' ', fp);
+        fputs(ident_name(var->name), fp);
+        fputs(" = ", fp);
+        fputs(string_chars(str), fp);
+        fputs(";\n", fp);
         string_discard(str);
     }
 

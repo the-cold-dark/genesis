@@ -139,4 +139,5 @@ RELEASE INFORMATION:
       * Cleanup memory.c to separate old vs new pile code (Brad)
       * Add free_pile() (Brad)
       * Cleanup memory at exit (Brad)
+      * Optimize textdump decompilation some. (Bruce)
 

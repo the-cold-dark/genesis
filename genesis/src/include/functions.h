@@ -39,6 +39,8 @@ COLDC_FUNC(dict_del);
 COLDC_FUNC(dict_contains);
 COLDC_FUNC(dict_union);
 COLDC_FUNC(error);
+COLDC_FUNC(error_message);
+COLDC_FUNC(error_data);
 COLDC_FUNC(traceback);
 COLDC_FUNC(throw);
 COLDC_FUNC(rethrow);

@@ -8,6 +8,7 @@
 typedef struct frame Frame;
 typedef struct error_action_specifier Error_action_specifier;
 typedef struct handler_info Handler_info;
+typedef struct traceback_info Traceback_info;
 typedef struct vmstate VMState;
 typedef struct vmstack VMStack;
 typedef struct task_s task_t;
@@ -95,10 +96,31 @@ struct error_action_specifier {
     Error_action_specifier *next;
 };
 
+/*
+ *  * type specifies interp_error, user_error or
+ *   */
+struct traceback_info {
+    Int              type;
+    Ident            location;
+    union {
+        cData          * method_name;
+        Ident            opcode;
+    } u;
+    cObjnum          current_obj;
+    cObjnum          defining_obj;
+    Method         * method;
+    Int              pc;
+    Traceback_info * next;
+};
+
+
 struct handler_info {
-    cList *traceback;
-    Ident error;
-    Handler_info *next;
+    cList          * cached_traceback;
+    Traceback_info * traceback;
+    Ident            error;
+    cStr           * error_message;
+    cData          * error_data;
+    Handler_info   * next;
 };
 
 #define MF_NONE      0    /* No flags */
@@ -156,6 +178,7 @@ Int pass_method(Int stack_start, Int arg_start);
 Int call_method(cObjnum objnum, Ident message, Int stack_start, Int arg_start, Bool is_frob);
 void pop(Int n);
 void check_stack(Int n);
+Traceback_info *traceback_info_dup(Traceback_info *info);
 
 #define F_PUSH(_name_, _c_type_) \
     void CAT(push_, _name_) (_c_type_ var)
@@ -205,9 +228,12 @@ void cthrow(Long id, char *fmt, ...);
 void unignorable_error(Ident id, cStr *str);
 void interp_error(Ident error, cStr *str);
 void user_error(Ident error, cStr *str, cData *arg);
-void propagate_error(cList *traceback, Ident error);
+void propagate_error(Traceback_info *traceback, Ident error,
+                     cStr *explnation, cData *arg);
 void pop_error_action_specifier(void);
 void pop_handler_info(void);
+cList *generate_traceback(Traceback_info *traceback);
+
 void task_suspend(void);
 cList * task_info(Long tid);
 void task_resume(Long tid, cData *ret);

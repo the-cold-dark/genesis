@@ -21,9 +21,10 @@ extern Bool running;
 INTERNAL void execute(void);
 INTERNAL void out_of_ticks_error(void);
 INTERNAL void start_error(Ident error, cStr *explanation, cData *arg,
-                        cList * location);
-INTERNAL cList * traceback_add(cList * traceback, Ident error);
-INTERNAL void fill_in_method_info(cData *d);
+                          Traceback_info * location);
+INTERNAL Traceback_info * traceback_add(Traceback_info * traceback,
+                                        Ident error);
+INTERNAL void fill_in_method_info(Traceback_info *d);
 
 INTERNAL Frame *frame_store = NULL;
 INTERNAL Int frame_depth;
@@ -1634,11 +1635,85 @@ void cthrow(Ident error, char *fmt, ...)
 	string_discard(str);
 }
 
+INTERNAL Traceback_info *traceback_info_new() {
+    Traceback_info *new;
+
+    new = (Traceback_info *) emalloc(sizeof(Traceback_info));
+    new->type = 3;
+    new->next = NULL;
+    return new;
+}
+
+INTERNAL Traceback_info *traceback_info_add(Traceback_info *now,
+                                            Traceback_info *new) {
+    Traceback_info *current;
+
+    current = now;
+
+    while (current->next != NULL) {
+        current = current->next;
+    }
+
+    current->next = new;
+
+    return now;
+}
+
+Traceback_info *traceback_info_dup(Traceback_info *info) {
+    Traceback_info *new;
+
+    new = EMALLOC(Traceback_info, 1);
+    new->type = info->type;
+    switch(info->type) {
+        case 1:
+            new->location = ident_dup(info->location);
+            new->u.opcode = ident_dup(info->u.opcode);
+            break;
+        case 2:
+        case 3:
+            new->location = ident_dup(info->location);
+            new->u.method_name = EMALLOC(cData, 1);
+            data_dup(new->u.method_name, info->u.method_name);
+            new->current_obj = info->current_obj;
+            new->defining_obj = info->defining_obj;
+            new->method = method_dup(info->method);
+            new->pc = info->pc;
+    }
+
+    if (info->next != NULL) {
+        new->next = traceback_info_dup(info->next);
+    } else {
+        new->next = NULL;
+    }
+
+    return new;
+}
+
+INTERNAL void traceback_info_discard(Traceback_info *info) {
+    if (info->next != NULL) {
+        traceback_info_discard(info->next);
+        info->next = NULL;
+    }
+    switch (info->type) {
+        case 1:
+            ident_discard(info->location);
+            ident_discard(info->u.opcode);
+            break;
+        case 2:
+        case 3:
+            ident_discard(info->location);
+            data_discard(info->u.method_name);
+            efree(info->u.method_name);
+            method_discard(info->method);
+            break;
+    }
+    efree(info);
+}
+
 void interp_error(Ident error, cStr *explanation)
 {
-    cList * location;
+    Traceback_info * location;
     Ident location_type;
-    cData *d;
     char *opname;
 
     if (explanation) {
@@ -1647,43 +1722,35 @@ void interp_error(Ident error, cStr *explanation)
 	location_type = (islower(*opname)) ? function_id : opcode_id;
 
 	/* Construct a two-element list giving the location. */
-	location = list_new(2);
-	d = list_empty_spaces(location, 2);
+        location = traceback_info_new();
+        location->type = 1;
 
 	/* The first element is 'function or 'opcode. */
-	d->type = SYMBOL;
-	d->u.symbol = ident_dup(location_type);
-	d++;
+        location->location = ident_dup(location_type);
 
 	/* The second element is the symbol for the opcode. */
-	d->type = SYMBOL;
-	d->u.symbol = ident_dup(op_table[cur_frame->last_opcode].symbol);
+	location->u.opcode = ident_dup(op_table[cur_frame->last_opcode].symbol);
     }
     else
 	location = NULL;
 
     start_error(error, explanation, NULL, location);
-    if (location)
-	list_discard(location);
 }
 
 void user_error(Ident error, cStr *explanation, cData *arg)
 {
-    cList  * location;
-    cData  * d;
-    Method * method;
+    Traceback_info * location;
+    Method         * method;
 
     /* Construct a list giving the location. */
-    location = list_new(5);
-    d = list_empty_spaces(location, 5);
+    location = traceback_info_new();
+    location->type = 2;
 
     /* The first element is 'method. */
-    d->type = SYMBOL;
-    d->u.symbol = ident_dup(method_id);
-    d++;
+    location->location = ident_dup(method_id);
 
     /* The second through fifth elements are the current method info. */
-    fill_in_method_info(d);
+    fill_in_method_info(location);
 
     /* Return from the current method, and propagate the error. */
     /* protect the current method, so that strings live long enough */
@@ -1691,86 +1758,72 @@ void user_error(Ident error, cStr *explanation, cData *arg)
     frame_return();
     start_error(error, explanation, arg, location);
     method_discard(method);
-    list_discard(location);
 }
 
 INTERNAL void out_of_ticks_error(void)
 {
-    static cStr *explanation;
-    cList  * location;
-    cData  * d;
-    Method * method;
+    static cStr     * explanation;
+    Traceback_info  * location;
+    Method          * method;
 
     /* Construct a list giving the location. */
-    location = list_new(5);
-    d = list_empty_spaces(location, 5);
+    location = traceback_info_new();
+    location->type = 2;
 
     /* The first element is 'interpreter. */
-    d->type = SYMBOL;
-    d->u.symbol = ident_dup(interpreter_id);
-    d++;
+    location->location = ident_dup(interpreter_id);
 
     /* The second through fifth elements are the current method info. */
-    fill_in_method_info(d);
+    fill_in_method_info(location);
 
     /* Don't give the topmost frame a chance to return. */
     method = method_dup(cur_frame->method);
     frame_return();
-  
+
     if (!explanation)
         explanation = string_from_chars("Out of ticks", 12);
     start_error(methoderr_id, explanation, NULL, location);
     method_discard(method);
-    list_discard(location);
 }
 
 INTERNAL void start_error(Ident error, cStr *explanation, cData *arg,
-                        cList * location)
+                          Traceback_info * location)
 {
-    cList * error_condition, *traceback;
-    cData *d;
+    Traceback_info *traceback;
+    cData *arg_to_pass;
 
+    arg_to_pass = (cData *)emalloc(sizeof(cData));
     if (location) {
-	/* Construct a three-element list for the error condition. */
-	error_condition = list_new(3);
-	d = list_empty_spaces(error_condition, 3);
+        /*
+         * set up arg to pass it on to propagate.  If there isn't an
+         * arg, just use integer 0.
+         */
+        if (arg) {
+            data_dup(arg_to_pass, arg);
+        } else {
+            arg_to_pass->type = INTEGER;
+            arg_to_pass->u.val = 0;
+        }
 
-	/* The first element is the error code. */
-	d->type = T_ERROR;
-	d->u.error = ident_dup(error);
-	d++;
-
-	/* The second element is the explanation string. */
-	d->type = STRING;
-	d->u.str = string_dup(explanation);
-	d++;
-
-	/* The third element is the error arg, or 0 if there is none. */
-	if (arg) {
-	    data_dup(d, arg);
-	} else {
-	    d->type = INTEGER;
-	    d->u.val = 0;
-	}
-
-	/* Now construct a traceback, starting as a two-element list. */
-	traceback = list_new(2);
-	d = list_empty_spaces(traceback, 2);
-
-	/* The first element is the error condition. */
-	d->type = LIST;
-	d->u.list = error_condition;
-	d++;
-
-	/* The second argument is the location. */
-	d->type = LIST;
-	d->u.list = list_dup(location);
+        traceback = location;
     }
-    else
+    else {
+        arg_to_pass->type = INTEGER;
+        arg_to_pass->u.val = 0;
 	traceback=NULL;
+    }
+
+    if (explanation)
+        string_dup(explanation);
 
     /* Start the error propagating.  This consumes traceback. */
-    propagate_error(traceback, error);
+    propagate_error(traceback, ident_dup(error), explanation,
+                    arg_to_pass);
+    ident_dup(error);
+    if (explanation)
+        string_discard(explanation);
+    data_discard(arg_to_pass);
+    efree(arg_to_pass);
 }
 
 /* Requires:  traceback is a list of lists containing the traceback
@@ -1779,7 +1832,8 @@ INTERNAL void start_error(Ident error, cStr *explanation, cData *arg,
  *            which is "owned" by a data stack frame that we will
  *            nuke in the course of unwinding the call stack.
  *            str is a string containing an explanation of the error. */
-void propagate_error(cList * traceback, Ident error)
+void propagate_error(Traceback_info * traceback, Ident error,
+                     cStr * explanation, cData * arg)
 {
     Int i, ind, propagate = 0;
     Error_action_specifier *spec;
@@ -1788,7 +1842,7 @@ void propagate_error(cList * traceback, Ident error)
 
     /* If there's no current frame, drop all this on the floor. */
     if (!cur_frame) {
-        list_discard(traceback);
+        traceback_info_discard(traceback);
         return;
     }
 
@@ -1827,7 +1881,7 @@ void propagate_error(cList * traceback, Ident error)
              * processing. */
             pop_error_action_specifier();
             if (traceback)
-		list_discard(traceback);
+		traceback_info_discard(traceback);
             return;
 
           case PROPAGATE:
@@ -1859,10 +1913,15 @@ void propagate_error(cList * traceback, Ident error)
             /* We catch this error.  Make a handler info structure and push it
              * onto the stack. */
             hinfo = EMALLOC(Handler_info, 1);
+            hinfo->cached_traceback = NULL;
             hinfo->traceback = traceback;
             hinfo->error = ident_dup(error);
+            hinfo->error_message = string_dup(explanation);
+            hinfo->error_data = (cData*) emalloc(sizeof(cData));
+            data_dup(hinfo->error_data, arg);
             hinfo->next = cur_frame->handler_info;
             cur_frame->handler_info = hinfo;
+
 
             /* Pop the stack down to where we were at the beginning of the
              * catch statement.  This may nuke our copy of error, but we don't
@@ -1883,31 +1942,25 @@ void propagate_error(cList * traceback, Ident error)
 
     /* There was no handler in the current frame. */
     frame_return();
-    propagate_error(traceback, (propagate) ? error : methoderr_id);
+    propagate_error(traceback, (propagate) ? error : methoderr_id,
+                    explanation, arg);
 }
 
-INTERNAL cList * traceback_add(cList * traceback, Ident error)
+INTERNAL Traceback_info * traceback_add(Traceback_info * traceback, Ident error)
 {
-    cList * frame;
-    cData *d, frame_data;
+    Traceback_info * frame;
 
     /* Construct a list giving information about this stack frame. */
-    frame = list_new(5);
-    d = list_empty_spaces(frame, 5);
+    frame = traceback_info_new();
 
     /* First element is the error code. */
-    d->type = T_ERROR;
-    d->u.error = ident_dup(error);
-    d++;
+    frame->location = ident_dup(error);
 
-    /* Second through fifth elements are the current method info. */
-    fill_in_method_info(d);
+   /* Second through fifth elements are the current method info. */
+    fill_in_method_info(frame);
 
     /* Add the frame to the list. */
-    frame_data.type = LIST;
-    frame_data.u.list = frame;
-    traceback = list_add(traceback, &frame_data);
-    list_discard(frame);
+    traceback = traceback_info_add(traceback, frame);
 
     return traceback;
 }
@@ -1929,40 +1982,176 @@ void pop_handler_info(void)
     /* Free the data in the first handler info specifier, and pop it off that
      * stack. */
     old = cur_frame->handler_info;
-    list_discard(old->traceback);
+    traceback_info_discard(old->traceback);
+    if (old->cached_traceback)
+        list_discard(old->cached_traceback);
     ident_discard(old->error);
+    string_discard(old->error_message);
+    data_discard(old->error_data);
+    efree(old->error_data);
     cur_frame->handler_info = old->next;
     efree(old);
 }
 
-INTERNAL void fill_in_method_info(cData *d)
+INTERNAL void fill_in_method_info(Traceback_info *d)
 {
     Ident method_name;
 
     /* The method name, or 0 for eval. */
     method_name = cur_frame->method->name;
+    d->u.method_name = (cData *)emalloc(sizeof(cData));
     if (method_name == NOT_AN_IDENT) {
-        d->type = INTEGER;
-        d->u.val = 0;
+        d->u.method_name->type = INTEGER;
+        d->u.method_name->u.val = 0;
     } else {
-        d->type = SYMBOL;
-        d->u.val = ident_dup(method_name);
+        d->u.method_name->type = SYMBOL;
+        d->u.method_name->u.symbol = ident_dup(method_name);
     }
-    d++;
 
     /* The current object. */
-    d->type = OBJNUM;
-    d->u.objnum = cur_frame->object->objnum;
-    d++;
+    d->current_obj = cur_frame->object->objnum;
 
     /* The defining object. */
-    d->type = OBJNUM;
-    d->u.objnum = cur_frame->method->object->objnum;
+    d->defining_obj = cur_frame->method->object->objnum;
+
+    /*
+     * The line number will be calculated in traceback()
+     * since it is only needed there.  Store the info
+     * that we need to calculate it now though.  Store the method
+     * now also so that should it get deleted or re-programmed,
+     * we will still get a valid line number.
+     */
+    d->method = method_dup(cur_frame->method);
+    d->pc = cur_frame->pc;
+}
+
+cList *generate_traceback(Traceback_info *traceback) {
+    cList *line, *tb;
+    Traceback_info *current;
+    cData *d, elem;
+
+    line = list_new(3);
+    d = list_empty_spaces(line, 3);
+
+    d->type = T_ERROR;
+    d->u.error = ident_dup(cur_frame->handler_info->error);
     d++;
 
-    /* The line number. */
-    d->type = INTEGER;
-    d->u.val = line_number(cur_frame->method, cur_frame->pc);
+    d->type = STRING;
+    d->u.str = string_dup(cur_frame->handler_info->error_message);
+    d++;
+
+    data_dup(d, cur_frame->handler_info->error_data);
+
+    tb = list_new(1);
+    d = list_empty_spaces(tb, 1);
+
+    d->type = LIST;
+    d->u.list = line;
+
+    current = traceback;
+
+    switch (current->type) {
+        case 1:
+            /* interp_error */
+            line = list_new(2);
+            d = list_empty_spaces(line, 2);
+
+            d->type = SYMBOL;
+            d->u.symbol = ident_dup(current->location);
+            d++;
+
+            d->type = SYMBOL;
+            d->u.symbol = ident_dup(current->u.opcode);
+
+            break;
+        case 2:
+            /* user_error */
+            /* out_of_ticks_error */
+            line = list_new(5);
+            d = list_empty_spaces(line, 5);
+
+            d->type = SYMBOL;
+            d->u.symbol = ident_dup(current->location);
+            d++;
+
+            break;
+        case 3:
+            line = list_new(5);
+            d = list_empty_spaces(line, 5);
+
+            d->type = T_ERROR;
+            d->u.error = ident_dup(current->location);
+            d++;
+
+            break;
+    }
+
+    if (current->type != 1) {
+        /* Second element is the method name */
+        /* This might be integer 0 in some cases instead of an ident */
+        data_dup(d, current->u.method_name);
+        d++;
+
+        /* The current object. */
+        d->type = OBJNUM;
+        d->u.objnum = current->current_obj;
+        d++;
+
+        /* The defining object. */
+        d->type = OBJNUM;
+        d->u.objnum = current->defining_obj;
+        d++;
+
+       /* The line number. */
+       d->type = INTEGER;
+       d->u.val = line_number(current->method, current->pc);
+    }
+
+    elem.type = LIST;
+    elem.u.list = line;
+
+    tb = list_add(tb, &elem);
+    data_discard(&elem);
+
+    current = current->next;
+
+    while (current != NULL) {
+        line = list_new(5);
+        d = list_empty_spaces(line, 5);
+
+        /* First element is the error code. */
+        d->type = T_ERROR;
+        d->u.error = ident_dup(current->location);
+        d++;
+
+        /* Second element is the method name */
+        /* This might be integer 0 in some cases instead of an ident */
+        data_dup(d, current->u.method_name);
+        d++;
+
+        /* The current object. */
+        d->type = OBJNUM;
+        d->u.objnum = current->current_obj;
+        d++;
+
+        /* The defining object. */
+        d->type = OBJNUM;
+        d->u.objnum = current->defining_obj;
+        d++;
+
+        /* The line number. */
+        d->type = INTEGER;
+        d->u.val = line_number(current->method, current->pc);
+
+        elem.u.list = line;
+        tb = list_add(tb, &elem);
+        data_discard(&elem);
+
+        current = current->next;
+    };
+
+    return tb;
 }
 
 void bind_opcode(Int opcode, cObjnum objnum) {

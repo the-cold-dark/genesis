@@ -211,6 +211,8 @@ static Op_info op_info[] = {
 
     /* Exception functions */
     { F_ERROR_FUNC,       "error",                func_error },
+    { F_ERROR_MESSAGE,    "error_message",        func_error_message },
+    { F_ERROR_DATA,       "error_data",           func_error_data },
     { F_TRACEBACK,        "traceback",            func_traceback },
     { F_THROW,            "throw",                func_throw },
     { F_RETHROW,          "rethrow",              func_rethrow },

@@ -21,7 +21,7 @@
 NATIVE_METHOD(listlen) {
     INIT_1_ARG(LIST)
 
-    RETURN_INTEGER(list_length(_LIST(ARG)));
+    RETURN_INTEGER(list_length(_LIST(ARG1)));
 }
 
 NATIVE_METHOD(sublist) {

@@ -358,6 +358,8 @@ void func_strsed(void) {
                 mult = args[4].u.val;
                 if (mult < 0)
                     mult = 2;
+                if (mult > 10)
+                    THROW((perm_id, "You can only specify a size multiplier of 1-10, sorry!"))
         case 4: if (args[3].type != STRING)
                     THROW_TYPE_ERROR(STRING, "fourth", 3)
                 if (!parse_strsed_args(string_chars(_STR(ARG4)),

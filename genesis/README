@@ -104,6 +104,8 @@ POST 1.0 TODO:
     * sanity checks are still not done, do them.
     * get execute to use file i/o, so calling execute would be paramount
       to using fopen() on a file (shag code from apache CGI)
+    * get bind_native directive in textdumps to handle specifying alternate
+      objects as well.
 
 Possiblilities:
 
@@ -124,4 +126,22 @@ Possiblilities:
     * 'retry' jump (ala continue, etc, for catch statements)
     * "\n" in strings should be character '10', not '\' and 'n'.
     * PERL-extensions to regexps (i.e. \s etc)
+    * optionally declare a set type for variables, ala:
+
+          'type variable
+
+      when it is declared, such as:
+
+          arg 'string cmd, 'integer num, [more];
+          var 'integer i, some, other, that;
+
+      When the type is set, it is always that.
+
+    * Declare the default value of a variable when starting, such as:
+
+          var i = 1;
+
+      Perhaps even allow expressions:
+
+          var i = .default_value();
 

@@ -530,7 +530,7 @@ string_t * strsed(string_t * reg,  /* the regexp string */
             /* die after 100 subs, magic numbers yay */
             int depth = 100;
             p = s;
-            out = string_new(slen+(rlen*mult)-(string_length(ss)*mult));
+            out = string_new(slen + (rlen * mult));
 
             /* the sub loop; see, do/while loops can be useful */
             do {
@@ -565,7 +565,7 @@ string_t * strsed(string_t * reg,  /* the regexp string */
             int depth = 100;
             char * rxs = s;
     
-            out = string_new(slen + (rlen * mult));
+            out = string_new(slen + ((rlen * size) * mult));
     
             if ((i = rx->startp[0] - s))
                 out = string_add_chars(out, s, i);

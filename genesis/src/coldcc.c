@@ -202,7 +202,7 @@ INTERNAL void initialize(int argc, char **argv) {
     init_modules(argc, argv);
     init_cache();
 
-    force_natives = 0;
+    use_natives = 0;
 
     argv++;
     argc--;
@@ -219,7 +219,10 @@ INTERNAL void initialize(int argc, char **argv) {
                            VERSION_PATCH);
                     exit(0);
                 case 'f':
-                    force_natives = 1;
+                    use_natives |= FORCE_NATIVES;
+                    break;
+                case 'n':
+                    use_natives |= IGNORE_NATIVES;
                     break;
                 case 'c':
                     c_opt = OPT_COMP;

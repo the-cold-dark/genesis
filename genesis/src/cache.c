@@ -120,7 +120,7 @@ object_t * cache_get_holder(long objnum) {
     obj->dirty = 0;
     obj->dead = 0;
     obj->refs = 1;
-    obj->ucounter+=10;
+    obj->ucounter+=OBJECT_PERSISTANCE;
 
     /* we may actually have a connection or file, and when
        it is used these will get set correctly */
@@ -157,7 +157,7 @@ object_t *cache_retrieve(long objnum) {
     for (obj = active[ind].next; obj != &active[ind]; obj = obj->next) {
 	if (obj->objnum == objnum) {
 	    obj->refs++;
-            obj->ucounter+=10;
+            obj->ucounter+=OBJECT_PERSISTANCE;
 	    return obj;
 	}
     }
@@ -178,7 +178,7 @@ object_t *cache_retrieve(long objnum) {
 	    obj->prev->next = obj->next->prev = obj;
 
 	    obj->refs = 1;
-            obj->ucounter+=10;
+            obj->ucounter+=OBJECT_PERSISTANCE;
 #if DEBUG_CACHE
             _acounter++;
 #endif
@@ -214,7 +214,7 @@ object_t *cache_retrieve(long objnum) {
 
 object_t *cache_grab(object_t *obj) {
     obj->refs++;
-    obj->ucounter+=10;
+    obj->ucounter+=OBJECT_PERSISTANCE;
     return obj;
 }
 

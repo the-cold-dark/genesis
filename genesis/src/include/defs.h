@@ -77,9 +77,22 @@ void init_defs(void);
 /* Maximum depth of method calls. */
 #define MAX_CALL_DEPTH		128
 
-/* Width and depth of object cache. (15 and 30 are defaults) */
-#define CACHE_WIDTH	2
-#define CACHE_DEPTH	50
+/* Clean objects out of the cache?  This gives you a smaller memory
+   imprint, but it may cause lag if your memory cache is too small
+   and you are demanding many objects constantly.  You may want to
+   expand the cache size */
+#define CLEAN_CACHE
+
+/* How persistant is an object, to stay in the cache?  This is
+   logarithmic, just changing it from 10 to 20 will not double the
+   persistance, it will just increase it a notch */
+#define OBJECT_PERSISTANCE 10
+
+/* Width and depth of object cache. (10 and 30 are defaults) */
+#define CACHE_WIDTH	10
+#define CACHE_DEPTH	30
+
+
 #define FORCED_CLEANUP_LIMIT 64
 #define FORCED_CLEANUP_BOUND 40
 

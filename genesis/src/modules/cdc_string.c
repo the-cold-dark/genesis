@@ -33,7 +33,6 @@ NATIVE_METHOD(substr) {
     int  start,
          len,
          string_len;
-    string_t * str;
 
     INIT_2_OR_3_ARGS(STRING, INTEGER, INTEGER)
 
@@ -51,13 +50,7 @@ NATIVE_METHOD(substr) {
               "The substring extends to %d, past the end of the string (%d).",
               start + len, string_len))
 
-    printf("STRING: %s\n", string_chars(_STR(ARG1)));
-    fflush(stdout);
-    str = string_substring(_STR(ARG1), start, len);
-    printf("STRING: %s\n", string_chars(str));
-    fflush(stdout);
-
-    RETURN_STRING(str);
+    RETURN_STRING(string_substring(_STR(ARG1), start, len));
 }
 
 NATIVE_METHOD(explode) {
@@ -312,6 +305,8 @@ NATIVE_METHOD(strsed) {
                  mult = _INT(ARG5);
                  if (mult < 0)
                      mult = 2;
+                if (mult > 10)
+                    THROW((perm_id, "You can only specify a size multiplier of 1-10, sorry!"))
         case 4:  INIT_ARG4(STRING)
                  if (!parse_strsed_args(string_chars(_STR(ARG4)),
                                         &global,
@@ -322,6 +317,7 @@ NATIVE_METHOD(strsed) {
         case 3:  INIT_ARG3(STRING);
                  INIT_ARG2(STRING);
                  INIT_ARG1(STRING);
+                 break;
         default: THROW_NUM_ERROR(ARG_COUNT, "three to five")
     }
                  /* regexp *//* string *//* replace */

@@ -623,18 +623,18 @@ void anticipate_assignment(void) {
 /*
 // ---------------------------------------------------------------
 */
-INTERNAL void call_native_method(method_t * method, int arg_start) {
+INTERNAL void call_native_method(method_t * method, int stack_start, int arg_start, objnum_t objnum) {
     data_t rval;
+    register int i;
 
-    rval.type = -1;
+    rval.type = OBJNUM;
+    rval.u.objnum = objnum;
     if ((*natives[method->native].func)(arg_start, &rval)) {
-        if (rval.type == -1) {
-            pop(stack_pos - arg_start);
-        } else {
-            pop(stack_pos - arg_start + 1);
-            stack[stack_pos] = rval;
-            stack_pos++;
-        }
+        for (i = stack_start + 1; i < stack_pos; i++)
+            data_discard(&stack[i]);
+        stack_pos = stack_start;
+        stack[stack_pos] = rval;
+        stack_pos++;
     }
 }
 
@@ -673,7 +673,7 @@ int pass_method(int stack_start, int arg_start) {
         result = frame_start(cur_frame->object, method, cur_frame->sender,
                              cur_frame->caller, stack_start, arg_start);
     } else {
-        call_native_method(method, arg_start);
+        call_native_method(method, stack_start, arg_start, method->object->objnum);
        /* method_discard(method); */
         result = CALL_NATIVE;
     }
@@ -684,10 +684,13 @@ int pass_method(int stack_start, int arg_start) {
 /*
 // ---------------------------------------------------------------
 */
-int call_method(objnum_t   objnum,
-                Ident      message,
-                int        stack_start,
-                int        arg_start)
+int call_method(objnum_t objnum,    /* the object */
+                Ident name,         /* the method name */
+                int stack_start,    /* start of the stack .. */
+                int arg_start)      /* start of the args */
+#if 0
+                short isdata)       /* was this a call from data? */
+#endif
 {
     object_t * obj;
     method_t * method;
@@ -701,7 +704,7 @@ int call_method(objnum_t   objnum,
         return CALL_OBJNF;
 
     /* Find the method to run. */
-    method = object_find_method(obj->objnum, message);
+    method = object_find_method(objnum, name);
     if (!method) {
         cache_discard(obj);
         return CALL_METHNF;
@@ -721,7 +724,7 @@ int call_method(objnum_t   objnum,
                     return CALL_PRIVATE;
                 break;
             case MS_PROTECTED:
-                if (cur_frame->object->objnum != obj->objnum)
+                if (cur_frame->object->objnum != objnum)
                     return CALL_PROT;
                 break;
             case MS_ROOT:
@@ -741,7 +744,7 @@ int call_method(objnum_t   objnum,
         caller = (cur_frame) ? cur_frame->method->object->objnum : NOT_AN_IDENT;
         result = frame_start(obj,method,sender,caller,stack_start,arg_start);
     } else {
-        call_native_method(method, arg_start);
+        call_native_method(method, stack_start, arg_start, objnum);
         /* method_discard(method); */
         result = CALL_NATIVE;
     }

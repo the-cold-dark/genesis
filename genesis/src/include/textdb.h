@@ -5,14 +5,15 @@
 // Full details and copyright information can be found in the file doc/CREDITS
 //
 // File: include/textdb.h
-// ---
-// Declarations for dbm chunking routines.
 */
 
 #ifndef _textdb_h_
 #define _textdb_h_
 
-int force_natives;
+#define FORCE_NATIVES  0x1
+#define IGNORE_NATIVES 0x2
+
+int use_natives;
 
 void compile_cdc_file(FILE * fp);
 int text_dump(void);

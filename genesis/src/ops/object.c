@@ -169,10 +169,12 @@ void func_add_method(void) {
 	return;
 
     method = object_find_method(cur_frame->object->objnum, args[1].u.symbol);
-    if (method && (method->m_flags & MF_LOCK)) {
-        cthrow(perm_id, "Method is locked, and cannot be changed.");
-        return;
-    }
+
+    if (method && (method->m_flags & MF_LOCK))
+        THROW((perm_id, "Method is locked, and cannot be changed."))
+    if (method && (method->m_flags & MF_NATIVE))
+        THROW((perm_id, "Method is native, and cannot be recompiled."))
+
 
     /* keep these for later reference, if its already around */
     if (method) {

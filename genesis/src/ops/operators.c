@@ -513,23 +513,12 @@ void op_message(void) {
     data_t *target;
     long message, objnum;
     Frob *frob;
-    int   rrg;
 
     ind = cur_frame->opcodes[cur_frame->pc++];
     message = object_get_ident(cur_frame->method->object, ind);
 
     arg_start = arg_starts[--arg_pos];
     target = &stack[arg_start - 1];
-
-#if 0
-    write_err("##call %s [%d]", ident_name(message), arg_start);
-
-    rrg = arg_start;
-    while (rrg--)
-        write_err("## [%d] %D", rrg, &stack[rrg]);
-
-    fflush(stderr); fflush(stdout);
-#endif
 
     switch (target->type) {
         case OBJNUM:
@@ -577,32 +566,35 @@ void op_expr_message(void) {
     }
     message = ident_dup(message_data->u.symbol);
 
-    if (target->type == OBJNUM) {
-	objnum = target->u.objnum;
-    } else if (target->type == FROB) {
-	objnum = target->u.frob->cclass;
+    switch (target->type) {
+        case OBJNUM:
+            objnum = target->u.objnum;
+            break;
+        case FROB:
+            objnum = target->u.frob->cclass;
 
-	/* Pass frob rep as first argument (where the message data is now). */
-	data_discard(message_data);
-	*message_data = target->u.frob->rep;
-	arg_start--;
+            /* Pass frob rep as first argument (where the method data is now) */
+            data_discard(message_data);
+            *message_data = target->u.frob->rep;
+            arg_start--;
 
-	/* Discard the frob and replace it with a dummy value. */
-	TFREE(target->u.frob, 1);
-	target->type = INTEGER;
-	target->u.val = 0;
-    } else {
-        /* JBB - changed to support messages to all object types */
-        if (!lookup_retrieve_name(data_type_id(target->type), &objnum)) {
-            cthrow(objnf_id,
-                   "No object for data type %I",
-                   data_type_id(target->type));
-	    ident_discard(message);
-            return;
-	}
-        arg_start--;
-        data_discard(message_data);
-        message_data = &stack[arg_start -1];
+            /* Discard the frob and replace it with a dummy value. */
+            TFREE(target->u.frob, 1);
+            target->type = INTEGER;
+            target->u.val = 0;
+            break;
+        default:
+            if (!lookup_retrieve_name(data_type_id(target->type), &objnum)) {
+                cthrow(objnf_id,
+                       "No object for data type %I",
+                       data_type_id(target->type));
+                ident_discard(message);
+                return;
+            }
+            arg_start--;
+            data_discard(message_data);
+                message_data = &stack[arg_start -1];
+            break;
     }
 
     /* Attempt to send the message. */

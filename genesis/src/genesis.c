@@ -293,7 +293,7 @@ INTERNAL void main_loop(void) {
 	flush_defunct();
 
 	/* Sanity check: make sure there are no objects in active chains. */
-	cache_sanity_check();
+	/* cache_sanity_check(); */
 
 	/* Find number of seconds before next heartbeat. */
 	if (heartbeat_freq != -1) {
@@ -324,8 +324,10 @@ INTERNAL void main_loop(void) {
 		last_heartbeat = t;
 		task(SYSTEM_OBJNUM, heartbeat_id, 0);
 
-                /* cleanup the cache */
+#ifdef CLEAN_CACHE
+                /* cleanup the cache while we are at it */
                 cache_cleanup();
+#endif
 	    }
 	}
 

@@ -1,11 +1,15 @@
 -------------------------------------------------------------------------
-ColdX
+Cold
 -------------------------------------------------------------------------
 Note: all versions are denoted by "Major.Minor-PatchLevel".  Each index
 line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-0  [17-Apr-96] Brandon Gillespie
+      * Bug fix, "xxxx".native() caused a segmentation violation, the
+        problem was mine, I wasn't cleaning up the stack correctly after
+        completing a native method call.
 0.4-4  [16-Apr-96] Brandon Gillespie
       * last function change to get the math functions to sit correctly,
         'log()' has been changed to 'dblog()', and the logarithmic float

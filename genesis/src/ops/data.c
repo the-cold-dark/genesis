@@ -187,8 +187,6 @@ COLDC_FUNC(toerr) {
     if (!func_init_1(&args, STRING))
 	return;
 
-    THROW((type_id, "I'm feeling petulant today."))
-
     error = ident_get(string_chars(args[0].u.str));
     pop(1);
     push_error(error);

@@ -80,7 +80,7 @@ module_t * cold_modules[] = {
 #define NATIVE_HTTP_ENCODE 55
 #define NATIVE_LAST 56
 
-#define MAGIC_MODNUMBER 839954045
+#define MAGIC_MODNUMBER 840207047
 
 
 #ifdef _native_

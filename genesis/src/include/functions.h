@@ -128,6 +128,7 @@ COLDC_FUNC(match_regexp);
 COLDC_FUNC(regexp);
 COLDC_FUNC(split);
 COLDC_FUNC(crypt);
+COLDC_FUNC(match_crypted);
 COLDC_FUNC(uppercase);
 COLDC_FUNC(lowercase);
 COLDC_FUNC(strcmp);

@@ -50,7 +50,7 @@ cStr *string_from_chars(char *s, Int len) {
     cStr *cnew = string_new(len);
 
     MEMCPY(cnew->s, s, len);
-    cnew->s[len] = 0;
+    cnew->s[len] = (char) NULL;
     cnew->len = len;
     return cnew;
 }

@@ -6,9 +6,16 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-13 [20-Aug-96] Brandon Gillespie, Miroslav Silovic
+      * binary database patch to fix wild db growth (Miro)
+      * toerr() was always throwing (my stupidity: Brandon)
+      * added match_crypted(), this was supposed to have been done a
+        while ago.  Use this to match crypt()'ed strings--it handles
+        varying cases (Brandon).
 1.0-12 [13-Aug-96] Brandon Gillespie
       * Added bitwise native methods to $integer, in the cdc module.
-      * our own inet_aton() is added for those systems that do not have it.
+      * our own inet_aton() is added for those systems that do not have it,
+        courtesy of Luc Girardin <girardin@hei.unige.ch>.
       * the pre-generated salt in crypt_string() was one element too short,
         which caused it to overflow into other memory.
       * fixed the textdump reading quote problem

@@ -325,10 +325,10 @@ static void dump_copy (off_t start, Int blocks)
 
     if (fseek(dump_db_file,  BLOCK_OFFSET (start), SEEK_SET))
         panic("fseek(\"%s\") in copy: %s", dump_db_file, strerror(errno));
-    for (i=0; i<blocks; i+=16) {
+    for (i=0; i<blocks; i++) {
 	fread (buf, 1, BLOCK_SIZE, database_file);
 	fwrite (buf, 1, BLOCK_SIZE, dump_db_file);
-	dump_bitmap[i >> 3] &= ~(1 << (i&7));
+	dump_bitmap[(start+i) >> 3] &= ~(1 << ((start+i)&7));
     }
 }
 
@@ -453,6 +453,7 @@ static Int db_alloc(Int size)
 
 	if (count == blocks_needed) {
 	    /* Mark these blocks taken and return the starting block. */
+	    allocated_blocks+=count;
 	    for (b = starting_block; b < starting_block + count; b++)
 		bitmap[b >> 3] |= (1 << (b & 7));
 	    last_free = b;
@@ -480,21 +481,49 @@ Int db_get(Obj *object, Long objnum)
     return 1;
 }
 
+Int check_free_blocks(Int blocks_needed, Int b)
+{
+    Int count;
+    
+    if (b >= bitmap_blocks)
+	return 0;
+    for (count = 0; count < blocks_needed; count++) {
+	if (bitmap[b >> 3] & (1 << (b & 7)))
+	    break;
+	b++;
+	if (b >= bitmap_blocks)
+	    break;
+    }
+    return count == blocks_needed;
+}
+
 Int db_put(Obj *obj, Long objnum)
 {
     off_t old_offset, new_offset;
-    Int old_size, new_size = size_object(obj);
+    Int old_size, new_size = size_object(obj), tmp1, tmp2;
 
     db_is_dirty();
-
     if (lookup_retrieve_objnum(objnum, &old_offset, &old_size)) {
-	if (NEEDED(new_size, BLOCK_SIZE) > NEEDED(old_size, BLOCK_SIZE)) {
-	    db_unmark(LOGICAL_BLOCK(old_offset), old_size);
-	    new_offset = BLOCK_OFFSET(db_alloc(new_size));
-	} else {
+	if ((tmp1=NEEDED(new_size, BLOCK_SIZE)) > (tmp2=NEEDED(old_size, BLOCK_SIZE))) {
+	    /* check for the possible realloc */
+	    if (check_free_blocks(tmp1 - tmp2, LOGICAL_BLOCK(old_offset)+tmp2)) {
+		/* no, we don't have to move, just overwrite */
+		if (dump_db_file)
+		    dump_copy (LOGICAL_BLOCK(old_offset), tmp1);
+		db_mark(LOGICAL_BLOCK(old_offset) + tmp2,
+			BLOCK_SIZE * (tmp1 - tmp2));
+		new_offset = old_offset;
+	    } else {
+		db_unmark(LOGICAL_BLOCK(old_offset), old_size);
+		new_offset = BLOCK_OFFSET(db_alloc(new_size));
+	    }
+        } else {
 	    if (dump_db_file)
-		dump_copy (LOGICAL_BLOCK(old_offset),
-			   NEEDED(old_size, BLOCK_SIZE));
+		dump_copy (LOGICAL_BLOCK(old_offset), tmp2);
+	    if (tmp1 < tmp2) {
+		db_unmark(LOGICAL_BLOCK(old_offset) + tmp1,
+			  BLOCK_SIZE * (tmp2 - tmp1));
+	    }
 	    new_offset = old_offset;
 	}
     } else {

@@ -244,7 +244,6 @@ static Op_info op_info[] = {
     { F_POW,            "pow",               func_pow },
     { F_ATAN2,          "atan2",             func_atan2 },
 
-    /* -------- from here on are native functions -------- */
     /* Operations on strings (stringop.c). */
     { F_STRFMT,           "strfmt",          func_strfmt },
     { F_STRLEN,           "strlen",          func_strlen },
@@ -259,6 +258,7 @@ static Op_info op_info[] = {
     { F_REGEXP,           "regexp",          func_regexp },
     { F_SPLIT,            "split",           func_split },
     { F_CRYPT,            "crypt",           func_crypt },
+    { F_MATCH_CRYPTED,    "match_crypted",   func_match_crypted },
     { F_UPPERCASE,        "uppercase",       func_uppercase },
     { F_LOWERCASE,        "lowercase",       func_lowercase },
     { F_STRCMP,           "strcmp",          func_strcmp },

@@ -129,7 +129,7 @@ SOCKET get_server_socket(Int port, char * addr) {
     sockin.sin_family = AF_INET;                      /* set inet */
     sockin.sin_port = htons((unsigned short) port);   /* set port */
 
-    if (addr && inet_aton(addr, &sockin.sin_addr)) {
+    if (addr && !inet_aton(addr, &sockin.sin_addr)) {
         server_failure_reason = address_id;
         return SOCKET_ERROR;
     }

@@ -1,10 +1,19 @@
 -----------------------
+Immediate:
+
+* Change method scope to change based off the method access, so a frob
+  '.name()'  can exist alongside a public '.name()'.  Do this by using
+  the method access in matching.
+
+-----------------------
 Bugs:
 
 * line counting with a simple catch statement gets off, (i.e. no braces):
 
       catch any
           (> do this <);
+
+* $dictionary.[add/del]_elem bad
 
 -----------------------
 Cleanup:

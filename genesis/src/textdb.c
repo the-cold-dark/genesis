@@ -47,47 +47,47 @@ extern Bool print_objs;
 extern Bool print_invalid;
 extern Bool print_warn;
 
-#define ERR(__s)  (printf("\rLine %ld: %s\n", (long) line_count, __s))
+#define ERR(__s)  printf("\rLine %ld: %s\n", (long) line_count, __s)
 
-#define ERRf(__s, __x) { \
+#define ERRf(__s, __x) do { \
         printf("\rLine %ld: ", (long) line_count); \
         printf(__s, __x); \
         fputc('\n', stdout); \
 	fflush(stdout); \
-    }
+    } while (0)
 
-#define WARN(_printf_) { \
+#define WARN(_printf_) do { \
         if (print_warn) { \
             printf("\rLine %ld: WARNING: ", (long) line_count); \
             printf _printf_; \
             fputc('\n', stdout); \
 	    fflush(stdout); \
         } \
-    }
+    } while (0)
 
-#define DIE(__s) { \
+#define DIE(__s) do { \
         printf("\rLine %ld: ERROR: %s\n", (long) line_count, __s); \
 	fflush(stdout); \
         shutdown_coldcc(); \
-    }
+    } while (0)
 
-#define DIEf(__fmt, __arg) { \
+#define DIEf(__fmt, __arg) do { \
         printf("\rLine %ld: ERROR: ", (long) line_count); \
         printf(__fmt, __arg); \
         fputc('\n', stdout); \
 	fflush(stdout); \
         shutdown_coldcc(); \
-    }
+    } while (0)
 
 /* Dancer: This is more portable than the pointer arithmetic
            that it replaces.  This should work on all boxes */
-#define COPY(__buf, __s1, __s2) { \
+#define COPY(__buf, __s1, __s2) do { \
         char s0; \
         s0=*__s2; \
         *__s2='\0'; \
           strcpy(__buf, __s1); \
         *__s2=s0; \
-    }
+    } while (0)
 
 #define MATCH(__s, __t, __l) (!strnccmp(__s, __t, __l) && isspace(__s[__l]))
 #define NEXT_SPACE(__s) {for (; *__s && !isspace(*__s) && *__s != (char) NULL; __s++);}
@@ -421,7 +421,8 @@ static void verify_native_methods(void) {
                  use_natives != FORCE_NATIVES)
             {
                 if (print_warn)
-                    fformat(stdout, "\rWARNING: method definition %O.%s() overrides native method.\n", obj->objnum, ident_name(mname));
+                    fformat(stdout, "\rWARNING: method definition %O.%s() overrides native method.\n",
+                            obj->objnum, ident_name(mname));
             } else {
 		cache_dirty_object(obj);
                 method->native = x;
@@ -505,7 +506,7 @@ static Int get_idref(char * sp, idref_t * id, Int isobj) {
             id->objnum = strtol(&sp[1], &end, 10);
             return (end - sp);
         } else {
-            DIEf("Invalid objnum \"%s\".", sp)
+            DIEf("Invalid objnum \"%s\".", sp);
         }
     }
 
@@ -516,7 +517,7 @@ static Int get_idref(char * sp, idref_t * id, Int isobj) {
 
     if (sp[0] == '$') {
         if (!isobj)
-            DIEf("Invalid symbol '%s.", sp)
+            DIEf("Invalid symbol '%s.", sp);
         strncpy(id->str, &sp[1], x-1);
         id->str[x-1] = 0;
         id->len = x-1;
@@ -607,7 +608,7 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
                 /* we may be at the end of the line.. */
                 slen = strlen(s);
                 if (s[slen - 1] != ';')
-                    DIE("Parse Error, unterminated directive.")
+                    DIE("Parse Error, unterminated directive.");
                 s[slen - 1] = (char) NULL;
                 strcpy(par_str, s);
                 len = strlen(par_str);
@@ -959,7 +960,8 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
                         fputc('>', stdout);
                         cache_discard(def);
                     }
-                    printf(",%s:\nLine %ld: WARNING: data: %s\nLine %ld: WARNING: Defaulting value to ZERO ('0').\n",
+                    printf(",%s:\nLine %ld: WARNING: data: %s\n"
+                           "Line %ld: WARNING: Defaulting value to ZERO ('0').\n",
                            ident_name(var), (long) line_count, strchop(s, 50), (long) line_count);
 	            fflush(stdout);
                 }
@@ -1074,14 +1076,14 @@ static void handle_bind_nativecmd(FILE * fp, char * s) {
    
 #ifndef ONLY_PARSE_TEXTDB
     if (nat.str[0] == (char) NULL || meth.str[0] == (char) NULL)
-        DIE("Invalid method name in bind_native directive.\n")
+        DIE("Invalid method name in bind_native directive.\n");
 
     inat = ident_get(nat.str);
     imeth = ident_get(meth.str);
 
     n = find_defined_native_method(cur_obj->objnum, imeth);
     if (n == (nh_t *) NULL)
-        DIE("Attempt to bind_native to method which is not native.\n")
+        DIE("Attempt to bind_native to method which is not native.\n");
 
     /* if they've already bound it, we have precedence */
     if (n->method != NOT_AN_IDENT)
@@ -1113,7 +1115,7 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
     if (*s == '#' || *s == '$') {
         s += get_idref(s, &id, ISOBJ);
         if (id.err)
-            DIE("Invalid object \"$\"")
+            DIE("Invalid object \"$\"");
 
 #ifndef ONLY_PARSE_TEXTDB
         /* parse the parent.. */
@@ -1121,7 +1123,7 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
 
         /* make sure it exists, and not just as a name */
         if (!cache_check(definer))
-            DIE("method defined with invalid parent...")
+            DIE("method defined with invalid parent...");
     } else {
         if (!cur_obj)
             DIE("attempt to define method without defining object.");
@@ -1180,7 +1182,7 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
     } else {
         if ((p = strchr(s, ';')) == NULL &&
             (p = strchr(s, '{')) == NULL)
-            DIE("Un-terminted method definition.")
+            DIE("Un-terminted method definition.");
     }
 
 #ifndef ONLY_PARSE_TEXTDB
@@ -1587,7 +1589,9 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
 
     /* try to handle this */
     if (obj == NULL) {
-        printf("\rWARNING: NULL object pointer found, you likely used a corrupt binary db!\nWARNING: Attempting to work around.  This will probably create a\nWARNING: textdump with invalid ancestors\n");
+        printf("\rWARNING: NULL object pointer found, you likely used a corrupt binary db!\n"
+               "WARNING: Attempting to work around.  This will probably create a\n"
+               "WARNING: textdump with invalid ancestors\n");
         return;
     }
 

@@ -10,6 +10,20 @@
 
 /*
 // ---------------------------------------------------------------------
+// If running in BUILDING_COLDCC mode, turn off some options that slow
+// down the build
+*/
+#ifdef BUILDING_COLDCC
+#undef USE_CLEANER_THREAD
+#undef USE_DIRTY_LIST
+#undef USE_CACHE_HISTORY
+#else
+#define USE_DIRTY_LIST
+#define USE_CACHE_HISTORY
+#endif
+
+/*
+// ---------------------------------------------------------------------
 // This will reduce how much your database bloats, however it will
 // be slower as it searches the whole database for free blocks.
 // For now this is an option to reduce the amount of bloat occuring,
@@ -474,10 +488,12 @@ cObjnum cache_watch_object;
 Int  log_malloc_size;
 Int  log_method_cache;
 
+#ifdef USE_CACHE_HISTORY
 /* cache stats stuff */
 extern cList * ancestor_cache_history;
 extern cList * method_cache_history;
 Int cache_history_size;
+#endif
 
 #else
 extern jmp_buf main_jmp;
@@ -527,13 +543,15 @@ extern cObjnum cache_watch_object;
 extern Int  log_malloc_size;
 extern Int  log_method_cache;
 
+#ifdef USE_CACHE_HISTORY
 /* cache stats stuff */
 extern cList * ancestor_cache_history;
 extern cList * method_cache_history;
+extern Int cache_history_size;
+#endif
+
 extern Int name_cache_hits;
 extern Int name_cache_misses;
-
-extern Int cache_history_size;
 #endif
 
 #endif

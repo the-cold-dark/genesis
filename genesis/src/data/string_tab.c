@@ -184,6 +184,14 @@ cStr *string_tab_name_str(StringTab *tab, Ident id)
     return tab->tab[id].str;
 }
 
+char *string_tab_name_size(StringTab *tab, Int id, Int *sz)
+{
+    cStr *str = tab->tab[id].str;
+
+    *sz = str->len;
+    return string_chars(str);
+}
+
 uLong string_tab_hash(StringTab *tab, Ident id) {
     return tab->tab[id].hash;
 }

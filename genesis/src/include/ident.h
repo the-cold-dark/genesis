@@ -53,6 +53,8 @@ void   init_ident(void);
 #define ident_discard(id)	string_tab_discard(idents, id)
 #define ident_dup(id)		string_tab_dup(idents, id)
 #define ident_name(id)		string_tab_name(idents, id)
+#define ident_name_size(id, sz) string_tab_name_size(idents, id, sz)
+#define ident_name_str(id)      string_tab_name_str(idents, id)
 #define ident_hash(id)		string_tab_hash(idents, id)
 
 #endif

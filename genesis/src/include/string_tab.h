@@ -32,6 +32,7 @@ void        string_tab_discard(StringTab *tab, Int id);
 Int         string_tab_dup(StringTab *tab, Int id);
 char      * string_tab_name(StringTab *tab, Int id);
 cStr      * string_tab_name_str(StringTab *tab, Int id);
+char      * string_tab_name_size(StringTab *tab, Int id, Int *sz);
 uLong       string_tab_hash(StringTab *tab, Int id);
 
 #endif

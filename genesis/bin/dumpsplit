@@ -1,0 +1,143 @@
+#!/usr/bin/perl
+#
+# Created by Zachary
+# Updated by Brandon to include both split and join
+# Updated by Brandon for Perl5 and the new database format
+#
+
+## require perl 5 or better, sorry guys, upgrade time.
+if ($] < 5) {
+    die("This program requires perl 5.002 or greater.\n");
+}
+require 5.002;
+
+$parents = "";
+$buffer = "";
+select(STDOUT); $| = 1;
+
+sub frobfile {
+    local($file) = @_;
+
+    if ($file =~ /[^a-z0-9_]/) {
+        print "\nInvalid object name \"\$$file\"";
+        $file =~ s/[^a-z0-9_]//g;
+        print ", stripping to \"\$$file\".\n";
+    }
+
+    return $file;
+}
+
+sub saveobj {
+    local($object) = @_;
+    local($objname);
+
+    ($object =~ /^new object [\$#]([^:; ]+)/) ||
+        ($object =~ /^object [\$#]([^:; ]+)/);
+    $objname = $1;
+
+    local($file) = &frobfile($objname);
+
+    local($tmp) = "$file.cdc";
+    local($i) = 0;
+    while (-e $tmp) {
+        print "\nFile \"$tmp\" exists, renaming to ";
+        $i++;
+        $tmp = "$file-${i}.cdc";
+        print "\"$tmp\".\n";
+    }
+    $file = $tmp;
+
+    print ".";
+    open(FILE, ">$srcdir/$file") || die("\nUnable to write to \"$srcdir\".\n");
+
+    print INDEX "$file\n";
+
+    print FILE $object;
+    print FILE $buffer;
+
+    $buffer = "";
+    $parents = "";
+
+    close(FILE);
+}
+
+sub split {
+    $reading_obj = 0;
+    while (<DUMP>) {
+        if (/^new object / || /^object /) {
+            ($reading_obj) && &saveobj($reading_obj);
+            $reading_obj = $_;
+        } else {
+            $buffer .= "$_";
+        }
+    }
+    &saveobj($reading_obj);
+}
+
+sub unsplit {
+    local($name);
+
+    while (<INDEX>) {
+        chomp;
+        print STDERR ".";
+        $file = "$srcdir/$_";
+        if (-e $file) {
+            open(FILE, $file);
+            while (<FILE>) {
+                print DUMP;
+            }
+            close(FILE);
+        } else {
+            print STDERR "\nAck, unable to find file \"$file\".\n";
+        }
+    }
+}
+
+$USAGE = <<END;
+
+Usage: dumpsplit <option> [<dump> <srcdir>]
+
+    dump defaults to "textdump"
+    srcdir defaults to "src"
+
+Options:
+
+    -s   -- split
+    -j   -- join db (unsplit)
+
+END
+
+$_ = $ARGV[0];
+shift;
+
+if ($ARGV[0]) { $textdump = $ARGV[0]; } else { $textdump = "textdump"; }
+if ($ARGV[1]) { $srcdir = $ARGV[1]; } else { $srcdir = "src"; }
+
+$index = "$srcdir/INDEX";
+
+if (!(-d $srcdir)) {
+    mkdir($srcdir, 0755) ||
+       (print "Unable to make directory \"$srcdir\"." && exit);
+}
+
+if (/^-s/) {
+    open(DUMP, "$textdump") ||
+        (print "${USAGE}Unable to open textdump \"$textdump\".\n" && exit);
+    open(INDEX, ">$index") ||
+        (print "${USAGE}Unable to open name file \"$index\".\n" && exit);
+    print "Splitting db";
+    &split();
+} elsif (/^-[uj]/) {
+    open(DUMP, ">$textdump") ||
+        (print "${USAGE}Unable to open textdump \"$textdump\".\n" && exit);
+    open(INDEX, "$index") ||
+        (print "${USAGE}Unable to open name file \"$index\".\n" && exit);
+    print "Joining db";
+    &unsplit();
+} else {
+    print $USAGE;
+    exit(0);
+}
+print "\n";
+close(DUMP);
+close(INDEX);

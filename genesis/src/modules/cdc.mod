@@ -25,6 +25,7 @@ native $list.setadd()                setadd
 native $list.setremove()             setremove
 native $list.union()                 union
 native $list.join()                  join
+native $list.sort()                  sort
 native $string.length()              strlen
 native $string.subrange()            substr
 native $string.explode()             explode

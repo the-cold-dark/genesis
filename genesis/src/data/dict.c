@@ -320,10 +320,14 @@ INTERNAL void double_hashtab_size(cDict *dict)
 /* WARNING: This will discard both arguments! */
 cDict *dict_union (cDict *d1, cDict *d2) {
     int i, pos;
+    Bool swap;
 
     if (d1->keys->len > d2->keys->len) {
         cDict *t;
         t=d1; d1=d2; d2=t;
+        swap = NO;
+    } else {
+        swap = YES;
     }
 
     d2=dict_prep(d2);
@@ -332,9 +336,15 @@ cDict *dict_union (cDict *d1, cDict *d2) {
         cData *key=&d1->keys->el[i], *value=&d1->values->el[i];
 
         pos = search(d2, key);
+
         /* forget the add if it's already there */
-        if (pos != -1)
+        if (pos != F_FAILURE) {
+            /* ... but if the args are in the wrong order, we
+               want to overwrite the key */
+            if (swap)
+                d2->values = list_replace(d2->values, pos, value);
             continue;
+        }
 
         /* Add the key and value to the list. */
         d2->keys = list_add(d2->keys, key);

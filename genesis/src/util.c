@@ -467,6 +467,8 @@ Int parse_strcpy(char * b1, char * b2, Int slen) {
                 case 'n':
                     add_char(b, '\n');
                     len--;
+    /*                add_char(b, '\r');
+                    len-=2; */
                     break;
                 case 'r':
                     add_char(b, '\r');
@@ -531,3 +533,6 @@ Int is_valid_id(char * str, Int len) {
      return 1;
 }
 
+void set_argv0(char * str) {
+    
+}

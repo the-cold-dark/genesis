@@ -13,7 +13,7 @@
 #define READ_WRITE_EXECUTE 0700
 #endif
 
-#define DUMP_BLOCK_SIZE      16
+#define DUMP_BLOCK_SIZE      256
 #define DUMP_NOT_IN_PROGRESS -2
 #define DUMP_FAILED_TO_CLOSE -1
 #define DUMP_FINISHED        1

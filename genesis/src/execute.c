@@ -94,33 +94,6 @@ void store_stack(void) {
 /*
 // ---------------------------------------------------------------
 */
-VMState * vm_fork_current(void) {
-    VMState * vm;
-
-    if (vmstore) {
-        vm = vmstore;
-        vmstore = vmstore->next;
-    } else {
-        vm = EMALLOC(VMState, 1);
-    }
-
-    vm->preempted = 1;
-    vm->cur_frame = cur_frame;
-    vm->stack = stack;
-    vm->stack_pos = stack_pos;
-    vm->stack_size = stack_size;
-    vm->arg_starts = arg_starts;
-    vm->arg_pos = arg_pos;
-    vm->arg_size = arg_size;
-    vm->task_id = task_id;
-    vm->next = NULL;
-
-    return vm;
-}
-
-/*
-// ---------------------------------------------------------------
-*/
 VMState * vm_current(void) {
     VMState * vm;
 
@@ -131,7 +104,7 @@ VMState * vm_current(void) {
         vm = EMALLOC(VMState, 1);
     }
 
-    vm->preempted = 0;
+    vm->preempted = NO;
     vm->cur_frame = cur_frame;
     vm->stack = stack;
     vm->stack_pos = stack_pos;
@@ -299,10 +272,8 @@ Int fork_method(Obj * obj,
                 Int      arg_start,
                 Bool     is_frob)
 {
-    VMState * current = vm_current(),
-            * fvm;
+    VMState * current = vm_current();
     Int       count, spos, result;
-    int       i;
 
     /* get a new execution environment */
     init_execute();
@@ -387,7 +358,7 @@ void task_cancel(Long tid) {
 void task_pause(void) {
     VMState * vm = vm_current();
 
-    vm->preempted = 1;
+    vm->preempted = YES;
     ADD_TASK(preempted, vm);
     init_execute();
     cur_frame = NULL;  
@@ -941,7 +912,7 @@ Int pass_method(Int stack_start, Int arg_start) {
 	    method = object_find_next_method(cur_frame->object->objnum,
 					     cur_frame->method->name,
 					     cur_frame->method->object->objnum,
-					     cur_frame->is_frob);
+					     FROB_RETRY);
 	    if (!method)
 		call_error(CALL_ERR_METHNF);
 	} else
@@ -951,12 +922,15 @@ Int pass_method(Int stack_start, Int arg_start) {
     if (cur_frame) {
         switch (method->m_access) {
             case MS_ROOT:
-                if (cur_frame->method->object->objnum != ROOT_OBJNUM)
+                if (cur_frame->method->object->objnum != ROOT_OBJNUM) {
+                    cache_discard(method->object);
                     call_error(CALL_ERR_ROOT);
+                }
                 break;
             case MS_DRIVER:
                 /* if we are here, there is a current frame,
                    and the driver didn't send this */
+                cache_discard(method->object);
                 call_error(CALL_ERR_DRIVER);
         }
     }
@@ -998,6 +972,12 @@ Int call_method(cObjnum objnum,     /* the object */
     obj = cache_retrieve(objnum);
     if (!obj)
         call_error(CALL_ERR_OBJNF);
+
+    /* If we're executing as a frob method, treat any method calls to
+       this() as if it were a frob call */
+    if (cur_frame && cur_frame->is_frob == FROB_YES &&
+        cur_frame->object->objnum == objnum)
+        is_frob = FROB_YES;
 
     /* Find the method to run. */
     method = object_find_method(objnum, name, is_frob);

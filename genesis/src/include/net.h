@@ -30,6 +30,8 @@ cStr * ip(char *addr);
 void init_net(void);
 void uninit_net(void);
 
+SOCKET get_udp_server_socket(Int port, char * addr);
+
 extern Long server_failure_reason;
 
 #endif

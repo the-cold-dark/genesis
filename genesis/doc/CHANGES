@@ -6,6 +6,28 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-18 [05-Nov-96] Brandon Gillespie
+      * Included some of Brian's fixes that I accidentally left out of p17
+1.0-17 [04-Nov-96] Miroslav Silovic, Brian Buchanan
+      * Included a few scripts in 'bin' again (Brandon)
+      * Fixed unkillable object bug caused by reprogramming methods (Brian)
+      * Fixed method_info() to find local methods only (Brian)
+      * Fixed add_method() goofing flags and access for methods
+        overriding nonoverridable methods (Brian)
+      * Changed call_method() to treat method calls from within frob-access
+        methods to this() as if they were calls to frob methods (Brian)
+      * Fixed find_method() and find_next_method() to find frob methods
+        overriding nonoverridable methods (Brian)
+      * Fixed unkillable object bug caused by passing to ROOT or DRIVER
+        access methods (Brian)
+      * The backup won't hang with heavy-duty task running (Miro)
+      * (1).method() decompiles with parentheses around 1 (this happens
+        only if argument is an integer, which is valid behaviour) (Miro)
+      * Crash on attempt to decompile objnum has been fixed (Miro)
+      * $list.sort added (Miro)
+      * $dictionary.union fixed to insert keys in consistant order (Miro)
+      * UDP networking added (hooked into the existing functions) (Miro)
+      * ("string" * INTEGER) returns string repeated INTEGER times (Miro)
 1.0-16 [24-Oct-96] Brandon Gillespie
       * Fixed some bugs with $string.dbquote_explode()
       * Fixed a bug with forked methods, they were not cleaning up the

@@ -175,7 +175,7 @@ NATIVE_METHOD(distance) {
 }
 
 NATIVE_METHOD(cross) {
-    Int i,len;
+    Int len;
     cList *l,*l1,*l2;
     cData *f,*f1,*f2;
 

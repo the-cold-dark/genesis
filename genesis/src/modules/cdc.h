@@ -35,6 +35,7 @@ NATIVE_METHOD(setadd);
 NATIVE_METHOD(setremove);
 NATIVE_METHOD(union);
 NATIVE_METHOD(join);
+NATIVE_METHOD(sort);
 NATIVE_METHOD(strftime);
 NATIVE_METHOD(next_objnum);
 NATIVE_METHOD(status);

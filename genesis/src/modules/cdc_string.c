@@ -468,7 +468,7 @@ NATIVE_METHOD(word) {
 
     s = p = string_chars(STR1);
     word = 0;
-    for (p - s, q = strcstr(p, sep); q; q = strcstr(p, sep)) {
+    for (q = strcstr(p, sep); q; q = strcstr(p, sep)) {
         if (q > p) {
             word++;
             if (want_word == word) {
@@ -514,7 +514,6 @@ NATIVE_METHOD(word) {
 NATIVE_METHOD(dbquote_explode) {
     Int             len, sublen;
     cData           d;
-    cStr          * str;
     cList         * out;
     char            quote = '"',
                   * sorig;
@@ -571,7 +570,7 @@ NATIVE_METHOD(dbquote_explode) {
 
             while (*p && p[1] == quote) {
                 p += 2;
-                *t = '"';
+                *t = quote;
                 t++;
                 while (*p && *p != quote)
                     *t++ = *p++;

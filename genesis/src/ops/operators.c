@@ -778,7 +778,7 @@ void op_message(void) {
 }
 
 void op_expr_message(void) {
-    Int arg_start, result;
+    Int arg_start;
     Bool is_frob=FROB_NO;
     cData *target, *message_data;
     Long objnum, message;
@@ -1109,6 +1109,25 @@ void op_multiply(void) {
     cData *d2 = &stack[stack_pos - 1];
 
     switch (d1->type) {
+        case STRING: {
+	    Int n;
+	    cStr *s;
+
+	    if (d2->type!=INTEGER)
+		goto error;
+	    n=d2->u.val;
+	    if (n<0) {
+		cthrow(range_id, "Multiplying string %D with negative number %D.", d1, d2);
+		return;
+	    }
+	    s=string_new(d1->u.str->len*n+2); /* +2 just in case */
+	    while (n--)
+		s=string_add(s, d1->u.str);
+	    data_discard(d1);
+	    d1->u.str=s;
+	    break;
+	}
+
         case FLOAT:
             switch (d2->type) {
                 case INTEGER:
@@ -1142,7 +1161,7 @@ void op_multiply(void) {
 
         default:
         error:
-            cthrow(type_id, "%D and %D are not integers or floats.", d1, d2);
+            cthrow(type_id, "%D and %D are not integers or floats or string*integer.", d1, d2);
             return;
     }
 

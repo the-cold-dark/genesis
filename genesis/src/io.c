@@ -262,6 +262,18 @@ Int add_server(Int port, char * addr, Long objnum) {
     return TRUE;
 }
 
+Int udp_server(Int port, char * addr, Long objnum) {
+    SOCKET server_socket;
+
+    /* Get a server socket for the port. */
+    server_socket = get_udp_server_socket(port, addr);
+    if (server_socket == SOCKET_ERROR)
+        return FALSE;
+
+    connection_add (server_socket, objnum);
+    return TRUE;
+}
+
 /*
 // --------------------------------------------------------------------
 */
@@ -402,6 +414,25 @@ Long make_connection(char *addr, Int port, cObjnum receiver) {
     Long result;
 
     result = non_blocking_connect(addr, port, &socket);
+    if (result == address_id || result == socket_id)
+        return result;
+    cnew = TMALLOC(pending_t, 1);
+    cnew->fd = socket;
+    cnew->task_id = task_id;
+    cnew->objnum = receiver;
+    cnew->finished = 0;
+    cnew->error = result;
+    cnew->next = pendings;
+    pendings = cnew;
+    return NOT_AN_IDENT;
+}
+
+Long make_udp_connection(char *addr, Int port, cObjnum receiver) {
+    pending_t *cnew;
+    SOCKET socket;
+    Long result;
+
+    result = udp_connect(addr, port, &socket);
     if (result == address_id || result == socket_id)
         return result;
     cnew = TMALLOC(pending_t, 1);

@@ -215,3 +215,91 @@ NATIVE_METHOD(join) {
     CLEAN_RETURN_STRING(str);
 }
 
+static void merge_lists (cData *l, cData *key,
+			 Int start1, Int end1,
+			 Int start2, Int end2,
+			 cData *l_out, cData *key_out)
+{
+    Int i,j,k;
+
+    i=start1;
+    j=start2;
+    k=start1;
+
+    while (i<=end1 && j<=end2)
+	if (data_cmp(key+j,key+i)>=0)
+	    key_out[k]=key[i], l_out[k++]=l[i++];
+	else
+	    key_out[k]=key[j], l_out[k++]=l[j++];
+    while (i<=end1)
+	key_out[k]=key[i], l_out[k++]=l[i++];
+    while (j<=end2)
+	key_out[k]=key[j], l_out[k++]=l[j++];
+    memcpy (l+start1, l_out+start1, sizeof(cData)*(k-start1));
+    memcpy (key+start1, key_out+start1, sizeof(cData)*(k-start1));
+}
+
+static void merge_sort (cData *l, cData *key,
+			cData *l1, cData *key1,
+			Int start, Int end)
+{
+
+    Int mid;
+
+    if (start==end)
+	return;
+
+    mid=(start+end)/2;
+    merge_sort (l, key, l1, key1, start, mid);
+    merge_sort (l, key, l1, key1, mid+1, end);
+    merge_lists (l, key, start, mid, mid+1, end, l1, key1);
+}
+
+NATIVE_METHOD(sort) {
+    cData *d1, *d2, *key1, *key2;
+    Int n, i;
+    cList *data, *keys;
+    cList *out;
+
+    INIT_1_OR_2_ARGS(LIST, LIST);
+    data=LIST1;
+    if (argc==1)
+	keys=data;
+    else
+	keys=LIST2;
+
+    n=list_length(data);
+    if (!(list_length(keys)==n)) {
+	THROW((range_id, "Key and data lists are not of the same length"));
+    }
+
+    if (!n) {
+	out=list_dup(data);
+	CLEAN_RETURN_LIST(out);
+    }
+
+    d1=emalloc(sizeof(cData)*n);
+    d2=emalloc(sizeof(cData)*n);
+    key1=emalloc(sizeof(cData)*n);
+    key2=emalloc(sizeof(cData)*n);
+
+    for (i=0; i<n; i++) {
+	data_dup(d1+i, list_elem(data, i));
+	data_dup(key1+i, list_elem(keys, i));
+    }
+    merge_sort (d1, key1, d2, key2, 0, n-1);
+
+    out=list_new(n);
+    out->len=n;
+    for (i=0; i<n; i++) {
+        *list_elem(out, i)=d1[i]; /* We already did data_dup */
+	data_discard(key1+i);
+    }
+
+    efree(d1);
+    efree(d2);
+    efree(key1);
+    efree(key2);
+
+    CLEAN_RETURN_LIST(out);
+}

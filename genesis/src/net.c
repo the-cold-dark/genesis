@@ -155,6 +155,42 @@ SOCKET get_server_socket(Int port, char * addr) {
     return sock;
 }
 
+SOCKET get_udp_server_socket(Int port, char * addr) {
+    Int one=1;
+    SOCKET sock;
+
+    /* verify the address first */
+    memset(&sockin, 0, sizeof(sockin));               /* zero it */
+    sockin.sin_family = AF_INET;                      /* set inet */
+    sockin.sin_port = htons((unsigned short) port);   /* set port */
+
+    if (addr && !inet_aton(addr, &sockin.sin_addr)) {
+        server_failure_reason = address_id;
+        return SOCKET_ERROR;
+    }
+
+    /* Create a socket. */
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock == SOCKET_ERROR) {
+	server_failure_reason = socket_id;
+	return SOCKET_ERROR;
+    }
+
+    /* Set SO_REUSEADDR option to avoid restart problems. */
+    one = 1;
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(Int));
+
+    /* Bind the socket to port. */
+    if (bind(sock, (struct sockaddr *) &sockin, sizeof(sockin)) < 0) {
+	server_failure_reason = bind_id;
+	return SOCKET_ERROR;
+    }
+
+    /* We don't need any listen calls... */
+
+    return sock;
+}
+
 /* Wait for I/O events.  sec is the number of seconds we can wait before
  * returning, or -1 if we can wait forever.  Returns nonzero if an I/O event
  * happened. */
@@ -292,6 +328,55 @@ Long non_blocking_connect(char *addr, Int port, Int *socket_return)
 
     /* Get a socket for the connection. */
     fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (fd == SOCKET_ERROR)
+	return socket_id;
+
+    /* Set the socket non-blocking. */
+#ifdef WIN32
+    result = 1;
+    ioctlsocket(fd, FIONBIO, &result);
+#else
+    flags = fcntl(fd, F_GETFL);
+#ifdef FNDELAY
+    flags |= FNDELAY;
+#else
+#ifdef O_NDELAY
+    flags |= O_NDELAY;
+#endif
+#endif
+    fcntl(fd, F_SETFL, flags);
+#endif
+
+    /* Make the connection. */
+    memset(&saddr, 0, sizeof(saddr));
+    saddr.sin_family = AF_INET;
+    saddr.sin_port = htons((unsigned short) port);
+    saddr.sin_addr = inaddr;
+    do {
+	result = connect(fd, (struct sockaddr *) &saddr, sizeof(saddr));
+    } while (result == SOCKET_ERROR && GETERR() == ERR_INTR);
+
+    *socket_return = fd;
+    if (result != SOCKET_ERROR || GETERR() == ERR_INPROGRESS)
+	return NOT_AN_IDENT;
+    else
+	return translate_connect_error(GETERR());
+}
+
+Long udp_connect(char *addr, Int port, Int *socket_return)
+{
+    SOCKET fd;
+    Int    result, flags;
+    struct in_addr inaddr;
+    struct sockaddr_in saddr;
+
+    /* Convert address to struct in_addr. */
+    inaddr.s_addr = inet_addr(addr);
+    if (inaddr.s_addr == -1)
+	return address_id;
+
+    /* Get a socket for the connection. */
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd == SOCKET_ERROR)
 	return socket_id;
 

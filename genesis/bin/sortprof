@@ -1,0 +1,54 @@
+#!/usr/bin/perl
+##
+## Profiler output munching program, run this on your driver.log if you are
+## running with profiling, as:
+##
+##  sortprof < driver.log | more
+##
+## -Brandon Gillespie
+##
+
+### threshold, dont print out methods with less hits than this
+
+$thresh = 50;
+
+### dont bother with anything past this
+$dops = 0;
+$dmeths = 0;
+@ops = ();
+@meths = ();
+while (<STDIN>) {
+    chomp;
+    if (/^Methods/) {
+        $dops=0;
+        $dmeths=1;
+   } elsif (/^Opcodes/) {
+        $dops=1;
+        $dmeths=0;
+#    } elsif ($dops) {
+#        s/^\s*//;
+#        ($count, $opcode, $op) = split(/\s+/);
+#        if ($count > $thresh) {
+#            push(@ops, "$count:$op");
+#        }
+    } elsif ($dmeths) {
+        s/^\s*//;
+        ($count, $meth) = split(/\s+/);
+        if ($count > $thresh) {
+            push(@meths, "$count:$meth");
+        }
+    }
+}
+
+#print ("Opcodes:\n");
+#for (sort({$b <=> $a} @ops)) {
+#    ($count, $op) = split(/:/);
+#    printf("  %-10ld $op\n", $count);
+#}
+
+print ("Methods:\n");
+for (sort({$b <=> $a} @meths)) {
+    ($count, $m) = split(/:/);
+    printf("  %-10ld $m\n", $count);
+}
+

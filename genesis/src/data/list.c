@@ -145,7 +145,7 @@ Int list_search(cList *list, cData *data) {
 
 /* Effects: Returns 0 if the lists l1 and l2 are equivalent, or 1 if not. */
 Int list_cmp(cList *l1, cList *l2) {
-    Int i;
+    Int i, k;
 
     /* They're obviously the same if they're the same list. */
     if (l1 == l2)
@@ -157,8 +157,8 @@ Int list_cmp(cList *l1, cList *l2) {
 
     /* See if any elements differ. */
     for (i = 0; i < l1->len; i++) {
-        if (data_cmp(&l1->el[l1->start + i], &l2->el[l2->start + i]) != 0)
-            return 1;
+        if ((k=data_cmp(&l1->el[l1->start + i], &l2->el[l2->start + i])) != 0)
+            return k;
     }
 
     /* No elements differ, so the lists are the same. */

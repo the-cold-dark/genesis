@@ -8,6 +8,8 @@ Installation is undefined as people generally move the binaries to
 other locations.  Generally you should copy 'coldcc' and 'genesis' to
 your world directory (wherever it may be).
 
+The directory 'bin' contains a few useful scripts.
+
 ------------------------------------------------------------------------
 RELEASE INFORMATION
 

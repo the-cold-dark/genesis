@@ -279,7 +279,7 @@ INTERNAL void initialize(Int argc, char **argv) {
         cStr     * str;
         Bool       first = YES;
 
-        fputs("Calling $sys.startup(", errfile);
+        fputs("Calling $sys.startup([", errfile);
         for (d=list_first(args); d; d=list_next(args, d)) {
             str = data_to_literal(d, TRUE);
             if (!first) {
@@ -291,7 +291,7 @@ INTERNAL void initialize(Int argc, char **argv) {
             fputs(string_chars(str), errfile);
             string_discard(str);
         }
-        fputs(")...\n", errfile);
+        fputs("])...\n", errfile);
     }
 
     /* call $sys.startup() */

@@ -143,7 +143,7 @@ Int line_number(Method *method, Int pc) {
 
 INTERNAL Int count_lines(Int start, Int end, unsigned *flags)
 {
-    Int count=0, last=-1, next, complex_catch=0, with_start;
+    Int count=0, last=-1, next, complex_catch=0, with_start=0;
 
     *flags = 0x0;
 
@@ -785,6 +785,7 @@ static Expr_list *decompile_expressions_bounded(Int *pos_ptr, Int expr_end)
 	  case OBJNUM:
 	    stack = expr_list(objnum_expr(the_opcodes[pos + 1]), stack);
 	    pos += 2;
+	    break;
 
 	  case SYMBOL:
 	    s = ident_name(object_get_ident(the_object, the_opcodes[pos + 1]));
@@ -1523,8 +1524,12 @@ static cStr *unparse_expr(cStr *str, Expr *expr, Int paren) {
 	s = expr->u.message.name;
 
 	/* Only include target if it's not this(). */
+        if (expr->u.message.to->type==INTEGER)
+            str = string_addc (str,'(');
 	if (!is_this(expr->u.message.to))
 	    str = unparse_expr_prec(str, expr->u.message.to, CALL_METHOD, 0);
+        if (expr->u.message.to->type==INTEGER)
+            str = string_addc (str,')');
 
 	str = string_addc(str, '.');
 	str = string_add_chars(str, s, strlen(s));
@@ -1535,8 +1540,13 @@ static cStr *unparse_expr(cStr *str, Expr *expr, Int paren) {
 
       case EXPR_CALL_METHOD:
 	/* Only include target if it's not this(). */
+
+        if (expr->u.message.to->type==INTEGER)
+            str = string_addc (str,'(');
 	if (!is_this(expr->u.expr_message.to))
 	    str = unparse_expr_prec(str, expr->u.message.to, CALL_METHOD, 0);
+        if (expr->u.message.to->type==INTEGER)
+            str = string_addc (str,')');
 
 	str = string_add_chars(str, ".(", 2);
 	str = unparse_expr(str, expr->u.expr_message.message, PAREN_ASSIGN);

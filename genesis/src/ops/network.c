@@ -54,6 +54,7 @@ void func_reassign_connection(void) {
 void func_bind_port(void) {
     cData * args;
     Int     argc;
+    Int     port;
     char  * addr;
 
     /* Accept a port to bind to, and a objnum to handle connections. */
@@ -61,9 +62,10 @@ void func_bind_port(void) {
         return;
 
     addr = (argc==2 ? string_chars(STR2) : (char *) NULL);
-
-    if (add_server(INT1, addr, cur_frame->object->objnum))
-        push_int(1);
+    port=INT1;
+    if ((port>=0) ? add_server(port, addr, cur_frame->object->objnum)
+	: udp_server(-port, addr, cur_frame->object->objnum))
+	push_int(1);
     else if (server_failure_reason == address_id)
         THROW((address_id, "Invalid bind address: %s", addr))
     else if (server_failure_reason == socket_id)
@@ -96,16 +98,19 @@ void func_unbind_port(void) {
 void func_open_connection(void) {
     cData *args;
     char *address;
-    Int port;
+    Int port, argc;
     Long r;
 
-    if (!func_init_2(&args, STRING, INTEGER))
+    if (!func_init_2_or_3(&args, &argc, STRING, INTEGER, INTEGER))
         return;
 
     address = string_chars(args[0].u.str);
     port = args[1].u.val;
 
-    r = make_connection(address, port, cur_frame->object->objnum);
+    if (argc==2)
+	r = make_connection(address, port, cur_frame->object->objnum);
+    else
+	r = make_udp_connection(address, port, cur_frame->object->objnum);
     if (r == address_id)
         THROW((address_id, "Invalid address"))
     else if (r == socket_id)

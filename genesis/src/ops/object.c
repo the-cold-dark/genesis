@@ -25,12 +25,12 @@ COLDC_FUNC(add_var) {
 
     /* Accept a symbol argument a data value to assign to the variable. */
     if (!func_init_1(&args, SYMBOL))
-	return;
+        return;
 
     result = object_add_var(cur_frame->object, args[0].u.symbol);
     if (result == varexists_id)
-	THROW((varexists_id,
-	      "Object variable %I already exists.", args[0].u.symbol))
+        THROW((varexists_id,
+              "Object variable %I already exists.", args[0].u.symbol))
 
     pop(1);
     push_int(1);
@@ -42,14 +42,14 @@ COLDC_FUNC(del_var) {
 
     /* Accept one symbol argument. */
     if (!func_init_1(&args, SYMBOL))
-	return;
+        return;
 
     result = object_del_var(cur_frame->object, args[0].u.symbol);
     if (result == varnf_id) {
-	cthrow(varnf_id, "Object variable %I does not exist.", args[0].u.symbol);
+        cthrow(varnf_id, "Object variable %I does not exist.", args[0].u.symbol);
     } else {
-	pop(1);
-	push_int(1);
+        pop(1);
+        push_int(1);
     }
 }
 
@@ -62,18 +62,18 @@ COLDC_FUNC(variables) {
 
     /* Accept no arguments. */
     if (!func_init_0())
-	return;
+        return;
 
     /* Construct the list of variable names. */
     obj = cur_frame->object;
     vars = list_new(0);
     d.type = SYMBOL;
     for (i = 0; i < obj->vars.size; i++) {
-	var = &obj->vars.tab[i];
-	if (var->name != -1 && var->cclass == obj->objnum) {
-	    d.u.symbol = var->name;
-	    vars = list_add(vars, &d);
-	}
+        var = &obj->vars.tab[i];
+        if (var->name != -1 && var->cclass == obj->objnum) {
+            d.u.symbol = var->name;
+            vars = list_add(vars, &d);
+        }
     }
 
     /* Push the list onto the stack. */
@@ -88,16 +88,16 @@ COLDC_FUNC(set_var) {
 
     /* Accept a symbol for the variable name and a data value of any type. */
     if (!func_init_2(&args, SYMBOL, 0))
-	return;
+        return;
 
     result = object_assign_var(cur_frame->object, cur_frame->method->object,
-			       args[0].u.symbol, &args[1]);
+        		       args[0].u.symbol, &args[1]);
     if (result == varnf_id) {
-	cthrow(varnf_id, "Object variable %I does not exist.", args[0].u.symbol);
+        cthrow(varnf_id, "Object variable %I does not exist.", args[0].u.symbol);
     } else {
         /* This is just a stupid way of returning args[1] */
         data_dup(&d, &args[1]);
-	pop(2);
+        pop(2);
         data_dup(&stack[stack_pos++], &d);
         data_discard(&d);
     }
@@ -110,15 +110,15 @@ COLDC_FUNC(get_var) {
 
     /* Accept a symbol argument. */
     if (!func_init_1(&args, SYMBOL))
-	return;
+        return;
 
     result = object_retrieve_var(cur_frame->object, cur_frame->method->object,
-				 args[0].u.symbol, &d);
+        			 args[0].u.symbol, &d);
     if (result == varnf_id) {
-	cthrow(varnf_id, "Object variable %I does not exist.", args[0].u.symbol);
+        cthrow(varnf_id, "Object variable %I does not exist.", args[0].u.symbol);
     } else {
-	pop(1);
-	data_dup(&stack[stack_pos++], &d);
+        pop(1);
+        data_dup(&stack[stack_pos++], &d);
         data_discard(&d);
     }
 }
@@ -158,7 +158,7 @@ COLDC_FUNC(add_method) {
 
     /* Accept a list of lines of code and a symbol for the name. */
     if (!func_init_2(&args, LIST, SYMBOL))
-	return;
+        return;
 
     name = ident_name(SYM2);
     if (is_reserved_word(name))
@@ -166,7 +166,7 @@ COLDC_FUNC(add_method) {
               "%I is a reserved word, and cannot be used as a method name",
               SYM2))
 
-    method = object_find_method(cur_frame->object->objnum, args[1].u.symbol, FROB_ANY);
+    method = object_find_method_local(cur_frame->object, args[1].u.symbol, FROB_ANY);
 
     if (method && (method->m_flags & MF_LOCK))
         THROW((perm_id, "Method is locked, and cannot be changed."))
@@ -176,17 +176,18 @@ COLDC_FUNC(add_method) {
         flags = method->m_flags;
         access = method->m_access;
         native = method->native;
+        cache_discard(method->object);
     }
 
     code = args[0].u.list;
 
     /* Make sure that every element in the code list is a string. */
     for (d = list_first(code); d; d = list_next(code, d)) {
-	if (d->type != STRING) {
-	    cthrow(type_id, "Line %d (%D) is not a string.",
-		  d - list_first(code), d);
-	    return;
-	}
+        if (d->type != STRING) {
+            cthrow(type_id, "Line %d (%D) is not a string.",
+        	  d - list_first(code), d);
+            return;
+        }
     }
 
     method = compile(cur_frame->object, code, &errors);
@@ -196,8 +197,8 @@ COLDC_FUNC(add_method) {
         if (access != -1)
             method->m_access = access;
         method->native = native;
-	object_add_method(cur_frame->object, args[1].u.symbol, method);
-	method_discard(method);
+        object_add_method(cur_frame->object, args[1].u.symbol, method);
+        method_discard(method);
     }
 
     pop(2);
@@ -292,8 +293,8 @@ COLDC_FUNC(set_method_flags) {
 
     list = args[1].u.list;
     for (d = list_first(list); d; d = list_next(list, d)) {
-	if (d->type != SYMBOL)
-	    THROW((type_id, "Invalid method flag (%D).", d))
+        if (d->type != SYMBOL)
+            THROW((type_id, "Invalid method flag (%D).", d))
         if (d->u.symbol == noover_id)
             new_flags |= MF_NOOVER;
         else if (d->u.symbol == sync_id)
@@ -356,7 +357,7 @@ COLDC_FUNC(set_method_access) {
     else if (sym == driver_id)
         access = MS_DRIVER;
     else if (sym == frob_id)
-	access = MS_FROB;
+        access = MS_FROB;
     else
         cthrow(type_id, "Invalid method access flag.");
 
@@ -380,9 +381,9 @@ COLDC_FUNC(method_info) {
 
     /* A symbol for the Method name. */
     if (!func_init_1(&args, SYMBOL))
-	return;
+        return;
 
-    method = object_find_method(cur_frame->object->objnum, args[0].u.symbol, FROB_ANY);
+    method = object_find_method_local(cur_frame->object, args[0].u.symbol, FROB_ANY);
     if (!method) {
         cthrow(methodnf_id, "Method not found.");
         return;
@@ -446,17 +447,17 @@ COLDC_FUNC(methods) {
 
     /* Accept no arguments. */
     if (!func_init_0())
-	return;
+        return;
 
     /* Construct the list of method names. */
     obj = cur_frame->object;
     methods = list_new(obj->methods.size);
     for (i = 0; i < obj->methods.size; i++) {
-	if (obj->methods.tab[i].m) {
-	    d.type = SYMBOL;
-	    d.u.symbol = obj->methods.tab[i].m->name;
-	    methods = list_add(methods, &d);
-	}
+        if (obj->methods.tab[i].m) {
+            d.type = SYMBOL;
+            d.u.symbol = obj->methods.tab[i].m->name;
+            methods = list_add(methods, &d);
+        }
     }
 
     /* Push the list onto the stack. */
@@ -467,40 +468,65 @@ COLDC_FUNC(methods) {
 
 COLDC_FUNC(find_method) {
     cData   * args;
-    Method * method;
+    Method * m, * m2;
 
     /* Accept a symbol argument giving the method name. */
     if (!func_init_1(&args, SYMBOL))
-	return;
+        return;
 
     /* Look for the method on the current object. */
-    method = object_find_method(cur_frame->object->objnum, args[0].u.symbol, FROB_ANY);
+    m = object_find_method(cur_frame->object->objnum, SYM1, FROB_YES);
+    m2 = object_find_method(cur_frame->object->objnum, SYM1, FROB_NO);
+    if (!m) {
+        m = m2;
+    } else if (m2) {
+        if (object_has_ancestor(m2->object->objnum, m->object->objnum)) {
+            cache_discard(m->object);
+            m = m2;
+        } else {
+            cache_discard(m2->object);
+        }
+    }
+
     pop(1);
-    if (method) {
-	push_objnum(method->object->objnum);
-	cache_discard(method->object);
+    if (m) {
+        push_objnum(m->object->objnum);
+        cache_discard(m->object);
     } else {
-	cthrow(methodnf_id, "Method %I not found.", args[0].u.symbol);
+        cthrow(methodnf_id, "Method %I not found.", args[0].u.symbol);
     }
 }
 
 COLDC_FUNC(find_next_method) {
     cData   * args;
-    Method * method;
+    Method * m, * m2;
 
     /* Accept a symbol argument giving the method name, and a objnum giving the
      * object to search past. */
     if (!func_init_2(&args, SYMBOL, OBJNUM))
-	return;
+        return;
 
     /* Look for the method on the current object. */
-    method = object_find_next_method(cur_frame->object->objnum,
-				     args[0].u.symbol, args[1].u.objnum, FROB_ANY);
-    if (method) {
-	push_objnum(method->object->objnum);
-	cache_discard(method->object);
+    m = object_find_next_method(cur_frame->object->objnum,
+                                SYM1, OBJNUM2, FROB_YES);
+    m2 = object_find_next_method(cur_frame->object->objnum,
+                                 SYM1, OBJNUM2, FROB_NO);
+    if (!m) {
+        m = m2;
+    } else if (m2) {
+        if (object_has_ancestor(m2->object->objnum, m->object->objnum)) {
+            cache_discard(m->object);
+            m = m2;
+        } else {
+            cache_discard(m2->object);
+        }
+    }
+
+    if (m) {
+        push_objnum(m->object->objnum);
+        cache_discard(m->object);
     } else {
-	cthrow(methodnf_id, "Method %I not found.", args[0].u.symbol);
+        cthrow(methodnf_id, "Method %I not found.", args[0].u.symbol);
     }
 }
 
@@ -515,20 +541,20 @@ COLDC_FUNC(list_method) {
      * indentation, and an optional integer to specify full
      * parenthesization. */
     if (!func_init_1_to_3(&args, &num_args, SYMBOL, INTEGER, INTEGER))
-	return;
+        return;
 
     indent = (num_args >= 2) ? args[1].u.val : DEFAULT_INDENT;
     indent = (indent < 0) ? 0 : indent;
     parens = (num_args == 3) ? (args[2].u.val != 0) : 0;
     code = object_list_method(cur_frame->object, args[0].u.symbol, indent,
-			      parens);
+        		      parens);
 
     if (code) {
-	pop(num_args);
-	push_list(code);
-	list_discard(code);
+        pop(num_args);
+        push_list(code);
+        list_discard(code);
     } else {
-	cthrow(methodnf_id, "Method %I not found.", args[0].u.symbol);
+        cthrow(methodnf_id, "Method %I not found.", args[0].u.symbol);
     }
 }
 
@@ -538,23 +564,23 @@ COLDC_FUNC(del_method) {
 
     /* Accept a symbol for the method name. */
     if (!func_init_1(&args, SYMBOL))
-	return;
+        return;
 
     status = object_del_method(cur_frame->object, args[0].u.symbol);
     if (status == 0) {
-	cthrow(methodnf_id, "No method named %I was found.", args[0].u.symbol);
+        cthrow(methodnf_id, "No method named %I was found.", args[0].u.symbol);
     } else if (status == -1) {
         cthrow(perm_id, "Method is locked, and cannot be removed.");
     } else {
-	pop(1);
-	push_int(1);
+        pop(1);
+        push_int(1);
     }
 }
 
 COLDC_FUNC(parents) {
     /* Accept no arguments. */
     if (!func_init_0())
-	return;
+        return;
 
     /* Push the parents list onto the stack. */
     push_list(cur_frame->object->parents);
@@ -563,7 +589,7 @@ COLDC_FUNC(parents) {
 COLDC_FUNC(children) {
     /* Accept no arguments. */
     if (!func_init_0())
-	return;
+        return;
 
     /* Push the children list onto the stack. */
     push_list(cur_frame->object->children);
@@ -574,7 +600,7 @@ COLDC_FUNC(ancestors) {
 
     /* Accept no arguments. */
     if (!func_init_0())
-	return;
+        return;
 
     /* Get an ancestors list from the object. */
     ancestors = object_ancestors(cur_frame->object->objnum);
@@ -588,7 +614,7 @@ COLDC_FUNC(has_ancestor) {
 
     /* Accept a objnum to check as an ancestor. */
     if (!func_init_1(&args, OBJNUM))
-	return;
+        return;
 
     result = object_has_ancestor(cur_frame->object->objnum, args[0].u.objnum);
     pop(1);

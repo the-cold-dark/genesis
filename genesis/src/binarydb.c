@@ -241,7 +241,7 @@ void init_binary_db(void) {
     lookup_open(fdb_index, 0);
     init_bitmaps();
     sync_index();
-    fprintf (errfile, "Binary database free space: %.2f%%\n",
+    fprintf (errfile, "[%s] Binary database free space: %.2f%%\n", timestamp(NULL),
 		(100.0*(1.0-(float)allocated_blocks/(float)bitmap_blocks)));
 
     db_clean = 1;
@@ -258,6 +258,7 @@ void init_new_db(void) {
 #ifdef USE_CLEANER_THREAD
     pthread_mutex_init (&db_mutex, NULL);
 #endif
+    LOCK_DB("init_new_db")
 
     sprintf(c_clean_file, "%s/.clean", c_dir_binary);
     DBFILE(fdb_objects, "objects");
@@ -269,6 +270,7 @@ void init_new_db(void) {
     init_bitmaps();
     sync_index();
     db_is_clean();
+    UNLOCK_DB("init_new_db")
 }
 
 static void display_bitmap()
@@ -336,14 +338,18 @@ static void dump_copy (off_t start, Int blocks)
 
     if (i == start+blocks) return;
 
-    if (fseek(database_file, BLOCK_OFFSET (start), SEEK_SET))
+    if (fseek(database_file, BLOCK_OFFSET (start), SEEK_SET)) {
+	UNLOCK_DB("dump_copy")
         panic("fseek(\"%s\") in copy: %s", database_file, strerror(errno));
+    }
 
     /* PORTABILITY WARNING : THIS FSEEK MAKES THE FILE LONGER IN SOME CASES.
        Checked on Solaris, should work on others. */
 
-    if (fseek(dump_db_file,  BLOCK_OFFSET (start), SEEK_SET))
+    if (fseek(dump_db_file,  BLOCK_OFFSET (start), SEEK_SET)) {
+	UNLOCK_DB("dump_copy")
         panic("fseek(\"%s\") in copy: %s", dump_db_file, strerror(errno));
+    }
     for (i=0; i<blocks; i++) {
 	fread (buf, 1, BLOCK_SIZE, database_file);
 	fwrite (buf, 1, BLOCK_SIZE, dump_db_file);
@@ -392,10 +398,14 @@ Int dump_some_blocks (Int maxblocks)
     while (maxblocks) {
 	if ( (dump_bitmap[last_dumped >> 3] & (1 << (last_dumped & 7))) ) {
 	    if (dofseek) {
-		if (fseek(database_file, BLOCK_OFFSET (last_dumped), SEEK_SET))
-                   panic("fseek(\"%s\"..): %s", database_file, strerror(errno));
-		if (fseek(dump_db_file,  BLOCK_OFFSET (last_dumped), SEEK_SET))
-                   panic("fseek(\"%s\"..): %s", dump_db_file, strerror(errno));
+		if (fseek(database_file, BLOCK_OFFSET (last_dumped), SEEK_SET)) {
+		    UNLOCK_DB("dump_some_blocks")
+                    panic("fseek(\"%s\"..): %s", database_file, strerror(errno));
+		}
+		if (fseek(dump_db_file,  BLOCK_OFFSET (last_dumped), SEEK_SET)) {
+		    UNLOCK_DB("dump_some_blocks")
+                    panic("fseek(\"%s\"..): %s", dump_db_file, strerror(errno));
+		}
 		dofseek=0;
 	    }
 	    fread (buf, 1, BLOCK_SIZE, database_file);
@@ -407,8 +417,10 @@ Int dump_some_blocks (Int maxblocks)
 	    dofseek=1;
 
 	if (last_dumped++ >= dump_blocks) {
-	    if (fclose (dump_db_file))
+	    if (fclose (dump_db_file)) {
+		UNLOCK_DB("dump_some_blocks")
 	        panic("Unable to close dump file '%s'", dump_db_file);
+	    }
 	    dump_db_file = NULL;
 	    free (dump_bitmap);
 	    dump_bitmap=NULL;
@@ -514,8 +526,10 @@ Int db_get(Obj *object, Long objnum)
     LOCK_DB("db_get")
 
     /* seek to location */
-    if (fseek(database_file, offset, SEEK_SET))
+    if (fseek(database_file, offset, SEEK_SET)) {
+	UNLOCK_DB("db_get")
 	return 0;
+    }
 
     buf = buffer_new(size);
     buf->len = size;
@@ -666,10 +680,12 @@ Int db_del(Long objnum)
 
 void db_close(void)
 {
+    LOCK_DB("db_close")
     lookup_close();
     fclose(database_file);
     efree(bitmap);
     db_is_clean();
+    UNLOCK_DB("db_close")
 }
 
 void db_flush(void)
@@ -709,8 +725,10 @@ static void db_is_clean(void) {
 
     /* Create 'clean' file. */
     fp = open_scratch_file(c_clean_file, "wb");
-    if (!fp)
+    if (!fp) {
+	UNLOCK_DB("db_is_clean")
 	panic("Cannot create file 'clean'.");
+    }
     write_clean_file(fp);
     close_scratch_file(fp);
     db_clean = 1;
@@ -719,8 +737,10 @@ static void db_is_clean(void) {
 static void db_is_dirty(void) {
     if (db_clean) {
 	/* Remove 'clean' file. */
-	if (unlink(c_clean_file) == -1)
+	if (unlink(c_clean_file) == -1) {
+	    UNLOCK_DB("db_is_clean")
 	    panic("Cannot remove file 'clean'.");
+	}
 	db_clean = 0;
     }
 }

@@ -284,6 +284,7 @@ uLong cache_search;
 
 /* Keeps track of objnum for next object in database. */
 Long db_top;
+Long num_objects;
 
 /* Validity count for method cache (incrementing this count invalidates all
  * cache entries. */
@@ -341,6 +342,7 @@ extern Int     object_set_method_access(Obj * object, Long name, Int access);
 
 /* variables */
 extern Long db_top;
+extern Long num_objects;
 extern uLong cache_search;
 
 #endif /* _object_ */

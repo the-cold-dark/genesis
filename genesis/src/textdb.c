@@ -110,7 +110,7 @@ extern Bool print_warn;
 INTERNAL Method * get_method(FILE * fp, Obj * obj, char * name);
 char * strchop(char * str, Int len);
 INTERNAL void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames);
-void blank_and_print_obj(char * what, Obj * obj);
+void blank_and_print_obj(char * what, Float percent_done, Obj * obj);
 
 /*
 // ------------------------------------------------------------------------
@@ -1170,6 +1170,11 @@ void compile_cdc_file(FILE * fp) {
              * s;
     Obj      * obj,
              * root;
+    Long       filesize = 0, filepos = 0;
+    struct stat statbuf;
+
+    fstat(fileno(fp), &statbuf);
+    filesize = statbuf.st_size;
 
     /* start at line 0 */
     line_count = 0;
@@ -1266,7 +1271,7 @@ void compile_cdc_file(FILE * fp) {
                 if (cur_obj != NULL)
                     cache_discard(cur_obj);
                 if (print_objs)
-                    blank_and_print_obj("Compiling ", obj);
+                    blank_and_print_obj("Compiling ", (100.0 * ftell(fp)) / filesize, obj);
                 cur_obj = obj;
             }
         } else if (MATCH(s, "parent", 6)) {
@@ -1408,6 +1413,7 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
     Int      first,
              i;
     Method * meth;
+    static Long objects_decompiled = 0;
 
     dobj.type = OBJNUM;
     dobj.u.objnum = objnum;
@@ -1462,7 +1468,7 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
 
     /* let them know? */
     if (print_objs)
-        blank_and_print_obj("Decompiling ", obj);
+        blank_and_print_obj("Decompiling ", (100.0 * ++objects_decompiled) / num_objects, obj);
 
     /* put 'new' on everything except the system objects */
     if (!is_system(obj->objnum))
@@ -1623,7 +1629,7 @@ INTERNAL char * method_definition(Method * m) {
     return buf;
 }
 
-void blank_and_print_obj(char * what, Obj * obj) {
+void blank_and_print_obj(char * what, Float percent_done, Obj * obj) {
     register int x;
     static Int len = 0;
     Number_buf nbuf;
@@ -1638,7 +1644,7 @@ void blank_and_print_obj(char * what, Obj * obj) {
     fputs("    \r", stdout);
 
     /* let them know whats up now */
-    fputs(what, stdout);
+    fprintf(stdout, "%s(%.1f%%) ", what, percent_done);
     if (obj->objname == NOT_AN_IDENT) {
         sn = long_to_ascii(obj->objnum, nbuf);
         fputc('#', stdout);

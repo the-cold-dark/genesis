@@ -56,6 +56,7 @@ char c_clean_file[255];
 static Int db_clean;
 
 extern Long db_top;
+extern Long num_objects;
 
 /* this isn't the most graceful way, but *shrug* */
 #define WARN(_s_) { \
@@ -93,6 +94,7 @@ extern Long db_top;
 #define sync_index() { \
         objnum = lookup_first_objnum(); \
         while (objnum != NOT_AN_IDENT) { \
+	    ++num_objects; \
             if (!lookup_retrieve_objnum(objnum, &offset, &size)) \
                 FAIL("Database index (\"%s/index\") is inconsistent.\n"); \
             if (objnum >= db_top) \
@@ -527,6 +529,7 @@ Int db_put(Obj *obj, Long objnum, Long *sizewritten)
 	    new_offset = old_offset;
 	}
     } else {
+	++num_objects;
 	buf = buffer_new(0);
 	buf = pack_object(buf, obj);
 	new_size = buf->len;
@@ -575,6 +578,7 @@ Int db_del(Long objnum)
     if (!lookup_remove_objnum(objnum))
 	return 0;
 
+    --num_objects;
     db_is_dirty();
 
     /* Mark free space in bitmap */

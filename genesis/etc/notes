@@ -58,6 +58,7 @@ RELEASE INFORMATION:
         (Bruce, Brad)
       * Added a cache_check cache in handle_varcmd (Brad)
       * Minor code cleanups in binarydb.c (Brad)
+      * Add percent done to coldcc compile and decompile (Brad)
       * valid() works on frobs (normal and handled-frobs). Tests
         added to the test suite. (Bruce)
       * Error handling optimization to shift expense from throw()

@@ -89,8 +89,7 @@ inline void cache_dirty_object(Obj *obj)
     obj->dirty++;
     if ((cache_watch_object == obj->objnum) && !(obj->dirty % cache_watch_count))
     {
-	cList *stack = task_stack(cur_frame, FALSE);
-	log_task_stack(task_id, stack, write_err);
+	log_current_task_stack(FALSE, write_err);
     }
     if (obj->dirty > 1)
 	return;

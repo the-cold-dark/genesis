@@ -73,3 +73,37 @@ void write_err(char *fmt, ...) {
     string_discard(str);
 }
 
+void log_current_task_stack(Bool want_lineno, void (logroutine)(char*,...))
+{
+    cList * stack;
+
+    stack = task_stack(cur_frame, want_lineno);
+    log_task_stack(task_id, stack, logroutine);
+    list_discard(stack);
+}
+
+void log_all_task_stacks(Bool want_lineno, void (logroutine)(char*,...))
+{
+    VMState * vm;
+    cList   * stack;
+
+    (logroutine)("Current task:");
+    stack = task_stack(cur_frame, want_lineno);
+    log_task_stack(task_id, stack, logroutine);
+    list_discard(stack);
+
+    (logroutine)("Suspended tasks:");
+    for (vm = suspended;  vm;  vm = vm->next) {
+        stack = task_stack(vm->cur_frame, want_lineno);
+        log_task_stack(vm->task_id, stack, logroutine);
+        list_discard(stack);
+    }
+
+    (logroutine)("Paused tasks:");
+    for (vm = preempted;  vm;  vm = vm->next) {
+        stack = task_stack(vm->cur_frame, want_lineno);
+        log_task_stack(vm->task_id, stack, logroutine);
+        list_discard(stack);
+    }
+}
+

@@ -238,6 +238,7 @@ COLDC_FUNC(config) {
 	else if (SYM1 == cachelog_id)	rval = cache_log_flag;
 	else if (SYM1 == cachewatch_id)	rval = cache_watch_object;
 	else if (SYM1 == cachewatchcount_id)	rval = cache_watch_count;
+        else if (SYM1 == log_malloc_size_id)    rval = log_malloc_size;
 	else
 	    THROW((type_id, "Invalid configuration name."))
     } else {
@@ -249,6 +250,7 @@ COLDC_FUNC(config) {
 	else if (SYM1 == cachelog_id)	rval = cache_log_flag     = INT2;
 	else if (SYM1 == cachewatch_id)	rval = cache_watch_object = INT2;
 	else if (SYM1 == cachewatchcount_id)	rval = cache_watch_count = INT2;
+        else if (SYM1 == log_malloc_size_id)    rval = log_malloc_size = INT2;
 	else
 	    THROW((type_id, "Invalid configuration name."))
     }

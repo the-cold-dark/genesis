@@ -53,6 +53,8 @@ void init_defs(void) {
     str_hostname = string_new(0);
     str_release = string_from_chars(VERSION_RELEASE, strlen(VERSION_RELEASE));
     str_system = string_from_chars(SYSTEM_TYPE, strlen(SYSTEM_TYPE));
+
+    log_malloc_size = 0;
 }
 
 #undef INIT_VAR

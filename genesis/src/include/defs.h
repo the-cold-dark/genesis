@@ -450,6 +450,7 @@ Int  limit_objswap;
 Int  cache_log_flag;
 Int  cache_watch_count;
 cObjnum cache_watch_object;
+Int  log_malloc_size;
 
 #else
 extern jmp_buf main_jmp;
@@ -490,6 +491,7 @@ extern Int  limit_objswap;
 extern Int  cache_log_flag;
 extern Int  cache_watch_count;
 extern cObjnum cache_watch_object;
+extern Int  log_malloc_size;
 #endif
 
 #endif

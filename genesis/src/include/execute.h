@@ -217,7 +217,6 @@ VMState *task_lookup(Long tid);
 cList * task_list(void);
 cList * task_stack(Frame * frame_to_trace, Bool calculate_line_numbers);
 void log_task_stack(Long taskid, cList * stack, void (logroutine)(char*,...));
-void log_all_task_stacks(Bool want_lineno, void (logroutine)(char*,...));
 void run_paused_tasks(void);
 void bind_opcode(Int opcode, cObjnum objnum);
 VMState * vm_current(void);

@@ -537,7 +537,7 @@ cList * task_list(void) {
 /*
 // ---------------------------------------------------------------
 */
-cList * task_stack(Frame * frame_to_trace, Bool calculate_line_numbers) {
+cList * task_stack(Frame * frame_to_trace, Bool want_line_numbers) {
     cList * r;
     cData   d,
            * list;
@@ -557,10 +557,10 @@ cList * task_stack(Frame * frame_to_trace, Bool calculate_line_numbers) {
         list[2].type = SYMBOL;
         list[2].u.symbol = ident_dup(f->method->name);
         list[3].type = INTEGER;
-        if (calculate_line_numbers)
+        if (want_line_numbers)
             list[3].u.val = line_number(f->method, f->pc - 1);
         else
-            list[3].u.val = 0;
+            list[3].u.val = -1;
         list[4].type = INTEGER;
         list[4].u.val = (Long) f->pc;
 
@@ -609,38 +609,17 @@ void log_task_stack(Long taskid, cList * stack, void (logroutine)(char*,...))
         lineno_val = lineno->u.val;
         opcode_val = opcode->u.val;
 
-	(logroutine)("  $%s<$%s>.%s(): line: %d opcode: %d", 
-                     sender_name, caller_name, method_name,
-                     lineno_val, opcode_val);
+	if (lineno_val == -1)
+            (logroutine)("  $%s<$%s>.%s(): opcode: %d",
+                         sender_name, caller_name, method_name,
+                         opcode_val);
+	else
+	    (logroutine)("  $%s<$%s>.%s(): line: %d opcode: %d", 
+                         sender_name, caller_name, method_name,
+                         lineno_val, opcode_val);
     }
 
     (logroutine)("---");
-}
-
-void log_all_task_stacks(Bool want_lineno, void (logroutine)(char*,...))
-{
-    VMState * vm;
-    cList   * stack;
-
-    (logroutine)("Current task:");
-    stack = task_stack(cur_frame, want_lineno);
-    log_task_stack(task_id, stack, logroutine);
-    list_discard(stack);
-
-    (logroutine)("Suspended tasks:");
-    for (vm = suspended;  vm;  vm = vm->next) {
-        stack = task_stack(vm->cur_frame, want_lineno);
-        log_task_stack(vm->task_id, stack, logroutine);
-        list_discard(stack);
-    }
-
-    (logroutine)("Paused tasks:");
-    for (vm = preempted;  vm;  vm = vm->next) {
-        stack = task_stack(vm->cur_frame, want_lineno);
-        log_task_stack(vm->task_id, stack, logroutine);
-        list_discard(stack);
-    }
-
 }
 
 /*

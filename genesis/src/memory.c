@@ -64,6 +64,8 @@ struct oversized {
 
 static Tlist *trays[NUM_TRAYS];
 
+static Bool inside_emalloc_logger = FALSE;
+
 #ifdef DOFUNC_FREE
 void efree(void *block) {
     free(block);
@@ -77,6 +79,16 @@ void * emalloc(size_t size) {
     if (!ptr)
         panic("emalloc(%lX) failed.", size);
 
+    if (log_malloc_size &&
+        (log_malloc_size <= size) &&
+        !inside_emalloc_logger)
+    {
+        inside_emalloc_logger = TRUE;
+        write_err("Allocation of size %l at:", size);
+        log_current_task_stack(FALSE, write_err);
+        inside_emalloc_logger = FALSE;
+    }
+
     return ptr;
 }
 
@@ -87,6 +99,17 @@ void *erealloc(void *ptr, size_t size)
     newptr = realloc(ptr, size);
     if (!newptr)
 	panic("erealloc(%ld) failed.", size);
+
+    if (log_malloc_size &&
+        (log_malloc_size <= size) &&
+        !inside_emalloc_logger)
+    {
+        inside_emalloc_logger = TRUE;
+        write_err("Allocation of size %l at:", size);
+        log_current_task_stack(FALSE, write_err);
+        inside_emalloc_logger = FALSE;
+    }
+
     return newptr;
 }
 

@@ -103,6 +103,9 @@ void catch_signal(int sig) {
 
     write_err("Caught signal %d: %S", sig, sigstr);
 
+    string_discard(sigstr);
+
+
     /* figure out what to do */
     switch(sig) {
 #ifdef __UNIX__
@@ -128,8 +131,10 @@ void catch_signal(int sig) {
             }
             list_discard(l);
 
-            /* now cancel the current task */
-            task_cancel(task_id);
+            /* now cancel the current task if it is valid */
+            if (task_lookup(task_id) != NULL) {
+                task_cancel(task_id);
+            }
 
             /* jump back to the main loop */
             longjmp(main_jmp, 1);
@@ -162,7 +167,7 @@ void catch_signal(int sig) {
 
     /* send a message to the system object */
     arg1.type = SYMBOL;
-    arg1.u.symbol = ident_get(string_chars(sigstr));
+    arg1.u.symbol = ident_get(sptr);
     task(SYSTEM_OBJNUM, signal_id, 1, &arg1);
 
     if (do_shutdown)

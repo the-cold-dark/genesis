@@ -246,8 +246,8 @@ void init_binary_db(void) {
     lookup_open(fdb_index, 0);
     init_bitmaps();
     sync_index();
-    fprintf (errfile, "[%s] Binary database free space: %.2f%%\n", timestamp(NULL),
-		(100.0*(1.0-(float)allocated_blocks/(float)bitmap_blocks)));
+    fprintf (errfile, "[%s] Binary database free space: %.2f%%\n",
+             timestamp(NULL), (100.0 * simble_fragmentation()));
 
     db_clean = 1;
 }
@@ -319,7 +319,7 @@ static void simble_mark(off_t start, Int size)
     Int i, blocks;
 
     blocks = NEEDED(size, BLOCK_SIZE);
-    allocated_blocks+=blocks;
+    allocated_blocks += blocks;
 
     while (start + blocks > bitmap_blocks)
 	simble_grow_bitmap(bitmap_blocks + DB_BITBLOCK);
@@ -330,8 +330,8 @@ static void simble_mark(off_t start, Int size)
 
 /* This routine copies the object from the current binary to the
    dump binary. It will first check whether copying is needed.
-   Called from simble_unmark and simble_put (to prevent dirtying the undumped
-   objects) */
+   Called from simble_unmark and simble_put (to prevent dirtying
+   the undumped objects) */
 
 static void dump_copy (off_t start, Int blocks)
 {
@@ -812,6 +812,10 @@ void init_core_objects(void) {
     d->u.objnum = ROOT_OBJNUM;
     _check_obj(SYSTEM_OBJNUM, parents, "sys");
     list_discard(parents);
+}
+
+Float simble_fragmentation(void) {
+    return 1.0 - ((float)allocated_blocks/(float)bitmap_blocks);
 }
 
 #undef _binarydb_

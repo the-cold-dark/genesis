@@ -340,6 +340,7 @@ COLDC_FUNC(cache_stats) {
         entry = ancestor_cache_info();
 #else
 	list = list_new(0);
+	entry = list_new(0);
 #endif
         list_entry.type = LIST;
         list_entry.u.list = entry;
@@ -351,6 +352,7 @@ COLDC_FUNC(cache_stats) {
         entry = method_cache_info();
 #else
 	list = list_new(0);
+	entry = list_new(0);
 #endif
 	list_entry.type = LIST;
         list_entry.u.list = entry;

@@ -25,8 +25,10 @@ void uninit_sig(void) {
     signal(SIGILL,  SIG_DFL);
     signal(SIGINT,  SIG_DFL);
     signal(SIGTERM, SIG_DFL);
+#ifndef USING_GLIBC_2_0
     signal(SIGUSR1, SIG_DFL);
     signal(SIGUSR2, SIG_DFL);
+#endif
 #ifdef __UNIX__
     signal(SIGQUIT, SIG_DFL);
     signal(SIGHUP,  SIG_DFL);
@@ -40,8 +42,10 @@ void init_sig(void) {
     signal(SIGILL,  catch_signal);
     signal(SIGINT,  catch_signal);
     signal(SIGTERM, catch_signal);
+#ifndef USING_GLIBC_2_0
     signal(SIGUSR1, catch_signal);
     signal(SIGUSR2, catch_signal);
+#endif
     signal(SIGFPE,  catch_SIGFPE);
 #ifdef __UNIX__
     signal(SIGQUIT, catch_signal);
@@ -82,8 +86,10 @@ char *sig_name(int sig) {
         case SIGHUP:  return "HUP";
 #endif
         case SIGTERM: return "TERM";
+#ifndef USING_GLIBC_2_0
         case SIGUSR1: return "USR1";
         case SIGUSR2: return "USR2";
+#endif
         default:      return "Unknown";
     }
     return NULL;
@@ -114,10 +120,15 @@ void catch_signal(int sig) {
             handle_connection_output();
             flush_files();
 #endif
+#ifndef USING_GLIBC_2_0
         case SIGUSR2:
             /* let the db do what it wants from here */
             break;
-        case SIGUSR1: {
+        case SIGUSR1:
+#else
+	case SIGILL:
+#endif
+        {
             cData * d;
             cList * l;
  
@@ -140,10 +151,12 @@ void catch_signal(int sig) {
             longjmp(main_jmp, 1);
             break;
         }
+#ifndef USING_GLIBC_2_0
         case SIGILL:
             /* lets panic and hopefully shutdown without frobbing the db */
             panic(sig_name(sig));
             break;
+#endif
         case SIGTERM:
             if (running) {
                 write_err("*** Attempting normal shutdown ***");

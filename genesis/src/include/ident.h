@@ -5,6 +5,8 @@
 #ifndef cdc_ident_h
 #define cdc_ident_h
 
+#include "string_tab.h"
+
 #define NOT_AN_IDENT -1
 
 /* error id's */
@@ -42,13 +44,16 @@ extern Ident signal_id;
 /* used by cdc_string, set here incase they are needed elsewhere */
 extern Ident left_id, right_id, both_id;
 
+extern StringTab *idents;
+
 void   init_ident(void);
-Ident  ident_get(char *s);
-Ident  ident_get_string(cStr * str);
-void   ident_discard(Ident id);
-Ident  ident_dup(Ident id);
-char * ident_name(Ident id);
-uLong  ident_hash(Ident id);
+
+#define ident_get(s)		string_tab_get(idents, s)
+#define ident_get_string(str)	string_tab_get_string(idents, str)
+#define ident_discard(id)	string_tab_discard(idents, id)
+#define ident_dup(id)		string_tab_dup(idents, id)
+#define ident_name(id)		string_tab_name(idents, id)
+#define ident_hash(id)		string_tab_hash(idents, id)
 
 #endif
 

@@ -1140,42 +1140,41 @@ EOF
 fi
 
 
-#echo $ac_n "  Checking for inline""... $ac_c" 1>&6
-#if eval "test \"`echo '$''{'ac_cv_c_inline'+set}'`\" = set"; then
-#  echo $ac_n "(cached) $ac_c" 1>&6
-#else
-#  ac_cv_c_inline=no
-#for ac_kw in inline __inline__ __inline; do
-#  cat > conftest.$ac_ext <<EOF
-##line 1203 "configure"
-##include "confdefs.h"
-#
-#int main() { return 0; }
-#int t() {
-#} $ac_kw foo() {
-#; return 0; }
-#EOF
-#if eval $ac_compile; then
-#  rm -rf conftest*
-#  ac_cv_c_inline=$ac_kw; break
-#fi
-#rm -f conftest*
-#
-#done
-#
-#fi
-#echo "$ac_t""$ac_cv_c_inline" 1>&6
-#case "$ac_cv_c_inline" in
-#  inline | yes) ;;
-#  no) cat >> confdefs.h <<\EOF
-##define inline 
-#EOF
-# ;;
-#  *)  cat >> confdefs.h <<EOF
-##define inline $ac_cv_c_inline
-#EOF
-# ;;
-#esac
+echo $ac_n "  Checking for inline""... $ac_c" 1>&6
+if eval "test \"`echo '$''{'ac_cv_c_inline'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  ac_cv_c_inline=no
+for ac_kw in inline __inline__ __inline; do
+  cat > conftest.$ac_ext <<EOF
+#line 1203 "configure"
+#include "confdefs.h"
+
+int main() { return 0; }
+int t() {
+} $ac_kw foo() {
+; return 0; }
+EOF
+if eval $ac_compile; then
+  rm -rf conftest*
+  ac_cv_c_inline=$ac_kw; break
+fi
+rm -f conftest*
+done
+
+fi
+echo "$ac_t""$ac_cv_c_inline" 1>&6
+case "$ac_cv_c_inline" in
+  inline | yes) ;;
+  no) cat >> confdefs.h <<\EOF
+#define inline 
+EOF
+ ;;
+  *)  cat >> confdefs.h <<EOF
+#define inline $ac_cv_c_inline
+EOF
+ ;;
+esac
 
 echo $ac_n "  Checking for working const""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_c_const'+set}'`\" = set"; then

@@ -25,6 +25,7 @@ RELEASE INFORMATION:
         given frame and to generate either line numbers or 
         opcode index values. (Bruce)
       * Add log_task_stack() callable from C. (Bruce)
+      * Re-enable AC_INLINE check in configure (Bruce)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

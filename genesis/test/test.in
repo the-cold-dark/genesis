@@ -2303,12 +2303,17 @@ eval {
 	// Output
 
 		String test 7
-		  strsed("abcde", "(\\A\[[0-9;]+m|\\)", "", "g") --> DISABLED, CRASH BUG
+		  strsed("abcde", "(\\A\[[0-9;]+m|\\)", "", "g") --> ~regexp error caught
 
 eval {
     dblog("String test 7");
-    dblog("  strsed(\"abcde\", \"(\\\\A\[[0-9;]+m|\\\\)\", \"\", \"g\") --> DISABLED, CRASH BUG");
-	//" + toliteral(strsed("abcde", "(\\A\[[0-9;]+m|\\)", "", "g")));
+    catch any {
+        dblog("  strsed(\"abcde\", \"(\\\\A\[[0-9;]+m|\\\\)\", \"\", \"g\") --> should have caught an error, got '" +
+              toliteral(strsed("abcde", "(\\A\[[0-9;]+m|\\)", "", "g")) +
+              "' instead.");
+    } with {
+        dblog("  strsed(\"abcde\", \"(\\\\A\[[0-9;]+m|\\\\)\", \"\", \"g\") --> " + toliteral(error()) + " error caught");
+    }
 };
 
 	// String test 8

@@ -214,7 +214,7 @@ void init_binary_db(void) {
                   fdb_index[BUF];
     off_t         offset;
     Int           size;
-    Long          objnum;
+    cObjnum       objnum;
 
 #ifdef USE_CLEANER_THREAD
     pthread_mutex_init (&db_mutex, NULL);
@@ -258,7 +258,7 @@ void init_new_db(void) {
                   fdb_index[BUF];
     off_t         offset;
     Int           size;
-    Long          objnum;
+    cObjnum       objnum;
 
 #ifdef USE_CLEANER_THREAD
     pthread_mutex_init (&db_mutex, NULL);
@@ -520,7 +520,7 @@ static Int simble_alloc(Int size)
     }
 }
 
-Int simble_get(Obj *object, Long objnum, Long *sizeread)
+Int simble_get(Obj *object, cObjnum objnum, Long *sizeread)
 {
     off_t offset;
     Int size;
@@ -574,7 +574,7 @@ static Int check_free_blocks(Int blocks_needed, Int b)
     return count == blocks_needed;
 }
 
-Int simble_put(Obj *obj, Long objnum, Long *sizewritten)
+Int simble_put(Obj *obj, cObjnum objnum, Long *sizewritten)
 {
     cBuf *buf;
     off_t old_offset, new_offset;
@@ -657,7 +657,7 @@ Int simble_put(Obj *obj, Long objnum, Long *sizewritten)
     return 1;
 }
 
-Int simble_check(Long objnum)
+Int simble_check(cObjnum objnum)
 {
     off_t offset;
     Int size;
@@ -665,7 +665,7 @@ Int simble_check(Long objnum)
     return lookup_retrieve_objnum(objnum, &offset, &size);
 }
 
-Int simble_del(Long objnum)
+Int simble_del(cObjnum objnum)
 {
     off_t offset;
     Int size;
@@ -774,10 +774,10 @@ static void simble_flag_as_dirty(void) {
 /* checks for #1/$root and #0/$sys, adds them if they
    do not exist.  Call AFTER init_*_db has been called */
 
-static void _check_obj(Long objnum, cList * parents, char * name) {
-    Obj * obj = cache_retrieve(objnum),
+static void _check_obj(cObjnum objnum, cList * parents, char * name) {
+    Obj      * obj = cache_retrieve(objnum),
              * obj2;
-    Long       other;
+    cObjnum    other;
     Ident      id = ident_get(name);
 
     if (!obj)

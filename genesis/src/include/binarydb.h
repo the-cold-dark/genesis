@@ -22,10 +22,10 @@
 void   init_binary_db(void);
 void   init_new_db(void);
 void   init_core_objects(void);
-Int    simble_get(Obj * object, Long name, Long *obj_size);
-Int    simble_put(Obj * object, Long name, Long *obj_size);
-Int    simble_check(Long name);
-Int    simble_del(Long name);
+Int    simble_get(Obj * object, cObjnum objnum, Long *obj_size);
+Int    simble_put(Obj * object, cObjnum objnum, Long *obj_size);
+Int    simble_check(cObjnum objnum);
+Int    simble_del(cObjnum objnum);
 void   simble_close(void);
 void   simble_flush(void);
 Float  simble_fragmentation(void);

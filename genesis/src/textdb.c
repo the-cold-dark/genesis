@@ -40,6 +40,7 @@ Int        use_natives;
 Long       line_count;
 Long       method_start;
 Obj * cur_obj;
+static Hash * dump_hash;
 extern Bool print_objs;
 extern Bool print_invalid;
 extern Bool print_warn;
@@ -142,42 +143,15 @@ struct nh_s {
     nh_t  * next;
 };
 
-#if 0
 struct holder_s {
     Long       objnum;
     cStr * str;
     holder_t * next;
 };
 
-holder_t * holders = NULL;
-Long num_holders = 0;
-#else
-cDict *holders;
-#endif
+static holder_t * holders = NULL;
 
 nh_t * nhs = NULL;
-
-#if 0
-INTERNAL void remove_from_holder(cObjnum objnum) {
-    holder_t *holder = holders, *prev = NULL;
-
-    while (holder && holder->objnum != objnum) {
-	prev = holder;
-	holder = holder->next;
-    }
-
-    if (holder) {
-	if (prev) {
-	    prev->next = holder->next;
-	} else {
-	    holders = holders->next;
-	}
-	string_discard(holder->str);
-	free(holder);
-	--num_holders;
-    }
-}
-#endif
 
 INTERNAL Int add_objname(char * str, Long objnum, Int skip_lookup) {
     Ident   id = ident_get(str);
@@ -196,16 +170,14 @@ INTERNAL Int add_objname(char * str, Long objnum, Int skip_lookup) {
        the name on the object after it is defined */
     obj = cache_retrieve(objnum);
     if (!obj) {
-        cData key, value;
+        holder_t * holder = (holder_t *) malloc(sizeof(holder_t));
 
         lookup_store_name(id, objnum);
 
-	key.type = OBJNUM;
-	key.u.objnum = objnum;
-	value.type = STRING;
-	value.u.str = string_from_chars(str, strlen(str));
-        holders = dict_add(holders, &key, &value);
-	string_discard(value.u.str);
+        holder->objnum = objnum;
+        holder->str = string_from_chars(ident_name(id), strlen(ident_name(id)));
+        holder->next = holders;
+        holders = holder;
     } else {
         if (num == objnum)
             obj->objname = ident_dup(id);
@@ -234,56 +206,50 @@ cObjnum get_object_name(Ident id) {
 
 
 INTERNAL void cleanup_holders(void) {
-    cList    * keys, * values;
-    cData    * key, * value;
+    holder_t * holder = holders,
+             * old = NULL;
     Long       objnum;
-#if 0
     Obj      * obj;
-#endif
     Ident      id;
-    off_t      offset;
-    Int        size;
+    cData      key;
 
-    keys = dict_keys(holders);
-    values = dict_values(holders);
-    for (key = list_first(keys), value = list_first(values);
-	key && value;
-	key = list_next(keys, key), value = list_next(values, value)) {
-        id = ident_get(string_chars(value->u.str));
-        if (!lookup_retrieve_name(id, &objnum)) {
-            if (print_warn)
-                printf("\rWARNING: Name $%s for object #%d disapppeared.\n",
-                       ident_name(id), (int) objnum);
-        } else if (objnum != key->u.objnum) {
-            if (print_warn)
-               printf("\rWARNING: Name $%s is no longer bound to object #%d.\n",
-                      ident_name(id), (int) objnum);
-        } else {
-#if 0
-            obj = cache_retrieve(holder->objnum);
-            if (obj) {
-                if (obj->objname == NOT_AN_IDENT) {
-		    cache_dirty_object(obj);
-                    obj->objname = ident_dup(id);
-		}
-                cache_discard(obj);
-	    } else {
-#else
-            if (!lookup_retrieve_objnum(objnum, &offset, &size)) {
-#endif
+    key.type = OBJNUM;
+
+    while (holder != NULL) {
+        key.u.objnum = holder->objnum;
+        if (hash_find(dump_hash, &key) == F_FAILURE) {
+            id = ident_get(string_chars(holder->str));
+            if (!lookup_retrieve_name(id, &objnum)) {
                 if (print_warn)
-                    printf("\rWARNING: Object $%s (#%d) was never defined.\n",
+                    printf("\rWARNING: Name $%s for object #%d disapppeared.\n",
                            ident_name(id), (int) objnum);
-                lookup_remove_name(id);
+            } else if (objnum != holder->objnum) {
+                if (print_warn)
+                   printf("\rWARNING: Name $%s is no longer bound to object #%d.\n",
+                          ident_name(id), (int) objnum);
+            } else {
+                obj = cache_retrieve(holder->objnum);
+                if (obj) {
+                    if (obj->objname == NOT_AN_IDENT) {
+                        cache_dirty_object(obj);
+                        obj->objname = ident_dup(id);
+                    }
+                    cache_discard(obj);
+                } else {
+                    if (print_warn)
+                        printf("\rWARNING: Object $%s (#%d) was never defined.\n",
+                               ident_name(id), (int) objnum);
+                    lookup_remove_name(id);
+                }
             }
+            ident_discard(id);
         }
 
-        ident_discard(id);
+        string_discard(holder->str);
+        old = holder;
+        holder = holder->next;
+        free(old);
     }
-    list_discard(keys);
-    list_discard(values);
-    dict_discard(holders);
-    holders = NULL;
 }
 
 /* only call with a method which declars a MF_NATIVE flag */
@@ -704,8 +670,7 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
 
     d.type = OBJNUM;
     d.u.objnum = objnum;
-    if (dict_contains(holders, &d))
-        holders = dict_del(holders, &d);
+    dump_hash = hash_add(dump_hash, &d);
 
     /* if we should, add the name.  If it already has one, we just replace it.*/
     if (objnum != ROOT_OBJNUM && objnum != SYSTEM_OBJNUM) {
@@ -1241,7 +1206,7 @@ void compile_cdc_file(FILE * fp) {
 
     fstat(fileno(fp), &statbuf);
     filesize = statbuf.st_size;
-    holders = dict_new_empty();
+    dump_hash = hash_new(250000);
 
     /* start at line 0 */
     line_count = 0;
@@ -1382,7 +1347,7 @@ void compile_cdc_file(FILE * fp) {
     fflush(stdout);
     write_err("Syncing binarydb...");
     cache_sync();
-    write_err("Cleaning up name holders (%d)...", holders->keys->len);
+    write_err("Cleaning up name holders...");
     cleanup_holders();
 }
 
@@ -1391,7 +1356,6 @@ void compile_cdc_file(FILE * fp) {
 // decompile the binary db to a text file
 */
 Int last_length; /* used in doing fancy formatting */
-Hash * dump_hash;
 void dump_object(Long objnum, FILE *fp, Bool objnames);
 INTERNAL char * method_definition(Method * m);
 
@@ -1447,7 +1411,6 @@ Int text_dump(Bool objnames) {
     dump_object(ROOT_OBJNUM, fp, objnames);
     END_SEARCH();
 #endif
-    holders = dict_new_empty();
     dump_hash = hash_new(0);
     dump_object(ROOT_OBJNUM, fp, objnames);
     hash_discard(dump_hash);

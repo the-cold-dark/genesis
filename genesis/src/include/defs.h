@@ -27,6 +27,7 @@
 // precision, but is not necessarily recommended unless you know your
 // system can handle 64bit + words.  You do not need to specify both
 // (You can specify just USE_BIG_FLOATS, and not numbers).
+// This will increase the size of cData from 8 bytes to 12.
 */
 #if DISABLED
 #  define USE_BIG_FLOATS

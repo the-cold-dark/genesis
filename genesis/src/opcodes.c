@@ -47,13 +47,18 @@ static Op_info op_info[] = {
     { ONE,              "ONE",             op_one },
     { INTEGER,          "INTEGER",         op_integer, INTEGER },
 
+#ifdef USE_BIG_FLOATS
+    /* Big floats are the size of two ints */
+    { FLOAT,		"FLOAT",	   op_float, INTEGER, INTEGER },
+#else
     /* By the time it examines the arg, the FLOAT has already been
        cast into an INTEGER, so we just need to let it know its an INT */
     { FLOAT,            "FLOAT",           op_float, INTEGER },
+#endif
     { STRING,           "STRING",          op_string, STRING },
     { OBJNUM,           "OBJNUM",          op_objnum, INTEGER },
     { SYMBOL,           "SYMBOL",          op_symbol, IDENT },
-    { T_ERROR,            "ERROR",         op_error, IDENT },
+    { T_ERROR,          "ERROR",           op_error, IDENT },
     { OBJNAME,          "OBJNAME",         op_objname, IDENT },
     { GET_LOCAL,        "GET_LOCAL",       op_get_local, VAR },
     { GET_OBJ_VAR,      "GET_OBJ_VAR",     op_get_obj_var, IDENT },

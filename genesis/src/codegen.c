@@ -1225,7 +1225,15 @@ static void compile_expr(Expr *expr)
       case FLOAT:
 
         code(FLOAT);
+#ifdef USE_BIG_FLOATS
+	{
+	    Long *flt = (Long *)(&expr->u.fnum);
+	    code(flt[0]);
+	    code(flt[1]);
+	}
+#else
   	code(*((Long*)(&expr->u.fnum)));
+#endif
 
   	break;
 	

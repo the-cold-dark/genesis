@@ -915,10 +915,6 @@ INTERNAL cList * add_op_arg(cList * out, Int type, Long op, Method * method) {
             d.type = INTEGER;
             d.u.val = op;
             break;
-        case FLOAT:
-            d.type = FLOAT;
-            d.u.fval = *((Float*)(&op));
-            break;
         case T_ERROR:
             d.type = T_ERROR;
             d.u.error = object_get_ident(obj, op);
@@ -961,6 +957,7 @@ INTERNAL cList * add_op_arg(cList * out, Int type, Long op, Method * method) {
         default:
             return out;
 #if DISABLED   /* none of these are used as args in op_table */
+        case FLOAT:
         case LIST:
         case FROB:
         case DICT:

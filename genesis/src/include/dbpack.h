@@ -15,11 +15,15 @@ Int  size_data(cData *data);
 
 Long read_ident(FILE *fp);
 void write_ident(Long id, FILE *fp);
-Long size_ident(Long id);
+Int  size_ident(Long id);
 
 void write_long(Long n, FILE * fp);
 Long read_long(FILE * fp);
 Int  size_long(Long n);
+
+void  write_float(Float n, FILE * fp);
+Float read_float(FILE * fp);
+Int   size_float(Float n);
 
 #endif
 

@@ -31,6 +31,9 @@ RELEASE INFORMATION:
         cache holder array (Brad)
       * Add linefeed to panic() message. (Bruce)
       * panic() now tries to call log_all_task_stacks(). (Bruce)
+      * Integrate patch to support using doubles for the ColdC
+        float type. (Brian, trvial modifications by Bruce and Brad)
+      * Adjust size_* functions to all return Int. (Bruce)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

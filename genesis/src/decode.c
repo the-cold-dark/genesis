@@ -827,8 +827,22 @@ static Expr_list *decompile_expressions_bounded(Int *pos_ptr, Int expr_end)
 	    break;
 
           case FLOAT:
+#ifdef USE_BIG_FLOATS
+	  {
+	      Long flong[2];
+	      Float fnum;
+
+	      flong[0] = the_opcodes[pos + 1];
+	      flong[1] = the_opcodes[pos + 2];
+	      fnum = *((Float *)flong);
+	      
+            stack = expr_list(float_expr(fnum), stack);
+            pos += 3;
+	  }
+#else
             stack = expr_list(float_expr(*((Float*)(&the_opcodes[pos+1]))), stack);
             pos += 2;
+#endif            
             break;
 
 	  case STRING:

@@ -602,7 +602,17 @@ void op_integer(void) {
 }
 
 void op_float(void) {
+#ifdef USE_BIG_FLOATS
+    cFloat fl;
+    Int flong[2];
+    flong[0] = cur_frame->opcodes[cur_frame->pc++];
+    flong[1] = cur_frame->opcodes[cur_frame->pc++];
+
+    fl = *((Float *)flong);
+    push_float(fl);
+#else
     push_float(*((cFloat*)(&cur_frame->opcodes[cur_frame->pc++])));
+#endif    
 }
 
 void op_string(void) {

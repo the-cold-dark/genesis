@@ -146,6 +146,23 @@ Int size_long(Long n)
 #endif
 }
 
+void write_float(Float n, FILE *fp)
+{
+    fwrite(&n, sizeof(Float), 1, fp);
+}
+
+Float read_float(FILE *fp)
+{
+    Float k;
+    
+    fread(&k, sizeof(Float), 1, fp);
+    return k;
+}
+
+Int size_float(Float n)
+{
+    return sizeof(Float);
+}
 
 void write_ident(Long id, FILE *fp)
 {
@@ -189,7 +206,7 @@ Long read_ident(FILE *fp)
     return id;
 }
 
-Long size_ident(Long id)
+Int size_ident(Long id)
 {
     Int len = strlen(ident_name(id));
 
@@ -612,7 +629,7 @@ void pack_data(cData *data, FILE *fp)
 	break;
 
       case FLOAT:
-        write_long(*((Long*)(&data->u.fval)), fp);
+        write_float(data->u.fval, fp);
         break;
 
       case STRING:
@@ -668,11 +685,9 @@ void unpack_data(cData *data, FILE *fp)
 	data->u.val = read_long(fp);
 	break;
 
-      case FLOAT: {
-        Long k = read_long(fp);
-        data->u.fval = *((cFloat*)(&k));
+      case FLOAT:
+        data->u.fval = read_float(fp);
         break;
-      }
 
       case STRING:
 	data->u.str = string_unpack(fp);
@@ -732,7 +747,7 @@ Int size_data(cData *data) {
 	break;
 
       case FLOAT:
-        size += size_long(*((Long*)(&data->u.fval)));
+        size += size_float(data->u.fval);
         break;
 
       case STRING:
@@ -825,4 +840,3 @@ Int size_object(Obj *obj)
 #endif
     return size;
 }
-

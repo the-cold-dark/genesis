@@ -132,7 +132,11 @@ char *long_to_ascii(Long num, Number_buf nbuf) {
 
 char * float_to_ascii(Float num, Number_buf nbuf) {
     int i;
+#ifdef USE_BIG_FLOATS
+    sprintf (nbuf, "%.15g", num);
+#else        
     sprintf (nbuf, "%g", num);
+#endif
     for (i=0; nbuf[i]; i++)
       if (nbuf[i]=='.' || nbuf[i]=='e')
            return nbuf;

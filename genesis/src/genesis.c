@@ -19,7 +19,6 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <errno.h>
-#include "y.tab.h"
 #include "codegen.h"
 #include "opcodes.h"
 #include "cdc_types.h"
@@ -53,7 +52,6 @@ void usage (char * name);
 
 int main(int argc, char **argv) {
     /* make us look purdy */
-    inststr(argv, argc, "Genesis");
 
     initialize(argc, argv);
     main_loop();
@@ -84,7 +82,7 @@ int main(int argc, char **argv) {
 
 #define NEWFILE(var, name) { \
         free(var); \
-        var = EMALLOC(char, strlen(name)); \
+        var = EMALLOC(char, strlen(name) + 1); \
         strcpy(var, name); \
     }
 
@@ -97,6 +95,8 @@ INTERNAL void initialize(int argc, char **argv) {
              * basedir = NULL,
              * buf;
     FILE     * fp;
+    int        dofork = 1;
+    pid_t      pid;
 
     name = *argv;
     argv++;
@@ -131,7 +131,7 @@ INTERNAL void initialize(int argc, char **argv) {
                 addarg(opt);
             } else {
                 switch (*opt) {
-                    case 'd':
+                    case 'b':
                         argv += getarg(name,&buf,opt,argv,&argc,usage);
                         NEWFILE(c_dir_binary, buf);
                         break;
@@ -139,11 +139,11 @@ INTERNAL void initialize(int argc, char **argv) {
                         argv += getarg(name,&buf,opt,argv,&argc,usage);
                         NEWFILE(c_dir_root, buf);
                         break;
-                    case 'b':
+                    case 'x':
                         argv += getarg(name,&buf,opt,argv,&argc,usage);
                         NEWFILE(c_dir_bin, buf);
                         break;
-                    case 's':
+                    case 'd':
                         argv += getarg(name,&buf,opt,argv,&argc,usage);
                         NEWFILE(c_logfile, buf);
                         break;
@@ -154,6 +154,9 @@ INTERNAL void initialize(int argc, char **argv) {
                     case 'p':
                         argv += getarg(name,&buf,opt,argv,&argc,usage);
                         NEWFILE(c_pidfile, buf);
+                        break;
+                    case 'f':
+                        dofork = 0;
                         break;
                     case 'v':
                         printf("Genesis %d.%d-%d\n",
@@ -214,6 +217,20 @@ INTERNAL void initialize(int argc, char **argv) {
         errfile = stderr;
     }
 
+    /* fork ? */
+    if (dofork) {
+#ifdef USE_VFORK
+        pid = vfork();
+#else
+        pid = fork();
+#endif
+        if (pid != 0) { /* parent */
+            if (pid == -1)
+                fprintf(stderr,"genesis: unable to fork: %s\n",strerror(errno));
+            exit(0);
+        }
+    }
+
     /* print the PID */
     if ((fp = fopen(c_pidfile, "wb")) != NULL) {
         fprintf(fp, "%ld\n", (long) getpid());
@@ -231,19 +248,19 @@ INTERNAL void initialize(int argc, char **argv) {
         string_t * str;
         int        first = 1;
 
-        fputs("Calling $sys.startup(", logfile);
+        fputs("Calling $sys.startup(", errfile);
         for (d=list_first(args); d; d=list_next(args, d)) {
             str = data_to_literal(d);
             if (!first) {
-                fputc(',', logfile);
-                fputc(' ', logfile);
+                fputc(',', errfile);
+                fputc(' ', errfile);
             } else {
                 first = 0;
             }
-            fputs(string_chars(str), logfile);
+            fputs(string_chars(str), errfile);
             string_discard(str);
         }
-        fputs(")...\n", logfile);
+        fputs(")...\n", errfile);
     }
      
     /* call $sys.startup() */
@@ -285,7 +302,7 @@ INTERNAL void main_loop(void) {
 			      ) + heartbeat_freq;
 	    time(&t);
 	    seconds = (t >= next_heartbeat) ? 0 : next_heartbeat - t;
-	    seconds = (paused ? 0 : seconds);
+	    seconds = (preempted ? 0 : seconds);
 	}
 
         /* wait seconds for something to happen */
@@ -316,7 +333,7 @@ INTERNAL void main_loop(void) {
         handle_connection_output();
 
         /* complete paused tasks */
-	if (paused)
+	if (preempted)
             run_paused_tasks();
     }
 }
@@ -331,13 +348,15 @@ Usage: %s [base dir] [options]\n\n\
     direct them appropriately.\n\n\
 Options:\n\n\
     -v               version.\n\
-    -d binary        binary database directory name, default: \"binary\"\n\
-    -r root          root file directory name, default: \"root\"\n\
-    -b bindir        exacutables directory, default: \"root/bin\"\n\
-    -s serverlog     alternate server logfile, default: \"logs/server.log\"\n\
-    -e errorlog      alternate error file, default: \"logs/error.log\"\n\
-    -p pidfile       alternate pid file, default: \"logs/genesis.pid\"\n\
-\n",  VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, name);
+    -b binary        binary database directory name, default: \"%s\"\n\
+    -r root          root file directory name, default: \"%s\"\n\
+    -x bindir        db executables directory, default: \"%s\"\n\
+    -d log           alternate database logfile, default: \"%s\"\n\
+    -e log           alternate error (driver) file, default: \"%s\"\n\
+    -p pidfile       alternate pid file, default: \"%s\"\n\
+    -f               do not fork on startup\n\
+\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, name, c_dir_binary,
+     c_dir_root, c_dir_bin, c_logfile, c_errfile, c_pidfile);
 }
 
 #undef _main_

@@ -71,6 +71,8 @@ Expr * frob_expr(Expr * cclass, Expr * rep);
 Expr * index_expr(Expr * list, Expr * offset);
 Expr * unary_expr(int opcode, Expr * expr);
 Expr * binary_expr(int opcode, Expr * left, Expr * right);
+Expr * indecr_expr(int opcode, char * var);
+Expr * doeq_expr(int opcode, char * var, Expr * value);
 Expr * and_expr(Expr * left, Expr * right);
 Expr * or_expr(Expr * left, Expr * right);
 Expr * cond_expr(Expr * cond, Expr * true, Expr * false);

@@ -156,7 +156,7 @@ do
 
   *) 
     cat << EOF
--- Genesis $VERSION (the ColdX driver) --
+-- Genesis $VERSION (ColdC driver) --
 
 Usage: configure [options]
 
@@ -364,6 +364,12 @@ echo "#define SYSTEM_TYPE \"$host\"" >> confdefs.h
 # Linux is either 'linux' (elf) or 'linuxaout' (a.out)
 SYS=`echo $SYS | sed 's/aout$//g'`
 
+## if they are HP-UX, lets add -Aa
+
+if [ $SYS = "hp-hpux" ]; then
+    CFLAGS="$CFLAGS -Aa"
+fi
+
 # Checks for programs
 # Extract the first word of "gcc", so it can be a program name with args.
 set dummy gcc; ac_word=$2
@@ -437,6 +443,33 @@ else
   test "${CFLAGS+set}" = set || CFLAGS="-g"
 fi
 
+# Extract the first word of "perl", so it can be a program name with args.
+set dummy perl; ac_word=$2
+echo $ac_n "  Checking for $ac_word""... $ac_c" 1>&6
+if eval "test \"`echo '$''{'ac_cv_prog_PERL'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  if test -n "$PERL"; then
+  ac_cv_prog_PERL="$PERL" # Let the user override the test.
+else
+  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${IFS}:"
+  for ac_dir in $PATH; do
+    test -z "$ac_dir" && ac_dir=.
+    if test -f $ac_dir/$ac_word; then
+      ac_cv_prog_PERL="perl"
+      break
+    fi
+  done
+  IFS="$ac_save_ifs"
+fi
+fi
+PERL="$ac_cv_prog_PERL"
+if test -n "$PERL"; then
+  echo "$ac_t""$PERL" 1>&6
+else
+  echo "$ac_t""no" 1>&6
+fi
+
 # Extract the first word of "lint", so it can be a program name with args.
 set dummy lint; ac_word=$2
 echo $ac_n "  Checking for $ac_word""... $ac_c" 1>&6
@@ -455,7 +488,6 @@ else
     fi
   done
   IFS="$ac_save_ifs"
-  test -z "$ac_cv_prog_LINT" && ac_cv_prog_LINT=":"
 fi
 fi
 LINT="$ac_cv_prog_LINT"
@@ -1043,7 +1075,6 @@ else
   echo "$ac_t""no" 1>&6
 fi
 done
-
 
 echo $ac_n "  Checking for sys_siglist declaration in signal.h or unistd.h""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_decl_sys_siglist'+set}'`\" = set"; then
@@ -1717,7 +1748,7 @@ cat > conftest.$ac_ext <<EOF
 
 int main() { return 0; }
 int t() {
-strftime()
+gethostbyname()
 ; return 0; }
 EOF
 if eval $ac_link; then
@@ -1751,7 +1782,7 @@ cat > conftest.$ac_ext <<EOF
 
 int main() { return 0; }
 int t() {
-strftime()
+crypt()
 ; return 0; }
 EOF
 if eval $ac_link; then
@@ -1785,7 +1816,7 @@ cat > conftest.$ac_ext <<EOF
 
 int main() { return 0; }
 int t() {
-strftime()
+socket()
 ; return 0; }
 EOF
 if eval $ac_link; then
@@ -1806,7 +1837,10 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
-# lib -lgdbm
+#
+## check for a dbm library to use..
+## -lgdbm has priority over -lndbm
+#
 echo $ac_n "  Checking for -lgdbm""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_lib_gdbm'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -1819,7 +1853,7 @@ cat > conftest.$ac_ext <<EOF
 
 int main() { return 0; }
 int t() {
-strftime()
+dbm_open()
 ; return 0; }
 EOF
 if eval $ac_link; then
@@ -1833,13 +1867,59 @@ rm -f conftest*
 LIBS="$ac_save_LIBS"
 
 fi
+
 if eval "test \"`echo '$ac_cv_lib_'gdbm`\" = yes"; then
   echo "$ac_t""yes" 1>&6
   LIBS="-lgdbm $LIBS"
 else
   echo "$ac_t""no" 1>&6
+
+echo $ac_n "  Checking for -lndbm""... $ac_c" 1>&6
+if eval "test \"`echo '$''{'ac_cv_lib_ndbm'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  ac_save_LIBS="$LIBS"
+LIBS="-lndbm $LIBS"
+cat > conftest.$ac_ext <<EOF
+#line 1793 "configure"
+#include "confdefs.h"
+
+int main() { return 0; }
+int t() {
+dbm_open()
+; return 0; }
+EOF
+if eval $ac_link; then
+  rm -rf conftest*
+  eval "ac_cv_lib_ndbm=yes"
+else
+  rm -rf conftest*
+  eval "ac_cv_lib_ndbm=no"
+fi
+rm -f conftest*
+LIBS="$ac_save_LIBS"
+
 fi
 
+  if eval "test \"`echo '$ac_cv_lib_'ndbm`\" = yes"; then
+    echo "$ac_t""yes" 1>&6
+    if [ $SYS = "hp-hpux" ]; then
+        cat <<END
+** WARNING: the ndbm library in HPUX has been known to be dysfunctional,
+** it is suggested you get the gdbm library from:
+**
+**    ftp://prep.ai.mit.edu/pub/gnu/
+**
+** and use it instead (reconfigure)
+END
+    fi
+    LIBS="-lndbm $LIBS"
+  else
+    echo "$ac_t""no" 1>&6
+  fi
+fi
+
+#####
 # strftime is in -lintl on SCO UNIX.
 echo $ac_n "  Checking for -lintl""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_lib_intl'+set}'`\" = set"; then
@@ -1874,54 +1954,54 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
-echo $ac_n "  Checking for strftime""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_func_strftime'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  cat > conftest.$ac_ext <<EOF
-#line 1824 "configure"
-#include "confdefs.h"
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char strftime(); below.  */
-#include <assert.h>
-/* Override any gcc2 internal prototype to avoid an error.  */
-char strftime(); 
+# echo $ac_n "  Checking for strftime""... $ac_c" 1>&6
+# if eval "test \"`echo '$''{'ac_cv_func_strftime'+set}'`\" = set"; then
+#   echo $ac_n "(cached) $ac_c" 1>&6
+# else
+#   cat > conftest.$ac_ext <<EOF
+# #line 1824 "configure"
+# #include "confdefs.h"
+# /* System header to define __stub macros and hopefully few prototypes,
+#     which can conflict with char strftime(); below.  */
+# #include <assert.h>
+# /* Override any gcc2 internal prototype to avoid an error.  */
+# char strftime(); 
+# 
+# int main() { return 0; }
+# int t() {
+# 
+# /* The GNU C library defines this for functions which it implements
+#     to always fail with ENOSYS.  Some functions are actually named
+#     something starting with __ and the normal name is an alias.  */
+# #if defined (__stub_strftime) || defined (__stub___strftime)
+# choke me
+# #else
+# strftime();
+# #endif
+# 
+# ; return 0; }
+# EOF
+# if eval $ac_link; then
+#   rm -rf conftest*
+#   eval "ac_cv_func_strftime=yes"
+# else
+#   rm -rf conftest*
+#   eval "ac_cv_func_strftime=no"
+# fi
+# rm -f conftest*
+# 
+# fi
+# if eval "test \"`echo '$ac_cv_func_'strftime`\" = yes"; then
+#   echo "$ac_t""yes" 1>&6
+#   cat >> confdefs.h <<\EOF
+# #define HAVE_STRFTIME 1
+# EOF
+# 
+# else
+#   echo "$ac_t""no" 1>&6
+# fi
 
-int main() { return 0; }
-int t() {
-
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_strftime) || defined (__stub___strftime)
-choke me
-#else
-strftime();
-#endif
-
-; return 0; }
-EOF
-if eval $ac_link; then
-  rm -rf conftest*
-  eval "ac_cv_func_strftime=yes"
-else
-  rm -rf conftest*
-  eval "ac_cv_func_strftime=no"
-fi
-rm -f conftest*
-
-fi
-if eval "test \"`echo '$ac_cv_func_'strftime`\" = yes"; then
-  echo "$ac_t""yes" 1>&6
-  cat >> confdefs.h <<\EOF
-#define HAVE_STRFTIME 1
-EOF
-
-else
-  echo "$ac_t""no" 1>&6
-fi
-
-for ac_func in gettimeofday mkdir select socket strcspn strerror getrusage strstr memmove
+for ac_func in strftime gettimeofday mkdir select socket strcspn strerror getrusage strstr memmove
 do
 echo $ac_n "  Checking for $ac_func""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
@@ -2006,12 +2086,16 @@ fi
 
 cat <<END
 
-# File operations may be restricted to stay within the 'root' subdirectory
-# in the world directory.  Do you wish this to stay?
+# 
+# File operations may be restricted.  Restrictions include paths
+# (all files must stay within the 'root' subdirectory), as well as
+# other security restrictions, such as disallowing sticky or setuid
+# file perms with fchmod()
+#
 
 END
 
-echo $ac_n "Restrict file paths? [yes] $ac_c"
+echo $ac_n "Restrict files? [yes] $ac_c"
 
 read input
 if [ x$input != x"n" -a \
@@ -2024,10 +2108,28 @@ EOF
 
 fi
 
-ac_cv_lib_coldcore=${ac_cv_lib_coldcore='yes'}
-ac_cv_lib_coldc=${ac_cv_lib_coldcore='no'}
+modules="core cdc web"
+ac_cv_mod_core=${ac_cv_mod_core='yes'}
+ac_cv_mod_cdc=${ac_cv_mod_cdc='yes'}
+ac_cv_mod_web=${ac_cv_mod_web='yes'}
+moduledef="src/modules/moduledef.h"
+inc="module.inc"
+defs="module.defs"
 
-cat > conftest.msg <<END
+trap "rm -f $inc $defs $moduledef; exit" 1 2 15
+
+printconfig() {
+    cat <<END
+# Your current configuration is:
+#
+#           ColdCore Module (core): $ac_cv_mod_core
+#           ColdC Module (cdc):     $ac_cv_mod_cdc
+#           Web Module (web):       $ac_cv_mod_web
+
+END
+}
+
+cat <<END
 
 # Genesis allows for native methods to be included in the database.
 # This is done through modules, where each module adds native methods
@@ -2036,26 +2138,80 @@ cat > conftest.msg <<END
 #
 # By default, you should always have the ColdC Module
 #
-# Your current configuration is:
-#
-#           ColdC Module:    $ac_cv_lib_coldc
-#           ColdCore Module: $ac_cv_lib_coldcore
-#
-
 END
 
-$pager conftest.msg
-rm -f conftest.msg
+if test -z "$PERL"; then
+    printconfig
+    cat <<END
+!!
+!! configure was unable to find 'perl' in your PATH.  The programs which
+!! reconfigure your modules use perl.  If you wish to reconfigure your
+!! modules you will have to get perl version 4 or higher.
+!!
 
-echo $ac_n "Reconfigure Modules? [no] $ac_c"
+END
+else
 
-read input
-if [ x$input = x"y" -o \
-     x$input = x"yes" -o \
-     x$input = x"Y" -o \
-     x$input = x"Yes" -o \
-     x$input = x"YES" ]; then
-    echo "Okay, configured"
+query=no
+while true; do
+    printconfig
+    echo $ac_n "Reconfigure Modules? [$query] $ac_c" 1>&6
+    read inp
+    inp=`echo $inp | tr '[A-Z]' '[a-z]'`
+    if [ \( -z "$inp" -a "$query" = "no" \) -o "$inp" = "n" -o "$inp" = "no" ]
+    then
+        break
+    fi
+
+    echo
+
+    for ac_mod in $modules; do
+    echo $ac_n "Use $ac_mod module? [`eval echo '$ac_cv_mod_'$ac_mod`] $ac_c" 1>&6
+    read inp
+    inp=`echo $inp | tr '[A-Z]' '[a-z]'`
+    if [ -n "$inp" -a \( "$inp" = "y" -o "$inp" = "yes" \) ]; then
+        eval "ac_cv_mod_${ac_mod}=yes"
+    elif [ -n "$inp" -a \( "$inp" = "n" -o "$inp" = "no" \) ]; then
+        eval "ac_cv_mod_${ac_mod}=no"
+    fi
+
+    done
+
+    echo
+    query=no
+done
+
+## now setup the modules
+#echo "- Creating $moduledef"
+for ac_mod in $modules; do
+
+if eval "test \"`echo '$ac_cv_mod_'$ac_mod`\" = yes"; then
+
+COLDLIBS="$COLDLIBS -l$ac_mod"
+
+#echo "#include \"$ac_mod.h\"" >> $inc
+#echo "    &${ac_mod}_module," >> $defs
+
+fi
+
+done
+
+#cat ${moduledef}.in > $moduledef
+#cat $inc >> $moduledef
+#cat <<END >> $moduledef
+#
+#module_t * cold_modules[] = {
+#END
+#cat $defs >> $moduledef
+#
+#cat <<END >> $moduledef
+#    NULL
+#};
+#
+#endif
+#END
+#
+#rm -f $defs $inc
 fi
 
 ######################################################################
@@ -2146,7 +2302,7 @@ done
 
 ac_given_srcdir=$srcdir
 
-trap 'rm -fr `echo "src/Makefile src/modules/Makefile src/include/config.h" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
+trap 'rm -fr `echo "src/Makefile src/modules/Makefile src/ops/Makefile src/data/Makefile src/include/config.h" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 
 # Protect against being on the right side of a sed subst in config.status. 
 sed 's/%@/@@/; s/@%/@@/; s/%g$/@g/; /@g$/s/[\\\\&%]/\\\\&/g; 
@@ -2158,6 +2314,7 @@ s%@CPPFLAGS@%$CPPFLAGS%g
 s%@CXXFLAGS@%$CXXFLAGS%g
 s%@DEFS@%$DEFS%g
 s%@LDFLAGS@%$LDFLAGS%g
+s%@COLDLIBS@%$COLDLIBS%g
 s%@LIBS@%$LIBS%g
 s%@exec_prefix@%$exec_prefix%g
 s%@prefix@%$prefix%g
@@ -2191,7 +2348,7 @@ CEOF
 EOF
 cat >> $CONFIG_STATUS <<EOF
 
-CONFIG_FILES=\${CONFIG_FILES-"src/Makefile src/modules/Makefile"}
+CONFIG_FILES=\${CONFIG_FILES-"src/Makefile src/modules/Makefile src/ops/Makefile src/data/Makefile"}
 SYS=${SYS}
 VENDOR=${VENDOR}
 CPU=${CPU}

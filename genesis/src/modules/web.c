@@ -33,10 +33,10 @@
 #include "config.h"
 #include "defs.h"
 #include "util.h"
-#include "y.tab.h"
 #include "operators.h"
 #include "execute.h"
 #include "cdc_string.h"
+#include "web.h"
 
 /* valid ascii: 48-57 (0-9) 65-90 (A-Z) 97-122 (a-z) */
 
@@ -61,6 +61,13 @@ char * dec_2_hex[] = {
 
 #define tohex(c) (dec_2_hex[(int) c])
 
+
+void init_web(int argc, char ** argv) {
+}
+
+void uninit_web(void) {
+}
+
 INTERNAL char tochar(char h, char l) {
      char p;
 
@@ -77,9 +84,9 @@ INTERNAL char tochar(char h, char l) {
      return p;
 }
 
-char * decode(char * s) {
-    char * n = s,
-         * r = s,
+string_t * decode(string_t * str) {
+    char * s = str->s,
+         * n = str->s,
            h,
            l;
 
@@ -99,8 +106,9 @@ char * decode(char * s) {
     }
 
     *n = NULL;
+    str->len = strlen(str->s);
 
-    return r;
+    return str;
 }
 
 
@@ -126,15 +134,14 @@ string_t * encode(char * s) {
 
 void native_decode(void) {
     data_t   * args;
-    char     * s;
     string_t * str;
 
     /* Accept a string to take the length of. */
     if (!func_init_1(&args, STRING))
         return;
 
-    s = decode(string_chars(args[0].u.str));
-    str = string_from_chars(s, strlen(s));
+    /* decode directly munches the string, so simply duplicate it */
+    str = decode(string_from_chars(args[0].u.str->s, args[0].u.str->len));
 
     pop(1);
     push_string(str);

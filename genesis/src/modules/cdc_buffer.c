@@ -10,12 +10,12 @@
 */
 
 #include "config.h"
-#include "y.tab.h"
+#include "defs.h"
 #include "cdc_types.h"
 #include "operators.h"
 #include "execute.h"
 
-void op_buffer_len(void) {
+void native_buffer_len(void) {
     data_t *args;
     int len;
 
@@ -26,7 +26,7 @@ void op_buffer_len(void) {
     push_int(len);
 }
 
-void op_buffer_retrieve(void) {
+void native_buffer_retrieve(void) {
     data_t *args;
     int c, pos;
 
@@ -45,7 +45,7 @@ void op_buffer_retrieve(void) {
     }
 }
 
-void op_buffer_append(void) {
+void native_buffer_append(void) {
     data_t *args;
 
     if (!func_init_2(&args, BUFFER, BUFFER))
@@ -54,7 +54,7 @@ void op_buffer_append(void) {
     pop(1);
 }
 
-void op_buffer_replace(void) {
+void native_buffer_replace(void) {
     data_t *args;
     int pos;
 
@@ -73,7 +73,7 @@ void op_buffer_replace(void) {
     pop(2);
 }
 
-void op_buffer_add(void) {
+void native_buffer_add(void) {
     data_t *args;
 
     if (!func_init_2(&args, BUFFER, INTEGER))
@@ -82,7 +82,7 @@ void op_buffer_add(void) {
     pop(1);
 }
 
-void op_buffer_truncate(void) {
+void native_buffer_truncate(void) {
     data_t *args;
     int pos;
 
@@ -101,7 +101,33 @@ void op_buffer_truncate(void) {
     pop(1);
 }
 
-void op_buffer_tail(void) {
+void native_buffer_subrange(void) {
+    data_t *args;
+    int start, len, nargs, blen;
+
+    if (!func_init_2_or_3(&args, &nargs, BUFFER, INTEGER, INTEGER))
+	return;
+
+    blen = args[0].u.buffer->len;
+    start = args[1].u.val - 1;
+    len = (nargs == 3) ? args[2].u.val : blen - start;
+
+    if (start < 0) {
+        cthrow(range_id, "Start (%d) is less than one.", start + 1);
+    } else if (len < 0) {
+        cthrow(range_id, "Length (%d) is less than zero.", len);
+    } else if (start + len > blen) {
+        cthrow(range_id,
+              "The substring extends to %d, past the end of the string (%d).",
+              start + len, blen);
+    } else {
+        anticipate_assignment();
+        args[0].u.buffer = buffer_subrange(args[0].u.buffer, start, len);
+        pop(nargs - 1);
+    }
+}
+
+void native_buffer_tail(void) {
     data_t *args;
     int pos;
 
@@ -120,7 +146,7 @@ void op_buffer_tail(void) {
     pop(1);
 }
 
-void op_buffer_to_string(void) {
+void native_buffer_to_string(void) {
     data_t *args;
     string_t * str;
 
@@ -132,7 +158,7 @@ void op_buffer_to_string(void) {
     string_discard(str);
 }
 
-void op_buffer_to_strings(void) {
+void native_buffer_to_strings(void) {
     data_t *args;
     int num_args;
     list_t *list;
@@ -147,7 +173,7 @@ void op_buffer_to_strings(void) {
     list_discard(list);
 }
 
-void op_buffer_from_string(void) {
+void native_buffer_from_string(void) {
     data_t *args;
     Buffer *buf;
 
@@ -160,7 +186,7 @@ void op_buffer_from_string(void) {
 }
 
 
-void op_buffer_from_strings(void) {
+void native_buffer_from_strings(void) {
     data_t *args, *d;
     int num_args, i;
     Buffer *buf, *sep;

@@ -12,6 +12,11 @@
 #ifndef LOOKUP_H
 #define LOOKUP_H
 
+#ifndef _did_sys_types_
+#define _did_sys_types_
+#include <sys/types.h>
+#endif
+
 void lookup_open(char *name, int cnew);
 void lookup_close(void);
 void lookup_sync(void);

@@ -12,15 +12,12 @@
 #ifndef _modules_h_
 #define _modules_h_
 
-void init_coldcore(int argc, char ** argv);
-void uninit_coldcore(void);
-
 typedef struct module_s {
     void (*init)(int argc, char ** argv);
     void (*uninit)();
 } module_t;
 
 int init_modules(int argc, char ** argv);
-int uninit_modules(int argc, char ** argv);
+int uninit_modules(void);
 
 #endif

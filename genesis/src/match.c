@@ -13,7 +13,6 @@
 #include "defs.h"
 
 #include <string.h>
-#include "y.tab.h"
 #include "match.h"
 #include "memory.h"
 #include "cdc_types.h"

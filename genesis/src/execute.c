@@ -14,7 +14,6 @@
 
 #include <stdarg.h>
 #include <ctype.h>
-#include "y.tab.h"
 #include "execute.h"
 #include "memory.h"
 #include "cdc_types.h"
@@ -42,7 +41,7 @@ INTERNAL int frame_depth;
 string_t *numargs_str;
 
 Frame *cur_frame, *suspend_frame;
-data_t *stack;
+data_t * stack;
 int stack_pos, stack_size;
 int *arg_starts, arg_pos, arg_size;
 long task_id;
@@ -51,8 +50,8 @@ long tick;
 #define DEBUG_VM 0
 #define DEBUG_EXECUTE 0
 
-VMState *tasks = NULL, *paused = NULL, *vmstore = NULL;
-VMStack *stack_store = NULL, *holder_store = NULL; 
+VMState *suspended = NULL, *preempted = NULL, *vmstore = NULL;
+VMStack *stack_store = NULL, *holder_cache = NULL; 
 
 /*
 // ---------------------------------------------------------------
@@ -84,17 +83,11 @@ VMStack *stack_store = NULL, *holder_store = NULL;
 void store_stack(void) {
     VMStack * holder;
 
-    if (holder_store) {
-        holder = holder_store;
-        holder_store = holder_store->next;
-#if DEBUG_VM
-        write_err("store_stack:  reusing holder %d", holder);
-#endif
+    if (holder_cache) {
+        holder = holder_cache;
+        holder_cache = holder_cache->next;
     } else {
         holder = EMALLOC(VMStack, 1);
-#if DEBUG_VM
-        write_err("store_stack:  allocating holder %d", holder);
-#endif
     }
   
     holder->stack = stack;
@@ -110,23 +103,17 @@ void store_stack(void) {
 /*
 // ---------------------------------------------------------------
 */
-VMState *suspend_vm(void) {
+VMState * vm_current(void) {
     VMState * vm;
 
     if (vmstore) {
         vm = vmstore;
         vmstore = vmstore->next;
-#if DEBUG_VM
-        write_err("suspend_vm:  reusing vm %d", vm);
-#endif
-  } else {
+    } else {
         vm = EMALLOC(VMState, 1);
-#if DEBUG_VM
-        write_err("suspend_vm:  allocating vm %d", vm);
-#endif
-  }
+    }
 
-    vm->paused = 0;
+    vm->preempted = 0;
     vm->cur_frame = cur_frame;
     vm->stack = stack;
     vm->stack_pos = stack_pos;
@@ -163,7 +150,7 @@ void restore_vm(VMState *vm) {
 // ---------------------------------------------------------------
 */
 void task_delete(VMState *list, VMState *elem) {
-    if (list != tasks)
+    if (list != suspended)
         list = list->next;
     while (list && (list->next != elem))
         list = list->next;
@@ -177,11 +164,11 @@ void task_delete(VMState *list, VMState *elem) {
 VMState *task_lookup(long tid) {
     VMState * vm;
 
-    for (vm = tasks;  vm;  vm = vm->next)
+    for (vm = suspended;  vm;  vm = vm->next)
         if (vm->task_id == tid)
             return vm;
 
-    for (vm = paused;  vm;  vm = vm->next)
+    for (vm = preempted;  vm;  vm = vm->next)
         if (vm->task_id == tid)
             return vm;
 
@@ -190,16 +177,16 @@ VMState *task_lookup(long tid) {
 
 /*
 // ---------------------------------------------------------------
-// we assume tid is a non-paused task
+// we assume tid is a non-preempted task
 //
 */
 void task_resume(long tid, data_t *ret) {
     VMState * vm = task_lookup(tid),
             * old_vm;
 
-    old_vm = suspend_vm();
+    old_vm = vm_current();
     restore_vm(vm);
-    REMOVE_TASK(tasks, vm);
+    REMOVE_TASK(suspended, vm);
     ADD_TASK(vmstore, vm);
     if (ret) {
         check_stack(1);
@@ -217,10 +204,83 @@ void task_resume(long tid, data_t *ret) {
 /*
 // ---------------------------------------------------------------
 */
-void task_suspend(void) {
-    VMState * vm = suspend_vm();
+#if 0
+void dup_everything(void) {
+    VMState * vm;
+    Frame   * frame;
 
-    ADD_TASK(tasks, vm);
+    if (vmstore) {
+        vm = vmstore;
+        vmstore = vmstore->next;
+    } else {
+        vm = EMALLOC(VMState, 1);
+    }
+
+    if (frame_store) {
+        frame = frame_store;
+        frame_store = frame_store->caller_frame;
+    } else {
+        frame = EMALLOC(Frame, 1);
+    }
+
+    vm->preempted  = 0;
+    vm->cur_frame  = frame;
+    frame->object  = cache_grab(cur_frame->object);
+    frame->sender  = cur_frame->sender;
+    frame->caller  = cur_frame->caller;
+    frame->method  = method_dup(cur_frame->method);
+                     cache_grab(cur_frame->method->object);
+    frame->opcodes = cur_frame->opcodes;
+    frame->pc      = cur_frame->pc;
+    frame->ticks   = METHOD_TICKS;   /* start with fresh ticks when we fork */
+
+    frame->specifiers = NULL;        /* no forking during error conditions */
+    frame->handler_info = NULL;
+    
+    /* Set up stack indices. */
+    frame->stack_start = stack_start;
+    frame->var_start = arg_start;
+    
+        /* Initialize local variables to 0. */
+        check_stack(method->num_vars);
+        for (i = 0; i < method->num_vars; i++) {
+            stack[stack_pos + i].type = INTEGER;
+            stack[stack_pos + i].u.val = 0;
+        }
+        stack_pos += method->num_vars;
+    
+        frame->caller_frame = cur_frame;
+    vm->stack      = stack;
+    vm->stack_pos  = stack_pos;
+    vm->stack_size = stack_size;
+    vm->arg_starts = arg_starts;
+    vm->arg_pos    = arg_pos;
+    vm->arg_size   = arg_size;
+    vm->task_id    = task_id;
+    vm->next       = NULL;
+}
+
+/*
+// ---------------------------------------------------------------
+*/
+void fork_method(objnum_t objnum, Ident method) {
+    VMState * vm;
+
+    if (call_method(objnum, method) == CALL_OK) {
+    
+    ADD_TASK(suspended, vm);
+    init_execute();
+    cur_frame = NULL;
+}
+#endif
+
+/*
+// ---------------------------------------------------------------
+*/
+void task_suspend(void) {
+    VMState * vm = vm_current();
+
+    ADD_TASK(suspended, vm);
     init_execute();
     cur_frame = NULL;
 }
@@ -232,14 +292,14 @@ void task_cancel(long tid) {
     VMState * vm = task_lookup(tid),
             * old_vm;
 
-    old_vm = suspend_vm();
+    old_vm = vm_current();
     restore_vm(vm);
     while (cur_frame)
         frame_return();
-    if (vm->paused) {
-        REMOVE_TASK(paused, vm);
+    if (vm->preempted) {
+        REMOVE_TASK(preempted, vm);
     } else {
-        REMOVE_TASK(tasks, vm);
+        REMOVE_TASK(suspended, vm);
     }
     store_stack();
     ADD_TASK(vmstore, vm);
@@ -251,10 +311,10 @@ void task_cancel(long tid) {
 // ---------------------------------------------------------------
 */
 void task_pause(void) {
-    VMState * vm = suspend_vm();
+    VMState * vm = vm_current();
 
-    vm->paused = 1;
-    ADD_TASK(paused, vm);
+    vm->preempted = 1;
+    ADD_TASK(preempted, vm);
     init_execute();
     cur_frame = NULL;  
 }
@@ -263,12 +323,13 @@ void task_pause(void) {
 // ---------------------------------------------------------------
 */
 void run_paused_tasks(void) {
-    VMState * vm = suspend_vm(),
-            * task = paused,
+    VMState * vm = vm_current(),
+            * task = preempted,
             * last_task;
 
-    /* don't want any task adding itself while we're running the paused tasks */
-    paused = NULL;
+    /* tasks preempting again will be on a new list */
+    preempted = NULL;
+
     while (task) {
         restore_vm(task);
         cur_frame->ticks = PAUSED_METHOD_TICKS;
@@ -278,19 +339,15 @@ void run_paused_tasks(void) {
         execute();
         store_stack();
     }
+
     restore_vm(vm);
     ADD_TASK(vmstore, vm);
-
-#if DEBUG_VM
-    for (vm = paused; vm; vm = vm->next)
-        write_err("paused task tid %d", vm->task_id);
-#endif
 }
 
 /*
 // ---------------------------------------------------------------
 //
-// List tasks, leave out paused tasks as they exist only for a brief
+// List tasks, leave out preempted tasks as they exist only for a brief
 // moment in time anyway.
 //
 */
@@ -298,19 +355,19 @@ void run_paused_tasks(void) {
 list_t * task_list(void) {
     list_t  * r;
     data_t    elem;
-    VMState * vm = tasks;
+    VMState * vm = suspended;
   
     r = list_new(0);
   
     elem.type = INTEGER;
     for (; vm; vm = vm->next) {
         elem.u.val = vm->task_id;
-        list_add(r, &elem); 
+        r = list_add(r, &elem); 
     }
   
-    for (vm = paused; vm; vm = vm->next) {
+    for (vm = preempted; vm; vm = vm->next) {
         elem.u.val = vm->task_id;
-        list_add(r, &elem); 
+        r = list_add(r, &elem); 
     }
   
     return r;
@@ -329,7 +386,7 @@ list_t * task_stack(void) {
     d.type = LIST;
     for (f = cur_frame; f; f = f->caller_frame) {
 
-        d.u.list = list_new(4);
+        d.u.list = list_new(5);
         list = list_empty_spaces(d.u.list, 4);
 
         list[0].type = OBJNUM;
@@ -337,11 +394,13 @@ list_t * task_stack(void) {
         list[1].type = OBJNUM;
         list[1].u.objnum = f->method->object->objnum;
         list[2].type = SYMBOL;
-        list[2].u.symbol = f->method->name;
+        list[2].u.symbol = ident_dup(f->method->name);
         list[3].type = INTEGER;
         list[3].u.val = line_number(f->method, f->pc - 1);
+        list[4].type = INTEGER;
+        list[4].u.val = (long) f->pc;
 
-        list_add(r, &d);
+        r = list_add(r, &d);
         list_discard(d.u.list);
     }
 
@@ -363,8 +422,8 @@ void init_execute(void) {
     
         holder = stack_store;
         stack_store = holder->next;
-        holder->next = holder_store;
-        holder_store = holder;
+        holder->next = holder_cache;
+        holder_cache = holder;
 
 #if DEBUG_VM
         write_err("resuing execution state");
@@ -392,7 +451,7 @@ void init_execute(void) {
 // Execute a task by sending a message to an object.
 //
 */
-void task(objnum_t objnum, long message, int num_args, ...) {
+void task(objnum_t objnum, long name, int num_args, ...) {
     va_list arg;
 
     /* Don't execute if a shutdown() has occured. */
@@ -410,10 +469,10 @@ void task(objnum_t objnum, long message, int num_args, ...) {
         data_dup(&stack[stack_pos++], va_arg(arg, data_t *));
     va_end(arg);
 
-    /* Send the message.  If this is succesful, start the task by calling
-     * execute(). */
-    ident_dup(message);
-    if (call_method(objnum, message, 0, 0) == CALL_OK) {
+    /* Call the method.  If this is succesful,
+       start the task by calling execute(). */
+    ident_dup(name);
+    if (call_method(objnum, name, 0, 0) == CALL_OK) {
         execute();
         if (stack_pos != 0)
             panic("Stack not empty after interpretation.");
@@ -421,7 +480,7 @@ void task(objnum_t objnum, long message, int num_args, ...) {
     } else {
         pop(stack_pos);
     }
-    ident_discard(message);
+    ident_discard(name);
 }
 
 /*
@@ -465,7 +524,7 @@ int frame_start(object_t * obj,
             string_discard(numargs_str);
         o.type = OBJNUM;
         o.u.objnum = obj->objnum;
-        numargs_str = format("%D.%s called with %s argument%s, requires %s%s",
+        numargs_str = format("%D.%s() called with %s argument%s, requires %s%s",
                              &o, ident_name(method->name),
                              english_integer(num_args, nbuf1),
                              (num_args == 1) ? "" : "s",
@@ -494,39 +553,49 @@ int frame_start(object_t * obj,
         list_discard(rest);
     }
 
-    if (frame_store) {
-        frame = frame_store;
-        frame_store = frame_store->caller_frame;
+#if 0
+    /* do native methods */
+    if (method->native != -1) {
+        return CALL_NATIVE;
     } else {
-        frame = EMALLOC(Frame, 1);
+#endif
+        if (frame_store) {
+            frame = frame_store;
+            frame_store = frame_store->caller_frame;
+        } else {
+            frame = EMALLOC(Frame, 1);
+        }
+    
+        frame->object = cache_grab(obj);
+        frame->sender = sender;
+        frame->caller = caller;
+        frame->method = method_dup(method);
+        cache_grab(method->object);
+        frame->opcodes = method->opcodes;
+        frame->pc = 0;
+        frame->ticks = METHOD_TICKS;
+    
+        frame->specifiers = NULL;
+        frame->handler_info = NULL;
+    
+        /* Set up stack indices. */
+        frame->stack_start = stack_start;
+        frame->var_start = arg_start;
+    
+        /* Initialize local variables to 0. */
+        check_stack(method->num_vars);
+        for (i = 0; i < method->num_vars; i++) {
+            stack[stack_pos + i].type = INTEGER;
+            stack[stack_pos + i].u.val = 0;
+        }
+        stack_pos += method->num_vars;
+    
+        frame->caller_frame = cur_frame;
+        cur_frame = frame;
+#if 0
     }
+#endif
 
-    frame->object = cache_grab(obj);
-    frame->sender = sender;
-    frame->caller = caller;
-    frame->method = method_dup(method);
-    cache_grab(method->object);
-    frame->opcodes = method->opcodes;
-    frame->pc = 0;
-    frame->ticks = METHOD_TICKS;
-
-    frame->specifiers = NULL;
-    frame->handler_info = NULL;
-
-    /* Set up stack indices. */
-    frame->stack_start = stack_start;
-    frame->var_start = arg_start;
-
-    /* Initialize local variables to 0. */
-    check_stack(method->num_vars);
-    for (i = 0; i < method->num_vars; i++) {
-        stack[stack_pos + i].type = INTEGER;
-        stack[stack_pos + i].u.val = 0;
-    }
-    stack_pos += method->num_vars;
-
-    frame->caller_frame = cur_frame;
-    cur_frame = frame;
 
     return CALL_OK;
 }
@@ -611,14 +680,16 @@ void anticipate_assignment(void) {
     data_t *dp, d;
 
     opcode = cur_frame->opcodes[cur_frame->pc];
-    if (opcode == SET_LOCAL) {
+    switch (opcode) {
+      case SET_LOCAL:
         /* Zero out local variable value. */
         dp = &stack[cur_frame->var_start +
                     cur_frame->opcodes[cur_frame->pc + 1]];
         data_discard(dp);
         dp->type = INTEGER;
         dp->u.val = 0;
-    } else if (opcode == SET_OBJ_VAR) {
+        break;
+      case SET_OBJ_VAR:
         /* Zero out the object variable, if it exists. */
         ind = cur_frame->opcodes[cur_frame->pc + 1];
         id = object_get_ident(cur_frame->method->object, ind);
@@ -626,6 +697,7 @@ void anticipate_assignment(void) {
         d.u.val = 0;
         object_assign_var(cur_frame->object, cur_frame->method->object,
                           id, &d);
+        break;
     }
 }
 

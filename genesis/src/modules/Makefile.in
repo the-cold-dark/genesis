@@ -1,6 +1,6 @@
 # ColdX driver
 
-CFLAGS=@CFLAGS@ -I../include -I../
+CFLAGS=@CFLAGS@ -I../include
 LDFLAGS=@LDFLAGS@
 LIBS=@LIBS@
 CC=@CC@
@@ -19,10 +19,8 @@ MODULES=$(SRCDIR)/modules
 
 VERSION=@VERSION@
 
-CDC_OBJS = cdc_buffer.o cdc_integer.o cdc_object.o cdc_time.o \
-           cdc_dict.o cdc_list.o cdc_string.o \
-           cdc_network.o cdc_sys.o
-COLDCORE_O = coldcore_cml.o coldcore_veil.o
+CDC_OBJS = cdc.o cdc_buffer.o cdc_misc.o cdc_dict.o cdc_list.o cdc_string.o
+COLDCORE_O = core.o core_veil.o
 WEB_OBJS = web.o
 
 SRCS = `echo $(CDC_OBJS) $(COLDCORE_O) | sed -e 's/\.o/.c/g'`
@@ -30,7 +28,7 @@ SRCS = `echo $(CDC_OBJS) $(COLDCORE_O) | sed -e 's/\.o/.c/g'`
 #######
 # rules
 
-libs: libcdc.a libColdCore.a libweb.a
+libs: libcdc.a libcore.a libweb.a
 
 libweb.a: $(WEB_OBJS)
 	rm -f $@
@@ -42,7 +40,7 @@ libcdc.a: $(CDC_OBJS)
 	ar -cq $@ $(CDC_OBJS)
 	$(RANLIB) $@
 
-libColdCore.a: $(COLDCORE_O)
+libcore.a: $(COLDCORE_O)
 	rm -f $@
 	ar -cq $@ $(COLDCORE_O)
 	$(RANLIB) $@
@@ -71,91 +69,87 @@ patchable: scrub
 	@echo "	@echo \"** running the configure script ... **\"" >> Makefile
 	@echo "	@cd ../..; configure" >> Makefile
 
-y.tab.h:
-	cd ../; make grammar.o
+../include/parse.h:
+	cd ../; make grammar.o include/parse.h
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-cdc_buffer.o: ../include/config.h ../y.tab.h ../include/cdc_types.h
-cdc_buffer.o: ../include/regexp.h ../include/ident.h ../include/list.h
-cdc_buffer.o: ../include/cdc_string.h
-cdc_buffer.o: ../include/buffer.h
-cdc_buffer.o: ../include/dict.h ../include/object.h ../include/data.h
-cdc_buffer.o: ../include/operators.h ../include/execute.h
-cdc_buffer.o: ../include/io.h
-cdc_integer.o: ../include/config.h
-cdc_integer.o: ../include/defs.h ../y.tab.h
+cdc.o: ../include/defs.h  
+cdc.o: ../include/parse.h cdc.h ../include/modules.h
+cdc_buffer.o: ../include/config.h ../include/cdc_types.h ../include/regexp.h
+cdc_buffer.o: ../include/ident.h ../include/list.h ../include/cdc_string.h
+cdc_buffer.o: ../include/buffer.h ../include/dict.h ../include/object.h
+cdc_buffer.o: ../include/io.h ../include/file.h 
+cdc_buffer.o: ../include/data.h ../include/operators.h ../include/execute.h
+cdc_integer.o: ../include/config.h ../include/defs.h 
+cdc_integer.o: ../include/parse.h
 cdc_integer.o: ../include/operators.h ../include/execute.h
-cdc_integer.o: ../include/data.h ../include/cdc_types.h ../include/regexp.h
-cdc_integer.o: ../include/ident.h ../include/list.h ../include/cdc_string.h
-cdc_integer.o: ../include/buffer.h ../include/dict.h
-cdc_integer.o: ../include/object.h ../include/io.h
-cdc_object.o: ../include/config.h
-cdc_object.o: ../include/defs.h ../y.tab.h
-cdc_object.o: ../include/cdc_types.h ../include/regexp.h ../include/ident.h
-cdc_object.o: ../include/list.h ../include/cdc_string.h
-cdc_object.o: ../include/buffer.h ../include/dict.h ../include/object.h
-cdc_object.o: ../include/data.h ../include/operators.h ../include/execute.h
-cdc_object.o: ../include/io.h
-cdc_object.o: ../include/util.h ../include/lookup.h
-cdc_time.o: ../include/config.h
-cdc_time.o: ../include/defs.h ../y.tab.h
-cdc_time.o: ../include/cdc_types.h ../include/regexp.h ../include/ident.h
-cdc_time.o: ../include/list.h ../include/cdc_string.h
-cdc_time.o: ../include/buffer.h ../include/dict.h ../include/object.h
-cdc_time.o: ../include/data.h ../include/operators.h ../include/execute.h
-cdc_time.o: ../include/io.h
-cdc_time.o: ../include/util.h
-cdc_dict.o: ../include/config.h ../y.tab.h ../include/operators.h
-cdc_dict.o: ../include/execute.h
+cdc_integer.o: ../include/data.h ../include/cdc_types.h
+cdc_integer.o: ../include/regexp.h ../include/ident.h ../include/list.h
+cdc_integer.o: ../include/cdc_string.h ../include/buffer.h ../include/dict.h
+cdc_integer.o: ../include/object.h ../include/io.h ../include/file.h
+cdc_integer.o: ../include/util.h
+cdc_time.o: ../include/config.h ../include/defs.h 
+cdc_time.o: ../include/parse.h 
+cdc_time.o: ../include/cdc_types.h
+cdc_time.o: ../include/regexp.h ../include/ident.h ../include/list.h
+cdc_time.o: ../include/cdc_string.h ../include/buffer.h ../include/dict.h
+cdc_time.o: ../include/object.h ../include/io.h ../include/file.h
+cdc_time.o: ../include/data.h ../include/operators.h
+cdc_time.o: ../include/execute.h  ../include/util.h
+cdc_dict.o: ../include/config.h ../include/operators.h ../include/execute.h
 cdc_dict.o: ../include/data.h ../include/cdc_types.h ../include/regexp.h
 cdc_dict.o: ../include/ident.h ../include/list.h ../include/cdc_string.h
 cdc_dict.o: ../include/buffer.h ../include/dict.h
-cdc_dict.o: ../include/object.h ../include/io.h ../include/memory.h
-cdc_list.o: ../include/config.h ../y.tab.h ../include/operators.h
-cdc_list.o: ../include/execute.h
+cdc_dict.o: ../include/object.h ../include/io.h ../include/file.h
+cdc_dict.o: ../include/memory.h 
+cdc_list.o: ../include/config.h ../include/operators.h ../include/execute.h
 cdc_list.o: ../include/data.h ../include/cdc_types.h ../include/regexp.h
 cdc_list.o: ../include/ident.h ../include/list.h ../include/cdc_string.h
 cdc_list.o: ../include/buffer.h ../include/dict.h
-cdc_list.o: ../include/object.h ../include/io.h ../include/memory.h
-cdc_string.o: ../include/config.h
-cdc_string.o: ../y.tab.h ../include/operators.h
-cdc_string.o: ../include/execute.h
+cdc_list.o: ../include/object.h ../include/io.h ../include/file.h
+cdc_list.o: ../include/memory.h 
+cdc_string.o: ../include/config.h ../include/defs.h 
+cdc_string.o: ../include/parse.h 
+cdc_string.o: ../include/operators.h ../include/execute.h
 cdc_string.o: ../include/data.h ../include/cdc_types.h
 cdc_string.o: ../include/regexp.h ../include/ident.h ../include/list.h
-cdc_string.o: ../include/cdc_string.h
-cdc_string.o: ../include/buffer.h ../include/dict.h ../include/object.h
-cdc_string.o: ../include/io.h ../include/match.h ../include/util.h
-cdc_file.o: ../include/config.h
-cdc_file.o: ../include/defs.h
-cdc_file.o: ../y.tab.h ../include/operators.h ../include/execute.h
-cdc_file.o: ../include/data.h ../include/cdc_types.h
-cdc_file.o: ../include/regexp.h ../include/ident.h ../include/list.h
-cdc_file.o: ../include/cdc_string.h ../include/buffer.h ../include/dict.h
-cdc_file.o: ../include/object.h ../include/io.h ../include/memory.h
-cdc_file.o: ../include/util.h
-cdc_network.o: ../include/config.h ../include/defs.h ../y.tab.h
+cdc_string.o: ../include/cdc_string.h ../include/buffer.h ../include/dict.h
+cdc_string.o: ../include/object.h ../include/io.h ../include/file.h
+cdc_string.o: ../include/match.h ../include/util.h
+cdc_string.o: ../include/memory.h
+cdc_network.o: ../include/config.h ../include/defs.h 
+cdc_network.o: ../include/parse.h
 cdc_network.o: ../include/cdc_types.h ../include/regexp.h ../include/ident.h
-cdc_network.o: ../include/list.h ../include/cdc_string.h
-cdc_network.o: ../include/buffer.h
-cdc_network.o: ../include/dict.h ../include/object.h ../include/data.h
-cdc_network.o: ../include/execute.h
-cdc_network.o: ../include/io.h ../include/net.h
-cdc_sys.o: ../include/config.h ../include/defs.h ../y.tab.h
+cdc_network.o: ../include/list.h ../include/cdc_string.h ../include/buffer.h
+cdc_network.o: ../include/dict.h ../include/object.h ../include/io.h
+cdc_network.o: ../include/file.h 
+cdc_network.o: ../include/data.h ../include/execute.h 
+cdc_network.o: ../include/net.h
+cdc_sys.o: ../include/config.h ../include/defs.h 
+cdc_sys.o: ../include/parse.h
 cdc_sys.o: ../include/cdc_types.h ../include/regexp.h ../include/ident.h
-cdc_sys.o: ../include/list.h ../include/cdc_string.h
-cdc_sys.o: ../include/buffer.h ../include/dict.h
-cdc_sys.o: ../include/object.h ../include/data.h ../include/execute.h
-cdc_sys.o: ../include/io.h
-coldcore_cml.o: ../include/config.h
-coldcore_cml.o: ../include/defs.h ../y.tab.h ../include/cdc_types.h
-coldcore_cml.o: ../include/regexp.h ../include/ident.h ../include/list.h
-coldcore_cml.o: ../include/cdc_string.h ../include/buffer.h ../include/dict.h
-coldcore_cml.o: ../include/object.h ../include/data.h
-coldcore_veil.o: ../include/config.h ../include/defs.h ../y.tab.h
-coldcore_veil.o: ../include/cdc_types.h ../include/regexp.h ../include/ident.h
-coldcore_veil.o: ../include/list.h ../include/cdc_string.h
-coldcore_veil.o: ../include/buffer.h ../include/dict.h
-coldcore_veil.o: ../include/object.h ../include/data.h ../include/operators.h
-coldcore_veil.o: ../include/execute.h
-coldcore_veil.o: ../include/io.h ../include/memory.h
+cdc_sys.o: ../include/list.h ../include/cdc_string.h ../include/buffer.h
+cdc_sys.o: ../include/dict.h ../include/object.h ../include/io.h
+cdc_sys.o: ../include/file.h  ../include/data.h
+cdc_sys.o: ../include/execute.h 
+core.o: ../include/defs.h  
+core.o: ../include/parse.h
+core.o: core.h ../include/modules.h ../include/ident.h ../include/cdc_types.h
+core.o: ../include/regexp.h ../include/list.h ../include/cdc_string.h
+core.o: ../include/buffer.h ../include/dict.h ../include/object.h
+core.o: ../include/io.h ../include/file.h 
+core.o: ../include/data.h
+core_cml.o: ../include/config.h ../include/defs.h 
+core_cml.o: ../include/parse.h ../include/cdc_types.h
+core_cml.o: ../include/regexp.h ../include/ident.h ../include/list.h
+core_cml.o: ../include/cdc_string.h ../include/buffer.h ../include/dict.h
+core_cml.o: ../include/object.h ../include/io.h ../include/file.h
+core_cml.o: ../include/data.h ../include/execute.h
+core_veil.o: ../include/config.h ../include/defs.h 
+core_veil.o: ../include/parse.h ../include/cdc_types.h
+core_veil.o: ../include/regexp.h ../include/ident.h ../include/list.h
+core_veil.o: ../include/cdc_string.h ../include/buffer.h ../include/dict.h
+core_veil.o: ../include/object.h ../include/io.h ../include/file.h
+core_veil.o: ../include/data.h ../include/operators.h
+core_veil.o: ../include/execute.h  ../include/memory.h

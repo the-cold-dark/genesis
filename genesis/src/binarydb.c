@@ -21,7 +21,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "y.tab.h"
 #include "binarydb.h"
 #include "lookup.h"
 #include "object.h"
@@ -89,8 +88,8 @@ extern long cur_search, db_top;
             FAIL("Cannot stat database file \"%s/objects\".\n"); \
         bitmap_blocks = ROUND_UP(LOGICAL_BLOCK(statbuf.st_size) + \
                         DB_BITBLOCK, 8); \
-        bitmap = EMALLOC(char, bitmap_blocks / 8); \
-        memset(bitmap, 0, bitmap_blocks / 8); \
+        bitmap = EMALLOC(char, (bitmap_blocks / 8)+1); \
+        memset(bitmap, 0, (bitmap_blocks / 8)+1); \
     }
 
 #define sync_index() { \
@@ -250,8 +249,8 @@ int init_db(int force_textdump) {
 	FAIL("Cannot stat database file \"%s/objects\".\n");
 
     bitmap_blocks = ROUND_UP(LOGICAL_BLOCK(statbuf.st_size) + DB_BITBLOCK, 8);
-    bitmap = EMALLOC(char, bitmap_blocks / 8);
-    memset(bitmap, 0, bitmap_blocks / 8);
+    bitmap = EMALLOC(char, (bitmap_blocks / 8)+1);
+    memset(bitmap, 0, (bitmap_blocks / 8)+1);
 
     objnum = lookup_first_objnum();
     if (objnum >= db_top)

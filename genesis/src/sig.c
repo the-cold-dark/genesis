@@ -20,7 +20,6 @@
 #include "execute.h"      /* task() */
 #include "cdc_string.h"   /* string_from_chars() */
 #include "data.h"
-#include "y.tab.h"
 
 void catch_SIGCHLD(int sig);
 

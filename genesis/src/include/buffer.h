@@ -27,6 +27,7 @@ string_t * buffer_to_string(Buffer *buf);
 Buffer   * buffer_from_string(string_t * string);
 list_t   * buffer_to_strings(Buffer *buf, Buffer *sep);
 Buffer   * buffer_from_strings(list_t *string_list, Buffer *sep);
+Buffer   * buffer_subrange(Buffer *buf, int start, int len);
 
 #define buffer_len(__b) (__b->len)
 /* int      buffer_len(Buffer *buf); */

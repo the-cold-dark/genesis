@@ -10,13 +10,13 @@
 */
 
 #include "config.h"
-#include "y.tab.h"
+#include "defs.h"
 #include "operators.h"
 #include "execute.h"
 #include "cdc_types.h"
 #include "memory.h"
 
-void op_dict_keys(void) {
+void native_dict_keys(void) {
     data_t * args;
     list_t * keys;
 
@@ -29,7 +29,7 @@ void op_dict_keys(void) {
     list_discard(keys);
 }
 
-void op_dict_add(void) {
+void native_dict_add(void) {
     data_t * args;
 
     if (!func_init_3(&args, DICT, 0, 0))
@@ -40,7 +40,7 @@ void op_dict_add(void) {
     pop(2);
 }
 
-void op_dict_del(void) {
+void native_dict_del(void) {
     data_t * args;
 
     if (!func_init_2(&args, DICT, 0))
@@ -55,7 +55,7 @@ void op_dict_del(void) {
     }
 }
 
-void op_dict_contains(void) {
+void native_dict_contains(void) {
     data_t * args;
     int      val;
 

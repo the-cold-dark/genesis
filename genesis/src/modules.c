@@ -15,9 +15,7 @@
 #include "defs.h"
 #include "cdc_types.h"
 #include "modules.h"
-#include "moduledef.h"
-
-Ident pabort_id, pclose_id, popen_id;
+#include "moddef.h"
 
 int init_modules(int argc, char ** argv) {
     int m;
@@ -28,25 +26,13 @@ int init_modules(int argc, char ** argv) {
     return 1;
 }
 
-int uninit_modules(int argc, char ** argv) {
+int uninit_modules(void) {
     int m;
 
     for (m=0; cold_modules[m] != NULL; m++)
-        cold_modules[m]->uninit(argc, argv);
+        cold_modules[m]->uninit();
 
     return 1;
-}
-
-void init_coldcore(int argc, char ** argv) {
-    pabort_id = ident_get("abort");
-    pclose_id = ident_get("close");
-    popen_id  = ident_get("open");
-}
-
-void uninit_coldcore(void) {
-    ident_discard(pabort_id);
-    ident_discard(pclose_id);
-    ident_discard(popen_id);
 }
 
 #undef _modules_

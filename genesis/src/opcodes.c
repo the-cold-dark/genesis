@@ -12,7 +12,6 @@
 #include <ctype.h>
 #include "config.h"
 #include "defs.h"
-#include "y.tab.h"
 #include "opcodes.h"
 #include "operators.h"
 #include "old_ops.h"
@@ -96,6 +95,14 @@ static Op_info op_info[] = {
     { '<',              "<",               op_less },
     { LE,               "<=",              op_less_or_equal },
     { IN,               "IN",              op_in },
+    { P_INCREMENT,      "P_INCREMENT",     op_p_increment },
+    { P_DECREMENT,      "P_DECREMENT",     op_p_decrement },
+    { INCREMENT,        "INCREMENT",       op_increment },
+    { DECREMENT,        "DECREMENT",       op_decrement },
+    { MULT_EQ,          "MULT_EQ",         op_doeq_multiply },
+    { DIV_EQ,           "DIV_EQ",          op_doeq_divide },
+    { PLUS_EQ,          "PLUS_EQ",         op_doeq_add },
+    { MINUS_EQ,         "MINUS_EQ",        op_doeq_subtract },
 
     /* Object variable functions */
     { ADD_VAR,           "add_var",             func_add_var },
@@ -106,11 +113,11 @@ static Op_info op_info[] = {
     { VARIABLES,         "variables",           func_variables },
 
     /* Object method functions */
-    { COMPILE,           "compile",             func_null_function },
+    { COMPILE,           "compile",             func_compile },
     { DECOMPILE,         "decompile",           func_decompile },
     { ADD_METHOD,        "add_method",          func_add_method },
     { DEL_METHOD,        "del_method",          func_del_method },
-    { GET_METHOD,        "get_method",          func_null_function },
+    { GET_METHOD,        "get_method",          func_get_method },
     { RENAME_METHOD,     "rename_method",       func_rename_method },
     { SET_METHOD_FLAGS,  "set_method_flags",    func_set_method_flags },
     { SET_METHOD_ACCESS, "set_method_access",   func_set_method_access },
@@ -145,7 +152,7 @@ static Op_info op_info[] = {
     { SET_HEARTBEAT,     "set_heartbeat",       func_set_heartbeat },
 
     /* Task/Frame functions */
-    { TICK,             "tick",                 func_tick },
+    { F_TICK,           "tick",                 func_tick },
     { RESUME,           "resume",               func_resume },
     { SUSPEND,          "suspend",              func_suspend },
     { TASKS,            "tasks",                func_tasks },
@@ -209,75 +216,75 @@ static Op_info op_info[] = {
     { F_FFLUSH,         "fflush",               func_fflush },
 
     /* Miscellaneous functions */
-    { LOCALTIME,        "localtime",       op_localtime },
-    { TIME,             "time",            op_time },
-    { MTIME,            "mtime",           op_mtime },
-    { CTIME,            "ctime",           op_ctime },
+    { LOCALTIME,        "localtime",       func_localtime },
+    { TIME,             "time",            func_time },
+    { MTIME,            "mtime",           func_mtime },
+    { CTIME,            "ctime",           func_ctime },
     { BIND_FUNCTION,    "bind_function",   func_bind_function },
     { UNBIND_FUNCTION,  "unbind_function", func_unbind_function },
-    { RANDOM,           "random",          op_random },
-    { F_MIN,            "min",             op_min },
-    { F_MAX,            "max",             op_max },
-    { F_ABS,            "abs",             op_abs },
+    { RANDOM,           "random",          func_random },
+    { F_MIN,            "min",             func_min },
+    { F_MAX,            "max",             func_max },
+    { F_ABS,            "abs",             func_abs },
 
     /* -------- from here on are native functions -------- */
     /* Operations on strings (stringop.c). */
-    { STRFMT,           "strfmt",          op_strfmt },
-    { STRLEN,           "strlen",          op_strlen },
-    { SUBSTR,           "substr",          op_substr },
-    { EXPLODE,          "explode",         op_explode },
-    { STRSUB,           "strsub",          op_strsub },
-    { PAD,              "pad",             op_pad },
-    { MATCH_BEGIN,      "match_begin",     op_match_begin },
-    { MATCH_TEMPLATE,   "match_template",  op_match_template },
-    { MATCH_PATTERN,    "match_pattern",   op_match_pattern },
-    { MATCH_REGEXP,     "match_regexp",    op_match_regexp },
-    { CRYPT,            "crypt",           op_crypt },
-    { UPPERCASE,        "uppercase",       op_uppercase },
-    { LOWERCASE,        "lowercase",       op_lowercase },
-    { STRCMP,           "strcmp",          op_strcmp },
+    { STRFMT,           "strfmt",          func_strfmt },
+    { STRLEN,           "strlen",          func_strlen },
+    { SUBSTR,           "substr",          func_substr },
+    { EXPLODE,          "explode",         func_explode },
+    { STRSUB,           "strsub",          func_strsub },
+    { PAD,              "pad",             func_pad },
+    { MATCH_BEGIN,      "match_begin",     func_match_begin },
+    { MATCH_TEMPLATE,   "match_template",  func_match_template },
+    { MATCH_PATTERN,    "match_pattern",   func_match_pattern },
+    { MATCH_REGEXP,     "match_regexp",    func_match_regexp },
+    { CRYPT,            "crypt",           func_crypt },
+    { UPPERCASE,        "uppercase",       func_uppercase },
+    { LOWERCASE,        "lowercase",       func_lowercase },
+    { STRCMP,           "strcmp",          func_strcmp },
+    { STRSED,           "strsed",          func_strsed },
 
     /* List manipulation (listop.c). */
-    { LISTLEN,          "listlen",         op_listlen },
-    { SUBLIST,          "sublist",         op_sublist },
-    { INSERT,           "insert",          op_insert },
-    { REPLACE,          "replace",         op_replace },
-    { DELETE,           "delete",          op_delete },
-    { SETADD,           "setadd",          op_setadd },
-    { SETREMOVE,        "setremove",       op_setremove },
-    { UNION,            "union",           op_union },
+    { LISTLEN,          "listlen",         func_listlen },
+    { SUBLIST,          "sublist",         func_sublist },
+    { INSERT,           "insert",          func_insert },
+    { REPLACE,          "replace",         func_replace },
+    { DELETE,           "delete",          func_delete },
+    { SETADD,           "setadd",          func_setadd },
+    { SETREMOVE,        "setremove",       func_setremove },
+    { UNION,            "union",           func_union },
 
     /* Dictionary manipulation (dictop.c). */
-    { DICT_KEYS,        "dict_keys",       op_dict_keys },
-    { DICT_ADD,         "dict_add",        op_dict_add },
-    { DICT_DEL,         "dict_del",        op_dict_del },
-    { DICT_CONTAINS,    "dict_contains",   op_dict_contains },
+    { DICT_KEYS,        "dict_keys",       func_dict_keys },
+    { DICT_ADD,         "dict_add",        func_dict_add },
+    { DICT_DEL,         "dict_del",        func_dict_del },
+    { DICT_CONTAINS,    "dict_contains",   func_dict_contains },
 
     /* Buffer manipulation (bufferop.c). */
-    { BUFFER_LEN,       "buffer_len",      op_buffer_len },
-    { BUFFER_RETRIEVE,  "buffer_retrieve", op_buffer_retrieve },
-    { BUFFER_APPEND,    "buffer_append",   op_buffer_append },
-    { BUFFER_REPLACE,   "buffer_replace",  op_buffer_replace },
-    { BUFFER_ADD,       "buffer_add",      op_buffer_add },
-    { BUFFER_TRUNCATE,  "buffer_truncate", op_buffer_truncate },
-    { BUFFER_TAIL,      "buffer_tail",     op_buffer_tail },
-    { BUFFER_TO_STRINGS,"buffer_to_strings",op_buffer_to_strings },
-    { BUFFER_TO_STRING,"buffer_to_string",op_buffer_to_string },
-    { BUFFER_FROM_STRINGS,"buffer_from_strings",op_buffer_from_strings },
-    { BUFFER_FROM_STRING,"buffer_from_string",op_buffer_from_string },
+#if 0
+    { BUF_RETRIEVE,  "buffer_retrieve", func_buffer_retrieve },
+    { BUF_APPEND,    "buffer_append",   func_buffer_append },
+    { BUF_ADD,       "buffer_add",      func_buffer_add },
+    { BUF_TRUNCATE,  "buffer_truncate", func_buffer_truncate },
+    { BUF_TAIL,      "buffer_tail",     func_buffer_tail },
+#endif
+    { BUFLEN,           "buflen",          func_buflen },
+    { BUF_REPLACE,      "buf_replace",     func_buf_replace },
+    { BUF_TO_STRINGS,   "buf_to_strings",  func_buf_to_strings },
+    { BUF_TO_STR,       "buf_to_str",      func_buf_to_str },
+    { STRINGS_TO_BUF,   "strings_to_buf",  func_strings_to_buf },
+    { STR_TO_BUF,       "str_to_buf",      func_str_to_buf },
+    { SUBBUF,           "subbuf",          func_subbuf },
 
-    { HOSTNAME,         "hostname",             op_hostname },
-    { IP,               "ip",                   op_ip },
-    { STATUS,           "status",                op_status },
-    { NEXT_OBJNUM,      "next_objnum",                op_next_objnum },
-    { VERSION,          "version",         op_version },
-    { STRFTIME,         "strftime",        op_strftime },
-    { TOKENIZE_CML,     "tokenize_cml",    op_tokenize_cml },
-    { BUF_TO_VEIL_PACKETS,      "buf_to_veil_packets",   op_buf_to_veil_packets },
-    { BUF_FROM_VEIL_PACKETS,    "buf_from_veil_packets", op_buf_from_veil_packets },
-
-    { DECODE, "decode", native_decode },
-    { ENCODE, "encode", native_encode }
+#if 1  /* remove these once native methods are fully functional */
+    { HOSTNAME,         "hostname",             native_hostname },
+    { IP,               "ip",                   native_ip },
+    { STATUS,           "status",                native_status },
+    { NEXT_OBJNUM,      "next_objnum",                native_next_objnum },
+    { VERSION,          "version",         native_version },
+    { STRFTIME,         "strftime",        native_strftime },
+#endif
 };
 
 void init_op_table(void) {

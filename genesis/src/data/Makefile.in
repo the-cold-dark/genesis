@@ -1,0 +1,50 @@
+# ColdX driver
+
+CFLAGS=@CFLAGS@ -I../include
+LDFLAGS=@LDFLAGS@
+LIBS=@LIBS@
+CC=@CC@
+RANLIB=@RANLIB@
+LINT=@LINT@
+YACC=@YACC@
+
+SYS=@SYS@
+CPU=@CPU@
+VENDOR=@VENDOR@
+
+prefix=@prefix@
+BINDIR=$(prefix)/bin
+SRCDIR=$(prefix)/src
+
+VERSION=@VERSION@
+
+OBJS = data.o buffer.o dict.o ident.o list.o object.o string.o 
+
+SRCS = `echo $(CDC_OBJS) $(COLDCORE_O) | sed -e 's/\.o/.c/g'`
+
+#######
+# rules
+
+all: $(OBJS)
+
+clean:
+	rm -f lib*.a *~ *.BAK *.bak *.o
+
+scrub: clean
+
+makefile:
+	@cd $(prefix); configure -q
+
+depend:
+	@makedepend -- $(CFLAGS) -- $(SRCS)
+	@rm Makefile.bak
+
+lint:
+	$(LINT) -u $(SRCS)
+
+patchable: scrub
+	@chmod -f u+w Makefile
+	@rm -f Makefile
+
+include/parse.h:
+	cd ../; make grammar.o include/parse.h

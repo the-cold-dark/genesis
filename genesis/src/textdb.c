@@ -17,7 +17,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
-#include "y.tab.h"
+#include <errno.h>
 #include "cdc_types.h"
 #include "memory.h"
 #include "cache.h"
@@ -48,40 +48,41 @@ typedef struct idref_s {
 } idref_t;
 
 /* globals, because its easier this way */
-int        line_count;
+long       line_count;
+long       method_start;
 object_t * cur_obj;
 
-#define LINECOUNT (printf("Line %d: ", line_count))
+#define LINECOUNT (printf("Line %ld: ", line_count))
 
-#define ERR(__s)  (printf("Line %d: %s\n",          line_count, __s))
+#define ERR(__s)  (printf("Line %ld: %s\n",          line_count, __s))
 
 #define ERRf(__s, __x) { \
-        printf("Line %d: ", line_count); \
+        printf("Line %ld: ", line_count); \
         printf(__s, __x); \
         fputc(10, logfile); \
     }
 
-#define WARN(__s) (printf("Line %d: WARNING: %s\n", line_count, __s))
+#define WARN(__s) (printf("Line %ld: WARNING: %s\n", line_count, __s))
 
 #define WARNf(__s, __x) { \
-        printf("Line %d: WARNING: ", line_count); \
+        printf("Line %ld: WARNING: ", line_count); \
         printf(__s, __x); \
         fputc(10, logfile); \
     }
 
 #define WARNf2(__s, __a1, __a2) { \
-        printf("Line %d: WARNING: ", line_count); \
+        printf("Line %ld: WARNING: ", line_count); \
         printf(__s, __a1, __a2); \
         fputc(10, logfile); \
     }
 
 #define DIE(__s) { \
-        printf("Line %d: ABORT: %s\n", line_count, __s); \
+        printf("Line %ld: ABORT: %s\n", line_count, __s); \
         shutdown(); \
     }
 
 #define DIEf(__fmt, __arg) { \
-        printf("Line %d: ABORT: ", line_count); \
+        printf("Line %ld: ABORT: ", line_count); \
         printf(__fmt, __arg); \
         fputc(10, logfile); \
         shutdown(); \
@@ -105,8 +106,6 @@ object_t * cur_obj;
 /* this is here, rather than in data.c, because it would be lint for genesis */
 
 char * data_from_literal(data_t *d, char *s);
-void object_text_dump(long objnum, FILE *fp);
-static void object_text_dump_aux(object_t *obj, FILE *fp);
 
 /*
 // ------------------------------------------------------------------------
@@ -154,7 +153,7 @@ INTERNAL int add_objname(char * str, long objnum) {
     long       num = INV_OBJNUM;
 
     if (lookup_retrieve_name(id, &num) && num != objnum) {
-        printf("Line %d: WARNING: Attempt to rebind existing objname $%s (#%d)\n",
+        printf("Line %ld: WARNING: Attempt to rebind existing objname $%s (#%d)\n",
                 line_count, str, (int) num);
         ident_discard(id);
         return 0;
@@ -231,18 +230,6 @@ INTERNAL void cleanup_holders(void) {
             free(old);
         }
     }
-}
-
-/*
-// ------------------------------------------------------------------------
-*/
-int is_valid_id(char * str, int len) {
-    while (len--) {
-        if (!isalnum(*str) && *str != '_')
-            return 0;
-        str++;
-     }
-     return 1;
 }
 
 /*
@@ -845,6 +832,29 @@ INTERNAL void handle_methcmd(FILE * fp, char * s, int new, int access) {
 /*
 // ------------------------------------------------------------------------
 */
+INTERNAL void frob_n_print_errstr(char * err, char * name, objnum_t objnum) {
+    int        line = 0;
+    string_t * str;
+
+    if (strncmp("Line ", err, 5) == 0) {
+        err += 5;
+        while (isdigit(*err))
+            line = line * 10 + *err++ - '0';
+        err += 2;
+    }
+
+    str = format("Line %l: line %d in %O.%s(): %s\n",
+                 method_start + line,
+                 line,
+                 objnum,
+                 name,
+                 err);
+
+    fputs(str->s, stderr);
+
+    string_discard(str);
+}
+
 INTERNAL method_t * get_method(FILE * fp, object_t * obj, char * name) {
     method_t * method;
     list_t   * code,
@@ -855,6 +865,9 @@ INTERNAL method_t * get_method(FILE * fp, object_t * obj, char * name) {
 
     code = list_new(0);
     d.type = STRING;
+
+    /* used in printing method errs */
+    method_start = line_count;
     for (line = fgetstring(fp); line; line = fgetstring(fp)) {
         line_count++;
 
@@ -865,13 +878,9 @@ INTERNAL method_t * get_method(FILE * fp, object_t * obj, char * name) {
             list_discard(code);
 
             /* do warnings and errors, if they exist */
-            for (i = 0; i < errors->len; i++) {
-                printf("Line %d: #%li %s: %s\n",
-                       line_count,
-                       obj->objnum,
-                       name,
-                       (errors->el[i].u.str->s));
-            }
+            for (i = 0; i < errors->len; i++)
+                frob_n_print_errstr(errors->el[i].u.str->s, name, obj->objnum);
+
             list_discard(errors);
 
             /* return the method, null or not */
@@ -908,6 +917,7 @@ void compile_cdc_file(FILE * fp) {
 
     /* start at line 0 */
     line_count = 0;
+    cur_obj = cache_retrieve(ROOT_OBJNUM);
 
     /* use fgetstring because it'll expand until we have the whole line */
     while ((line = fgetstring(fp)) && running) {
@@ -1193,77 +1203,162 @@ char * data_from_literal(data_t *d, char *s) {
 
 /*
 // ------------------------------------------------------------------------
-// Text dump.  This dump can allocate memory, and thus shouldn't be used
-// as a panic dump for low-memory situations.
+// decompile the binary db to a text file
+*/
+void dump_object(long objnum, FILE *fp);
+INTERNAL char * method_definition(method_t * m);
+
+INTERNAL void print_objname(object_t * obj, FILE * fp) {
+    if (!obj || obj->objname == -1) {
+        fputc('#', fp);
+        fprintf(fp, "%li", obj->objnum);
+    } else {
+        fputc('$', fp);
+        fputs(ident_name(obj->objname), fp);
+    }
+}
+
+/*
+// ------------------------------------------------------------------------
 */
 int text_dump(void) {
-    FILE *fp;
-    object_t *obj;
-    long name, objnum;
+    FILE      * fp;
+    char        buf[BUF];
 
     /* Open the output file. */
-    fp = open_scratch_file("textdump.new", "w");
-    if (!fp)
+    sprintf(buf, "%s.out", c_dir_textdump);
+
+    fp = open_scratch_file(buf, "w");
+    if (!fp) {
+        fprintf(stderr, "Unable to open temporary file \"%s\".\n", buf);
         return 0;
-
-    /* Dump the names. */
-    name = lookup_first_name();
-    while (name != NOT_AN_IDENT) {
-        if (!lookup_retrieve_name(name, &objnum))
-            panic("Name index is inconsistent.");
-        fformat(fp, "name %I %d\n", name, objnum);
-        ident_discard(name);
-        name = lookup_next_name();
     }
 
-    /* Dump the objects. */
     cur_search++;
-    obj = cache_first();
-    while (obj) {
-        object_text_dump(obj->objnum, fp);
-        cache_discard(obj);
-        obj = cache_next();
-    }
+    dump_object(ROOT_OBJNUM, fp);
 
     close_scratch_file(fp);
 
-    if (rename("textdump.new", "textdump") == F_FAILURE)
+    if (rename(buf, c_dir_textdump) == F_FAILURE) {
+        fprintf(stderr, "Unable to rename \"%s\" to \"%s\":\n\t%s\n",
+                buf, c_dir_textdump, strerror(errno));
         return 0;
+    }
 
     return 1;
 }
+#define is_system(__n) (__n == ROOT_OBJNUM || __n == SYSTEM_OBJNUM)
+#define print_objname_by_num(__o, __fp) { \
+        tmp = cache_retrieve(__o); \
+        print_objname(tmp, __fp); \
+        cache_discard(tmp); \
+    }
 
-void object_text_dump(long objnum, FILE *fp) {
-    object_t * obj;
-    list_t * parents;
-    data_t * d;
+void dump_object(long objnum, FILE *fp) {
+    object_t * obj,
+             * tmp;
+    list_t   * objs,
+             * code;
+    data_t   * d;
+    string_t * str;
+    Var      * var;
+    int        first,
+               i;
 
     obj = cache_retrieve(objnum);
 
-    /* Don't dump an object twice. */
     if (obj->search == cur_search) {
         cache_discard(obj);
         return;
     }
+    objs = list_dup(obj->parents);
+    cache_discard(obj); 
+
+    /* Dump any parents which haven't already been dumped. */
+    if (list_length(objs) != 0) {
+        for (d = list_first(objs); d; d = list_next(objs, d))
+            dump_object(d->u.objnum, fp);
+    }
+
+    obj = cache_retrieve(objnum);
+    if (obj->search == cur_search) { /* were we written out already ? */
+        cache_discard(obj);
+        return;
+    }
+
     obj->dirty = 1;
     obj->search = cur_search;
 
-    /* Pick up a copy of the objnum and parents list, and forget the object. */
-    parents = list_dup(obj->parents);
+    if (!is_system(obj->objnum))
+       fputs("new ", fp);
+    fputs("object ", fp);
+    print_objname(obj, fp);
+
+    if (objs->len != 0) {
+        fputc(':', fp);
+        fputc(' ', fp);
+        first = 1;
+        for (d = list_first(objs); d; d = list_next(objs, d)) {
+            if (!first)
+                fputs(", ", fp);
+            first = 0;
+            print_objname_by_num(d->u.objnum, fp);
+        }
+    }
+
+    list_discard(objs);
+
+    fputs(";\n\n", fp);
+
+    /* define variables */
+    for (i = 0; i < obj->vars.size; i++) {
+        var = &obj->vars.tab[i];
+        if (var->name == -1)
+            continue;
+        if (!cache_check(var->cclass))
+            continue;
+        str = data_to_literal(&var->val);
+        fputs("var ", fp);
+        print_objname_by_num(var->cclass, fp);
+        fformat(fp, " %I = %S;\n", var->name, str);
+        string_discard(str);
+    }
+
+    fputc('\n', fp);
+
+    /* define methods */
+    for (i = 0; i < obj->methods.size; i++) {
+        if (!obj->methods.tab[i].m)
+            continue;
+
+        /* define it */
+        fputs(method_definition(obj->methods.tab[i].m), fp);
+        fputs(" {\n", fp);
+        
+        /* list it */
+        code = decompile(obj->methods.tab[i].m, obj, 4, 1);
+        for (d = list_first(code); d; d = list_next(code, d)) {
+            fputs("    ", fp);
+            fputs(string_chars(d->u.str), fp);
+            putc('\n', fp);
+        }
+        list_discard(code);
+
+        /* end it */
+        fputs("};\n\n", fp);
+    }
+
+    fputc('\n', fp);
+
+    /* now dump it's children */
+    objs = list_dup(obj->children);
     cache_discard(obj);
 
-    /* Dump any parents which haven't already been dumped. */
-    for (d = list_first(parents); d; d = list_next(parents, d))
-        object_text_dump(d->u.objnum, fp);
-
-    /* Now discard the parents list and retrieve the object again. */
-    list_discard(parents);
-    obj = cache_retrieve(objnum);
-
-    /* Write the object out, finally. */
-    object_text_dump_aux(obj, fp);
-
-    cache_discard(obj);
+    if (objs->len) {
+        for (d = list_first(objs); d; d = list_next(objs, d))
+            dump_object(d->u.objnum, fp);
+    }
+    list_discard(objs);
 }
 
 #define ADD_FLAG(__bit, __str1, __str2) { \
@@ -1302,8 +1397,11 @@ INTERNAL char * method_definition(method_t * m) {
     /* this should else and use string_add_unparsed, but, ohwell */
     if (is_valid_ident(s))
 #endif
-        strcat(buf, s);
-        
+
+    strcat(buf, "method .");
+    strcat(buf, s);
+    strcat(buf, "()");
+
     /* flags */
     if (m->m_flags & MF_NOOVER) {
         strcpy(flags, "nooverride");
@@ -1322,54 +1420,3 @@ INTERNAL char * method_definition(method_t * m) {
     return buf;
 }
 
-static void object_text_dump_aux(object_t *obj, FILE *fp) {
-    string_t *str;
-    list_t *code, *parents;
-    data_t *d;
-    int i;
-    Var *var;
-
-    /* define parents */
-    parents = obj->parents;
-    for (d = list_first(parents); d; d = list_next(parents, d))
-        fformat(fp, "parent #%l\n", d->u.objnum);
-
-    /* define object */
-    fformat(fp, "object #%l\n\n", obj->objnum);
-
-    /* define variables */
-    for (i = 0; i < obj->vars.size; i++) {
-        var = &obj->vars.tab[i];
-        if (var->name == -1)
-            continue;
-        if (!cache_check(var->cclass))
-            continue;
-        str = data_to_literal(&var->val);
-        fformat(fp, "var %d %I %S\n", var->cclass, var->name, str);
-        string_discard(str);
-    }
-
-    putc('\n', fp);
-
-    /* define methods */
-    for (i = 0; i < obj->methods.size; i++) {
-        if (!obj->methods.tab[i].m)
-            continue;
-
-        /* define it */
-        fputs(method_definition(obj->methods.tab[i].m), fp);
-        putc('\n', fp);
-        
-        /* list it */
-        code = decompile(obj->methods.tab[i].m, obj, 4, 1);
-        for (d = list_first(code); d; d = list_next(code, d)) {
-            fputs("    ", fp);
-            fputs(string_chars(d->u.str), fp);
-            putc('\n', fp);
-        }
-        list_discard(code);
-
-        /* end it */
-        fputs(".\n\n", fp);
-    }
-}

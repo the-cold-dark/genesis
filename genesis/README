@@ -1,24 +1,26 @@
-Look into the directory "doc/" for documentation on the ColdX Driver,
-the ColdX Project and other instructions.
+Documentation on using this software package can be found at:
 
-An email list is available, send 'subscribe' in a mail message to:
+    http://www.cold.org/Genesis/
 
-    coldstuff-request@cold.org
+The following email lists are available:
 
-This will register you to the coldstuff list at:
+    coldstuff           Generic cold-related list
+    coldcore            Generic discussion in relation to the ColdCore
+    coldcore-bugs       Bug (feature) reporting for the ColdCore
+    coldcore-hackers    ColdCore development list
+    genesis             Generic discussion in relation to Genesis (ColdC driver)
+    genesis-bugs        Bug (feature) reporting for Genesis
+    genesis-hackers     Genesis development list
 
-    coldstuff@cold.org
+To subscribe to a list, send a mail message to majordomo@cold.org with
+a 'subscribe list' line for each list.  For instance, if you wanted to
+subscribe to 'coldstuff' and 'coldcore', your message body would be:
 
-Further information can be obtained from:
+subscribe coldstuff
+subscribe coldcore
+
+All lists are at cold.org (i.e. coldstuff@cold.org).
+
+Further information on cold and the ColdX Project can be obtained from:
 
     http://www.cold.org/
-
-Read any other README's which may exist in this directory before
-continuing, please!
-
-Known bugs/problems:
-
-    * callers() causes a SEGV sometimes (but not always).  It is
-      used in .debug() in coldcore, so you may want to remove this.
-    * tasks() causes a SEGV most times.
-

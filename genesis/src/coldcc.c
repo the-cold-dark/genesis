@@ -16,8 +16,8 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <signal.h>
 #include "cdc_string.h"               /* strccmp() */
-#include "y.tab.h"
 #include "codegen.h"
 #include "cdc_types.h"
 #include "ident.h"
@@ -63,25 +63,29 @@ INTERNAL void   compile_db(int type);
 int main(int argc, char **argv) {
     initialize(argc, argv);
 
-    if (c_opt == OPT_DECOMP) {
-        fprintf(stderr, "Decompiling database...\n");
-        init_binary_db();
-        init_core_objects();
-        text_dump();
-    } else if (c_opt == OPT_COMP) {
-        fprintf(stderr, "Compiling database...\n");
-        compile_db(NEW_DB);
-    } else if (c_opt == OPT_PARTIAL) {
-        fprintf(stderr, "Opening database for partial compile...\n");
-        compile_db(EXISTING_DB);
+    if (setjmp(main_jmp) == 0) {
+        if (c_opt == OPT_DECOMP) {
+            fprintf(stderr, "Decompiling database...\n");
+            init_binary_db();
+            init_core_objects();
+            if (text_dump())
+               fprintf(stderr,"Database decompiled to \"%s\"\n",c_dir_textdump);
+        } else if (c_opt == OPT_COMP) {
+            fprintf(stderr, "Compiling database...\n");
+            compile_db(NEW_DB);
+        } else if (c_opt == OPT_PARTIAL) {
+            fprintf(stderr, "Opening database for partial compile...\n");
+            compile_db(EXISTING_DB);
+        }
     }
 
+    fputs("Closing binary database...", stderr);
     cache_sync();
     db_close();
     flush_output();
     close_files();
 
-    fputc(10, logfile);
+    fputc(10, stderr);
 
     return 0;
 }
@@ -114,8 +118,7 @@ INTERNAL void compile_db(int newdb) {
         fclose(fp);
     }
 
-    fprintf(stderr, "Database compiled to \"%s\"\nClosing binary database...",
-            c_dir_binary);
+    fprintf(stderr, "Database compiled to \"%s\"\n", c_dir_binary);
 }
 
 /*
@@ -173,7 +176,7 @@ INTERNAL FILE * find_text_db(void) {
 
 #define NEWFILE(var, name) { \
         free(var); \
-        var = EMALLOC(char, strlen(name)); \
+        var = EMALLOC(char, strlen(name) + 1); \
         strcpy(var, name); \
     }
 
@@ -186,6 +189,7 @@ INTERNAL void initialize(int argc, char **argv) {
 
     init_defs();
 
+    init_sig();
     init_codegen();
     init_ident();
     init_op_table();

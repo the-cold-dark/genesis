@@ -46,7 +46,7 @@
 /* Declarations for case-insensitive matching. */
 static int case_matters;
 #define STRCHR(s, c) ((case_matters) ? strchr(s, c) : strcchr(s, c))
-#define STRCMP(s1, s2) ((case_matters) ? strcmp(s1, s2) : strccmp(s1, s2))
+/*#define STRCMP(s1, s2) ((case_matters) ? strcmp(s1, s2) : strccmp(s1, s2))*/
 #define STRNCMP(s1, s2, n) ((case_matters) ? strncmp(s1, s2, n) \
 					   : strnccmp(s1, s2, n))
 #define CHAREQ(a, b) ((case_matters) ? ((a) == (b)) : LCASE(a) == LCASE(b))
@@ -88,10 +88,10 @@ static int case_matters;
  */
 
 /* definition	number	opnd?	meaning */
-#define	END	0	/* no	End of program. */
+#define	REG_END	0	/* no	End of program. */
 #define	BOL	1	/* no	Match "" at beginning of line. */
 #define	EOL	2	/* no	Match "" at end of line. */
-#define	ANY	3	/* no	Match any one character. */
+#define	REG_ANY	3	/* no	Match any one character. */
 #define	ANYOF	4	/* str	Match any character in this string. */
 #define	ANYBUT	5	/* str	Match any character not in this string. */
 #define	BRANCH	6	/* node	Match this alternative, or the next... */
@@ -253,7 +253,7 @@ regexp * regcomp(char * exp) {
 	r->regmust = NULL;
 	r->regmlen = 0;
 	scan = r->program+1;			/* First BRANCH. */
-	if (OP(regnext(scan)) == END) {		/* Only one top-level choice. */
+	if (OP(regnext(scan)) == REG_END) {		/* Only one top-level choice. */
 		scan = OPERAND(scan);
 
 		/* Starting-point info. */
@@ -337,7 +337,7 @@ static char * reg(int paren, int *flagp) {
 	}
 
 	/* Make a closing node, and hook it on the end. */
-	ender = regnode((paren) ? CLOSE+parno : END);	
+	ender = regnode((paren) ? CLOSE+parno : REG_END);	
 	regtail(ret, ender);
 
 	/* Hook the tails of the branches to the closing node. */
@@ -483,7 +483,7 @@ int *flagp;
 		ret = regnode(EOL);
 		break;
 	case '.':
-		ret = regnode(ANY);
+		ret = regnode(REG_ANY);
 		*flagp |= HASWIDTH|SIMPLE;
 		break;
 	case '[': {
@@ -845,7 +845,7 @@ char *prog;
 			if (*reginput != '\0')
 				return(0);
 			break;
-		case ANY:
+		case REG_ANY:
 			if (*reginput == '\0')
 				return(0);
 			reginput++;
@@ -981,7 +981,7 @@ char *prog;
 				return(0);
 			}
 			break;
-		case END:
+		case REG_END:
 			return(1);	/* Success! */
 			break;
 		default:
@@ -1015,7 +1015,7 @@ char *p;
 	scan = reginput;
 	opnd = OPERAND(p);
 	switch (OP(p)) {
-	case ANY:
+	case REG_ANY:
 		count = strlen(scan);
 		scan += count;
 		break;
@@ -1087,7 +1087,7 @@ regexp *r;
 
 
 	s = r->program + 1;
-	while (op != END) {	/* While that wasn't END last time... */
+	while (op != REG_END) {	/* While that wasn't END last time... */
 		op = OP(s);
 		printf("%2d%s", s-r->program, regprop(s));	/* Where, what. */
 		next = regnext(s);
@@ -1136,8 +1136,8 @@ char *op;
 	case EOL:
 		p = "EOL";
 		break;
-	case ANY:
-		p = "ANY";
+	case REG_ANY:
+		p = "REG_ANY";
 		break;
 	case ANYOF:
 		p = "ANYOF";
@@ -1157,8 +1157,8 @@ char *op;
 	case BACK:
 		p = "BACK";
 		break;
-	case END:
-		p = "END";
+	case REG_END:
+		p = "REG_END";
 		break;
 	case OPEN+1:
 	case OPEN+2:

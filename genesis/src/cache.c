@@ -36,8 +36,6 @@
 object_t * active;
 object_t * inactive;
 
-int        load_count; /* used by cache_cleanup() and cache_retrieve() */
-
 #if DEBUG_CACHE
 int        _acounter = 0;
 int        _icounter = 0;
@@ -59,7 +57,6 @@ void init_cache(void) {
 
     active = EMALLOC(object_t, CACHE_WIDTH);
     inactive = EMALLOC(object_t, CACHE_WIDTH);
-    load_count = 0;
 
     for (i = 0; i < CACHE_WIDTH; i++) {
 	/* Active list starts out empty. */
@@ -153,15 +150,6 @@ object_t *cache_retrieve(long objnum) {
     int ind = objnum % CACHE_WIDTH;
     object_t *obj;
 
-#if DISABLED
-    if (load_count > FORCED_CLEANUP_LIMIT) {
-#if DEBUG_CACHE
-	printf("## Cache flood detected...");
-#endif
-	cache_cleanup();
-    }
-#endif
-
     if (objnum < 0)
 	return NULL;
 
@@ -202,7 +190,6 @@ object_t *cache_retrieve(long objnum) {
     obj = cache_get_holder(objnum);
 
     /* Read the object into the place-holder, if it's on disk. */
-    load_count++;
     if (db_get(obj, objnum)) {
 	return obj;
     } else {
@@ -432,15 +419,12 @@ void cache_sanity_check(void) {
 
 void cache_cleanup(void) {
     object_t * obj;
-    int        i,
-               flood_bound = (load_count > FORCED_CLEANUP_LIMIT ?
-                                           FORCED_CLEANUP_BOUND : 0);
+    int        i;
 
-    load_count = 0;
     for (i = 0; i < CACHE_WIDTH; i++) {
         for (obj = inactive[i].next; obj != &inactive[i]; obj = obj->next) {
             obj->ucounter >>= 1;
-            if(obj->ucounter > flood_bound) {
+            if(obj->ucounter > 0) {
 #if DISABLED
                 if(obj->objnum == INV_OBJNUM)
                     continue;

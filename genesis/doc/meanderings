@@ -1,0 +1,79 @@
+The following are meanderings.  They would be nice to have in ColdC, but
+probably wont exist (perhaps ColdC 2.0).
+
+----- Better error handling:
+
+'retry' will direct it to rewind and retry the block of code in the
+catch body.  For example:
+
+mode = 'read_write;
+catch any {
+    obj.do_something(mode);
+    return "Yipee, we did it!";
+} with {
+    if (error() == ~locked) {
+        mode = 'read_only;
+        retry;
+    }
+    return "Ack, error: " + error();
+}
+
+------ procedures:
+
+Procedures are simply methods, which are not bound to objects, and which can
+be passed around as data.  Furthermore, they can access 'external' local
+variables (not object variables), within their scope.
+
+public method .test(): nooverrides {
+    arg threshold, list;
+    var target, obj, add;
+   
+    add = procedure {
+        arg elem;
+        var total;
+  
+        target.add(elem);
+        if (++total > threshold)
+            throw(~max, "Maximum threshold breached.");
+    };
+   
+    for x in (list)
+       (> &add(second) <);
+};
+
+-------
+Miro created some pseudo code which may be used to implement ancestor
+caching for is_ancestor:
+
+typedef struct {
+    int a,b;
+    int result;
+} ancestor_cache;
+
+#define CACHE_SIZE 1257
+
+ancestor_cache c[CACHE_SIZE];
+
+int is_ancestor (object a, object b)
+{
+
+    int i;
+    int hash;
+    int res;
+
+    if (a==b) return 1;
+    hash=(a*1293112123+b*1723812128)%CACHE_SIZE;
+    if (c[hash].a==a && c[hash].b=b) return c[hash].result;
+    res=0;
+    for i in parents(b) {
+        if (is_ancestor(a,i)) {
+            res=1;
+            break;
+        }
+    }
+    c[hash].a=a;
+    c[hash].b=b;
+    c[hash].result=res;
+    return res;
+}
+

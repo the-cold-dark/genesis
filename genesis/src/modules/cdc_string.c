@@ -14,7 +14,6 @@
 
 #include <string.h>
 #include <ctype.h>
-#include "y.tab.h"
 #include "operators.h"
 #include "execute.h"
 #include "cdc_types.h"
@@ -22,7 +21,7 @@
 #include "util.h"
 #include "memory.h"
 
-void op_strlen(void) {
+void native_strlen(void) {
     data_t *args;
     int len;
 
@@ -36,7 +35,7 @@ void op_strlen(void) {
     push_int(len);
 }
 
-void op_substr(void) {
+void native_substr(void) {
     int num_args, start, len, string_len;
     data_t *args;
 
@@ -67,7 +66,7 @@ void op_substr(void) {
     }
 }
 
-void op_explode(void) {
+void native_explode(void) {
     int num_args, sep_len, len, want_blanks;
     data_t *args, d;
     list_t *exploded;
@@ -125,7 +124,7 @@ void op_explode(void) {
     list_discard(exploded);
 }
 
-void op_strsub(void) {
+void native_strsub(void) {
     int len, search_len, replace_len;
     data_t *args;
     char *search, *replace, *s, *p, *q;
@@ -164,7 +163,7 @@ void op_strsub(void) {
 
 /* Pad a string on the left (positive length) or on the right (negative
  * length).  The optional third argument gives the fill character. */
-void op_pad(void) {
+void native_pad(void) {
     int num_args, len, padding, filler_len;
     data_t *args;
     char *filler;
@@ -208,7 +207,7 @@ void op_pad(void) {
     pop(num_args - 1);
 }
 
-void op_match_begin(void)
+void native_match_begin(void)
 {
     data_t *args;
     int sep_len, search_len;
@@ -246,7 +245,7 @@ void op_match_begin(void)
 }
 
 /* Match against a command template. */
-void op_match_template(void) {
+void native_match_template(void) {
     data_t *args;
     list_t *fields;
     char *ctemplate, *str;
@@ -270,7 +269,7 @@ void op_match_template(void) {
 }
 
 /* Match against a command template. */
-void op_match_pattern(void) {
+void native_match_pattern(void) {
     data_t *args;
     list_t *fields;
     char *pattern, *str;
@@ -297,7 +296,7 @@ void op_match_pattern(void) {
     list_discard(fields);
 }
 
-void op_match_regexp(void) {
+void native_match_regexp(void) {
     data_t * args,
              d;
     regexp * reg;
@@ -359,7 +358,7 @@ void op_match_regexp(void) {
 }
 
 /* Encrypt a string. */
-void op_crypt(void) {
+void native_crypt(void) {
     int num_args;
     data_t *args;
     char *s, *encrypted;
@@ -387,7 +386,7 @@ void op_crypt(void) {
     string_discard(str);
 }
 
-void op_uppercase(void) {
+void native_uppercase(void) {
     data_t * args;
 
     /* Accept a string to uppercase. */
@@ -397,7 +396,7 @@ void op_uppercase(void) {
     args[0].u.str = string_uppercase(args[0].u.str);
 }
 
-void op_lowercase(void) {
+void native_lowercase(void) {
     data_t *args;
 
     /* Accept a string to uppercase. */
@@ -407,7 +406,7 @@ void op_lowercase(void) {
     args[0].u.str = string_lowercase(args[0].u.str);
 }
 
-void op_strcmp(void) {
+void native_strcmp(void) {
     data_t *args;
     int val;
 
@@ -520,7 +519,7 @@ INTERNAL string_t * PAD(string_t * str, string_t * v, int pad, char * fill) {
     v->s[pad] = (char) NULL;
 }
 
-void op_strfmt(void) {
+void native_strfmt(void) {
     data_t    * argv,
               * arg;
     string_t  * str,
@@ -707,7 +706,7 @@ void op_strfmt(void) {
 
 #else
 
-void op_strfmt(void) {
+void native_strfmt(void) {
     data_t   * argv,
              * arg;
     string_t * str,

@@ -20,7 +20,6 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <fcntl.h>
-#include "y.tab.h"
 #include "util.h"
 #include "cdc_string.h"
 #include "data.h"
@@ -265,6 +264,7 @@ string_t *vformat(char *fmt, va_list arg) {
             buf = string_add_chars(buf, string_chars(str), string_length(str));
             string_discard(str);
           }
+          break;
 
 	  case 'I':
 	    s = ident_name(va_arg(arg, long));
@@ -484,43 +484,7 @@ int parse_strcpy(char * b1, char * b2, int slen) {
     return len;
 }
 
-#undef add_char(__s, __c)
-
-extern char** environ;
-
-/* taken from bdflush-1.5 for Linux source code */
-
-/* actually, I stole it from the apache source -Brandon */
-
-void inststr(char *dst[], int argc, char *src) {
-    if (strlen(src) <= strlen(dst[0])) {
-        char *ptr;
- 
-        for (ptr = dst[0]; *ptr; *(ptr++) = '\0'); 
- 
-        strcpy(dst[0], src);
-    } else {
-        /* stolen from the source to perl 4.036 (assigning to $0) */ 
-        char *ptr, *ptr2;
-        int count;
-        ptr = dst[0] + strlen(dst[0]);
-        for (count = 1; count < argc; count++) {
-            if (dst[count] == ptr + 1)
-                ptr += strlen(++ptr);
-        } 
-        if (environ[0] == ptr + 1) { 
-            for (count = 0; environ[count]; count++)
-                if (environ[count] == ptr + 1)
-                    ptr += strlen(++ptr);
-        }
-        count = 0;
-        for (ptr2 = dst[0]; ptr2 <= ptr; ptr2++) {
-            *ptr2 = '\0';
-            count++;
-        }
-        strncpy(dst[0], src, count);
-    }
-}
+#undef add_char
 
 int getarg(char * n,
            char **buf,
@@ -531,20 +495,31 @@ int getarg(char * n,
 {
     char * p = opt; 
     
-    if (*++p != (char) NULL) {
+    p++;
+    if (*p != (char) NULL) {
         *buf = p;
 
         return 0;
     }
 
-    if (!(*argc - 1)) {
+    if ((*argc - 1) < 0) {
         usage(n);
         fprintf(stderr, "** No followup argument to -%s.\n", opt);
         exit(1);
     }
+
+    argv++;
     *buf = *argv;
     *argc -= 1;
 
     return 1;
-}       
+}
 
+int is_valid_id(char * str, int len) {
+    while (len--) {
+        if (!isalnum(*str) && *str != '_')
+            return 0;
+        str++;
+     }
+     return 1;
+}

@@ -118,6 +118,10 @@ struct method {
     int num_error_lists;
     Error_list *error_lists;
 
+    /* if this is a native method, it is > 0 and is relative to the native
+       method's spot in the lookup table */
+    int native;
+
     /* consolidate the following into bit flags */
     int m_access;       /* public, protected, private */
     int m_flags;       /* overridable, synchronized, locked */
@@ -191,7 +195,6 @@ struct {
 /* function prototypes */
 static void    object_update_parents(object_t *object,
                                   list_t *(*list_op)(list_t *, data_t *));
-static list_t   *object_descendants_aux(long objnum, list_t *descendants);
 static list_t   *object_ancestors_aux(long objnum, list_t *ancestors);
 static int     object_has_ancestor_aux(long objnum, long ancestor);
 static Var    *object_create_var(object_t *object, long cclass, long name);
@@ -230,6 +233,7 @@ int     object_rename_method(object_t * object, long oname, long nname);
 void    object_add_method(object_t *object, long name, method_t *method);
 int     object_del_method(object_t *object, long name);
 list_t   *object_list_method(object_t *object, long name, int indent, int parens);
+method_t * method_new(void);
 void    method_free(method_t *method);
 method_t *method_dup(method_t *method);
 void    method_discard(method_t *method);

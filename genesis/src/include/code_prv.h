@@ -31,8 +31,6 @@ union instr {
  * method.h), which is the internal form of a ColdC program used by the
  * interpreter. */
 struct prog {
-    int m_flags;
-    int m_access;
     Arguments * args;
     Id_list *   vars;
     Stmt_list * stmts;
@@ -151,6 +149,12 @@ struct expr {
 	    Expr *left;
 	    Expr *right;
 	} binary;
+
+        struct {
+	    int opcode;
+            char *var;
+            Expr *value;
+        } doeq;
 
 	struct {
 	    Expr *left;

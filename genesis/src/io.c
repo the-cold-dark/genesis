@@ -18,7 +18,6 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include "y.tab.h"
 #include "io.h"
 #include "net.h"
 #include "execute.h"

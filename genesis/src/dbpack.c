@@ -16,7 +16,6 @@
 #include "defs.h"
 
 #include <string.h>
-#include "y.tab.h"
 #include "dbpack.h"
 #include "cdc_types.h"
 #include "data.h"
@@ -319,6 +318,9 @@ INTERNAL void pack_method(method_t *method, FILE *fp)
 	    write_ident(method->error_lists[i].error_ids[j], fp);
     }
 
+/*
+    write_long(method->native, fp);
+*/
     write_long(method->m_access, fp);
     write_long(method->m_flags, fp);
 
@@ -370,6 +372,9 @@ INTERNAL method_t *unpack_method(FILE *fp)
 	}
     }
 
+/*
+    method->native = read_long(fp);
+*/
     method->m_access = read_long(fp);
     method->m_flags = read_long(fp);
 

@@ -1,0 +1,100 @@
+#!/usr/bin/perl
+
+##
+## using the given arguments, build a list of modules.  There must be
+## a .mod file for each argument
+##
+## this program should be run in the current directory.
+##
+
+sub die {
+    print "@_";
+    `rm -f moddef.h`;
+    exit(0);
+}
+
+@mods = @ARGV;
+
+## open moddef.h now, add to it as we go
+open(DEF, ">moddef.h") || die("Unable to open moddef.h");
+print DEF <<END;
+/*
+// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+//
+// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
+// Full details and copyright information can be found in the file doc/CREDITS
+//
+// File: modules/moddef.h
+// ---
+//
+*/
+
+#ifndef _moddef_h_
+#define _moddef_h_
+
+#include "modules.h"
+#include "native.h"
+
+END
+
+foreach $mod (@mods) {
+    print DEF "#include \"$mod.h\"\n";
+}
+print DEF "\n#define MAGIC_MODNUMBER " . time() . "\n";
+
+print DEF "\nmodule_t * cold_modules[] = {\n";
+
+foreach $mod (@mods) {
+    print DEF "    \&${mod}_module,\n";
+}
+
+print DEF "};\n\n";
+
+## now frob each module file
+$struct = "";
+$defn = 0;
+foreach $mod (@mods) {
+    if (!(-f "./$mod.mod")) {
+        print "** No module found by the name of $mod.mod\n";
+        next;
+    }
+    open(MOD, "$mod.mod");
+
+    while (<MOD>) {
+        chop;
+        (/^\s*#/) && next;
+        s/\s+/ /g;
+        s/^\s*//g;
+        s/\s*$//g;
+        ($ref, $args, $rest, $func) = split(/\s+/, $_);
+        ($ref !~ /\./) && &die("Object reference \"$ref\" is invalid.\n");
+        ($obj, $name) = split(/\./, $ref);
+        ($obj =~ /^#/) &&
+            &die("Native methods may only be specified with object names.\n");
+        $obj =~ s/^\$//;
+        ($obj =~ /[^a-z0-9_]/) &&
+            &die("Object name \"$obj\" contains invalid characters.\n");
+        $name =~ s/\(\s*\)//g;
+        ($name =~ /[^a-z0-9_]/) &&
+            &die("Native method name \"$name\" contains invalid characters.\n");
+        $def = $name;
+        $def =~ tr/[a-z]/[A-Z]/;
+        $defo = $obj;
+        $defo =~ tr/[a-z]/[A-Z]/;
+        print DEF "#define NATIVE_${defo}_${def} $defn\n";
+        $buf = sprintf("    {%-20s %-15s %-25s %-4s %s},\n",
+                "\"$name\",", "\"$obj\",", "$func,", "$args,", "$rest");
+        $struct .= $buf;
+        $defn++;
+    }
+}
+
+print DEF <<END;
+
+native_t natives[] {
+$struct};
+
+#endif
+END
+
+close(DEF);

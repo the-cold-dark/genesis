@@ -17,6 +17,7 @@ typedef struct error_action_specifier Error_action_specifier;
 typedef struct handler_info Handler_info;
 typedef struct vmstate VMState;
 typedef struct vmstack VMStack;
+typedef struct task_s task_t;
 
 #include <sys/types.h>
 #include <stdarg.h>
@@ -30,21 +31,32 @@ typedef struct vmstack VMStack;
 #define ARG_STACK_MALLOC_DELTA 8
 
 struct vmstack {
-  data_t *stack;
-  int stack_size;
-  int *arg_starts, arg_size;
-  VMStack *next;
+    data_t  * stack;
+    int       stack_size,
+            * arg_starts,
+              arg_size;
+    VMStack * next;
 };
 
 struct vmstate {
-    Frame *cur_frame;
-    connection_t *cur_conn;
-    data_t *stack;
-    int stack_pos, stack_size;
-    int *arg_starts, arg_pos, arg_size;
-    int task_id;
-    int paused;
-    VMState *next;
+    Frame   * cur_frame;
+    data_t  * stack;
+    int       stack_pos,
+              stack_size,
+            * arg_starts,
+              arg_pos,
+              arg_size;
+    int       task_id;
+    int       preempted;
+    VMState * next;
+};
+
+struct task_s {
+    objnum_t   objnum;
+    Ident      method;
+    int        stack_start;
+    int        arg_start;
+    task_t   * next;
 };
 
 struct frame {
@@ -97,17 +109,17 @@ struct handler_info {
 #define    CALL_PROT     6
 #define    CALL_ROOT     7
 #define    CALL_DRIVER   8
+#define    CALL_NATIVE   9
 
 extern Frame *cur_frame;
-extern connection_t *cur_conn;
 extern data_t *stack;
 extern int stack_pos, stack_size;
 extern int *arg_starts, arg_pos, arg_size;
 extern string_t *numargs_str;
 extern long task_id;
 extern long tick;
-extern VMState *paused;
-extern VMState *tasks;
+extern VMState * preempted;
+extern VMState * suspended;
 
 void init_execute(void);
 void task(objnum_t objnum, long message, int num_args, ...);

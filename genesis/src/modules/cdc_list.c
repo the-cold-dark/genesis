@@ -10,13 +10,13 @@
 */
 
 #include "config.h"
-#include "y.tab.h"
+#include "defs.h"
 #include "operators.h"
 #include "execute.h"
 #include "cdc_types.h"
 #include "memory.h"
 
-void op_listlen(void) {
+void native_listlen(void) {
     data_t *args;
     int len;
 
@@ -30,7 +30,7 @@ void op_listlen(void) {
     push_int(len);
 }
 
-void op_sublist(void) {
+void native_sublist(void) {
     int num_args, start, span, list_len;
     data_t *args;
 
@@ -58,7 +58,7 @@ void op_sublist(void) {
     }
 }
 
-void op_insert(void) {
+void native_insert(void) {
     int pos, list_len;
     data_t *args;
 
@@ -82,7 +82,7 @@ void op_insert(void) {
     }
 }
 
-void op_replace(void) {
+void native_replace(void) {
     int pos, list_len;
     data_t *args;
 
@@ -106,7 +106,7 @@ void op_replace(void) {
     }
 }
 
-void op_delete(void) {
+void native_delete(void) {
     int pos, list_len;
     data_t *args;
 
@@ -130,7 +130,7 @@ void op_delete(void) {
     }
 }
 
-void op_setadd(void) {
+void native_setadd(void) {
     data_t *args;
 
     /* Accept a list and a data value of any type. */
@@ -143,7 +143,7 @@ void op_setadd(void) {
     pop(1);
 }
 
-void op_setremove(void) {
+void native_setremove(void) {
     data_t *args;
 
     /* Accept a list and a data value of any type. */
@@ -156,7 +156,7 @@ void op_setremove(void) {
     pop(1);
 }
 
-void op_union(void) {
+void native_union(void) {
     data_t *args;
 
     /* Accept two lists. */

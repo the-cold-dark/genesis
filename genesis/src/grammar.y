@@ -18,6 +18,8 @@
 
 %{
 
+#define _grammar_y_
+
 #include "config.h"
 #include "defs.h"
 
@@ -85,6 +87,8 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %token		FORK
 %token		PASS CRITLEFT CRITRIGHT PROPLEFT PROPRIGHT
 
+%right	'='
+%right	MINUS_EQ DIV_EQ MULT_EQ PLUS_EQ
 %left	TO
 %right	'?' '|'
 %right	OR
@@ -95,6 +99,7 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %left	'*' '/' '%'
 %left	'!'
 %left	'[' ']' START_DICT START_BUFFER
+%right	P_INCREMENT INCREMENT P_DECREMENT DECREMENT
 %left	'.'
 
 /* Declarations to shut up shift/reduce conflicts. */
@@ -102,7 +107,6 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %nonassoc ELSE
 %nonassoc LOWER_THAN_WITH
 %nonassoc WITH
-/* %nonassoc '=' */
 
 /* The parser does not use the following tokens.  I define them here so
  * that I can use them, along with the above tokens, as statement and
@@ -110,6 +114,8 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
  * interpreter. */
 
 %token NOOP EXPR COMPOUND ASSIGN IF_ELSE FOR_RANGE FOR_LIST END RETURN_EXPR
+%token DOEQ INDECR
+/*%token MINUS_EQ DIV_EQ MULT_EQ PLUS_EQ*/
 %token CASE_VALUE CASE_RANGE LAST_CASE_VALUE LAST_CASE_RANGE END_CASE RANGE
 %token FUNCTION_CALL MESSAGE EXPR_MESSAGE LIST DICT BUFFER FROB INDEX UNARY
 %token BINARY CONDITIONAL SPLICE NEG SPLICE_ADD POP START_ARGS ZERO ONE
@@ -117,14 +123,12 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %token CRITICAL CRITICAL_END PROPAGATE PROPAGATE_END JUMP
 
 %token TYPE CLASS TOINT TOFLOAT TOSTR TOLITERAL TOOBJNUM TOSYM TOERR VALID
-%token STRFMT STRLEN SUBSTR EXPLODE STRSUB PAD MATCH_BEGIN MATCH_TEMPLATE
+%token STRFMT STRLEN SUBSTR EXPLODE STRSED STRSUB PAD MATCH_BEGIN MATCH_TEMPLATE
 %token MATCH_PATTERN MATCH_REGEXP CRYPT UPPERCASE LOWERCASE STRCMP
 %token LISTLEN SUBLIST INSERT REPLACE DELETE SETADD SETREMOVE UNION
 %token DICT_KEYS DICT_ADD DICT_DEL DICT_ADD_ELEM DICT_DEL_ELEM DICT_CONTAINS
-%token BUFFER_LEN BUFFER_RETRIEVE BUFFER_APPEND BUFFER_REPLACE BUFFER_ADD
-%token BUFFER_TRUNCATE BUFFER_TO_STRINGS BUFFER_FROM_STRINGS BUFFER_TAIL
-%token BUFFER_FROM_STRING BUFFER_TO_STRING
-%token VERSION RANDOM TIME LOCALTIME MTIME STRFTIME
+%token BUFLEN BUF_REPLACE BUF_TO_STRINGS STRINGS_TO_BUF STR_TO_BUF
+%token BUF_TO_STR SUBBUF VERSION RANDOM TIME LOCALTIME MTIME STRFTIME
 %token CTIME F_MIN F_MAX F_ABS LOOKUP METHOD_FLAGS METHOD_ACCESS
 %token SET_METHOD_FLAGS SET_METHOD_ACCESS
 %token METHOD THIS DEFINER SENDER CALLER TASK_ID TICKS_LEFT
@@ -139,11 +143,10 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %token REASSIGN_CONNECTION BACKUP BINARY_DUMP TEXT_DUMP
 %token EXECUTE SHUTDOWN BIND_PORT UNBIND_PORT OPEN_CONNECTION
 %token SET_HEARTBEAT DATA SET_OBJNAME DEL_OBJNAME OBJNAME F_OBJNUM NEXT_OBJNUM
-%token TICK HOSTNAME IP RESUME SUSPEND TASKS
+%token F_TICK HOSTNAME IP RESUME SUSPEND TASKS
 %token CANCEL PAUSE REFRESH STACK STATUS
-%token BIND_FUNCTION UNBIND_FUNCTION TOKENIZE_CML BUF_TO_VEIL_PACKETS
-%token BUF_FROM_VEIL_PACKETS ATOMIC NON_ATOMIC METHOD_INFO
-%token DECODE ENCODE
+%token BIND_FUNCTION UNBIND_FUNCTION
+%token ATOMIC NON_ATOMIC METHOD_INFO
 
 /* Reserved for future use. */
 %token FORK
@@ -223,6 +226,8 @@ stmt	: COMMENT			{ $$ = comment_stmt($1); }
 					{ $$ = catch_stmt($2, $3, NULL); }
 	| CATCH errors stmt WITH HANDLER stmt
 					{ $$ = catch_stmt($2, $3, $6); }
+	| CATCH errors stmt WITH stmt
+					{ $$ = catch_stmt($2, $3, $5); }
 	| error ';'			{ yyerrok; $$ = NULL; }
 	;
 
@@ -253,7 +258,6 @@ expr	: INTEGER			{ $$ = integer_expr($1); }
 	| NAME				{ $$ = name_expr($1); }
 	| IDENT				{ $$ = var_expr($1); }
 	| IDENT '(' args ')'		{ $$ = function_call_expr($1, $3); }
-	| IDENT '=' expr		{ $$ = assign_expr($1, $3); }
 	| PASS '(' args ')'		{ $$ = pass_expr($3); }
 	| expr '.' IDENT '(' args ')'	{ $$ = message_expr($1, $3, $5); }
 	| '.' IDENT '(' args ')'	{ $$ = message_expr(NULL, $2, $4); }
@@ -266,10 +270,14 @@ expr	: INTEGER			{ $$ = integer_expr($1); }
 	| START_BUFFER args ']'		{ $$ = buffer_expr($2); }
 	| '<' expr ',' expr '>'         { $$ = frob_expr($2, $4); }
 	| expr '[' expr ']'		{ $$ = index_expr($1, $3); }
+	| INCREMENT IDENT               { $$ = indecr_expr(P_INCREMENT, $2); }
+	| DECREMENT IDENT        	{ $$ = indecr_expr(P_DECREMENT, $2); }
+	| IDENT INCREMENT               { $$ = indecr_expr(INCREMENT, $1); }
+	| IDENT DECREMENT       	{ $$ = indecr_expr(DECREMENT, $1); }
 	| '!' expr			{ $$ = unary_expr('!', $2); }
 	| '-' expr %prec '!'		{ $$ = unary_expr(NEG, $2); }
 	| '+' expr %prec '!'		{ $$ = $2; }
-	| expr '*' expr			{ $$ = binary_expr('*', $1, $3); }
+        | expr '*' expr                 { $$ = binary_expr('*', $1, $3); }
 	| expr '/' expr			{ $$ = binary_expr('/', $1, $3); }
 	| expr '%' expr			{ $$ = binary_expr('%', $1, $3); }
 	| expr '+' expr			{ $$ = binary_expr('+', $1, $3); }
@@ -284,6 +292,11 @@ expr	: INTEGER			{ $$ = integer_expr($1); }
 	| expr AND expr			{ $$ = and_expr($1, $3); }
 	| expr OR expr			{ $$ = or_expr($1, $3); }
 	| expr '?' expr '|' expr	{ $$ = cond_expr($1, $3, $5); }
+	| IDENT MULT_EQ expr		{ $$ = doeq_expr(MULT_EQ, $1, $3); }
+	| IDENT DIV_EQ expr		{ $$ = doeq_expr(DIV_EQ, $1, $3); }
+	| IDENT PLUS_EQ expr		{ $$ = doeq_expr(PLUS_EQ, $1, $3); }
+	| IDENT MINUS_EQ expr		{ $$ = doeq_expr(MINUS_EQ, $1, $3); }
+	| IDENT '=' expr		{ $$ = assign_expr($1, $3); }
 	| '(' expr ')'			{ $$ = $2; }
         | CRITLEFT expr CRITRIGHT       { $$ = critical_expr($2); }
 	| PROPLEFT expr PROPRIGHT	{ $$ = propagate_expr($2); }
@@ -374,3 +387,4 @@ static void yyerror(char * s) {
     compiler_error(cur_lineno(), s);
 }
 
+#undef _grammar_y_

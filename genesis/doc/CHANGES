@@ -6,6 +6,14 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+0.3-9  [8-Mar-96] Brandon Gillespie
+        more, but I forget, lots of bug squishing
+0.3-8  [20-Feb-96] Brandon Gillespie
+      * changed bind_port() and open_connection() to use the current object,
+        rather than specifying the object as a second argument.
+0.3-7  [20-Feb-96] Brandon Gillespie
+      * bug fixes, yipee
+      * finalized command-line syntax
 0.3-4~6 [Feb-96]: Brandon Gillespie
       * many bug fixes
 0.3-3  [30-Jan-96]: Brandon Gillespie

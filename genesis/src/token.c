@@ -12,7 +12,6 @@
 #include <ctype.h>
 #include "config.h"
 #include "defs.h"
-#include "y.tab.h"
 #include "token.h"
 #include "memory.h"
 #include "data.h"
@@ -71,7 +70,14 @@ static struct {
     { "&&",			AND },
     { "==",			EQ },
     { "!=",			NE },
-    { ">=",			GE }
+    { ">=",			GE },
+
+    { "++",			INCREMENT },
+    { "--",			DECREMENT },
+    { "+=",			PLUS_EQ },
+    { "-=",			MINUS_EQ },
+    { "/=",			DIV_EQ },
+    { "*=",			MULT_EQ }
 };
 
 static struct {
@@ -276,6 +282,16 @@ int yylex(void)
 	return OBJNUM;
     }
 
+    if (len >= 2 && *s == '+' && s[1] == '+') {
+        s += 2, cur_pos += 2, len -= 2;
+        return INCREMENT;
+    }
+
+    if (len >= 2 && *s == '-' && s[1] == '-') {
+        s += 2, cur_pos += 2, len -= 2;
+        return DECREMENT;
+    }
+
     /* None of the above. */
     cur_pos++;
     return *s;
@@ -286,28 +302,10 @@ int cur_lineno(void)
     return cur_line + 1;
 }
 
-INTERNAL char *string_token(char * s, int len, int *token_len)
-{
+INTERNAL char *string_token(char * s, int len, int *token_len) {
     int count = 0, i;
     char *p, *q;
 
-#if 0
-    /* Count characters in string. */
-    for (i = 1; i < len && s[i] != '"'; i++) {
-	if (s[i] == '\\' && i < len - 1)
-	    i++;
-	count++;
-    }
-
-    /* Allocate space and copy. */
-    q = p = PMALLOC(compiler_pile, char, count + 1);
-    for (i = 1; i < len && s[i] != '"'; i++) {
-	if (s[i] == '\\' && i < len - 1)
-	    i++;
-	*q++ = s[i];
-    }
-    *q = 0;
-#else
     /* Count the length */
     for (i = 1; i < len && s[i] != '"'; i++) {
         if (s[i] == '\\' && i < len -1 && (s[i+1] == '"' || s[i+1] == '\\'))
@@ -323,7 +321,6 @@ INTERNAL char *string_token(char * s, int len, int *token_len)
 	*q++ = s[i];
     }
     *q = 0;
-#endif
 
     *token_len = (i == len) ? i : i + 1;
     return p;

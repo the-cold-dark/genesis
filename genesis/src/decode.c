@@ -12,7 +12,6 @@
 #include "config.h"
 #include "defs.h"
 
-#include "y.tab.h"
 #include "decode.h"
 #include "code_prv.h"
 #include "cdc_types.h"
@@ -102,6 +101,10 @@ static struct {
     int level;
 } precedences[] = {
     { '=',		 1 },
+    { PLUS_EQ,		 1 },
+    { MINUS_EQ,		 1 },
+    { MULT_EQ,		 1 },
+    { DIV_EQ,		 1 },
     { CONDITIONAL,	 2 },
     { OR,		 3 },
     { AND,		 4 },
@@ -119,8 +122,12 @@ static struct {
     { '%',		 8 },
     { '!',		 9 },
     { NEG,		 9 },
-    { MESSAGE,		10 },
-    { INDEX,		11 }
+    { P_INCREMENT,	10 },
+    { P_DECREMENT,	10 },
+    { INCREMENT,	10 },
+    { DECREMENT,	10 },
+    { MESSAGE,		11 },
+    { INDEX,		12 }
 };
 
 int line_number(method_t *method, int pc) {
@@ -796,6 +803,26 @@ static Expr_list *decompile_expressions_bounded(int *pos_ptr, int expr_end)
 	    pos += 2;
 	    break;
 
+          case P_INCREMENT:
+          case P_DECREMENT:
+          case INCREMENT:
+          case DECREMENT:
+            s = varname(the_opcodes[pos + 2]);
+            stack->expr = indecr_expr(the_opcodes[pos], s);
+            pos += 3;
+	    break;
+
+          case MULT_EQ:
+          case DIV_EQ:
+          case PLUS_EQ:
+          case MINUS_EQ:
+            /* ignore the current expr, it is just a GET_VAR */
+            stack = stack->next;
+            s = varname(the_opcodes[pos + 2]);
+            stack->expr = doeq_expr(the_opcodes[pos], s, stack->expr);
+            pos += 3;
+            break;
+
           case SET_LOCAL:
             /* SET_LOCAL opcode follows one expression. */
             s = varname(the_opcodes[pos + 1]);
@@ -1190,6 +1217,13 @@ static list_t *unparse_stmt(list_t *output, Stmt *stmt, int indent, Stmt *last)
 
       case CATCH: {
 	  Id_list *errors;
+          int complex = 0;
+
+          if ((stmt->u.ccatch.body != NULL &&
+               is_complex_type(stmt->u.ccatch.body->type)) ||
+              (stmt->u.ccatch.handler != NULL &&
+               is_complex_type(stmt->u.ccatch.handler->type)))
+              complex = 1;
 
 	  str = string_of_char(' ', indent);
 	  str = string_add_chars(str, "catch ", 6);
@@ -1204,19 +1238,24 @@ static list_t *unparse_stmt(list_t *output, Stmt *stmt, int indent, Stmt *last)
 	  } else {
 	     str = string_add_chars(str, "any", 3);
 	  }
-	  str = string_add_chars(str, " {", 2);
+          if (complex)
+              str = string_add_chars(str, " {", 2);
 	  output = add_and_discard_string(output, str);
 	  output = unparse_stmt(output, stmt->u.ccatch.body,
 				indent + the_increment, NULL);
 	  if (stmt->u.ccatch.handler) {
 	      str = string_of_char(' ', indent);
-	      str = string_add_chars(str, "} with handler {", 16);
+              if (complex)
+                  str = string_add_chars(str, "} with {", 8);
+              else
+                  str = string_add_chars(str, "with", 4);
 	      output = add_and_discard_string(output, str);
 	      output = unparse_stmt(output, stmt->u.ccatch.handler,
 				    indent + the_increment, NULL);
 	  }
 	  str = string_of_char(' ', indent);
-	  str = string_addc(str, '}');
+          if (complex)
+              str = string_addc(str, '}');
 	  return add_and_discard_string(output, str);
       }
 
@@ -1347,9 +1386,7 @@ static string_t *unparse_expr(string_t *str, Expr *expr, int paren) {
       case VAR:
 	return string_add_chars(str, expr->u.name, strlen(expr->u.name));
 
-      case ASSIGN: {
-        char *s;
-
+      case ASSIGN:
         s = expr->u.assign.var;
         if (paren)
             str = string_addc(str, '(');
@@ -1359,8 +1396,51 @@ static string_t *unparse_expr(string_t *str, Expr *expr, int paren) {
         if (paren)
             str = string_addc(str, ')');
         return str;
-      }
 
+      case INDECR:
+        s = expr->u.doeq.var;
+
+        /* redundant code */
+        switch (expr->u.doeq.opcode) {
+            case P_INCREMENT:
+                str = string_add_chars(str, "++", 2);
+                str = string_add_chars(str, s, strlen(s));
+                break;
+            case P_DECREMENT:
+                str = string_add_chars(str, "--", 2);
+                str = string_add_chars(str, s, strlen(s));
+                break;
+            case INCREMENT:
+                str = string_add_chars(str, s, strlen(s));
+                str = string_add_chars(str, "++", 2);
+                break;
+            case DECREMENT:
+                str = string_add_chars(str, s, strlen(s));
+                str = string_add_chars(str, "--", 2);
+                break;
+        }
+        return str;
+
+      case DOEQ:
+        s = expr->u.doeq.var;
+        if (paren)
+            str = string_addc(str, '(');
+        str = string_add_chars(str, s, strlen(s));
+        switch(expr->u.doeq.opcode) {
+            case MULT_EQ:
+                str = string_add_chars(str, " *= ", 4); break;
+            case DIV_EQ:
+                str = string_add_chars(str, " /= ", 4); break;
+            case PLUS_EQ:
+                str = string_add_chars(str, " += ", 4); break;
+            case MINUS_EQ:
+                str = string_add_chars(str, " -= ", 4); break;
+        }
+        str = unparse_expr(str, expr->u.doeq.value, PAREN_ASSIGN);
+        if (paren)
+            str = string_addc(str, ')');
+        return str;
+      
       case FUNCTION_CALL:
 	s = expr->u.function.name;
 	str = string_add_chars(str, s, strlen(s));

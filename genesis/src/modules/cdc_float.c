@@ -15,7 +15,6 @@
 
 #include <time.h>
 #include <sys/time.h>    /* for mtime() */
-#include "y.tab.h"
 #include "cdc_types.h"
 #include "operators.h"
 #include "execute.h"

@@ -13,13 +13,13 @@
 #include "defs.h"
 
 #include <string.h>
-#include "y.tab.h"
 #include "cdc_types.h"
 #include "codegen.h"
 #include "code_prv.h"
 #include "memory.h"
 #include "opcodes.h"
 #include "grammar.h"
+#include "object.h"
 #include "util.h"
 #include "token.h"
 
@@ -89,12 +89,6 @@ Prog *make_prog(int overridable, Arguments *args, Id_list *vars,
     Prog *cnew = PMALLOC(compiler_pile, Prog, 1);
 
     /* default states */
-    cnew->m_flags = MF_NONE;
-    cnew->m_access = MS_PUBLIC;
-#if 1
-    if (!overridable)
-        cnew->m_flags |= MF_NOOVER;
-#endif
     cnew->args = args;
     cnew->vars = vars;
     cnew->stmts = stmts;
@@ -472,6 +466,31 @@ Expr *binary_expr(int opcode, Expr *left, Expr *right)
     cnew->u.binary.opcode = opcode;
     cnew->u.binary.left = left;
     cnew->u.binary.right = right;
+    return cnew;
+}
+
+/* use doeq structure, it has all we need */
+Expr *indecr_expr(int opcode, char *var)
+{
+    Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
+
+    cnew->type = INDECR;
+    cnew->lineno = cur_lineno();
+    cnew->u.doeq.opcode = opcode;
+    cnew->u.doeq.var = var;
+    cnew->u.doeq.value = NULL;
+    return cnew;
+}
+
+Expr *doeq_expr(int opcode, char *var, Expr *value)
+{
+    Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
+
+    cnew->type = DOEQ;
+    cnew->lineno = cur_lineno();
+    cnew->u.doeq.opcode = opcode;
+    cnew->u.doeq.var = var;
+    cnew->u.doeq.value = value;
     return cnew;
 }
 
@@ -1235,6 +1254,70 @@ static void compile_expr(Expr *expr)
 
 	break;
 
+      case INDECR: {
+          int n;
+
+          n = find_local_var(expr->u.doeq.var);
+          if (n != -1) {
+              code(GET_LOCAL);
+              code(n);
+              code(expr->u.doeq.opcode);
+              code(SET_LOCAL);
+              code(n);
+          } else {
+              code(GET_OBJ_VAR);
+              code_str(expr->u.doeq.var);
+              code(expr->u.doeq.opcode);
+              code(SET_OBJ_VAR);
+              code_str(expr->u.doeq.var);
+          }
+          break;
+      }
+
+      case DOEQ: {
+          Expr *value = expr->u.doeq.value;
+          int n, otherop = 0;
+
+          n = find_local_var(expr->u.doeq.var);
+
+          /* do a touch of optimization, pfeh */
+          if (expr->u.doeq.opcode == PLUS_EQ) {
+              if ((value->type == INTEGER && value->u.num == 1) ||
+                  (value->type == FLOAT && value->u.fnum == 1.0)) {
+                  otherop = P_INCREMENT;
+              }
+          } else if (expr->u.doeq.opcode == MINUS_EQ) {
+              if ((value->type == INTEGER && value->u.num == -1) ||
+                  (value->type == FLOAT && value->u.fnum == -1.0)) {
+                  otherop = P_DECREMENT;
+              }
+          }
+
+          if (!otherop)
+              compile_expr(value);
+
+          if (n != -1) {
+              code(GET_LOCAL);
+              code(n);
+              if (otherop)
+                  code(otherop);
+              else
+                  code(expr->u.doeq.opcode);
+              code(SET_LOCAL);
+              code(n);
+          } else {
+              code(GET_OBJ_VAR);
+              code_str(expr->u.doeq.var);
+              if (otherop)
+                  code(otherop);
+              else
+                  code(expr->u.doeq.opcode);
+              code(SET_OBJ_VAR);
+              code_str(expr->u.doeq.var);
+          }
+          break;
+      }
+
       case AND: {
 	  int end_dest = new_jump_dest();
 
@@ -1465,16 +1548,16 @@ static int id_list_size(Id_list *id_list)
  * Effects: Converts the data in the instruction buffer into a method. */
 static method_t *final_pass(object_t *object)
 {
-    method_t *method;
-    Id_list *idl;
-    Op_info *info;
-    string_t *string;
+    method_t * method;
+    Id_list  * idl;
+    Op_info  * info;
+    string_t * string;
     int i, j, opcode, arg_type, cur_error_list;
 
     method = EMALLOC(method_t, 1);
-
-    method->m_flags = the_prog->m_flags;
-    method->m_access = the_prog->m_access;
+    method->m_flags  = MF_NONE;
+    method->m_access = MS_PUBLIC;
+    method->native   = -1;
 
     /* Set argument names. */
     method->num_args = id_list_size(the_prog->args->ids);

@@ -21,7 +21,6 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include "y.tab.h"
 #include "file.h"
 #include "execute.h"
 #include "memory.h"
@@ -336,10 +335,19 @@ list_t * open_file(string_t * name, string_t * smode, object_t * obj) {
         mode[2] = (char) NULL;
     }
 
-    /* urm, this will not let us create new files */
-    fnew->path = build_path(name->s, &sbuf, DISALLOW_DIR);
+    fnew->path = build_path(name->s, NULL, DISALLOW_DIR);
     if (fnew->path == NULL)
         return NULL;
+
+    /* redundant, as build_path could have done this, but we
+       have a special case which we need to handle differently */
+
+    if (stat(fnew->path->s, &sbuf) == F_SUCCESS) {
+        if (S_ISDIR(sbuf.st_mode)) {
+            cthrow(directory_id, "\"%s\" is a directory.", fnew->path->s);
+            return NULL;
+        }
+    }
 
     fnew->fp = fopen(fnew->path->s, mode);
 

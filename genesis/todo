@@ -1,4 +1,6 @@
-Optimization/Cleanup:
+Note: textdumping with 'coldcc -d' is still ignoring random objects
+
+POST 1.0:
     * overridable methods: change searching to take the first method
       found.  Do the check for !overridable methods at the time the method
       is set as !overridable, do not allow methods to be set as overridable
@@ -6,7 +8,25 @@ Optimization/Cleanup:
       added if an ancestor defines it as !overridable.
     * file ops should use the builtin file descriptor functions
     * sanity checks are still not done, do them.
+    * execute to use files (shag code from apache CGI)
 
-Changes:
+PRE 1.0:
     * Native methods
+    * decompiling bugs
 
+Possiblilities:
+
+    * servers bound to dead objects (what happens?)
+    * regexp replacing, s/.../.../ etc, good native function on $string :)
+    * forking
+    * send_to() builtin, this would be equivalent to the simple loop:
+
+          for obj in (.contents())
+              obj.tell("you are all silly");
+
+      Except for that it would be much more efficient.  Equivallently
+      it would look like:
+
+          send_to(.contents(), 'tell, ["you are all silly"]);
+
+      This could be a native method.

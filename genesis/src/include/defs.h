@@ -12,9 +12,18 @@
 #ifndef _defs_h_
 #define _defs_h_
 
+/* GRR linux; just get FreeBSD, it is faster */
+#ifdef sys_linux
+#undef NULL
+#define NULL 0
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <setjmp.h>
+#ifndef _grammar_y_
+#include "parse.h"
+#endif
 
 jmp_buf main_jmp;
 
@@ -95,5 +104,7 @@ void init_defs(void);
 #define INTERNAL static
 
 #define SERVER_NAME "Genesis (the ColdX driver)"
+
+#define DEF_BLOCKSIZE 512
 
 #endif

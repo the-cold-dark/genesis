@@ -18,7 +18,6 @@ typedef struct filec_s       filec_t;
 #include <sys/stat.h>
 #include "cdc_types.h"
 
-#define DEF_BLOCKSIZE 512
 #define DISALLOW_DIR 1
 #define ALLOW_DIR 0
 

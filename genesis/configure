@@ -396,6 +396,12 @@ END
 esac
 system=$host_alias
 
+case "$system" in
+  powerpc-apple-darwin*)
+    CFLAGS="$CFLAGS -traditional-cpp"
+    ;;
+esac
+
 echo "$ac_t""$system" 1>&6
 CPU=`echo $system | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\1/g;s/[\.-]/_/g'`
 VENDOR=`echo $system | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\2/g;s/[\.-]/_/g'`

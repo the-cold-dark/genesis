@@ -186,7 +186,7 @@ cStr * string_lowercase(cStr *str) {
  * it will be placed in regexp_error, and the returned regexp will be NULL. */
 regexp *string_regexp(cStr *str) {
     if (!str->reg)
-	str->reg = regcomp(str->s + str->start);
+	str->reg = gen_regcomp(str->s + str->start);
     return str->reg;
 }
 
@@ -293,7 +293,7 @@ cStr *string_add_unparsed(cStr *str, char *s, Int len) {
     return string_addc(str, '"');
 }
 
-char *regerror(char *msg) {
+char *gen_regerror(char *msg) {
     static char *regexp_error;
 
     if (msg)

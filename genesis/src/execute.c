@@ -56,7 +56,7 @@ VMStack *stack_store = NULL, *holder_cache = NULL;
 // These two defines add and remove tasks from task lists.
 //
 */
-#define ADD_TASK(the_list, the_value) { \
+#define ADD_VM_TASK(the_list, the_value) { \
         if (!the_list) { \
             the_list = the_value; \
             the_value->next = NULL; \
@@ -66,11 +66,11 @@ VMStack *stack_store = NULL, *holder_cache = NULL;
         } \
     }
 
-#define REMOVE_TASK(the_list, the_value) { \
+#define REMOVE_VM_TASK(the_list, the_value) { \
         if (the_list == the_value) { \
             the_list = the_list->next; \
         } else { \
-            task_delete(the_list, the_value); \
+            vm_delete(the_list, the_value); \
         } \
     }
 
@@ -170,7 +170,7 @@ static void restore_vm(VMState *vm) {
 /*
 // ---------------------------------------------------------------
 */
-static void task_delete(VMState *list, VMState *elem) {
+static void vm_delete(VMState *list, VMState *elem) {
     while (list && (list->next != elem))
         list = list->next;
     if (list)
@@ -180,7 +180,7 @@ static void task_delete(VMState *list, VMState *elem) {
 /*
 // ---------------------------------------------------------------
 */
-VMState *task_lookup(Long tid) {
+VMState *vm_lookup(Long tid) {
     VMState * vm;
 
     for (vm = suspended;  vm;  vm = vm->next)
@@ -232,12 +232,12 @@ static cList * frame_info(Frame * frame) {
     return list;
 }
 
-cList * task_info(Long tid) {
+cList * vm_info(Long tid) {
     cList   * list;
     Frame   * frame;
     cData     d,
             * dl;
-    VMState * vm = task_lookup(tid);
+    VMState * vm = vm_lookup(tid);
 
     if (!vm)
         return NULL;
@@ -288,16 +288,16 @@ cList * task_info(Long tid) {
 // we assume tid is a non-preempted task
 //
 */
-void task_resume(Long tid, cData *ret) {
-    VMState * vm = task_lookup(tid),
+void vm_resume(Long tid, cData *ret) {
+    VMState * vm = vm_lookup(tid),
             * old_vm;
 
     if (vm->task_id == task_id)
         return;
     old_vm = vm_current();
     restore_vm(vm);
-    REMOVE_TASK(suspended, vm);
-    ADD_TASK(vmstore, vm);
+    REMOVE_VM_TASK(suspended, vm);
+    ADD_VM_TASK(vmstore, vm);
     if (ret) {
         check_stack(1);
         data_dup(&stack[stack_pos], ret);
@@ -310,7 +310,7 @@ void task_resume(Long tid, cData *ret) {
     execute();
     store_stack();
     restore_vm(old_vm);
-    ADD_TASK(vmstore, old_vm);
+    ADD_VM_TASK(vmstore, old_vm);
 }
 
 /*
@@ -351,7 +351,7 @@ static Int fork_method(Obj * obj,
         pop(stack_pos);
     } else {
         /* pause it, and let system handle it later, as a normal paused task */
-        task_pause();
+        vm_pause();
         result = CALL_FORK;
         call_environ = task_id;
     }
@@ -362,7 +362,7 @@ static Int fork_method(Obj * obj,
     cache_discard(obj);
 
     restore_vm(current);
-    ADD_TASK(vmstore, current);
+    ADD_VM_TASK(vmstore, current);
 
     /* clean up the stack */
     if (result != CALL_ERROR) {
@@ -376,10 +376,10 @@ static Int fork_method(Obj * obj,
 /*
 // ---------------------------------------------------------------
 */
-void task_suspend(void) {
+void vm_suspend(void) {
     VMState * vm = vm_current();
 
-    ADD_TASK(suspended, vm);
+    ADD_VM_TASK(suspended, vm);
     init_execute();
     cur_frame = NULL;
 }
@@ -440,8 +440,8 @@ void show_queues(void) {
 /*
 // ---------------------------------------------------------------
 */
-void task_cancel(Long tid) {
-    VMState * vm = task_lookup(tid),
+void vm_cancel(Long tid) {
+    VMState * vm = vm_lookup(tid),
             * old_vm;
 
     if (vm == NULL) {
@@ -459,24 +459,24 @@ void task_cancel(Long tid) {
         frame_return();
     if (old_vm != NULL) {
         if (vm->preempted)
-            REMOVE_TASK(preempted, vm)
+            REMOVE_VM_TASK(preempted, vm)
         else
-            REMOVE_TASK(suspended, vm)
+            REMOVE_VM_TASK(suspended, vm)
         store_stack();
-        ADD_TASK(vmstore, vm);
+        ADD_VM_TASK(vmstore, vm);
         restore_vm(old_vm);
-        ADD_TASK(vmstore, old_vm);
+        ADD_VM_TASK(vmstore, old_vm);
     }
 }
 
 /*
 // ---------------------------------------------------------------
 */
-void task_pause(void) {
+void vm_pause(void) {
     VMState * vm = vm_current();
 
     vm->preempted = YES;
-    ADD_TASK(preempted, vm);
+    ADD_VM_TASK(preempted, vm);
     init_execute();
     cur_frame = NULL;  
 }
@@ -497,13 +497,13 @@ void run_paused_tasks(void) {
         cur_frame->ticks = PAUSED_METHOD_TICKS;
         last_task = task;
         task = task->next;
-        ADD_TASK(vmstore, last_task);
+        ADD_VM_TASK(vmstore, last_task);
         execute();
         store_stack();
     }
 
     restore_vm(vm);
-    ADD_TASK(vmstore, vm);
+    ADD_VM_TASK(vmstore, vm);
 }
 
 /*
@@ -513,7 +513,7 @@ void run_paused_tasks(void) {
 //
 */
 
-cList * task_list(void) {
+cList * vm_list(void) {
     cList  * r;
     cData    elem;
     VMState * vm;
@@ -538,7 +538,7 @@ cList * task_list(void) {
 /*
 // ---------------------------------------------------------------
 */
-cList * task_stack(Frame * frame_to_trace, Bool want_line_numbers) {
+cList * vm_stack(Frame * frame_to_trace, Bool want_line_numbers) {
     cList * r;
     cData   d,
            * list;
@@ -685,7 +685,7 @@ void init_execute(void) {
 //
 // No we dont, lets just rewrite the interpreter, this sucks.
 */
-void task(cObjnum objnum, Long name, Int num_args, ...) {
+void vm_task(cObjnum objnum, Long name, Int num_args, ...) {
     va_list arg;
 
     /* Don't execute if a shutdown() has occured. */
@@ -729,7 +729,7 @@ void task(cObjnum objnum, Long name, Int num_args, ...) {
 // Execute a task by evaluating a method on an object.
 //
 */
-void task_method(Obj *obj, Method *method) {
+void vm_method(Obj *obj, Method *method) {
     clear_debug();
     frame_start(obj, method, NOT_AN_IDENT, NOT_AN_IDENT, NOT_AN_IDENT, 0, 0, FROB_NO);
 

@@ -5,7 +5,7 @@ Genesis is the compiler and run-time interpreter/daemon for ColdC, and
 is produced by the Cold Project.  You can learn more about helping to
 support the Cold Project at:
 
-    http://www.cold.org/support/
+    http://www.cold.org/
 
 Release information can be found in doc/CHANGES.
 
@@ -25,7 +25,7 @@ To install simply type: make install
 The directory 'bin' contains a few useful scripts for Genesis database
 manipulation.  Full installation instructions can be found at:
 
-      http://www.cold.org/Software/Genesis/
+      http://web.cold.org/genesis/install.html
 
 ------------------------------------------------------------------------
 INSTALL/COMPILATION IN WIN32
@@ -48,22 +48,16 @@ FURTHER INFORMATION
 The following email lists are available:
 
     coldstuff           Generic cold-related list
-    coldcore            Generic discussion in relation to the ColdCore
-    coldcore-bugs       Bug (feature) reporting for the ColdCore
-    coldcore-hackers    ColdCore development list
-    genesis             Generic discussion in relation to Genesis (ColdC driver)
-    genesis-bugs        Bug (feature) reporting for Genesis
-    genesis-hackers     Genesis development list
 
 Further information, Archives and Subscription mechanisms for the lists are
 available at:
 
-    http://www.cold.org/info/lists.html
+    http://web.cold.org/contact.html
 
 Documentation:
 
-    for Genesis:     http://www.cold.org/Genesis/
-    for ColdC:       http://www.cold.org/ColdC/
+    for Genesis:     http://web.cold.org/genesis/
+    for ColdC:       http://ice.cold.org:1180/bin/help?node=coldc
 
 ------------------------------------------------------------------------
 NOTES
@@ -71,11 +65,7 @@ NOTES
 Verified to compile and run on:
 
     * FreeBSD (Any version after 2.0)
-    * DEC OSF/1 2.0, 3.2
-    * DEC Ultrix 4.4
     * Sun Solaris 2.5
     * Linux (although problems will arise 1.2.x versions)
-
-You will get the best results in FreeBSD, as it is the development platform
-so possible problems are immediately found.
+    * MacOS X (only tested on 10.1)
 

@@ -24,10 +24,9 @@ struct regexp {
     char  program[1];        /* Unwarranted chumminess with compiler. */
 };
 
-extern regexp * regcomp(char *exp);
-extern int      regexec(regexp *prog, char *string, int case_flag);
-extern int      regsub(regexp *prog, char *src, char *dest);
-extern char   * regerror(char *msg);
+extern regexp * gen_regcomp(char *exp);
+extern int      gen_regexec(regexp *prog, char *string, int case_flag);
+extern char   * gen_regerror(char *msg);
 
 #define	MAGIC	0234
 

@@ -514,7 +514,7 @@ static void initialize(Int argc, char **argv) {
     /* call $sys.startup() */
     arg.type = LIST;
     arg.u.list = args;
-    task(SYSTEM_OBJNUM, startup_id, 1, &arg);
+    vm_task(SYSTEM_OBJNUM, startup_id, 1, &arg);
     list_discard(args);
 }
 
@@ -572,7 +572,7 @@ static void main_loop(void) {
         switch (simble_dump_some_blocks(DUMP_BLOCK_SIZE)) {
             case DUMP_FINISHED:
                 simble_dump_finish();
-                task(SYSTEM_OBJNUM, backup_done_id, 0);
+                vm_task(SYSTEM_OBJNUM, backup_done_id, 0);
                 break;
             case DUMP_DUMPED_BLOCKS:
                 seconds = 0; /* we are still dumping, dont wait */
@@ -587,7 +587,7 @@ static void main_loop(void) {
             GETTIME();
             if (SECS >= next) {
                 last = SECS;
-                task(SYSTEM_OBJNUM, heartbeat_id, 0);
+                vm_task(SYSTEM_OBJNUM, heartbeat_id, 0);
 #ifdef CLEAN_CACHE
                 cache_cleanup();
 #endif

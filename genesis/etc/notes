@@ -121,11 +121,7 @@ RELEASE INFORMATION:
         NOTE: may crash, loose data, fail to sort properly.  Don't use.
       * Add extra argument for local port to callback for new incoming
         connections. [COMPAT] (Bruce)
+      * Port to Mac OS X. (Bruce)
+      * Remove regsub references (not implementd/used). (Bruce)
+      * Fixed README. (Bruce)
 
-1.1.9  [1-Oct-2000]
-      * removed phk_malloc -- modern OS mallocs are decent (Brandon)
-      * misc cleanup (Generic Bob)
-      * removed dnsserv (Brandon)
-      * fix for ctime() in Borland (Psyclone)
-      * Fixed inconsistent behavior in stridx(), listidx(), and
-        bufidx() when presented with an empty first argument. (Bruce)

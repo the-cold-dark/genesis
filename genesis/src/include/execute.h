@@ -161,8 +161,8 @@ extern VMState * preempted;
 extern VMState * suspended;
 
 void init_execute(void);
-void task(cObjnum objnum, Long message, Int num_args, ...);
-void task_method(Obj *obj, Method *method);
+void vm_task(cObjnum objnum, Long message, Int num_args, ...);
+void vm_method(Obj *obj, Method *method);
 Int  frame_start(Obj *obj,
                  Method *method,
                  cObjnum sender,
@@ -233,14 +233,14 @@ void pop_error_action_specifier(void);
 void pop_handler_info(void);
 cList *generate_traceback(Traceback_info *traceback);
 
-void      task_suspend(void);
-cList   * task_info(Long tid);
-void      task_resume(Long tid, cData *ret);
-void      task_cancel(Long tid);
-void      task_pause(void);
-VMState * task_lookup(Long tid);
-cList   * task_list(void);
-cList   * task_stack(Frame * frame_to_trace, Bool calculate_line_numbers);
+void      vm_suspend(void);
+cList   * vm_info(Long tid);
+void      vm_resume(Long tid, cData *ret);
+void      vm_cancel(Long tid);
+void      vm_pause(void);
+VMState * vm_lookup(Long tid);
+cList   * vm_list(void);
+cList   * vm_stack(Frame * frame_to_trace, Bool calculate_line_numbers);
 void      log_task_stack(Long taskid, cList * stack, 
                          void (logroutine)(char*,...));
 void      run_paused_tasks(void);

@@ -380,13 +380,13 @@ cList * match_regexp(cStr * reg, char * s, Bool sensitive, Bool *error) {
     Int      i;
 
     if ((rx = string_regexp(reg)) == NULL) {
-        cthrow(regexp_id, "%s", regerror(NULL));
+        cthrow(regexp_id, "%s", gen_regerror(NULL));
         *error = YES;
         return NULL;
     }
 
     *error = NO;
-    if (regexec(rx, s, sensitive)) {
+    if (gen_regexec(rx, s, sensitive)) {
         fields = list_new(NSUBEXP);
         for (i = 0; i < NSUBEXP; i++) {
             elemlist = list_new(2);
@@ -427,13 +427,13 @@ cList * regexp_matches(cStr * reg, char * s, Bool sensitive, Bool * error) {
              size;
 
     if ((rx = string_regexp(reg)) == (regexp *) NULL) {
-        cthrow(regexp_id, "%s", regerror(NULL));
+        cthrow(regexp_id, "%s", gen_regerror(NULL));
         *error = YES;
         return NULL;
     }
     *error = NO;
 
-    if (!regexec(rx, s, sensitive))
+    if (!gen_regexec(rx, s, sensitive))
         return NULL;
 
     /* size the results */
@@ -579,10 +579,10 @@ cStr * strsed(cStr * reg,  /* the regexp string */
 
     /* Compile the regexp, note: it is free'd by string_discard() */
     if ((rx = string_regexp(reg)) == (regexp *) NULL)
-        THROW((regexp_id, "%s", regerror(NULL)))
+        THROW((regexp_id, "%s", gen_regerror(NULL)))
 
     /* initial regexp execution */
-    if (!regexec(rx, s, sensitive))
+    if (!gen_regexec(rx, s, sensitive))
         return string_dup(ss);
 
     for (; size < NSUBEXP && rx->startp[size] != (char) NULL; size++);
@@ -605,7 +605,7 @@ cStr * strsed(cStr * reg,  /* the regexp string */
                 if (rlen)
                     out = string_add(out, rs);
                 p = rx->endp[0];
-            } while (p && regexec(rx, p, sensitive));
+            } while (p && gen_regexec(rx, p, sensitive));
 
             /* add the end on */
             if ((i = (s + slen) - p))
@@ -667,7 +667,7 @@ cStr * strsed(cStr * reg,  /* the regexp string */
                     out = string_add_chars(out, p, i);
 
                 rxs = rx->endp[0];
-            } while (rxs && regexec(rx, rxs, sensitive));
+            } while (rxs && gen_regexec(rx, rxs, sensitive));
 
             if ((i = (s + slen) - rxs))
                 out = string_add_chars(out, rxs, i);
@@ -1061,7 +1061,7 @@ cList * strsplit(cStr * str, cStr * reg, Int flags) {
 
     /* Compile the regexp, note: it is free'd by string_discard() */
     if ((rx = string_regexp(reg)) == (regexp *) NULL)
-        x_THROW((regexp_id, "%s", regerror(NULL)))
+        x_THROW((regexp_id, "%s", gen_regerror(NULL)))
 
     /* look at the regexp and see if its a simple one,
        which we can currently handle */
@@ -1080,7 +1080,7 @@ cList * strsplit(cStr * str, cStr * reg, Int flags) {
     s = p = string_chars(str);
 
     /* initial regexp execution */
-    if (!regexec(rx, s, flags & RF_SENSITIVE)) {
+    if (!gen_regexec(rx, s, flags & RF_SENSITIVE)) {
         d.u.str = str;
         list = list_add(list_new(1), &d);
         return list;
@@ -1106,7 +1106,7 @@ cList * strsplit(cStr * str, cStr * reg, Int flags) {
         }
 
         p = rx->endp[0];
-    } while (p && regexec(rx, p, flags & RF_SENSITIVE));
+    } while (p && gen_regexec(rx, p, flags & RF_SENSITIVE));
 
     if ((x = (s + len) - p) || (flags & RF_BLANKS)) {
         d.u.str = string_from_chars(p, x);

@@ -127,12 +127,12 @@ void handle_new_and_pending_connections(void) {
         d1.type = STRING;
         d1.u.str = str;
         d2.type = STRING;
-        d2.u.str = serv->addr; /* dont dup, task() will */
+        d2.u.str = serv->addr; /* dont dup, vm_task() will */
         d3.type = INTEGER;
         d3.u.val = serv->client_port;
         d4.type = INTEGER;
         d4.u.val = serv->port;
-        task(conn->objnum, connect_id, 4, &d1, &d2, &d3, &d4);
+        vm_task(conn->objnum, connect_id, 4, &d1, &d2, &d3, &d4);
         string_discard(str);
     }
 
@@ -143,14 +143,14 @@ void handle_new_and_pending_connections(void) {
                 conn = connection_add(pend->fd, pend->objnum);
                 d1.type = INTEGER;
                 d1.u.val = pend->task_id;
-                task(conn->objnum, connect_id, 1, &d1);
+                vm_task(conn->objnum, connect_id, 1, &d1);
             } else {
                 SOCK_CLOSE(pend->fd);
                 d1.type = INTEGER;
                 d1.u.val = pend->task_id;
                 d2.type = T_ERROR;
                 d2.u.error = pend->error;
-                task(pend->objnum, failed_id, 2, &d1, &d2);
+                vm_task(pend->objnum, failed_id, 2, &d1, &d2);
             }
         }
     }
@@ -332,7 +332,7 @@ static void connection_read(Conn *conn) {
     socket_buffer->len = len;
     d.type = BUFFER;
     d.u.buffer = socket_buffer;
-    task(conn->objnum, parse_id, 1, &d);
+    vm_task(conn->objnum, parse_id, 1, &d);
     socket_buffer->refs--;
 }
 
@@ -406,7 +406,7 @@ static void connection_discard(Conn *conn) {
     efree(conn);
 
     /* Notify connection object that the connection is gone */
-    task(objnum, disconnect_id, 0);
+    vm_task(objnum, disconnect_id, 0);
 }
 
 /*

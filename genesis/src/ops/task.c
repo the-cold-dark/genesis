@@ -15,7 +15,7 @@ COLDC_FUNC(task_info) {
     if (!func_init_1(&args, INTEGER))
         return;
 
-    list = task_info(INT1);
+    list = vm_info(INT1);
 
     if (!list)
         THROW((type_id, "No task %d.", INT1))
@@ -33,10 +33,10 @@ COLDC_FUNC(cancel) {
         return;
 
 
-    if (!task_lookup(args[0].u.val)) {
+    if (!vm_lookup(args[0].u.val)) {
         cthrow(type_id, "No task %d.", args[0].u.val);
     } else {
-        task_cancel(args[0].u.val);
+        vm_cancel(args[0].u.val);
         pop(1);
         push_int(1);
     }
@@ -54,7 +54,7 @@ COLDC_FUNC(suspend) {
         return;
     }
 
-    task_suspend();
+    vm_suspend();
 
     /* we'll let task_resume push something onto the stack for us */
 }
@@ -70,13 +70,13 @@ COLDC_FUNC(resume) {
 
     tid = args[0].u.val;
 
-    if (!task_lookup(tid)) {
+    if (!vm_lookup(tid)) {
         cthrow(type_id, "No task %d.", args[0].u.val);
     } else {
         if (nargs == 1)
-            task_resume(tid, NULL);
+            vm_resume(tid, NULL);
         else
-            task_resume(tid, &args[1]);
+            vm_resume(tid, &args[1]);
         pop(nargs);
         push_int(1);
     }
@@ -93,7 +93,7 @@ COLDC_FUNC(pause) {
         if (cur_frame->ticks <= REFRESH_METHOD_THRESHOLD)
             cur_frame->ticks = PAUSED_METHOD_TICKS;
     } else {
-        task_pause();
+        vm_pause();
     }
 }
 
@@ -123,7 +123,7 @@ COLDC_FUNC(refresh) {
         if (atomic) {
             cur_frame->ticks = PAUSED_METHOD_TICKS;
         } else {
-            task_pause();
+            vm_pause();
         }
     }
 }
@@ -135,7 +135,7 @@ COLDC_FUNC(tasks) {
     if (!func_init_0())
         return;
 
-    list = task_list();
+    list = vm_list();
 
     push_list(list);
     list_discard(list);
@@ -162,7 +162,7 @@ COLDC_FUNC(stack) {
     if ((nargs == 0) || (INT1 == task_id)) {
         frame = cur_frame;
     } else {
-        vm = task_lookup(INT1);
+        vm = vm_lookup(INT1);
         if (vm)
             frame = vm->cur_frame;
     }
@@ -173,7 +173,7 @@ COLDC_FUNC(stack) {
     if (frame) {
         cList * list;
 
-        list = task_stack(cur_frame, want_lineno);
+        list = vm_stack(cur_frame, want_lineno);
 
         pop(nargs);
         push_list(list);

@@ -6,7 +6,7 @@
 /*
 // Full copyright information is available in the file ../doc/CREDITS
 // ---
-// regcomp and regexec -- regsub and regerror are elsewhere
+// gen_regcomp and gen_regexec -- gen_regerror are elsewhere
 // @(#)regexp.c    1.3 of 18 April 87
 //
 //    Copyright (c) 1986 by University of Toronto.
@@ -61,11 +61,11 @@ static int case_matters;
  * Regstart and reganch permit very fast decisions on suitable starting points
  * for a match, cutting down the work a lot.  Regmust permits fast rejection
  * of lines that cannot possibly match.  The regmust tests are costly enough
- * that regcomp() supplies a regmust only if the r.e. contains something
+ * that gen_regcomp() supplies a regmust only if the r.e. contains something
  * potentially expensive (at present, the only such thing detected is * or +
  * at the start of the r.e., which can involve a lot of backup).  Regmlen is
- * supplied because the test in regexec() needs it and regcomp() is computing
- * it anyway.
+ * supplied because the test in gen_regexec() needs it and gen_regcomp() is
+ * computing it anyway.
  */
 
 /*
@@ -151,7 +151,7 @@ static int case_matters;
 #define    UCHARAT(p)    ((int)*(p)&CHARBITS)
 #endif
 
-#define    FAIL(m)    { regerror(m); return(NULL); }
+#define    FAIL(m)    { gen_regerror(m); return(NULL); }
 #define    ISMULT(c)    ((c) == '*' || (c) == '+' || (c) == '?')
 #define    META    "^$.[()|?+*\\"
 
@@ -164,7 +164,7 @@ static int case_matters;
 #define    WORST        0    /* Worst case. */
 
 /*
- * Global work variables for regcomp().
+ * Global work variables for gen_regcomp().
  */
 static char *regparse;        /* Input-scan pointer. */
 static int regnpar;        /* () count. */
@@ -173,7 +173,7 @@ static char *regcode;        /* Code-emit pointer; &regdummy = don't. */
 static long regsize;        /* Code size. */
 
 /*
- * Forward declarations for regcomp()'s friends.
+ * Forward declarations for gen_regcomp()'s friends.
  */
 static char *reg(int , int *);
 static char *regbranch(int *);
@@ -191,7 +191,7 @@ static int strcspn(char *s1, char *s2);
 #endif
 
 /*
- - regcomp - compile a regular expression into internal code
+ - gen_regcomp - compile a regular expression into internal code
  *
  * We can't allocate space until we know how big the compiled form will be,
  * but we can't compile it (and thus know how big it is) until we've got a
@@ -205,7 +205,7 @@ static int strcspn(char *s1, char *s2);
  * Beware that the optimization-preparation code in here knows about some
  * of the structure of the compiled regexp.
  */
-regexp * regcomp(char * exp) {
+regexp * gen_regcomp(char * exp) {
     register regexp *r;
     register char *scan;
     register char *longest;
@@ -658,11 +658,11 @@ static void regoptail(char *p, char *val) {
 }
 
 /*
- * regexec and friends
+ * gen_regexec and friends
  */
 
 /*
- * Global work variables for regexec().
+ * Global work variables for gen_regexec().
  */
 static char *reginput;        /* String-input pointer. */
 static char *regbol;        /* Beginning of input, for ^ check. */
@@ -683,22 +683,22 @@ static char *regprop();
 #endif
 
 /*
- - regexec - match a regexp against a string
+ - gen_regexec - match a regexp against a string
  */
-int regexec(register regexp *prog, register char *string, int case_flag) {
+int gen_regexec(register regexp *prog, register char *string, int case_flag) {
     register char *s;
 
     case_matters = case_flag;
 
     /* Be paranoid... */
     if (prog == NULL || string == NULL) {
-        regerror("NULL parameter");
+        gen_regerror("NULL parameter");
         return(0);
     }
 
     /* Check validity of program. */
     if (UCHARAT(prog->program) != MAGIC) {
-        regerror("corrupted program");
+        gen_regerror("corrupted program");
         return(0);
     }
 
@@ -943,7 +943,7 @@ static int regmatch(char * prog) {
             return(1);    /* Success! */
             break;
         default:
-            regerror("memory corruption");
+            gen_regerror("memory corruption");
             return(0);
             break;
         }
@@ -955,7 +955,7 @@ static int regmatch(char * prog) {
      * We get here only if there's trouble -- normally "case END" is
      * the terminating point.
      */
-    regerror("corrupted pointers");
+    gen_regerror("corrupted pointers");
     return(0);
 }
 
@@ -993,7 +993,7 @@ static int regrepeat(char *p) {
         }
         break;
     default:        /* Oh dear.  Called inappropriately. */
-        regerror("internal foulup");
+        gen_regerror("internal foulup");
         count = 0;    /* Best compromise. */
         break;
     }
@@ -1137,7 +1137,7 @@ static char * regprop(char *op) {
         p = "PLUS";
         break;
     default:
-        regerror("corrupted opcode");
+        gen_regerror("corrupted opcode");
         break;
     }
     if (p != NULL)

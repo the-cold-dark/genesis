@@ -11,7 +11,7 @@
 #ifdef __UNIX__
 #include <sys/wait.h>
 #endif
-#include "execute.h"      /* task() */
+#include "execute.h"      /* vm_task() */
 #include "sig.h"
 
 void catch_SIGFPE(int sig);
@@ -133,18 +133,18 @@ void catch_signal(int sig) {
             cList * l;
  
             /* First cancel all preempted and suspended tasks */
-            l = task_list();
+            l = vm_list();
             for (d=list_first(l); d; d=list_next(l, d)) {
                 /* boggle */
                 if (d->type != INTEGER)
                     continue;
-                task_cancel(d->u.val);
+                vm_cancel(d->u.val);
             }
             list_discard(l);
 
             /* now cancel the current task if it is valid */
-            if (task_lookup(task_id) != NULL) {
-                task_cancel(task_id);
+            if (vm_lookup(task_id) != NULL) {
+                vm_cancel(task_id);
             }
 
             /* jump back to the main loop */
@@ -181,7 +181,7 @@ void catch_signal(int sig) {
     /* send a message to the system object */
     arg1.type = SYMBOL;
     arg1.u.symbol = ident_get(sptr);
-    task(SYSTEM_OBJNUM, signal_id, 1, &arg1);
+    vm_task(SYSTEM_OBJNUM, signal_id, 1, &arg1);
 
     if (do_shutdown)
         running = NO;

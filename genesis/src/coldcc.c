@@ -11,6 +11,11 @@
 #include <signal.h>
 #include <ctype.h>
 
+#ifdef USE_CLEANER_THREAD
+#include <pthread.h>
+extern pthread_t cleaner;
+#endif
+
 #include "cdc_pcode.h"
 #include "cdc_db.h"
 #include "textdb.h"
@@ -41,6 +46,7 @@ INTERNAL FILE * find_text_db(void);
 INTERNAL void   compile_db(Int type);
 
 void   shutdown_coldcc(void) {
+    running = NO;
     cache_sync();
     db_close();
     flush_output();
@@ -318,7 +324,7 @@ INTERNAL void initialize(Int argc, char **argv) {
     init_token();
     init_modules(argc, argv);
     init_instances();
-    init_cache();
+    init_cache(FALSE);
 
     /* force coldcc to be atomic, specify that we are not running online */
     atomic = YES;

@@ -218,8 +218,10 @@ INTERNAL void cleanup_holders(void) {
         } else {
             obj = cache_retrieve(holder->objnum);
             if (obj) {
-                if (obj->objname == NOT_AN_IDENT)
+                if (obj->objname == NOT_AN_IDENT) {
+		    cache_dirty_object(obj);
                     obj->objname = ident_dup(id);
+		}
                 cache_discard(obj);
             } else {
                 if (print_warn)
@@ -375,9 +377,9 @@ void verify_native_methods(void) {
                 if (print_warn)
                     fformat(stdout, "\rWARNING: method definition %O.%s() overrides native method.\n", obj->objnum, ident_name(mname));
             } else {
+		cache_dirty_object(obj);
                 method->native = x;
                 method->m_flags |= MF_NATIVE;
-		cache_dirty_object(obj);
 
                 if (nh != (nh_t *) NULL)
                     nh->valid = 1;
@@ -415,8 +417,8 @@ void verify_native_methods(void) {
             if (cur_obj) {
                 method = object_find_method_local(cur_obj, name, FROB_ANY);
                 if (method) {
-                    method->native = -1;
 		    cache_dirty_object(cur_obj);
+                    method->native = -1;
                 }
                 cache_discard(cur_obj);
             }

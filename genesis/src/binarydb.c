@@ -20,6 +20,30 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifdef USE_CLEANER_THREAD
+#include <pthread.h>
+
+pthread_mutex_t db_mutex;
+
+#ifdef DEBUG_DB_LOCK
+#define LOCK_DB(func) \
+	write_err("%s: locking db", func); \
+	pthread_mutex_lock(&db_mutex); \
+	write_err("%s: locked db", func);
+#define UNLOCK_DB(func) \
+	pthread_mutex_unlock(&db_mutex); \
+	write_err("%s: unlocked db", func);
+#else /* thread, no debugging */
+#define LOCK_DB(func) \
+	pthread_mutex_lock(&db_mutex);
+#define UNLOCK_DB(func) \
+	pthread_mutex_unlock(&db_mutex);
+#endif
+#else /* no thread */
+#define LOCK_DB(func)
+#define UNLOCK_DB(func)
+#endif
+
 #include "cdc_db.h"
 #include "util.h"
 #include "moddef.h"
@@ -188,6 +212,10 @@ void init_binary_db(void) {
     Int           size;
     Long          objnum;
 
+#ifdef USE_CLEANER_THREAD
+    pthread_mutex_init (&db_mutex, NULL);
+#endif
+
     sprintf(c_clean_file, "%s/.clean", c_dir_binary);
     DBFILE(fdb_objects, "objects");
     DBFILE(fdb_index,   "index");
@@ -226,6 +254,10 @@ void init_new_db(void) {
     off_t         offset;
     Int           size;
     Long          objnum;
+
+#ifdef USE_CLEANER_THREAD
+    pthread_mutex_init (&db_mutex, NULL);
+#endif
 
     sprintf(c_clean_file, "%s/.clean", c_dir_binary);
     DBFILE(fdb_objects, "objects");
@@ -329,9 +361,15 @@ Int db_start_dump(char *dump_objects_filename) {
     if (!dump_db_file)
 	return -1;
     last_dumped = 0;
+
+    LOCK_DB("db_start_dump")
+
     dump_blocks = bitmap_blocks;
     dump_bitmap = EMALLOC(char, (bitmap_blocks / 8)+1);
     memcpy(dump_bitmap, bitmap, (bitmap_blocks / 8)+1);
+
+    UNLOCK_DB("db_start_dump")
+
     return 0;
 }
 
@@ -348,6 +386,9 @@ Int dump_some_blocks (Int maxblocks)
 
     if (!dump_db_file)
 	return DUMP_NOT_IN_PROGRESS;
+
+    LOCK_DB("dump_some_blocks")
+
     while (maxblocks) {
 	if ( (dump_bitmap[last_dumped >> 3] & (1 << (last_dumped & 7))) ) {
 	    if (dofseek) {
@@ -371,9 +412,15 @@ Int dump_some_blocks (Int maxblocks)
 	    dump_db_file = NULL;
 	    free (dump_bitmap);
 	    dump_bitmap=NULL;
+
+	    UNLOCK_DB("dump_some_blocks")
+
 	    return DUMP_FINISHED;
 	}
     }
+
+    UNLOCK_DB("dump_some_blocks")
+
     return DUMP_DUMPED_BLOCKS;
 }
 
@@ -464,6 +511,8 @@ Int db_get(Obj *object, Long objnum)
     if (!lookup_retrieve_objnum(objnum, &offset, &size))
 	return 0;
 
+    LOCK_DB("db_get")
+
     /* seek to location */
     if (fseek(database_file, offset, SEEK_SET))
 	return 0;
@@ -471,6 +520,8 @@ Int db_get(Obj *object, Long objnum)
     buf = buffer_new(size);
     buf->len = size;
     fread(buf->s, sizeof(uChar), size, database_file);
+    UNLOCK_DB("db_get")
+
     buf_pos = 0;
     unpack_object(buf, &buf_pos, object);
     free(buf);
@@ -478,7 +529,7 @@ Int db_get(Obj *object, Long objnum)
     return 1;
 }
 
-Int check_free_blocks(Int blocks_needed, Int b)
+static Int check_free_blocks(Int blocks_needed, Int b)
 {
     Int count;
     
@@ -500,11 +551,13 @@ Int db_put(Obj *obj, Long objnum, Long *sizewritten)
     off_t old_offset, new_offset;
     Int old_size, new_size, tmp1, tmp2;
 
-    db_is_dirty();
     if (lookup_retrieve_objnum(objnum, &old_offset, &old_size)) {
         buf = buffer_new(old_size);
         buf = pack_object(buf, obj);
 	new_size = buf->len;
+
+        LOCK_DB("db_put")
+        db_is_dirty();
 
 	if ((tmp1=NEEDED(new_size, BLOCK_SIZE)) > (tmp2=NEEDED(old_size, BLOCK_SIZE))) {
 	    /* check for the possible realloc */
@@ -533,16 +586,22 @@ Int db_put(Obj *obj, Long objnum, Long *sizewritten)
 	buf = buffer_new(0);
 	buf = pack_object(buf, obj);
 	new_size = buf->len;
+
+        LOCK_DB("db_put")
+        db_is_dirty();
+
 	new_offset = BLOCK_OFFSET(db_alloc(new_size));
     }
 
     if (!lookup_store_objnum(objnum, new_offset, new_size)) {
+	UNLOCK_DB("db_put")
 	buffer_discard(buf);
         if (sizewritten) *sizewritten = 0;
 	return 0;
     }
 
     if (fseek(database_file, new_offset, SEEK_SET)) {
+	UNLOCK_DB("db_put")
 	buffer_discard(buf);
 	write_err("ERROR: Seek failed for %l.", objnum);
         if (sizewritten) *sizewritten = 0;
@@ -552,6 +611,8 @@ Int db_put(Obj *obj, Long objnum, Long *sizewritten)
     fwrite(buf->s, sizeof(uChar), new_size, database_file);
     buffer_discard(buf);
     fflush(database_file);
+    UNLOCK_DB("db_put")
+
     if (sizewritten) *sizewritten = new_size;
 
     return 1;
@@ -578,6 +639,8 @@ Int db_del(Long objnum)
     if (!lookup_remove_objnum(objnum))
 	return 0;
 
+    LOCK_DB("db_del")
+
     --num_objects;
     db_is_dirty();
 
@@ -587,11 +650,16 @@ Int db_del(Long objnum)
     /* Mark object dead in file */
     if (fseek(database_file, offset, SEEK_SET)) {
 	write_err("ERROR: Failed to seek to object %l.", objnum);
+
+        UNLOCK_DB("db_del")
+
 	return 0;
     }
 
     fputs("delobj", database_file);
     fflush(database_file);
+
+    UNLOCK_DB("db_del")
 
     return 1;
 }
@@ -607,7 +675,12 @@ void db_close(void)
 void db_flush(void)
 {
     lookup_sync();
+
+    LOCK_DB("db_flush")
+
     db_is_clean();
+
+    UNLOCK_DB("db_flush")
 }
 
 #define write_clean_file(_fp_) \

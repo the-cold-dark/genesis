@@ -15,6 +15,10 @@
 #include "execute.h"
 #include "binarydb.h"
 
+#ifdef USE_CLEANER_THREAD
+#include "pthread.h"
+#endif
+
 void func_dblog(void) {
     cData * args;
 
@@ -137,6 +141,13 @@ void func_backup(void) {
     /* sync the db */
     cache_sync();
 
+#ifdef USE_CLEANER_THREAD
+#ifdef DEBUG_CLEANER
+    write_err("func_backup: locked cleaner");
+#endif
+    pthread_mutex_lock(&cleaner_lock);
+#endif
+
     /* copy the index files and '.clean' */
     dp = opendir(c_dir_binary); 
     /* if this failed, then this backup can't complete. die. */
@@ -160,6 +171,13 @@ void func_backup(void) {
     strcat(buf, "/objects");
     if (db_start_dump(buf))
         THROW((file_id, "Unable to open dump db file \"%s\"", buf))
+
+#ifdef USE_CLEANER_THREAD
+    pthread_mutex_unlock(&cleaner_lock);
+#ifdef DEBUG_CLEANER
+    write_err("func_backup: unlocked cleaner");
+#endif
+#endif
 
     /* return '1' */
     push_int(1);

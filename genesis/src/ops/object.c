@@ -766,6 +766,17 @@ COLDC_FUNC(destroy) {
     // Set the object dead, so it will go away when nothing is
     // holding onto it.  cache_discard() will notice the dead
     // flag, and call object_destroy().
+    //
+    // We don't need to dirty the object here because:
+    //   1) the object is ref'ed, so the cleaner thread will skip it
+    //   2) if the object isn't ref'ed then
+    //      a) it'll get written because it goes past the dead check
+    //         This is extra work, arguably, but imho, the chance of
+    //         writing out a soon to be dead object due to this tiny
+    //         race is better than trying to dirty the dirty object
+    //         needlessly and stalling due to the cleaner holding the
+    //         lock on this object's bucket
+    //      b) it won't get written because the dead flag gets set
     */
     obj->dead = 1;
     push_int(1);

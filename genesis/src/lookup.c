@@ -22,6 +22,31 @@
 #endif
 #include <fcntl.h>
 #include <string.h>
+
+#ifdef USE_CLEANER_THREAD
+#include <pthread.h>
+
+pthread_mutex_t lookup_mutex;
+
+#ifdef DEBUG_LOOKUP_LOCK
+#define LOCK_LOOKUP(func) \
+        write_err("%s: locking db", func); \
+	pthread_mutex_lock(&lookup_mutex); \
+	write_err("%s: locked db", func);
+#define UNLOCK_LOOKUP(func) \
+	pthread_mutex_unlock(&lookup_mutex); \
+	write_err("%s: unlocked db", func);
+#else
+#define LOCK_LOOKUP(func) \
+	pthread_mutex_lock(&lookup_mutex);
+#define UNLOCK_LOOKUP(func) \
+	pthread_mutex_unlock(&lookup_mutex);
+#endif
+#else
+#define LOCK_LOOKUP(func)
+#define UNLOCK_LOOKUP(func)
+#endif
+
 #include "cdc_db.h"
 #include "util.h"
 
@@ -54,6 +79,10 @@ struct name_cache_entry {
 void lookup_open(char *name, Int cnew) {
     Int i;
 
+#ifdef USE_CLEANER_THREAD
+    pthread_mutex_init(&lookup_mutex, NULL);
+#endif
+
     if (cnew)
 	dbp = dbm_open(name, O_TRUNC | O_RDWR | O_CREAT | O_BINARY, READ_WRITE);
     else
@@ -75,10 +104,15 @@ void lookup_sync(void) {
 
     sprintf(buf, "%s/index", c_dir_binary);
 
+    LOCK_LOOKUP("lookup_sync")
+
     /* Only way to do this with ndbm is close and re-open. */
     sync_name_cache();
     dbm_close(dbp);
     dbp = dbm_open(buf, O_RDWR | O_CREAT | O_BINARY, READ_WRITE);
+
+    UNLOCK_LOOKUP("lookup_sync")
+
     if (!dbp)
 	panic("Cannot reopen dbm database file.");
 }
@@ -88,13 +122,19 @@ Int lookup_retrieve_objnum(Long objnum, off_t *offset, Int *size)
     datum key, value;
     Number_buf nbuf;
 
+    LOCK_LOOKUP("lookup_retrieve_objnum")
+
     /* Get the value for objnum from the database. */
     key = objnum_key(objnum, nbuf);
     value = dbm_fetch(dbp, key);
     if (!value.dptr)
+    {
+	UNLOCK_LOOKUP("lookup_retrieve_objnum")
 	return 0;
+    }
 
     parse_offset_size_value(value, offset, size);
+    UNLOCK_LOOKUP("lookup_retrieve_objnum")
     return 1;
 }
 
@@ -103,13 +143,16 @@ Int lookup_store_objnum(Long objnum, off_t offset, Int size)
     datum key, value;
     Number_buf nbuf1, nbuf2;
 
+    LOCK_LOOKUP("lookup_store_objnum")
     key = objnum_key(objnum, nbuf1);
     value = offset_size_value(offset, size, nbuf2);
     if (dbm_store(dbp, key, value, DBM_REPLACE)) {
 	write_err("ERROR: Failed to store key %l.", objnum);
+        UNLOCK_LOOKUP("lookup_store_objnum")
 	return 0;
     }
 
+    UNLOCK_LOOKUP("lookup_store_objnum")
     return 1;
 }
 
@@ -118,15 +161,19 @@ Int lookup_remove_objnum(Long objnum)
     datum key;
     Number_buf nbuf;
 
+    LOCK_LOOKUP("lookup_remove_objnum")
     /* Remove the key from the database. */
     key = objnum_key(objnum, nbuf);
     if (dbm_delete(dbp, key)) {
 	write_err("ERROR: Failed to delete key %l.", objnum);
+        UNLOCK_LOOKUP("lookup_remove_objnum")
 	return 0;
     }
+    UNLOCK_LOOKUP("lookup_remove_objnum")
     return 1;
 }
 
+/* only called during startup, nothing can be dirty so no chance the cleaner can call it */
 Long lookup_first_objnum(void)
 {
     datum key;
@@ -139,6 +186,7 @@ Long lookup_first_objnum(void)
     return lookup_next_objnum();
 }
 
+/* only called during startup, nothing can be dirty so no chance the cleaner can call it */
 Long lookup_next_objnum(void)
 {
     datum key;
@@ -155,15 +203,19 @@ Int lookup_retrieve_name(Long name, Long *objnum)
 {
     Int i = name % NAME_CACHE_SIZE;
 
+    LOCK_LOOKUP("lookup_retrieve_name")
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
 	*objnum = name_cache[i].objnum;
+        UNLOCK_LOOKUP("lookup_retrieve_name")
 	return 1;
     }
 
     /* Get it from the database. */
-    if (!get_name(name, objnum))
+    if (!get_name(name, objnum)) {
+        UNLOCK_LOOKUP("lookup_retrieve_name")
 	return 0;
+    }
 
     /* Discard the old cache entry if it exists. */
     if (name_cache[i].name != NOT_AN_IDENT) {
@@ -178,6 +230,7 @@ Int lookup_retrieve_name(Long name, Long *objnum)
     name_cache[i].dirty = 0;
     name_cache[i].on_disk = 1;
 
+    UNLOCK_LOOKUP("lookup_retrieve_name")
     return 1;
 }
 
@@ -185,12 +238,15 @@ Int lookup_store_name(Long name, Long objnum)
 {
     Int i = name % NAME_CACHE_SIZE;
 
+    LOCK_LOOKUP("lookup_store_name")
+
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
 	if (name_cache[i].objnum != objnum) {
 	    name_cache[i].objnum = objnum;
 	    name_cache[i].dirty = 1;
 	}
+        UNLOCK_LOOKUP("lookup_store_name")
 	return 1;
     }
 
@@ -207,6 +263,7 @@ Int lookup_store_name(Long name, Long objnum)
     name_cache[i].dirty = 1;
     name_cache[i].on_disk = 0;
 
+    UNLOCK_LOOKUP("lookup_store_name")
     return 1;
 }
 
@@ -215,23 +272,32 @@ Int lookup_remove_name(Long name)
     datum key;
     Int i = name % NAME_CACHE_SIZE;
 
+    LOCK_LOOKUP("lookup_remove_name")
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
 	/* Delete it from the cache.  If it's not on disk, then we're done. */
 	/*write_err("##lookup_remove_name %d %s", name_cache[i].name, ident_name(name_cache[i].name));*/
 	ident_discard(name_cache[i].name);
 	name_cache[i].name = NOT_AN_IDENT;
-	if (!name_cache[i].on_disk)
+	if (!name_cache[i].on_disk) {
+            UNLOCK_LOOKUP("lookup_remove_name")
 	    return 1;
+	}
     }
 
     /* Remove the key from the database. */
     key = name_key(name);
-    if (dbm_delete(dbp, key))
+    if (dbm_delete(dbp, key)) {
+        UNLOCK_LOOKUP("lookup_remove_name")
 	return 0;
+    }
+
+    UNLOCK_LOOKUP("lookup_remove_name")
     return 1;
 }
 
+#if 0
+/* not called by anything */
 Long lookup_first_name(void)
 {
     datum key;
@@ -245,6 +311,7 @@ Long lookup_first_name(void)
     return lookup_next_name();
 }
 
+/* not called by anything */
 Long lookup_next_name(void)
 {
     datum key;
@@ -256,6 +323,7 @@ Long lookup_next_name(void)
 	return ident_get(key.dptr);
     return lookup_next_name();
 }
+#endif
 
 INTERNAL datum objnum_key(Long objnum, Number_buf nbuf)
 {

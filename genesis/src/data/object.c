@@ -79,6 +79,9 @@ Obj * object_new(Long objnum, cList * parents) {
     cnew->conn = NULL;
     cnew->file = NULL;
 
+    /* last still, which is ok, since coming out the gate its active and the
+     * cleaner thread should ignore it anyway
+     */
     cache_dirty_object(cnew);
 
     return cnew;
@@ -186,13 +189,14 @@ void object_destroy(Obj *object) {
     cthis.u.objnum = object->objnum;
     for (d = list_first(children); d; d = list_next(children, d)) {
 	kid = cache_retrieve(d->u.objnum);
+	cache_dirty_object(kid);
+
 	kid->parents = list_delete_element(kid->parents, &cthis);
 	if (!kid->parents->len) {
 	    list_discard(kid->parents);
 	    kid->parents = list_dup(object->parents);
 	    object_update_parents(kid, list_add);
 	}
-	cache_dirty_object(kid);
 	cache_discard(kid);
     }
 
@@ -226,8 +230,10 @@ INTERNAL void object_update_parents(Obj * object,
 
     for (d = list_first(parents); d; d = list_next(parents, d)) {
 	p = cache_retrieve(d->u.objnum);
-	p->children = (*list_op)(p->children, &cthis);
 	cache_dirty_object(p);
+
+	p->children = (*list_op)(p->children, &cthis);
+
 	cache_discard(p);
     }
 }
@@ -508,13 +514,13 @@ Int object_add_string(Obj *object, cStr *str)
 
 void object_discard_string(Obj *object, Int ind)
 {
+    cache_dirty_object(object);
+
     object->strings[ind].refs--;
     if (!object->strings[ind].refs) {
 	string_discard(object->strings[ind].str);
 	object->strings[ind].str = NULL;
     }
-
-    cache_dirty_object(object);
 }
 
 cStr *object_get_string(Obj *object, Int ind)
@@ -571,6 +577,8 @@ Int object_add_ident(Obj *object, char *ident)
 
 void object_discard_ident(Obj *object, Int ind)
 {
+    cache_dirty_object(object);
+
     object->idents[ind].refs--;
     if (!object->idents[ind].refs) {
       /*write_err("##object_discard_ident %d %s",
@@ -579,8 +587,6 @@ void object_discard_ident(Obj *object, Int ind)
       ident_discard(object->idents[ind].id);
       object->idents[ind].id = NOT_AN_IDENT;
     }
-
-    cache_dirty_object(object);
 }
 
 Long object_get_ident(Obj *object, Int ind) {
@@ -606,7 +612,9 @@ Long object_del_var(Obj *object, Long name)
     for (; *indp != -1; indp = &object->vars.tab[*indp].next) {
 	var = &object->vars.tab[*indp];
 	if (var->name == name && var->cclass == object->objnum) {
-	/*  write_err("##object_del_var %d %s", var->name, ident_name(var->name));*/
+	    cache_dirty_object(object);
+
+	    /*  write_err("##object_del_var %d %s", var->name, ident_name(var->name));*/
 	    ident_discard(var->name);
 	    data_discard(&var->val);
 	    var->name = -1;
@@ -617,7 +625,6 @@ Long object_del_var(Obj *object, Long name)
 	    var->next = object->vars.blanks;
 	    object->vars.blanks = var - object->vars.tab;
 
-            cache_dirty_object(object);
 	    return NOT_AN_IDENT;
 	}
     }
@@ -637,10 +644,10 @@ Long object_assign_var(Obj *object, Obj *cclass, Long name, cData *val) {
     if (!var)
 	var = object_create_var(object, cclass->objnum, name);
 
+    cache_dirty_object(object);
+
     data_discard(&var->val);
     data_dup(&var->val, val);
-
-    cache_dirty_object(object);
 
     return NOT_AN_IDENT;
 }
@@ -660,6 +667,8 @@ Long object_delete_var(Obj *object, Obj *cclass, Long name) {
         for (; *indp != -1; indp = &object->vars.tab[*indp].next) {
             var = &object->vars.tab[*indp];
             if (var->name == name && var->cclass == cclass->objnum) {
+                cache_dirty_object(object);
+
                 ident_discard(var->name);
                 data_discard(&var->val);
                 var->name = -1;
@@ -670,7 +679,6 @@ Long object_delete_var(Obj *object, Obj *cclass, Long name) {
                 var->next = object->vars.blanks;
                 object->vars.blanks = var - object->vars.tab;
 
-                cache_dirty_object(object);
                 return NOT_AN_IDENT;
             }
         }
@@ -777,6 +785,8 @@ static Var *object_create_var(Obj *object, Long cclass, Long name)
     Var *cnew;
     Int ind;
 
+    cache_dirty_object(object);
+
     /* If the variable table is full, expand it and its corresponding hash
      * table. */
     if (object->vars.blanks == -1) {
@@ -821,8 +831,6 @@ static Var *object_create_var(Obj *object, Long cclass, Long name)
     ind = ident_hash(name) % object->vars.size;
     cnew->next = object->vars.hashtab[ind];
     object->vars.hashtab[ind] = cnew - object->vars.tab;
-
-    cache_dirty_object(object);
 
     return cnew;
 }
@@ -1129,6 +1137,8 @@ void object_add_method(Obj *object, Long name, Method *method) {
     /* NOTE:  is there a better way to invalidate this? */
     cur_stamp++;
 
+    cache_dirty_object(object);
+
     /* Delete the method if it previous existed, calling this on a
        locked method WILL CAUSE PROBLEMS, make sure you check before
        calling this. */
@@ -1179,7 +1189,6 @@ void object_add_method(Obj *object, Long name, Method *method) {
     object->methods.tab[ind].next = object->methods.hashtab[hval];
     object->methods.hashtab[hval] = ind;
 
-    cache_dirty_object(object);
 }
 
 Int object_del_method(Obj *object, Long name) {
@@ -1199,6 +1208,8 @@ Int object_del_method(Obj *object, Long name) {
             if (object->methods.tab[ind].m->m_flags & MF_LOCK)
                 return -1;
 
+            cache_dirty_object(object);
+
 	    /* ok, we can discard it. */
 	    method_discard(object->methods.tab[ind].m);
 	    object->methods.tab[ind].m = NULL;
@@ -1208,8 +1219,6 @@ Int object_del_method(Obj *object, Long name) {
 	    *indp = object->methods.tab[ind].next;
 	    object->methods.tab[ind].next = object->methods.blanks;
 	    object->methods.blanks = ind;
-
-            cache_dirty_object(object);
 
             /* Invalidate the method cache. */
             cur_stamp++;
@@ -1244,8 +1253,10 @@ Int object_set_method_flags(Obj * object, Long name, Int flags) {
     method = object_find_method_local(object, name, FROB_ANY);
     if (method == NULL)
         return -1;
-    method->m_flags = flags;
+
     cache_dirty_object(object);
+
+    method->m_flags = flags;
     return flags;
 }
 
@@ -1272,8 +1283,9 @@ Int object_set_method_access(Obj * object, Long name, Int access) {
          */
         cur_stamp++;
     }
-    method->m_access = access;
     cache_dirty_object(object);
+
+    method->m_access = access;
     return access;
 }
 
@@ -1373,6 +1385,8 @@ void method_discard(Method *method) {
 Int object_del_objname(Obj * object) {
     Int result = 0;
 
+    cache_dirty_object(object);
+
     /* if it has one, remove it */
     if (object->objname != -1) {
         result = lookup_remove_name(object->objname);
@@ -1380,7 +1394,6 @@ Int object_del_objname(Obj * object) {
     }
 
     object->objname = -1;
-    cache_dirty_object(object);
 
     return result;
 }
@@ -1392,6 +1405,7 @@ Int object_set_objname(Obj * obj, Ident name) {
     if (lookup_retrieve_name(name, &num))
         return 0;
 
+    /* lucky for us, this call dirties the object appropriately and is first */
     /* do we have a name? Axe it... */
     object_del_objname(obj);
 

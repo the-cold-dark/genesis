@@ -490,6 +490,9 @@ extern Int  heartbeat_freq;
 
 extern Int cache_width;
 extern Int cache_depth;
+#ifdef USE_CLEANER_THREAD
+extern pthread_mutex_t cleaner_lock;
+#endif
 
 extern void init_defs(void); 
 

@@ -63,6 +63,7 @@ RELEASE INFORMATION:
         added to the test suite. (Bruce)
       * Error handling optimization to shift expense from throw()
         to traceback(). (Bruce)
+      * Add background cleaner thread to write dirty objects to disk (Brad)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

@@ -16,6 +16,33 @@
 #include "util.h"
 #include "execute.h"
 
+#ifdef USE_CLEANER_THREAD
+#include <pthread.h>
+
+pthread_mutex_t cleaner_lock;
+pthread_t cleaner;
+void *cache_cleaner_worker(void *dummy);
+
+#ifdef DEBUG_BUCKET_LOCK
+#define LOCK_BUCKET(func, bucket) \
+    write_err("%s: locking %d", func, &dirty[bucket].lock); \
+    pthread_mutex_lock(&dirty[bucket].lock); \
+    write_err("%s: locked %d", func, &dirty[bucket].lock);
+#define UNLOCK_BUCKET(func, bucket) \
+    pthread_mutex_unlock(&dirty[bucket].lock); \
+    write_err("%s: unlocked %d", func, &dirty[bucket].lock);
+#else
+#define LOCK_BUCKET(func, bucket) \
+    pthread_mutex_lock(&dirty[bucket].lock);
+#define UNLOCK_BUCKET(func, bucket) \
+    pthread_mutex_unlock(&dirty[bucket].lock);
+#endif	
+#else
+#define LOCK_BUCKET(func, bucket)
+#define UNLOCK_BUCKET(func, bucket)
+#endif
+
+
 /*
 // Store dummy objects for chain heads and tails.  This is a little storage-
 // intensive, but it simplifies and speeds up the list operations.
@@ -26,9 +53,19 @@ struct cache_buckets {
    Obj *last;
 };
 
-typedef struct cache_buckets CacheBuckets;
+struct dirty_buckets {
+   Obj *first;
+   Obj *last;
+#ifdef USE_CLEANER_THREAD
+   pthread_mutex_t lock;
+#endif
+};
 
-CacheBuckets *active, *inactive, *dirty;
+typedef struct cache_buckets CacheBuckets;
+typedef struct dirty_buckets DirtyBuckets;
+
+CacheBuckets *active, *inactive;
+DirtyBuckets *dirty;
 
 #if DEBUG_CACHE
 Int        _acounter = 0;
@@ -82,17 +119,9 @@ static void cache_remove_from_list(CacheBuckets *bucket, Obj *obj)
     obj->next_obj = obj->prev_obj = NULL;
 }
 
-inline void cache_dirty_object(Obj *obj)
+static inline void cache_add_to_dirty_list(Obj *obj)
 {
     Int ind;
-
-    obj->dirty++;
-    if ((cache_watch_object == obj->objnum) && !(obj->dirty % cache_watch_count))
-    {
-	log_current_task_stack(FALSE, write_err);
-    }
-    if (obj->dirty > 1)
-	return;
 
     ind = obj->objnum % cache_width;
     obj->prev_dirty = NULL;
@@ -107,7 +136,27 @@ inline void cache_dirty_object(Obj *obj)
 	dirty[ind].last = obj;
 }
 
-static void cache_remove_from_dirty(CacheBuckets *bucket, Obj *obj)
+inline void cache_dirty_object(Obj *obj)
+{
+#ifdef USE_CLEANER_THREAD
+    Int ind;
+
+    ind = obj->objnum % cache_width;
+#endif
+    LOCK_BUCKET("cache_dirty_object", ind)
+
+    obj->dirty++;
+
+    if ((cache_watch_object == obj->objnum) && !(obj->dirty % cache_watch_count))
+	log_current_task_stack(FALSE, write_err);
+
+    if (obj->dirty == 1)
+        cache_add_to_dirty_list(obj);
+
+    UNLOCK_BUCKET("cache_dirty_object", ind)
+}
+
+static void cache_remove_from_dirty(DirtyBuckets *bucket, Obj *obj)
 {
     if (obj->next_dirty)
         obj->next_dirty->prev_dirty = obj->prev_dirty;
@@ -130,7 +179,8 @@ static void cache_remove_from_dirty(CacheBuckets *bucket, Obj *obj)
 //
 */
 
-void init_cache(void) {
+void init_cache(Bool spawn_cleaner)
+{
     Obj *obj;
     Int	i, j;
 
@@ -139,12 +189,27 @@ void init_cache(void) {
     cache_watch_count  = 100;
     active             = EMALLOC(CacheBuckets, cache_width);
     inactive           = EMALLOC(CacheBuckets, cache_width);
-    dirty              = EMALLOC(CacheBuckets, cache_width);
+    dirty              = EMALLOC(DirtyBuckets, cache_width);
+
+#ifdef USE_CLEANER_THREAD
+    pthread_mutex_init(&cleaner_lock, NULL);
+    if (spawn_cleaner) {
+        if (pthread_create(&cleaner, NULL, cache_cleaner_worker, NULL))
+	    write_err("init_cache: unable to create cleaner thread");
+#ifdef DEBUG_CLEANER_LOCK
+        else
+	    write_err("init_cache: cleaner thread created");
+#endif
+    }
+#endif
 
     for (i = 0; i < cache_width; i++) {
 	/* Active list starts out empty. */
 	active[i].first = active[i].last = NULL;
 	dirty[i].first  = dirty[i].last  = NULL;
+#ifdef USE_CLEANER_THREAD
+	pthread_mutex_init(&dirty[i].lock, NULL);
+#endif
 
 	/* Inactive list begins as a chain of empty objects. */
 	inactive[i].first = inactive[i].last = NULL;
@@ -181,14 +246,18 @@ Obj * cache_get_holder(Long objnum) {
 
 	/* Check if we need to swap anything out. */
 	if (obj->objnum != INV_OBJNUM) {
+	    LOCK_BUCKET("cache_get_holder", ind)
 	    if (obj->dirty) {
 		if (!db_put(obj, obj->objnum, &obj_size))
 		    panic("Could not store an object.");
                 if (cache_log_flag & CACHE_LOG_OVERFLOW)
-		    write_err("cache_get_holder: wrote object %s (size: %d bytes) (dirty: %d)", ident_name(obj->objname), obj_size, obj->dirty);
+		    write_err("cache_get_holder: wrote object %s (size: %d bytes) (dirty: %d)",
+			      ident_name(obj->objname), obj_size, obj->dirty);
 
+                obj->dirty = 0;
 		cache_remove_from_dirty(&dirty[ind], obj);
 	    }
+	    UNLOCK_BUCKET("cache_get_holder", ind)
 	    object_free(obj);
 	}
 
@@ -273,15 +342,16 @@ Obj *cache_retrieve(Long objnum) {
     obj = cache_get_holder(objnum);
 
     /* Read the object into the place-holder, if it's on disk. */
-    if (db_get(obj, objnum)) {
-	return obj;
-    } else {
+    LOCK_BUCKET("cache_retrieve", ind)
+    if (!db_get(obj, objnum)) {
 	/* Oops.  add back to inactive list tail*/
 	obj->objnum = INV_OBJNUM;
 	cache_remove_from_list(&active[ind], obj);
 	cache_add_to_list_tail(&inactive[ind], obj);
-	return NULL;
+	obj = NULL;
     }
+    UNLOCK_BUCKET("cache_retrieve", ind)
+    return obj;
 }
 
 /*
@@ -329,11 +399,18 @@ void cache_discard(Obj *obj) {
            holder at the tail of the inactive chain.  Be careful about this,
            since object_destroy() can fiddle with the cache.  We're safe as
            long as obj isn't in any chains at the time of db_del(). */
-	db_del(obj->objnum);
 	object_destroy(obj);
+	db_del(obj->objnum);
+
+	LOCK_BUCKET("cache_discard", ind)
+
+	obj->dirty = 0;
+	cache_remove_from_dirty(&dirty[ind], obj);
+
+	UNLOCK_BUCKET("cache_discard", ind)
+
 	obj->objnum = INV_OBJNUM;
 	cache_add_to_list_tail(&inactive[ind], obj);
-	cache_remove_from_dirty(&dirty[ind], obj);
     } else {
 	/* Install at head of inactive chain. */
 	cache_add_to_list_head(&inactive[ind], obj);
@@ -388,29 +465,109 @@ void cache_sync(void) {
     Obj *obj, *tobj;
     Long obj_size;
 
+#ifdef USE_CLEANER_THREAD
+#ifdef DEBUG_CLEANER_LOCK
+    write_err("cache_sync: locking cleaner");
+#endif
+    pthread_mutex_lock(&cleaner_lock);
+#ifdef DEBUG_CLEANER_LOCK
+    write_err("cache_sync: locked cleaner");
+#endif
+#endif
     /* Traverse all the active and inactive chains. */
     if (cache_log_flag & CACHE_LOG_SYNC)
         write_err("cache_sync: start of sync");
     for (i = 0; i < cache_width; i++) {
 	/* Check active chain. */
+	LOCK_BUCKET("cache_sync", i)
 	obj = dirty[i].first;
-	while (obj)
-	{
-            if (!db_put(obj, obj->objnum, &obj_size))
-		panic("Could not store an object.");
-            if (cache_log_flag & CACHE_LOG_SYNC)
-		write_err("cache_sync: wrote object %s (size: %d bytes) (dirty: %d)", ident_name(obj->objname), obj_size, obj->dirty);
-	    obj->dirty = 0;
+	while (obj) {
+	    if (obj->dead) {
+		if (cache_log_flag & CACHE_LOG_DEAD_WRITE)
+		    write_err("cache_sync: skipping dead object");
+	    } else {
+                if (!db_put(obj, obj->objnum, &obj_size))
+		    panic("Could not store an object.");
+                if (cache_log_flag & CACHE_LOG_SYNC)
+		    write_err("cache_sync: wrote object %s (size: %d bytes) (dirty: %d)",
+			      ident_name(obj->objname), obj_size, obj->dirty);
+	        obj->dirty = 0;
+	    }
 
 	    tobj = obj->next_dirty;
 	    obj->next_dirty = obj->prev_dirty = NULL;
 	    obj = tobj;
 	}
 	dirty[i].first = dirty[i].last = NULL;
+	UNLOCK_BUCKET("cache_sync", i)
     }
 
     db_flush();
+#ifdef USE_CLEANER_THREAD
+    pthread_mutex_unlock(&cleaner_lock);
+#ifdef DEBUG_CLEANER_LOCK
+    write_err("cache_sync: unlocked cleaner");
+#endif
+#endif
 }
+
+#ifdef USE_CLEANER_THREAD
+void *cache_cleaner_worker(void *dummy)
+{
+    Int cache_bucket = 0;
+    Obj *tobj, *tobj2;
+    Long obj_size;
+
+    while (running) {
+	sleep(10);
+
+#ifdef DEBUG_CLEANER_LOCK
+        write_err("cache_cleaner_worker: locking cleaner");
+#endif
+        pthread_mutex_lock(&cleaner_lock);
+#ifdef DEBUG_CLEANER_LOCK
+        write_err("cache_cleaner_worker: locked cleaner");
+#endif
+
+	LOCK_BUCKET("cache_cleaner_worker", cache_bucket)
+
+	tobj = dirty[cache_bucket].first;
+	while (tobj) {
+	    if (tobj->refs == 0) {
+	        if (tobj->dead) {
+		    if (cache_log_flag & CACHE_LOG_DEAD_WRITE)
+		        write_err("cache_cleaner_worker: skipping dead object");
+		} else {
+		    if (!db_put(tobj, tobj->objnum, &obj_size))
+		        panic("Could not store an object.");
+		    if (cache_log_flag & CACHE_LOG_SYNC)
+		        write_err("cache_cleaner_worker: wrote object %s (size: %d bytes) (dirty: %d)",
+			          ident_name(tobj->objname), obj_size, tobj->dirty);
+		    tobj->dirty = 0;
+		}
+
+	        tobj2 = tobj->next_dirty;
+	        cache_remove_from_dirty(&dirty[cache_bucket], tobj);
+	        tobj = tobj2;
+	    }
+	    else
+		tobj = tobj->next_dirty;
+	}
+
+	UNLOCK_BUCKET("cache_cleaner_worker", cache_bucket)
+
+	if (++cache_bucket == cache_width)
+	    cache_bucket = 0;
+
+        pthread_mutex_unlock(&cleaner_lock);
+#ifdef DEBUG_CLEANER_LOCK
+        write_err("cache_cleaner_worker: unlocked cleaner");
+#endif
+    }
+
+    return NULL;
+}
+#endif
 
 #if 0
 /*
@@ -507,7 +664,8 @@ void cache_cleanup(void) {
                 if (!db_put(obj, obj->objnum, &obj_size))
                     panic("Could not store an object.");
 		if (cache_log_flag & CACHE_LOG_CLEANUP)
-		    write_err("cache_cleanup: wrote object %s (size: %d bytes) (dirty: %d)", ident_name(obj->objname), obj_size, obj->dirty);
+		    write_err("cache_cleanup: wrote object %s (size: %d bytes) (dirty: %d)",
+			      ident_name(obj->objname), obj_size, obj->dirty);
                 obj->dirty = 0;
             }
             if(obj->objnum != INV_OBJNUM) {

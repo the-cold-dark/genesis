@@ -8,9 +8,10 @@
 #define CACHE_LOG_SYNC		0x0001
 #define CACHE_LOG_OVERFLOW	0x0002
 #define CACHE_LOG_CLEAN		0x0004
+#define CACHE_LOG_DEAD_WRITE	0x0008
 
-void init_cache(void);
-void cache_dirty_object(Obj *obj);
+
+void init_cache(Bool spawn_cleaner);
 Obj *cache_get_holder(Long objnum);
 Obj *cache_retrieve(Long objnum);
 Obj *cache_grab(Obj *object);

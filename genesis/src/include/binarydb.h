@@ -25,8 +25,6 @@ Int    db_get(Obj * object, Long name);
 Int    db_put(Obj * object, Long name, Long *obj_size);
 Int    db_check(Long name);
 Int    db_del(Long name);
-char * db_traverse_first(void);
-char * db_traverse_next(void);
 Int    db_backup(char * out);
 void   db_close(void);
 void   db_flush(void);

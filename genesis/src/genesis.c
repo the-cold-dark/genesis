@@ -19,6 +19,12 @@
 #endif
 #include <ctype.h>
 #include <time.h>
+
+#ifdef USE_CLEANER_THREAD
+#include <pthread.h>
+extern pthread_t cleaner;
+#endif
+
 #include "cdc_pcode.h"
 #include "cdc_db.h"
 #include "strutil.h"
@@ -116,18 +122,22 @@ int main(int argc, char **argv) {
     main_loop();
 
 #ifdef PROFILE_EXECUTE
-   dump_execute_profile();
+    dump_execute_profile();
 #endif
 
     /* Flush defunct sockets, sync the cache,
      * flush output buffers, and exit normally.
      */
     flush_defunct();
+#ifdef USE_CLEANER_THREAD
+    pthread_join(cleaner, NULL);
+#endif
     cache_sync();
     db_close();
     flush_output();
     close_files();
     uninit_scratch_file();
+    write_err("Genesis shutdown");
     if (errfile)
         fclose(errfile);
     if (logfile)
@@ -475,7 +485,7 @@ INTERNAL void initialize(Int argc, char **argv) {
 
     /* Initialize database and network modules. */
     init_scratch_file();
-    init_cache();
+    init_cache(TRUE);
     init_binary_db();
     init_core_objects();
 
@@ -498,6 +508,7 @@ INTERNAL void initialize(Int argc, char **argv) {
             string_discard(str);
         }
         fputs("])...\n", errfile);
+        fflush(errfile);
     }
 
     /* call $sys.startup() */

@@ -7,6 +7,7 @@
 
 #include "defs.h"
 #include "file.h"
+#include "string_tab.h"
 
 struct Obj {
     cList * parents;
@@ -39,9 +40,7 @@ struct Obj {
     } methods;
 
     /* Table for string references in methods. */
-    String_entry *strings;
-    Int num_strings;
-    Int strings_size;
+    StringTab *strings;
 
     /* Table for identifier references in methods. */
     Ident_entry	*idents;

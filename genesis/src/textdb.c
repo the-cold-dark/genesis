@@ -142,6 +142,7 @@ struct nh_s {
     nh_t  * next;
 };
 
+#if 0
 struct holder_s {
     Long       objnum;
     cStr * str;
@@ -149,14 +150,41 @@ struct holder_s {
 };
 
 holder_t * holders = NULL;
+Long num_holders = 0;
+#else
+cDict *holders;
+#endif
+
 nh_t * nhs = NULL;
 
-INTERNAL Int add_objname(char * str, Long objnum) {
+#if 0
+INTERNAL void remove_from_holder(cObjnum objnum) {
+    holder_t *holder = holders, *prev = NULL;
+
+    while (holder && holder->objnum != objnum) {
+	prev = holder;
+	holder = holder->next;
+    }
+
+    if (holder) {
+	if (prev) {
+	    prev->next = holder->next;
+	} else {
+	    holders = holders->next;
+	}
+	string_discard(holder->str);
+	free(holder);
+	--num_holders;
+    }
+}
+#endif
+
+INTERNAL Int add_objname(char * str, Long objnum, Int skip_lookup) {
     Ident   id = ident_get(str);
     Obj   * obj = NULL;
     Long    num = INV_OBJNUM;
 
-    if (lookup_retrieve_name(id, &num) && num != objnum) {
+    if (!skip_lookup && lookup_retrieve_name(id, &num) && num != objnum) {
         WARN(("Attempt to rebind existing objname $%s (#%li)",
                str, (long) num));
         ident_discard(id);
@@ -168,14 +196,16 @@ INTERNAL Int add_objname(char * str, Long objnum) {
        the name on the object after it is defined */
     obj = cache_retrieve(objnum);
     if (!obj) {
-        holder_t * holder = (holder_t *) malloc(sizeof(holder_t));
+        cData key, value;
 
         lookup_store_name(id, objnum);
 
-        holder->objnum = objnum;
-        holder->str = string_from_chars(ident_name(id), strlen(ident_name(id)));
-        holder->next = holders;
-        holders = holder;
+	key.type = OBJNUM;
+	key.u.objnum = objnum;
+	value.type = STRING;
+	value.u.str = string_from_chars(str, strlen(str));
+        holders = dict_add(holders, &key, &value);
+	string_discard(value.u.str);
     } else {
         if (num == objnum)
             obj->objname = ident_dup(id);
@@ -196,7 +226,7 @@ cObjnum get_object_name(Ident id) {
 
     if (!lookup_retrieve_name(id, &num)) {
         num = db_top++;
-        add_objname(ident_name(id), num);
+        add_objname(ident_name(id), num, TRUE);
     }
 
     return num;
@@ -204,8 +234,8 @@ cObjnum get_object_name(Ident id) {
 
 
 INTERNAL void cleanup_holders(void) {
-    holder_t * holder = holders,
-             * old = NULL;
+    cList    * keys, * values;
+    cData    * key, * value;
     Long       objnum;
 #if 0
     Obj      * obj;
@@ -214,13 +244,17 @@ INTERNAL void cleanup_holders(void) {
     off_t      offset;
     Int        size;
 
-    while (holder != NULL) {
-        id = ident_get(string_chars(holder->str));
+    keys = dict_keys(holders);
+    values = dict_values(holders);
+    for (key = list_first(keys), value = list_first(values);
+	key && value;
+	key = list_next(keys, key), value = list_next(values, value)) {
+        id = ident_get(string_chars(value->u.str));
         if (!lookup_retrieve_name(id, &objnum)) {
             if (print_warn)
                 printf("\rWARNING: Name $%s for object #%d disapppeared.\n",
                        ident_name(id), (int) objnum);
-        } else if (objnum != holder->objnum) {
+        } else if (objnum != key->u.objnum) {
             if (print_warn)
                printf("\rWARNING: Name $%s is no longer bound to object #%d.\n",
                       ident_name(id), (int) objnum);
@@ -244,12 +278,10 @@ INTERNAL void cleanup_holders(void) {
             }
         }
 
-        string_discard(holder->str);
         ident_discard(id);
-        old = holder;
-        holder = holder->next;
-        free(old);
     }
+    dict_discard(holders);
+    holders = NULL;
 }
 
 /* only call with a method which declars a MF_NATIVE flag */
@@ -668,10 +700,15 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
 
     }
 
+    d.type = OBJNUM;
+    d.u.objnum = objnum;
+    if (dict_contains(holders, &d))
+        holders = dict_del(holders, &d);
+
     /* if we should, add the name.  If it already has one, we just replace it.*/
     if (objnum != ROOT_OBJNUM && objnum != SYSTEM_OBJNUM) {
         if (obj.str[0] != (char) NULL)
-            add_objname(obj.str, target->objnum);
+            add_objname(obj.str, target->objnum, objnum == INV_OBJNUM);
     }
 
     /* free up this list */
@@ -788,7 +825,7 @@ INTERNAL void handle_namecmd(char * line, char * s, Int new) {
         num = db_top++;
     }
 
-    add_objname(name, num);
+    add_objname(name, num, TRUE);
 }
 
 /*
@@ -1202,6 +1239,7 @@ void compile_cdc_file(FILE * fp) {
 
     fstat(fileno(fp), &statbuf);
     filesize = statbuf.st_size;
+    holders = dict_new_empty();
 
     /* start at line 0 */
     line_count = 0;
@@ -1342,7 +1380,7 @@ void compile_cdc_file(FILE * fp) {
     fflush(stdout);
     write_err("Syncing binarydb...");
     cache_sync();
-    write_err("Cleaning up name holders...");
+    write_err("Cleaning up name holders (%d)...", holders->keys->len);
     cleanup_holders();
 }
 
@@ -1407,6 +1445,7 @@ Int text_dump(Bool objnames) {
     dump_object(ROOT_OBJNUM, fp, objnames);
     END_SEARCH();
 #endif
+    holders = dict_new_empty();
     dump_hash = hash_new(0);
     dump_object(ROOT_OBJNUM, fp, objnames);
     hash_discard(dump_hash);

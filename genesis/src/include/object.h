@@ -5,6 +5,7 @@
 #ifndef cdc_object_h
 #define cdc_object_h
 
+#include "defs.h"
 #include "file.h"
 
 struct Obj {
@@ -181,7 +182,6 @@ struct error_list {
 #define METHOD_STARTING_SIZE    (16 - MALLOC_DELTA - 1)
 #define STRING_STARTING_SIZE    (16 - MALLOC_DELTA)
 #define IDENTS_STARTING_SIZE    (16 - MALLOC_DELTA)
-#define METHOD_CACHE_SIZE       2551
 
 /* ..................................................................... */
 /* types and structures */
@@ -207,6 +207,13 @@ struct {
     cObjnum loc;
 } method_cache[METHOD_CACHE_SIZE];
 
+struct {
+    Long stamp;
+    cObjnum objnum;
+    cObjnum ancestor;
+    Bool is_ancestor;
+} ancestor_cache[ANCESTOR_CACHE_SIZE];
+
 /* ..................................................................... */
 /* function prototypes */
 static void    object_update_parents(Obj *object,
@@ -221,6 +228,12 @@ static void    method_cache_set(Long objnum, Long name, Long after,
 static void    method_cache_invalidate(cObjnum objnum);
 static void    search_object(Long objnum, Search_params *params);
 static void    method_delete_code_refs(Method * method);
+
+static Bool ancestor_cache_check(cObjnum objnum, cObjnum ancestor,
+                                 Bool *is_ancestor);
+static void ancestor_cache_set(cObjnum objnum, cObjnum ancestor,
+                               Bool is_ancestor);
+
 
 Obj *object_new(Long objnum, cList *parents);
 void    object_free(Obj *object);
@@ -275,6 +288,7 @@ Long db_top;
 /* Validity count for method cache (incrementing this count invalidates all
  * cache entries. */
 static Int cur_stamp = 1;
+static Int cur_anc_stamp = 1;
 
 #else /* _object_ */
 

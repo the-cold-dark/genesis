@@ -166,6 +166,11 @@ void object_destroy(Obj *object) {
         method_cache_invalidate(object->objnum);
     }
 
+    /* Invalidate the ancestor cache if the object has any children */
+    if (list_length(object->children) != 0) {
+        cur_anc_stamp++;
+    }
+
     /* remove the object name, if it has one */
     object_del_objname(object);
 
@@ -326,15 +331,51 @@ cList * object_ancestors_breadth(Long objnum) {
     return list;
 }
 
+static Bool ancestor_cache_check(cObjnum objnum, cObjnum ancestor,
+                                 Bool *is_ancestor)
+{
+    cObjnum i;
+
+    i = (objnum + ancestor) % ANCESTOR_CACHE_SIZE;
+
+    if ((ancestor_cache[i].stamp == cur_anc_stamp) &&
+        (ancestor_cache[i].objnum == objnum) &&
+        (ancestor_cache[i].ancestor == ancestor))
+    {
+        *is_ancestor = ancestor_cache[i].is_ancestor;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static void ancestor_cache_set(cObjnum objnum, cObjnum ancestor,
+                               Bool is_ancestor)
+{
+    cObjnum i;
+
+    i = (objnum + ancestor) % ANCESTOR_CACHE_SIZE;
+
+    ancestor_cache[i].stamp = cur_anc_stamp;
+    ancestor_cache[i].objnum = objnum;
+    ancestor_cache[i].ancestor = ancestor;
+    ancestor_cache[i].is_ancestor = is_ancestor;
+}
+
 Int object_has_ancestor(Long objnum, Long ancestor)
 {
     Int retv;
+    Bool anc_cache_check;
 
     if (objnum == ancestor)
 	return 1;
 
+    if (ancestor_cache_check(objnum, ancestor, &anc_cache_check))
+        return anc_cache_check;
+
     START_SEARCH();
     retv = object_has_ancestor_aux(objnum, ancestor);
+    ancestor_cache_set(objnum, ancestor, retv);
     END_SEARCH();
     return retv;
 }
@@ -344,6 +385,7 @@ static Int object_has_ancestor_aux(Long objnum, Long ancestor)
     Obj *object;
     cList *parents;
     cData *d;
+    Bool anc_cache_check;
 
     /* Don't search an object twice. */
     object = cache_retrieve(objnum);
@@ -357,19 +399,31 @@ static Int object_has_ancestor_aux(Long objnum, Long ancestor)
     cache_discard(object);
 
     for (d = list_first(parents); d; d = list_next(parents, d)) {
+        /* Do this check first since it is trivial
+	 * The result of this will be cached in the
+	 * caller. */
 	if (d->u.objnum == ancestor) {
+            list_discard(parents);
+            return 1;
+        }
+        /* Only fall out if the test is true, since other parents may
+           have a true result. */
+        if (ancestor_cache_check(d->u.objnum, ancestor, &anc_cache_check) &&
+            anc_cache_check) {
 	    list_discard(parents);
-	    return 1;
+	    return anc_cache_check;
 	}
     }
 
     for (d = list_first(parents); d; d = list_next(parents, d)) {
 	if (object_has_ancestor_aux(d->u.objnum, ancestor)) {
+            ancestor_cache_set(d->u.objnum, ancestor, TRUE);
 	    list_discard(parents);
 	    return 1;
 	}
     }
 
+    ancestor_cache_set(objnum, ancestor, FALSE);
     list_discard(parents);
     return 0;
 }
@@ -393,6 +447,9 @@ Int object_change_parents(Obj *object, cList *parents)
     /* Invalidate the method cache. */
     /* NOTE:  is there a better way to invalidate this? */
     cur_stamp++;
+
+    /* Invalidate the ancestor cache */
+    cur_anc_stamp++;
 
     cache_dirty_object(object);
 

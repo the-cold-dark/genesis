@@ -126,6 +126,19 @@
 
 /*
 // ---------------------------------------------------------------------
+// size of method cache. use prime numbers and follow guidelines as 
+// with the name cache above.
+*/
+#define METHOD_CACHE_SIZE 2551
+
+/*
+// ---------------------------------------------------------------------
+// size of ancestor cache. use prime numbers and follow guidelines as 
+// with the name cache above.
+*/
+#define ANCESTOR_CACHE_SIZE 2551
+/*
+// ---------------------------------------------------------------------
 // Default indent for decompiled code.
 */
 #define DEFAULT_INDENT    4

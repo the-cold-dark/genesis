@@ -384,7 +384,7 @@ NATIVE_METHOD(sorted_insert) {
     DEF_argc;
 
     if (!validate_sorted_args(stack_start, arg_start))
-        return NULL;
+        return 0;
 
     list = list_dup(LIST1);
     data_dup(&data, &args[ARG2]);
@@ -412,7 +412,7 @@ NATIVE_METHOD(sorted_delete) {
     DEF_argc;
 
     if (!validate_sorted_args(stack_start, arg_start))
-        return NULL;
+        return 0;
 
     list = list_dup(LIST1);
     data_dup(&data, &args[ARG2]);

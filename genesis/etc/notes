@@ -78,6 +78,15 @@ RELEASE INFORMATION:
       * Add config('cachewatch, $obj) and config('cachewatchcount, ##)
         to log the call stack of a specific $obj every cachewatchcount
 	dirtys. (Brad)
+      * Add ability to get both size and char* data from an ident to avoid
+        useless strlen() calls. (Bruce)
+      * Avoid writing back size/offset values if they haven't changed in
+        binarydb.c. (Bruce)
+      * Lookup and bind native methods while compiling the DB so that they
+        can be used within eval blocks in coldcc to let you test natives
+        in the test suite. (Bruce)
+      * data_cmp() compares objnums by their numerical value now. (Bruce)
+      * New lookup implementation that uses Berkeley DB. (Bruce)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

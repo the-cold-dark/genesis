@@ -119,7 +119,7 @@ depend: $(GRAMMAR_O) include/parse.h
 	@cd $(OPSDIR); make $@
 	@echo data..
 	@cd $(DATADIR); make $@
-	@makedepend -- $(CFLAGS) -- $(EVERYTHING_C)
+	@makedepend -- $(CFLAGS) -- $(EVERYTHING_C) > /dev/null 2>&1
 	@rm -f Makefile.bak
 
 lint:

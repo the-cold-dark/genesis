@@ -40,15 +40,96 @@ void uninit_net(void) {
 #endif
 }
 
+/*
+// -------------------------------------------------------------------
+// add a defined() setting for your OS if it doesnt define inet_aton()
+//
+// inet_aton() courtesy of Luc Girardin <girardin@hei.unige.ch>, I dont
+// know where he got it  8)
+*/
+
+#ifndef HAVE_INET_ATON
+
+int inet_aton (const char * cp, struct in_addr * addr) {
+    unsigned long parts[4];
+    register unsigned long val;
+    register unsigned long part0;
+    register unsigned long part1;
+    register unsigned long part2;
+    register unsigned long part3;
+    int part;
+    char *next;
+
+    part = 0;
+
+    for (;;) {
+        if (!isdigit (*cp)) /* not decimal digit or leading 0, 0x */
+            return 0;
+
+        errno = 0;
+        parts[part++] = strtoul (cp, &next, 0); /* leading 0=octal, 0x=hex */
+        if (errno == ERANGE)
+            return 0;
+      
+        if (*next == '.') {
+            if (part >= 4)
+                return 0;
+
+            cp = next + 1;
+        } else
+            break; /* from for loop */
+    }
+    /* Check for trailing non-whitespace characters */
+    if (strlen (next) != strspn (next, " \t\n\v\f\r"))
+        return 0;
+
+    /* Concoct the address according to the number of parts specified. */
+
+    val = 0;
+    part0 = parts[0];
+    part1 = parts[1];
+    part2 = parts[2];
+    part3 = parts[3];
+
+    switch (part) {
+      case 4: /* a.b.c.d -- 8.8.8.8 bits */
+          if (part3 > 0xff || part2 > 0xff)
+              return 0;
+          val = part3;
+          part2 <<= 8;
+          /* FALLTHROUGH */
+      case 3: /* a.b.c -- 8.8.16 bits */
+          if (part2 > 0xffff || part1 > 0xff)
+              return 0;
+          val |= part2;
+          part1 <<= 16;
+          /* FALLTHROUGH */
+      case 2: /* a.b -- 8.24 bits */
+          if (part1 > 0xffffff || part0 > 0xff)
+              return 0;
+          val |= part1;
+          part0 <<= 24;
+          /* FALLTHROUGH */
+      case 1: /* a -- 32 bits */
+          val |= part0;
+    }
+
+    addr->s_addr = htonl (val);
+    return 1;
+}
+#endif
+
 SOCKET get_server_socket(Int port, char * addr) {
     Int one=1;
     SOCKET sock;
+    unsigned long ipaddr;
 
     /* verify the address first */
     memset(&sockin, 0, sizeof(sockin));               /* zero it */
     sockin.sin_family = AF_INET;                      /* set inet */
     sockin.sin_port = htons((unsigned short) port);   /* set port */
-    if (addr && !inet_aton(addr, &sockin.sin_addr)) { /* set optional addr */
+
+    if (addr && inet_aton(addr, &sockin.sin_addr)) {
         server_failure_reason = address_id;
         return SOCKET_ERROR;
     }

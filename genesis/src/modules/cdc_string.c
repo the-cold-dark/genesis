@@ -308,25 +308,16 @@ NATIVE_METHOD(strsed) {
 /* Encrypt a string. */
 NATIVE_METHOD(crypt) {
     char     * s,
-               salt[3],
-             * ss,
              * crypted;
 
     INIT_1_OR_2_ARGS(STRING, STRING)
 
     s = string_chars(STR1);
 
-    if (argc == 2) {
-        if (string_length(STR2) < 2)
-            THROW((salt_id, "Salt (%S) is not two characters.", STR2))
-        ss = string_chars(STR2);
-        salt[0] = ss[0];
-        salt[1] = ss[1];
-        salt[2] = (char) NULL;
-        crypted = crypt_string(s, salt);
-    } else {
+    if (argc == 2)
+        crypted = crypt_string(s, string_chars(STR2));
+    else
         crypted = crypt_string(s, NULL);
-    }
 
     CLEAN_RETURN_STRING(string_from_chars(crypted, strlen(crypted)));
 }

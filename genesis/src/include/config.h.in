@@ -35,6 +35,9 @@
 /* Define if you have the vprintf function.  */
 #undef HAVE_VPRINTF
 
+/* Define if you inet_aton() */
+#undef HAVE_INET_ATON
+
 /* Define as __inline if that's what the C compiler calls it.  */
 #undef inline
 

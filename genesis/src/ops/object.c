@@ -749,7 +749,7 @@ COLDC_FUNC(set_objname) {
         return;
 
     if (!object_set_objname(cur_frame->object, args[0].u.symbol)) {
-        cthrow(error_id, "The name '%I is already taken.", args[0].u.symbol);
+        cthrow(error_id, "The name $%I is already taken.", args[0].u.symbol);
         return;
     }
 
@@ -802,7 +802,7 @@ COLDC_FUNC(lookup) {
         return;
 
     if (!lookup_retrieve_name(args[0].u.symbol, &objnum)) {
-        cthrow(namenf_id, "Cannot find object %I.", args[0].u.symbol);
+        cthrow(namenf_id, "Cannot find object $%I.", args[0].u.symbol);
         return;
     }
 

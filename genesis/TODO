@@ -1,6 +1,10 @@
 -----------------------
 Bugs:
 
+* line counting with a simple catch statement gets off, (i.e. no braces):
+
+      catch any
+          (> do this <);
 
 -----------------------
 Cleanup:
@@ -29,13 +33,7 @@ Features:
   When the port is specified in this way, it looks up the port for the
   service, based of the machine's configuration.
 
-* asyncrynous backups
-
 * hack bind_native object renaming
-
-* hack up split() (like explode, but using regexps).
-
-* hack up join() (list to string)
 
 * $string.word(str, x) equivalent of $string.explode(str)[x]
 
@@ -65,6 +63,8 @@ Features:
 -----------------------
 Possiblilities:
 
+* multiple scopes to methods
+  
 * forking (requires a bit of rewriting in the actual interpreter)
 * 'retry' jump (ala continue, etc, for catch statements)
 * "\n" in strings should be character '10', not '\' and 'n'.

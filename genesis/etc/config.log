@@ -1,0 +1,13 @@
+This file contains any messages produced by compilers while
+running configure, to aid debugging if configure makes a mistake.
+
+conftest.c: In function `main':
+conftest.c:15: warning: left shift count >= width of type
+configure: In function `t':
+configure:1173: warning: initialization discards `const' from pointer target type
+configure:1642: vfork.h: No such file or directory
+ld: -lnsl: no match
+ld: -lsocket: no match
+ld: -lgdbm: no match
+ld: -lndbm: no match
+ld: -lintl: no match

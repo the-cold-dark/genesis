@@ -6,6 +6,13 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-12 [13-Aug-96] Brandon Gillespie
+      * Added bitwise native methods to $integer, in the cdc module.
+      * our own inet_aton() is added for those systems that do not have it.
+      * the pre-generated salt in crypt_string() was one element too short,
+        which caused it to overflow into other memory.
+      * fixed the textdump reading quote problem
+      * open_connection() was not returning after it threw an error (bad)
 1.0-11 [2-Aug-96] Brandon Gillespie, Miroslav Silovic
       * Added the ability to bind to seperate and multiple IP addresses
         with 'bind_port()' (Brandon)

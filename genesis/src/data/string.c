@@ -203,23 +203,26 @@ void string_discard(cStr *str) {
     }
 }
 
-cStr *string_parse(char **sptr) {
-    cStr *str;
-    char *s = *sptr, *p;
+cStr * string_parse(char **sptr) {
+    cStr * str;
+    char *p, *s, *start = *sptr;
 
-    str = string_new(0);
-    s++;
-    /* escape quote and backslash */
-    while (1) {
-	for (p = s; *p && *p != '"' && *p != '\\'; p++);
-	str = string_add_chars(str, s, p - s);
-	s = p + 1;
-	if (!*p || *p == '"')
-	    break;
-	if (*s) /*  && *p == '\\' && *s != '\\') */
-	    str = string_addc(str, *s++);
+    start++;
+
+    /* compress escaped, trust me, it works this time (BJG) */
+    for (p=s=start; *p && *p != '"'; p++, s++) {
+        if (*p == '\\' && *(p+1) && (*(p+1) == '"' || *(p+1) == '\\'))
+            p++;
+        *s = *p;
     }
-    *sptr = s;
+
+    /* make it into a string */
+    str = string_from_chars(start, s - start);
+
+    /* push *sptr to its new position */
+    *sptr = *p ? p+1 : p;
+
+    /* give them the string */
     return str;
 }
 

@@ -340,10 +340,9 @@ void func_fremove(void) {
 
     err = unlink(path->s);
     string_discard(path);
-    if (err != F_SUCCESS) {
-        cthrow(file_id, strerror(GETERR()));
-        return;
-    }
+
+    if (err != F_SUCCESS)
+        THROW((file_id, strerror(GETERR())))
 
     if (nargs)
         pop(1);
@@ -355,33 +354,31 @@ void func_fremove(void) {
 // -----------------------------------------------------------------
 */
 void func_fseek(void) {
-    cData  * args;
+    cData   * args;
     filec_t * file;
-    Int       whence = SEEK_CUR;
+    Int       whence;
 
     if (!func_init_2(&args, INTEGER, SYMBOL))
         return;
 
     GET_FILE_CONTROLLER(file)
  
-    if (!file->f.readable || !file->f.writable) {
-        cthrow(file_id,
+    if (!file->f.readable || !file->f.writable)
+        THROW((file_id,
                "File \"%s\" is not both readable and writable.",
-               file->path->s);
-        return;
-    }
+               file->path->s))
 
-    if (strccmp(ident_name(args[1].u.symbol), "SEEK_SET"))
+    if (SYM2 == SEEK_SET_id)
         whence = SEEK_SET;
-    else if (strccmp(ident_name(args[1].u.symbol), "SEEK_CUR")) 
+    else if (SYM2 == SEEK_CUR_id)
         whence = SEEK_CUR;
-    else if (strccmp(ident_name(args[1].u.symbol), "SEEK_END")) 
+    else if (SYM2 == SEEK_END_id)
         whence = SEEK_END;
+    else
+        THROW((type_id,"Whence is not one of 'SEEK_SET 'SEEK_CUR or 'SEEK_END"))
 
-    if (fseek(file->fp, args[0].u.val, whence) != F_SUCCESS) {
-        cthrow(file_id, strerror(GETERR()));
-        return;
-    }
+    if (fseek(file->fp, (long) INT1, whence) != F_SUCCESS)
+        THROW((file_id, strerror(GETERR())))
 
     pop(2);
     push_int(1);

@@ -112,7 +112,8 @@ char * float_to_ascii(float num, Number_buf nbuf) {
       if (nbuf[i]=='.' || nbuf[i]=='e')
            return nbuf;
     nbuf[i]='.';
-    nbuf[i+1]='\0';
+    nbuf[i+1]='0';
+    nbuf[i+2]='\0';
     return nbuf;
 }
 
@@ -175,7 +176,7 @@ char * crypt_string(char * key, char * salt) {
 #ifdef __Win32__
     return key;
 #else
-    char rsalt[2];
+    char rsalt[3];
 
     if (!salt) {
 	rsalt[0] = random_number(95) + 32;

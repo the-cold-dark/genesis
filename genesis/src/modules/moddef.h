@@ -68,13 +68,19 @@ module_t * cold_modules[] = {
 #define NATIVE_SYS_STATUS 43
 #define NATIVE_SYS_VERSION 44
 #define NATIVE_TIME_FORMAT 45
-#define NATIVE_BUFFER_TO_VEIL_PKTS 46
-#define NATIVE_BUFFER_FROM_VEIL_PKTS 47
-#define NATIVE_HTTP_DECODE 48
-#define NATIVE_HTTP_ENCODE 49
-#define NATIVE_LAST 50
+#define NATIVE_INTEGER_AND 46
+#define NATIVE_INTEGER_OR 47
+#define NATIVE_INTEGER_XOR 48
+#define NATIVE_INTEGER_SHLEFT 49
+#define NATIVE_INTEGER_SHRIGHT 50
+#define NATIVE_INTEGER_NOT 51
+#define NATIVE_BUFFER_TO_VEIL_PKTS 52
+#define NATIVE_BUFFER_FROM_VEIL_PKTS 53
+#define NATIVE_HTTP_DECODE 54
+#define NATIVE_HTTP_ENCODE 55
+#define NATIVE_LAST 56
 
-#define MAGIC_MODNUMBER 838747036
+#define MAGIC_MODNUMBER 839954045
 
 
 #ifdef _native_
@@ -125,6 +131,12 @@ native_t natives[NATIVE_LAST] = {
     {"sys",          "status",            native_status},
     {"sys",          "version",           native_version},
     {"time",         "format",            native_strftime},
+    {"integer",      "and",               native_and},
+    {"integer",      "or",                native_or},
+    {"integer",      "xor",               native_xor},
+    {"integer",      "shleft",            native_shleft},
+    {"integer",      "shright",           native_shright},
+    {"integer",      "not",               native_not},
     {"buffer",       "to_veil_pkts",      native_to_veil_pkts},
     {"buffer",       "from_veil_pkts",    native_from_veil_pkts},
     {"http",         "decode",            native_decode},

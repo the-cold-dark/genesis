@@ -36,6 +36,8 @@ Ident perm_id, type_id, div_id, integer_id, float_id, string_id, objnum_id,
 Ident public_id, protected_id, private_id, root_id, driver_id, fpe_id,
       noover_id, sync_id, locked_id, native_id, fork_id, atomic_id;
 
+Ident SEEK_SET_id, SEEK_CUR_id, SEEK_END_id;
+
 void init_ident(void)
 {
     Long i;
@@ -116,6 +118,9 @@ void init_ident(void)
     native_id = ident_get("native");
     atomic_id = ident_get("atomic");
     backup_done_id = ident_get("backup_done");
+    SEEK_SET_id = ident_get("SEEK_SET");
+    SEEK_CUR_id = ident_get("SEEK_CUR");
+    SEEK_END_id = ident_get("SEEK_END");
 }
 
 

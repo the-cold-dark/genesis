@@ -47,4 +47,10 @@ native $sys.next_objnum()            next_objnum
 native $sys.status()                 status
 native $sys.version()                version
 native $time.format()                strftime
-objs cdc.o cdc_buffer.o cdc_dict.o cdc_list.o cdc_misc.o cdc_string.o
+native $integer.and()                and
+native $integer.or()                 or
+native $integer.xor()                xor
+native $integer.shleft()             shleft
+native $integer.shright()            shright
+native $integer.not()                not
+objs cdc.o cdc_buffer.o cdc_dict.o cdc_list.o cdc_misc.o cdc_string.o cdc_integer.o

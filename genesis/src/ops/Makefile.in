@@ -38,7 +38,7 @@ makefile:
 	@cd $(prefix); configure -q
 
 depend:
-	@makedepend -- $(CFLAGS) -- $(SRCS)
+	@makedepend -- $(CFLAGS) -- $(SRCS) > /dev/null 2>&1
 	@rm Makefile.bak
 
 lint:

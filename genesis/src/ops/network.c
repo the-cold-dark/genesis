@@ -30,10 +30,9 @@ void func_reassign_connection(void) {
     c = find_connection(cur_frame->object);
     if (c) {
         obj = cache_retrieve(args[0].u.objnum);
-        if (!obj) {
-            cthrow(objnf_id, "Object #%l does not exist.", args[0].u.objnum);
-            return;
-        } else if (find_connection(obj)) {
+        if (!obj)
+            THROW((objnf_id, "Object #%l does not exist.", args[0].u.objnum))
+        else if (find_connection(obj)) {
             cthrow(perm_id, "Object %O already has a connection.", obj->objnum);
             cache_discard(obj);
             return;
@@ -66,13 +65,13 @@ void func_bind_port(void) {
     if (add_server(INT1, addr, cur_frame->object->objnum))
         push_int(1);
     else if (server_failure_reason == address_id)
-        cthrow(address_id, "Invalid bind address: %s", addr);
+        THROW((address_id, "Invalid bind address: %s", addr))
     else if (server_failure_reason == socket_id)
-        cthrow(socket_id, "Couldn't create server socket.");
+        THROW((socket_id, "Couldn't create server socket."))
     else if (addr)
-        cthrow(bind_id, "Couldn't bind to port %d on address %s", INT1, addr);
+        THROW((bind_id, "Couldn't bind to port %d on address %s", INT1, addr))
     else
-        cthrow(bind_id, "Couldn't bind to port %d.", INT1);
+        THROW((bind_id, "Couldn't bind to port %d.", INT1))
 }
 
 /*
@@ -86,7 +85,7 @@ void func_unbind_port(void) {
         return;
 
     if (!remove_server(args[0].u.val))
-        cthrow(servnf_id, "No server socket on port %d.", args[0].u.val);
+        THROW((servnf_id, "No server socket on port %d.", args[0].u.val))
     else
         push_int(1);
 }
@@ -108,9 +107,9 @@ void func_open_connection(void) {
 
     r = make_connection(address, port, cur_frame->object->objnum);
     if (r == address_id)
-        cthrow(address_id, "Invalid address");
+        THROW((address_id, "Invalid address"))
     else if (r == socket_id)
-        cthrow(socket_id, "Couldn't create socket for connection");
+        THROW((socket_id, "Couldn't create socket for connection"))
     pop(3);
     push_int(1);
 }
@@ -169,10 +168,8 @@ void func_cwritef(void) {
 
     /* Open the file for reading. */
     fp = open_scratch_file(str->s, "rb");
-    if (!fp) {
-        cthrow(file_id, "Cannot open file \"%s\" for reading.", str->s);
-        return;
-    }
+    if (!fp)
+        THROW((file_id, "Cannot open file \"%s\" for reading.", str->s))
 
     /* how big of a chunk do we read at a time? */
     if (nargs == 2) {
@@ -224,10 +221,8 @@ void func_connection(void) {
         return;
 
     c = find_connection(cur_frame->object);
-    if (!c) {
-        cthrow(net_id, "No connection established.");
-        return;
-    }
+    if (!c)
+        THROW((net_id, "No connection established."))
 
     info = list_new(4);
     list = list_empty_spaces(info, 4);

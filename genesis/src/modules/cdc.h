@@ -61,5 +61,11 @@ NATIVE_METHOD(strsed);
 NATIVE_METHOD(capitalize);
 NATIVE_METHOD(to_veil_pkts);
 NATIVE_METHOD(from_veil_pkts);
+NATIVE_METHOD(and);
+NATIVE_METHOD(or);
+NATIVE_METHOD(xor);
+NATIVE_METHOD(shleft);
+NATIVE_METHOD(shright);
+NATIVE_METHOD(not);
 
 #endif

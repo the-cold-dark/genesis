@@ -302,7 +302,7 @@ Int cur_lineno(void)
     return cur_line + 1;
 }
 
-INTERNAL char *string_token(char * s, Int len, Int *token_len) {
+INTERNAL char * string_token(char * s, Int len, Int *token_len) {
     Int count = 0, i;
     char *p, *q;
 

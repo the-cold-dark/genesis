@@ -2038,6 +2038,57 @@ else
 fi
 done
 
+########## look for inet_aton()
+echo $ac_n "  Checking for inet_aton... $ac_c" 1>&6
+if eval "test \"`echo '$''{'ac_cv_func_inet_aton'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 1873 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char inet_aton(); below.  */
+#include <assert.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+int main() { return 0; }
+int t() {
+    struct in_addr in;
+
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_inet_aton) || defined (__stub___inet_aton)
+choke me
+#else
+inet_aton("127.0.0.1", &in);
+#endif
+
+return 0; }
+EOF
+if eval $ac_link; then
+  rm -rf conftest*
+  eval "ac_cv_func_inet_aton=yes"
+else
+  rm -rf conftest*
+  eval "ac_cv_func_inet_aton=no"
+fi
+rm -f conftest*
+
+fi
+if eval "test \"`echo '$ac_cv_func_'inet_aton`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
+    ac_tr_func=HAVE_`echo inet_aton | tr '[a-z]' '[A-Z]'`
+  cat >> confdefs.h <<EOF
+#define $ac_tr_func 1
+EOF
+ 
+else
+  echo "$ac_t""no" 1>&6
+fi
 
 ######################################################################
 echo "- Genesis Configuration"
@@ -2083,7 +2134,7 @@ cat <<END
 #
 ##
 ## At the moment, mileage with phk_malloc() may vary, it is
-## only guaranteed to be useful and FAST in FreeBSD
+## only guaranteed to be useful and functional in FreeBSD and Linux
 ##
 
 END
@@ -2130,7 +2181,7 @@ END
 
 
 if test "$ac_cv_prog_gcc" = yes; then
-    opt_default='-O2'
+    opt_default='-g -O'
     cat <<END
 # You are running gcc, suggested:
 #
@@ -2146,7 +2197,7 @@ END
 END
     fi
 else
-    opt_default='-O'
+    opt_default='-g'
 fi
 
 echo
@@ -2570,7 +2621,7 @@ fi; done
 EOF
 
 if test x"$MAKEDEPEND" != x""; then
-    echo 'echo "- Building dependancies"' >> $CONFIG_STATUS
+    echo 'echo "- Building dependancies..."' >> $CONFIG_STATUS
     echo 'cd src; make depend' >> $CONFIG_STATUS
 fi
 

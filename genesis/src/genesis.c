@@ -495,7 +495,7 @@ INTERNAL void initialize(Int argc, char **argv) {
         cStr     * str;
         Bool       first = YES;
 
-        fputs("Calling $sys.startup([", errfile);
+        fprintf(errfile, "[%s] Calling $sys.startup([", timestamp(NULL));
         for (d=list_first(args); d; d=list_next(args, d)) {
             str = data_to_literal(d, DF_WITH_OBJNAMES);
             if (!first) {

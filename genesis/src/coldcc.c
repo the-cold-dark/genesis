@@ -47,11 +47,12 @@ INTERNAL void   compile_db(Int type);
 
 void   shutdown_coldcc(void) {
     running = NO;
+    write_err("Syncing binarydb...");
     cache_sync();
     db_close();
     flush_output();
     close_files();
-    fputc(10, stderr);
+    write_err("Done");
     exit(0);
 }
 
@@ -69,18 +70,18 @@ int main(int argc, char **argv) {
         if (c_opt == OPT_DECOMP) {
             init_binary_db();
             init_core_objects();
-            fprintf(stderr, "Writing to \"%s\"..\n", c_dir_textdump);
+            write_err ("Writing to \"%s\"..", c_dir_textdump);
             text_dump(print_names);
         } else if (c_opt == OPT_COMP) {
-            fprintf(stderr, "Compiling database...\n");
+            write_err ("Compiling database...");
             compile_db(NEW_DB);
         } else if (c_opt == OPT_PARTIAL) {
-            fprintf(stderr, "Opening database for partial compile...\n");
+            write_err ("Opening database for partial compile...");
             compile_db(EXISTING_DB);
         }
     }
 
-    fputs("Closing binary database...", stderr);
+    write_err ("Closing binary database...");
     shutdown_coldcc();
 
     /* make compilers happy; we never reach this */
@@ -106,7 +107,7 @@ INTERNAL void compile_db(Int newdb) {
     init_core_objects();
 
     if (!fp) {
-        fprintf(stderr, "Couldn't open text dump file \"%s\".\n",
+        write_err ("Couldn't open text dump file \"%s\".",
                 c_dir_textdump);
         exit(1);
     } else {
@@ -115,7 +116,7 @@ INTERNAL void compile_db(Int newdb) {
         fclose(fp);
     }
 
-    fprintf(stderr, "Database compiled to \"%s\"\n", c_dir_binary);
+    write_err ("Database compiled to \"%s\"", c_dir_binary);
 }
 
 /*
@@ -135,20 +136,18 @@ INTERNAL FILE * find_text_db(void) {
     FILE        * fp = NULL;
 
     if (strccmp(c_dir_textdump, "stdin") == 0) {
-        fputs("Reading from STDIN.\n", stderr);
+        write_err("Reading from STDIN...");
         return stdin;
     } else {
         struct stat sbuf;
 
         if (stat(c_dir_textdump, &sbuf) == F_FAILURE) {
-            fprintf(stderr, "** Unable to open target \"%s\".\n",
-                    c_dir_textdump);
+            write_err("** Unable to open target \"%s\".", c_dir_textdump);
             exit(1);
         }
 
         if (S_ISDIR(sbuf.st_mode)) {
-            fputs("** Directory based compilation is currently unsupported.\n",
-                  stderr);
+            write_err("** Directory based compilation is currently unsupported.");
             fclose(fp);
             exit(0);
         }
@@ -156,11 +155,11 @@ INTERNAL FILE * find_text_db(void) {
         /* just let fopen deal with the other perms */
         fp = fopen(c_dir_textdump, "rb");
         if (fp == NULL) {
-            fprintf(stderr, "** bad happened.\n");
+            write_err("** bad happened.");
             exit(1);
         }
 
-        fprintf(stderr, "Reading from \"%s\".\n", c_dir_textdump);
+        write_err("Reading from \"%s\".", c_dir_textdump);
     }
 
     return fp;
@@ -196,6 +195,7 @@ void print_natives(void) {
     }
 
     fputc(10, stdout);
+    fflush(stdout);
 }
 
 /*
@@ -287,7 +287,7 @@ INTERNAL void initialize(Int argc, char **argv) {
                     print_warn = NO;
                     break;
                 case 'w':
-                    fputs("\n** Unsupported option: -w\n", stderr);
+                    write_err("\n** Unsupported option: -w");
                     c_nowrite = 0;
                     break;
                 case 't':
@@ -304,7 +304,7 @@ INTERNAL void initialize(Int argc, char **argv) {
                     exit(0);
                 default:
                     usage(name);
-                    fprintf(stderr, "\n** Invalid Option: -%s\n", opt);
+                    write_err("\n** Invalid Option: -%s", opt);
                     exit(1);
             }
         }
@@ -336,31 +336,34 @@ INTERNAL void initialize(Int argc, char **argv) {
 // Simple usage message, rather explanatory
 */
 void usage (char * name) {
-    fprintf(stderr, "\n-- ColdCC %d.%d-%d --\n\n\
-Usage: %s [options]\n\
-\n\
-Options:\n\n\
-    -f              force native methods to override existing methods.\n\
-    -v              version\n\
-    -h              This message.\n\
-    -d              Decompile.\n\
-    -c              Compile (default).\n\
-    -b binary       binary db directory name, current: \"%s\"\n\
-    -t target       target text db, current: \"%s\"\n\
-                    If this is \"stdin\" it will read from stdin\n\
-                    instead.  <target> may be a directory or file.\n\
-    -p              Partial compile, compile object(s) and insert\n\
-                    into database accordingly.  Can be used with -w\n\
-                    for a ColdC code verification program.\n\
-    +|-#            Print/Do not print object numbers by default.\n\
-                    Default option is +#\n\
-                    print object names by default, if they exist.\n\
-    -s WIDTHxDEPTH  Cache size, default 10x30\n\
-    -n              List native method configuration.\n\
-    +|-o            Print/Do not print objects as they are processed.\n\
-    -W              Do not print warnings.\n\
-\n\
-\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, name, c_dir_binary, c_dir_textdump);
+    fprintf (stderr,
+	     "\n-- ColdCC %d.%d-%d --\n\n"
+             "Usage: %s [options]\n"
+             "\n"
+             "Options:\n\n"
+             "    -f              force native methods to override existing methods.\n"
+             "    -v              version\n"
+             "    -h              This message.\n"
+             "    -d              Decompile.\n"
+             "    -c              Compile (default).\n"
+             "    -b binary       binary db directory name, current: \"%s\"\n"
+             "    -t target       target text db, current: \"%s\"\n"
+             "                    If this is \"stdin\" it will read from stdin\n"
+             "                    instead.  <target> may be a directory or file.\n"
+             "    -p              Partial compile, compile object(s) and insert\n"
+             "                    into database accordingly.  Can be used with -w\n"
+             "                    for a ColdC code verification program.\n"
+             "    +|-#            Print/Do not print object numbers by default.\n"
+             "                    Default option is +#\n"
+             "                    print object names by default, if they exist.\n"
+             "    -s WIDTHxDEPTH  Cache size, default %dx%d\n"
+             "    -n              List native method configuration.\n"
+             "    +|-o            Print/Do not print objects as they are processed.\n"
+             "    -W              Do not print warnings.\n"
+             "\n\n",
+             VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, name, c_dir_binary, c_dir_textdump,
+             CACHE_WIDTH, CACHE_DEPTH);
+    fflush(stderr);
 }
 
 #undef _coldcc_

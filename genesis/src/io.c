@@ -317,7 +317,7 @@ INTERNAL void connection_read(Conn *conn) {
 
     /* We successfully read some data.  Handle it. */
     buf = buffer_new(len);
-    buffer_append_uchars(buf, temp, len);
+    MEMCPY(buf->s, /*@temp@*/, len);
     d.type = BUFFER;
     d.u.buffer = buf;
     task(conn->objnum, parse_id, 1, &d);

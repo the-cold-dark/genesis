@@ -21,7 +21,7 @@ VERSION=@VERSION@
 OBJS = data.o buffer.o dict.o ident.o list.o object.o string.o \
        handled_frob.o quickhash.o string_tab.o
 
-SRCS = `echo $(CDC_OBJS) $(COLDCORE_O) | sed -e 's/\.o/.c/g'`
+SRCS = `echo $(OBJS) | sed -e 's/\.o/.c/g'`
 
 #######
 # rules
@@ -36,6 +36,8 @@ scrub:
 
 makefile:
 	@cd $(prefix); configure -q
+
+install: all
 
 depend:
 	@makedepend -- $(CFLAGS) -- $(SRCS) > /dev/null 2>&1

@@ -45,7 +45,6 @@ OPS_O      = ops/operators.o ops/buffer.o ops/error.o ops/list.o\
 CRYPT_O    = shs.o crypt.o
 PCODE_O    = codegen.o execute.o opcodes.o token.o native.o
 MOD_O      = @MOD_O@
-OMOD_O     = `echo $(MOD_O) | sed -e 's/modules\///g'`
 COMMON_O   = $(DATA_O) $(DB_O) $(IO_O) $(MISC_O) \
              $(PCODE_O) $(OPS_O) $(MOD_O) $(CRYPT_O)
 DRIVER_O   = $(GRAMMAR_O) genesis.o $(COMMON_O)
@@ -69,7 +68,7 @@ Data:
 
 Modules:
 	@echo "module objects..."
-	@cd $(MODULES); make $(OMOD_O)
+	@cd $(MODULES); make
 
 Ops:
 	@echo "operator and function objects..."

@@ -16,12 +16,14 @@ MODULES=$(SRCDIR)/modules
 
 VERSION=@VERSION@
 
-## we don't need any rules as 'make xxxx.o' will still function correctly,
-## and the builds are usually called from ../Makefile anyway.
+OBJS      = cdc.o cdc_buffer.o cdc_dict.o cdc_integer.o cdc_list.o cdc_misc.o cdc_string.o ext_math.o veil.o web.o
 
-## Just add the standard rules.
+SRCS = `echo $(OBJS) | sed -e 's/\.o/.c/g'`
 
-all:
+#######
+# rules
+
+all: $(OBJS)
 
 clean:
 	rm -f *~ *.BAK *.bak
@@ -35,18 +37,15 @@ makefile:
 install: all
 
 depend:
-#	@makedepend -- $(CFLAGS) -- $(SRCS) > /dev/null 2>&1
-#	@rm Makefile.bak
+	@makedepend -- $(CFLAGS) -- $(SRCS) > /dev/null 2>&1
+	@rm Makefile.bak
 
 lint:
 	$(LINT) -u $(SRCS)
 
 patchable: scrub
 	@chmod -f u+w Makefile
-	@echo "all:" > Makefile
-	@echo " @echo \"** Invalid Makefile! **\"" >> Makefile
-	@echo " @echo \"** running the configure script ... **\"" >> Makefile
-	@echo " @cd ../..; configure" >> Makefile
+	@rm -f Makefile
 
 reconfig:
 	cd ..; make reconfig

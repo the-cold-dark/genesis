@@ -144,6 +144,7 @@ static Op_info op_info[] = {
     FDEF(F_METHOD_FLAGS,      "method_flags",      method_flags)
     FDEF(F_METHOD_ACCESS,     "method_access",     method_access)
     FDEF(F_METHODS,           "methods",           methods)
+    FDEF(F_HAS_METHOD,        "has_method",        has_method)
     FDEF(F_FIND_METHOD,       "find_method",       find_method)
     FDEF(F_FIND_NEXT_METHOD,  "find_next_method",  find_next_method)
 

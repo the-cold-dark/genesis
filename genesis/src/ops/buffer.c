@@ -3,7 +3,6 @@
 */
 
 #include "defs.h"
-#include "functions.h"
 #include "cdc_pcode.h"
 
 COLDC_FUNC(bufgraft) {
@@ -103,28 +102,6 @@ COLDC_FUNC(subbuf) {
     pop(nargs - 1);
 }
 
-COLDC_FUNC(bufsub) {
-    cData *args;
-    cBuf  *buf, *old, *new;
-
-    if (!func_init_3(&args, BUFFER, BUFFER, BUFFER))
-        return;
-
-    buf = buffer_dup(BUF1);
-    old = buffer_dup(BUF2);
-    new = buffer_dup(BUF3);
-
-    if (old->len == 0)
-	    THROW((type_id, "Can't replace empty buffer"))
-
-    anticipate_assignment();
-    buf = buffer_bufsub(buf, old, new);
-
-    pop(3);
-    push_buffer(buf);
-    buffer_discard(buf);
-}
-
 COLDC_FUNC(buf_to_str) {
     cData *args;
     cStr * str;
@@ -222,7 +199,7 @@ COLDC_FUNC(bufidx) {
         push_int(0);
         return;
     }
-
+    
     if ((r = buffer_index(BUF1, cp, clen, origin)) == F_FAILURE)
         THROW((range_id, "Origin is beyond the range of the buffer."))
 

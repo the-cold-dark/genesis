@@ -2275,7 +2275,8 @@ void op_in(void)
                 uchar * ss   = d1->u.buffer->s;
                 int     slen = d1->u.buffer->len;
 
-                pos = buffer_index(buf, ss, slen, 1) - 1;
+                if ((pos = buffer_index(buf, ss, slen, 1)) != F_FAILURE)
+                    pos--;
             } else
                 goto error;
 

@@ -29,11 +29,10 @@ VERSION=@VERSION@
 VMAJOR=@VMAJOR@
 VMINOR=@VMINOR@
 VPATCH=@VPATCH@
-VRELEASE=@VRELEASE@
 INSTALL=@INSTALL@
 
 DATA_O     = data/data.o data/buffer.o data/dict.o data/ident.o\
-             data/list.o data/object.o data/string.o data/string_tab.o\
+             data/list.o data/object.o data/string.o \
 	     data/handled_frob.o data/quickhash.o
 GRAMMAR_O  = grammar.o
 DB_O       = cache.o binarydb.o dbpack.o decode.o lookup.o
@@ -52,7 +51,7 @@ DRIVER_O   = $(GRAMMAR_O) genesis.o $(COMMON_O)
 COMPILER_O = $(GRAMMAR_O) coldcc.o textdb.o $(COMMON_O)
 CONTROL_O  = control.o
 
-EVERYTHING_O = genesis.o control.o coldcc.o textdb.o $(COMMON_O)
+EVERYTHING_O = genesis.o control.o coldcc.o $(COMMON_O)
 EVERYTHING_C = `echo $(EVERYTHING_O) | sed -e 's/\.o/.c/g'`
 
 DRIVER = genesis
@@ -100,7 +99,7 @@ scrub:
 	@cd $(DATADIR); make $@
 
 commitable:
-	@cd $(MODULES); ./modbuild -m0 cdc veil web ext_math
+	@cd $(MODULES); ./modbuild -m0 cdc web ext_math
 
 commit: commitable
 	cvs commit
@@ -160,13 +159,12 @@ config:
 win32: Win32
 
 Win32:
-	@echo "cleaning hierarchy..."
+	@echo "cleaning heirarchy..."
 	@make scrub 2>&1 > /dev/null
 	@echo "creating config file..."
 	@sed -e "s/#VMAJOR#/#define VERSION_MAJOR $(VMAJOR)/;\
                 s/#VMINOR#/#define VERSION_MINOR $(VMINOR)/;\
-                s/#VPATCH#/#define VERSION_PATCH $(VPATCH)/;\
-                s/#VRELEASE#/#define VERSION_RELEASE \"$(VRELEASE)\"/" include/config.h.win32 > include/config.h
+                s/#VPATCH#/#define VERSION_PATCH $(VPATCH)/" include/config.h.win32 > include/config.h
 	@echo "generating parser source..."
 	@$(YACC) $(YFLAGS) grammar.y
 	@mv -f y.tab.c grammar.c

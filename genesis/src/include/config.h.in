@@ -20,8 +20,9 @@
 /* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
 #undef HAVE_SYS_WAIT_H
 
-/* workaround for lame RedHat Linux placement of ndbm.h */
+/* Define for the right header for dbm routines */
 #undef DBM_H_FILE
+#undef DB_DBM_HSEARCH
 
 /* Define if your struct dirent has d_namlen */
 #undef HAVE_D_NAMLEN
@@ -145,24 +146,6 @@
 #undef CACHE_DEPTH
 
 #undef SYSTEM_TYPE
-
-/* coldcc should be built without dirty list or cleaner thread
- * as they're both a performance penalty for it, but a win for
- * genesis
- */
-#define BUILDING_COLDCC
-
-/* turns on the locking of db_*, lookup_*, and the use of the
- * background cleaner thread
- */
-#undef USE_CLEANER_THREAD
-#undef DEBUG_DB_LOCK
-#undef DEBUG_LOOKUP_LOCK
-#undef DEBUG_BUCKET_LOCK
-#undef DEBUG_CLEANER_LOCK
-
-/* development project, don't use yet */
-#undef USE_PARENT_OBJS
 
 #undef USE_OS_CRYPT
 

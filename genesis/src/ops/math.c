@@ -213,7 +213,7 @@ COLDC_FUNC(pow) {
 
     CHECK_FINITE(r);
 
-    pop(1);
+    pop(2);
 
     push_float((cFloat) r);
 }
@@ -227,13 +227,13 @@ COLDC_FUNC(atan2) {
 
     RESET_FPE;
 
-    r = pow((double) FLOAT1, (double) FLOAT2);
+    r = atan2((double) FLOAT1, (double) FLOAT2);
 
     HANDLE_FPE;
 
     CHECK_FINITE(r);
 
-    pop(1);
+    pop(2);
 
     push_float((cFloat) r);
 }

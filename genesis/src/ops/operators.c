@@ -165,6 +165,8 @@ void op_map(void) {
 	    domain->type=DICT;
 	    domain->u.dict=dict_new(list->u.list->el[0].u.list,
 				    list->u.list->el[1].u.list);
+            list_discard(list->u.list->el[0].u.list);
+            list_discard(list->u.list->el[1].u.list);
 	    break;
 	}
 	pop(2);
@@ -287,6 +289,8 @@ void op_map_range(void) {
 	    counter->type=DICT;
 	    counter->u.dict=dict_new(list->u.list->el[0].u.list,
 				     list->u.list->el[1].u.list);
+            list_discard(list->u.list->el[0].u.list);
+            list_discard(list->u.list->el[1].u.list);
 	    break;
 	}
 	pop(2);
@@ -739,6 +743,7 @@ void op_pass(void) {
 
 void op_message(void) {
     Int arg_start, ind;
+    Bool is_frob=FROB_NO;
     cData *target;
     Long message, objnum;
     cFrob *frob;
@@ -758,6 +763,7 @@ void op_message(void) {
             break;
         case FROB:
             /* Convert the frob to its rep and pass as first argument. */
+	    is_frob=FROB_YES;
             frob = target->u.frob;
             objnum = frob->cclass;
             *target = frob->rep;
@@ -777,7 +783,7 @@ void op_message(void) {
     /* Attempt to send the message. */
     ident_dup(message);
 
-    handle_method_call(call_method(objnum, message, target - stack, arg_start),
+    handle_method_call(call_method(objnum, message, target - stack, arg_start, is_frob),
                        objnum, message);
 
     ident_discard(message);
@@ -785,6 +791,7 @@ void op_message(void) {
 
 void op_expr_message(void) {
     Int arg_start;
+    Bool is_frob=FROB_NO;
     cData *target, *message_data;
     Long objnum, message;
 
@@ -806,6 +813,7 @@ void op_expr_message(void) {
             break;
         case FROB:
             objnum = target->u.frob->cclass;
+	    is_frob=FROB_YES;
 
             /* Pass frob rep as first argument (where the method data is now) */
             data_discard(message_data);
@@ -834,7 +842,7 @@ void op_expr_message(void) {
     /* Attempt to send the message. */
     ident_dup(message);
     
-    handle_method_call(call_method(objnum, message, target - stack, arg_start),
+    handle_method_call(call_method(objnum, message, target - stack, arg_start, is_frob),
                        objnum, message);
 
     ident_discard(message);

@@ -116,11 +116,12 @@ struct Method {
 };
 
 /* access: only one at a time */
-#define MS_PUBLIC    0x1    /* public */
-#define MS_PROTECTED 0x2    /* protected */
-#define MS_PRIVATE   0x4    /* private */
-#define MS_ROOT      0x8    /* root */
-#define MS_DRIVER    0x16   /* sender() and caller() are 0 */
+#define MS_PUBLIC    1    /* public */
+#define MS_PROTECTED 2    /* protected */
+#define MS_PRIVATE   4    /* private */
+#define MS_ROOT      8    /* root */
+#define MS_DRIVER    16   /* sender() and caller() are 0 */
+#define MS_FROB      32   /* called from a frob: (<$frob, #[]>).method() */
 
 /* perhaps create a method reference to call a task on for perm
    checking, with sender() and caller()? */
@@ -135,6 +136,11 @@ struct Method {
 #define MF_UNDF2     32   /* undefined */
 #define MF_UNDF3     64   /* undefined */
 #define MF_UNDF4     128  /* undefined */
+
+#define FROB_YES 1
+#define FROB_NO  0
+#define FROB_ANY 2
+#define FROB_RETRY -1
 
 struct error_list {
     Int num_errors;
@@ -155,7 +161,7 @@ struct error_list {
 #define METHOD_STARTING_SIZE    (16 - MALLOC_DELTA - 1)
 #define STRING_STARTING_SIZE    (16 - MALLOC_DELTA)
 #define IDENTS_STARTING_SIZE    (16 - MALLOC_DELTA)
-#define METHOD_CACHE_SIZE       503
+#define METHOD_CACHE_SIZE       2551
 
 /* ..................................................................... */
 /* types and structures */
@@ -167,6 +173,7 @@ struct search_params {
     uLong name;
     Long stop_at;
     Int done;
+    Bool is_frob;
     Method * last_method_found;
 };
 
@@ -174,6 +181,7 @@ struct {
     Long stamp;
     cObjnum objnum;
     Ident name;
+    Bool is_frob;
     cObjnum after;
     cObjnum loc;
 } method_cache[METHOD_CACHE_SIZE];
@@ -186,8 +194,8 @@ static cList   *object_ancestors_aux(Long objnum, cList *ancestors);
 static Int     object_has_ancestor_aux(Long objnum, Long ancestor);
 static Var    *object_create_var(Obj *object, Long cclass, Long name);
 static Var    *object_find_var(Obj *object, Long cclass, Long name);
-static Method * method_cache_check(Long objnum, Long name, Long after);
-static void    method_cache_set(Long objnum, Long name, Long after, Long loc);
+static Method * method_cache_check(Long objnum, Long name, Long after, Bool is_frob);
+static void    method_cache_set(Long objnum, Long name, Long after, Long loc, Bool is_frob);
 static void    search_object(Long objnum, Search_params *params);
 static void    method_delete_code_refs(Method * method);
 
@@ -212,9 +220,9 @@ Long    object_delete_var(Obj *object, Obj *cclass, Long name);
 Long    object_retrieve_var(Obj *object, Obj *cclass, Long name,
                             cData *ret);
 void    object_put_var(Obj *object, Long cclass, Long name, cData *val);
-Method * object_find_method(Long objnum, Long name);
-Method * object_find_method_local(Obj *object, Long name);
-Method * object_find_next_method(Long objnum, Long name, Long after);
+Method * object_find_method(Long objnum, Long name, Bool is_frob);
+Method * object_find_method_local(Obj *object, Long name, Bool is_frob);
+Method * object_find_next_method(Long objnum, Long name, Long after, Bool is_frob);
 Int     object_rename_method(Obj * object, Long oname, Long nname);
 void    object_add_method(Obj *object, Long name, Method *method);
 Int     object_del_method(Obj *object, Long name);
@@ -264,9 +272,9 @@ extern Long    object_retrieve_var(Obj *object, Obj *cclass, Long name,
                                    cData *ret);
 extern void    object_put_var(Obj *object, Long cclass, Long name,
                               cData *val);
-extern Method *object_find_method(Long objnum, Long name);
-extern Method *object_find_method_local(Obj * obj, Long name);
-extern Method *object_find_next_method(Long objnum, Long name, Long after);
+extern Method *object_find_method(Long objnum, Long name, Bool is_frob);
+extern Method *object_find_method_local(Obj * obj, Long name, Bool is_frob);
+extern Method *object_find_next_method(Long objnum, Long name, Long after, Bool is_frob);
 extern Int     object_rename_method(Obj * object, Long oname, Long nname);
 extern void    object_add_method(Obj *object, Long name, Method *method);
 extern Int     object_del_method(Obj *object, Long name);

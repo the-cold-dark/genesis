@@ -88,7 +88,7 @@ cList * buf_to_veil_packets(cBuf * buf) {
     blen = buf->len;
     cbuf = buf->s;
 
-    for (;;) {
+    forever {
         /* 8 bytes will give us the header, we check length again after
            that, because the header gives us the data length */
         if (blen < HEADER_SIZE)

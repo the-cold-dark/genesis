@@ -6,7 +6,37 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
-1.0-14 [-Sep-96] Brandon Gillespie, Miroslav Silovic
+1.0-15 [22-Oct-96] Miroslav Silovic, Brad Roberts, Brandon Gillespie
+      * Fixed a few leaks pointed out after running through pure. (Miro)
+      * Forked methods now work.  Just set the flag +forked on the method,
+        and it will fork off when called (Brandon).
+      * Added $string.word(str, x), equivalent to explode(str)[x] (Brandon)
+      * Added $string.dbquote_explode(), explodes a quoted string in
+        the common relational database quoted export format.  Primarily
+        exploding a quoted string, where quotes doubled within a quoted
+        segment are escaped, Example:
+             "this string" and "" 1 "this 14"" screen"
+             => ["this string", "and", "", "1", "this 14\" screen"]
+        This used to be in the PROGRESS module (Brandon)
+      * Fixed small bug where rename_method() was looking up the method
+        to rename to in all the ancestors, and not just on the object
+        as it should have done.  (Brandon)
+      * Included new $math module with extended math functions. (Miro)
+      * match_crypted() needed some diddling with the OS_SUPPORT stuff,
+        to handle FreeBSD MD5 passwords. (Brandon)
+      * '=/' bug fixed (Brandon)
+      * fixed small but impacting problem with writing MINLONG to disk (Brad)
+      * Added 'frob flag to method access.  Frob methods exist in a different
+        name scope from all other methods, and are executed first if called
+        from a frob.  Note: this is currently simply an anticipation
+        implementation for forward compatability.  The designed implementation
+        will allow two methods of the same name to exist on one object (in
+        different scope).  Currently you cannot do this, only one method of
+        either scope may exist on a single object, for the moment. (Miro).
+      * Fixed where line-counting got off with simple catch statements,
+        only works in the general case of non-nested catches.  Line-counting
+        will still get off if you have nested catches. (Brandon)
+1.0-14 [22-Sep-96] Brandon Gillespie, Miroslav Silovic
       * at one point I had an odd idea to allow people to submit bytecode
         as well as lists of strings.  I adjusted the method handling
         functions in anticipation of this, and later realized what a

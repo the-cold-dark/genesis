@@ -232,7 +232,7 @@ cStr *string_add_unparsed(cStr *str, char *s, Int len) {
     str = string_addc(str, '"');
 
     /* Add characters to string, escaping quotes and backslashes. */
-    while (1) {
+    forever {
 	for (i = 0; i < len && s[i] != '"' && s[i] != '\\'; i++);
 	str = string_add_chars(str, s, i);
 	if (i < len) {

@@ -141,9 +141,9 @@ Int line_number(Method *method, Int pc) {
     return count + count_lines(0, pc, &flags);
 }
 
-static Int count_lines(Int start, Int end, unsigned *flags)
+INTERNAL Int count_lines(Int start, Int end, unsigned *flags)
 {
-    Int count = 0, last = -1, next;
+    Int count=0, last=-1, next, complex_catch=0, with_start;
 
     *flags = 0x0;
 
@@ -338,7 +338,7 @@ static Int count_lines(Int start, Int end, unsigned *flags)
 	  }
 
 	  case CATCH: {
-	      Int body_end;
+	      Int body_end, body_lines;
 	      unsigned body_flags;
 
 	      /* Count catch line and consider body. */
@@ -351,19 +351,38 @@ static Int count_lines(Int start, Int end, unsigned *flags)
 		  return count + count_lines(start, end, &body_flags);
 	      }
 
-	      /* Count body and closing brace. */
-	      count += 1 + count_lines(start, body_end, &body_flags);
+	      /* Count body and closing brace, if applicable */
+              body_lines = count_lines(start, body_end, &body_flags);
+              count += body_lines;
+              if (body_lines > 1) {
+	          count += 1;
+                  complex_catch++;
+              }
 
+              /*
+              // BUGNOTE: this odd handling of with_start etc does not
+              // take into account nested catch statements, which will
+              // cause the line count to be off.  It does work for the
+              // non-nested catch, which is fine until I rewrite this.
+              // -B
+              */
 	      if (the_opcodes[body_end] == HANDLER_END) {
 		  /* Skip dummy HANDLER_END instruction. */
 		  last = CATCH;
 		  next = body_end + 1;
+                  with_start=0;
 	      } else {
 		  /* We don't know where the end of the handler is.  Rather
 		   * than counting it recursively, fake it, and count the
 		   * closing brace when we hit the HANDLER_END. */
 		  last = -1;
 		  next = body_end;
+
+                  /* add in the line for } with { */
+                  count++;
+
+                  /* remember where we are */
+                  with_start=count;
 	      }
 
 	      *flags &= ~SPANNING_IF_FLAG;
@@ -374,8 +393,12 @@ static Int count_lines(Int start, Int end, unsigned *flags)
 	  case HANDLER_END:
 	    /* Count closing brace, and set last to CATCH to reflect the
 	     * enclosing catch statement. */
+            if ((count - with_start) > 1 || complex_catch) {
+	        count++;
+                complex_catch--;
+                with_start = 0;
+            }
 	    last = CATCH;
-	    count++;
 	    break;
 	}
 
@@ -661,7 +684,7 @@ static Expr_list *decompile_case_values(Int *pos_ptr, Int *end_ret)
     }
 
     /* Loop until we hit the last case opcode for this case. */
-    while (1) {
+    forever {
 	/* Get any expressions preceding the case opcode. */
 	exprs = decompile_expressions(&pos);
 

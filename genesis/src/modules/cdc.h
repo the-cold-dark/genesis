@@ -68,5 +68,7 @@ NATIVE_METHOD(xor);
 NATIVE_METHOD(shleft);
 NATIVE_METHOD(shright);
 NATIVE_METHOD(not);
+NATIVE_METHOD(word);
+NATIVE_METHOD(dbquote_explode);
 
 #endif

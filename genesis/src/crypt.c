@@ -100,13 +100,17 @@ Int match_crypted(cStr * encrypted, cStr * possible) {
         return (!strcmp((char *) ep, p_buf));
     } else {
 #ifdef USE_OS_CRYPT
+#ifdef sys_freebsd
+        sp = ep;
+#else
         /* assume ancient DES format, with the first two chars as salt */
         salt[0] = ep[0];
         salt[1] = ep[1];
         salt[2] = (char) NULL;
-
+        sp = salt;
+#endif
         return
-            (!strcmp((char *) ep, (char *) crypt((char *) pp, (char *) salt)));
+            (!strcmp((char *) ep, (char *) crypt((char *) pp, (char *) sp)));
 #else
         cthrow(type_id, "Driver was not compiled with OS crypt() support.");
         return -1;
@@ -122,7 +126,7 @@ Int match_crypted(cStr * encrypted, cStr * possible) {
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $Id: crypt.c,v 1.5 1998/06/24 07:43:59 braddr Exp $
+ * $Id: crypt.c,v 1.6 1998/06/25 05:58:13 braddr Exp $
  *
  ***
  *** This license somewhat applies to shs_crypt() as its based off PHK's

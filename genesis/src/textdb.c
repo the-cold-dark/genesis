@@ -94,6 +94,7 @@ extern Bool print_objs;
 #define A_PUBLIC     MS_PUBLIC
 #define A_PROTECTED  MS_PROTECTED
 #define A_PRIVATE    MS_PRIVATE
+#define A_FROB       MS_FROB
 #define A_ROOT       MS_ROOT
 #define A_DRIVER     MS_DRIVER
 
@@ -319,7 +320,7 @@ void verify_native_methods(void) {
         }
 
         /* now find it on the object, use 'mname' as the method name */
-        method = object_find_method(objnum, mname);
+        method = object_find_method(objnum, mname, FROB_ANY);
 
         /* it does not exist, compile an empty method */
         if (method == NULL) {
@@ -381,7 +382,7 @@ void verify_native_methods(void) {
                 printf("\rWARNING: No native definition for method .%s()\n",
                        ident_name(name));
             if (cur_obj) {
-                method = object_find_method_local(cur_obj, name);
+                method = object_find_method_local(cur_obj, name, FROB_ANY);
                 if (method) {
                     method->native = -1;
                     cur_obj->dirty = 1;
@@ -1187,6 +1188,9 @@ void compile_cdc_file(FILE * fp) {
         } else if (MATCH(s, "private", 7)) {
             access = A_PRIVATE;
             next_token(s);
+        } else if (MATCH(s, "frob", 4)) {
+            access = A_FROB;
+            next_token(s);
         } else if (MATCH(s, "root", 4)) {
             access = A_ROOT;
             next_token(s);
@@ -1659,6 +1663,8 @@ INTERNAL char * method_definition(Method * m) {
         strcpy(buf, "protected ");
     else if (m->m_access == MS_ROOT)
         strcpy(buf, "root ");
+    else if (m->m_access == MS_FROB)
+        strcpy(buf, "frob ");
     else if (m->m_access == MS_DRIVER)
         strcpy(buf, "driver ");
     else

@@ -34,7 +34,7 @@ Ident perm_id, type_id, div_id, integer_id, float_id, string_id, objnum_id,
       backup_done_id;
 
 Ident public_id, protected_id, private_id, root_id, driver_id, fpe_id, inf_id,
-      noover_id, sync_id, locked_id, native_id, fork_id, atomic_id;
+      noover_id, sync_id, locked_id, native_id, forked_id, atomic_id;
 
 Ident SEEK_SET_id, SEEK_CUR_id, SEEK_END_id;
 
@@ -113,7 +113,7 @@ void init_ident(void)
     root_id = ident_get("root");
     driver_id = ident_get("driver");
     noover_id = ident_get("nooverride");
-    fork_id = ident_get("fork");
+    forked_id = ident_get("forked");
     sync_id = ident_get("synchronized");
     locked_id = ident_get("locked");
     native_id = ident_get("native");

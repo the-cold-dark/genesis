@@ -28,6 +28,14 @@ $write=1;
 @args = @ARGV;
 @arg_save = ();
 
+if ($#args == -1) {
+    open(TMP, "modbuild.last");
+    $tmp = <TMP>;
+    chop($tmp);
+    close(TMP);
+    @args = split(/ /, $tmp);
+}
+
 doargs:
 for ($x=0; $x <= $#args; $x++) {
     $_ = $args[$x];
@@ -44,13 +52,6 @@ for ($x=0; $x <= $#args; $x++) {
             &die("Invalid magic number \"$magic\"\n");
         }
         push(@arg_save, "-m$magic");
-    } elsif (/^-l/) {
-        open(TMP, "modbuild.last");
-        $tmp = <TMP>;
-        chop($tmp);
-        close(TMP);
-        @args = split(/ /, $tmp);
-        goto doargs;
     } else {
         $nmods++;
         push(@mods, $_);
@@ -58,7 +59,9 @@ for ($x=0; $x <= $#args; $x++) {
     }
 }
 
-`echo @arg_save > modbuild.last`;
+$arg_save = join(" ", @arg_save);
+
+`echo $arg_save > modbuild.last`;
 
 if ($write) {
 ## open moddef.h now, add to it as we go
@@ -108,7 +111,7 @@ foreach $mod (@mods) {
 
     while (<MOD>) {
         chop;
-        (/^\s*#/) && next;
+        (/^\s*#/ || /^\s*$/) && next;
         s/\s+/ /g;
         s/^\s*//g;
         s/\s*$//g;

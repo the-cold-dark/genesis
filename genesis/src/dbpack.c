@@ -12,14 +12,24 @@
 #define COMPRESS ENABLED
 #define ORDER_BYTES DISABLED
 
+#define MINLONG -(2^31)
+
 /* Write a four-byte number to fp in a consistent byte-order. */
 void write_long(Long n, FILE *fp)
 {
 #if COMPRESS
-                    /* figure the size of this based off sizeof(Int) etc */
-    Int sign, i, h, buf[17];
- 
-    sign = n<0 ? 1 : 0;  
+    Int sign, i, h, buf[5];
+
+    if (n == MINLONG)
+    {
+        putc(0xA0, fp);
+        putc(0x00, fp);
+        putc(0x00, fp);
+        putc(0x00, fp);
+        putc(0x08, fp);
+        return;
+    }
+    sign = n<0 ? 1 : 0;
     n = abs(n);
     h = 1;
     buf[0] = n&15;
@@ -27,7 +37,7 @@ void write_long(Long n, FILE *fp)
     while (n) {
       buf[h++] = n & 255;
       n >>= 8;
-    } 
+    }
     buf[0] += (h << 5) + (sign << 4);
     for (i=0; i<h; i++)
       putc(buf[i], fp);
@@ -60,19 +70,19 @@ Long read_long(FILE *fp)
 {
 #if COMPRESS
     Int sign, i, h, n, k;
- 
+
     h = (unsigned)getc(fp) & 255;
     sign = h & 16;
     n = h & 15;
     k = 4;
-    h = h >> 5;
-    for (i=0; i<h-1; i++) {
+    h >>= 5;
+    h--;
+    for (i=0; i<h; i++) {
       n += ((unsigned)getc(fp) & 255) << k;
       k += 8;
     }
     if (sign) n=-n;
     return n;
-
 #else
 # if ORDER_BYTES
     Int c;
@@ -87,7 +97,7 @@ Long read_long(FILE *fp)
     n = (c < 64) ? -((c - 32) % 32) : ((c - 64) % 32);
     place = (c < 64) ? -32 : 32;
 
-    while (1) {
+    forever {
 	c = getc(fp);
 	if (c == 96)
 	    return n;
@@ -109,6 +119,8 @@ Int size_long(Long n)
 #if COMPRESS
     Int h;
 
+    if (n == MINLONG)
+        return 5;
     n = abs(n);
     h = 1;
     n >>= 4;

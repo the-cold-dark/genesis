@@ -33,7 +33,8 @@ Frame *cur_frame, *suspend_frame;
 cData * stack;
 Int stack_pos, stack_size;
 Int *arg_starts, arg_pos, arg_size;
-Long task_id;
+Long task_id=1;
+Long next_task_id=1;
 Long tick;
 
 #define DEBUG_VM DISABLED
@@ -288,6 +289,59 @@ void task_resume(Long tid, cData *ret) {
 /*
 // ---------------------------------------------------------------
 */
+Int fork_method(Obj * obj,
+                Method * method,
+                cObjnum    sender,
+                cObjnum    caller,
+                cObjnum    user,
+                Int      stack_start,
+                Int      arg_start,
+                Bool     is_frob)
+{
+    VMState * current = vm_current(),
+            * fvm;
+    Int       count, spos, result;
+
+    /* get a new execution environment */
+    init_execute();
+    cur_frame = NULL;
+    task_id = next_task_id++;
+    cache_grab(obj);
+    cache_grab(method->object);
+    method_dup(method);
+
+    /* dup the call method args from the original stack */
+    count = current->stack_pos - stack_start;
+    spos = stack_start;
+    check_stack(count);
+    while (count--)
+        data_dup(&stack[stack_pos++], &current->stack[spos++]);
+
+    result = frame_start(obj, method, sender, caller, user,
+                         0, arg_start - stack_start, is_frob);
+
+    if (result == CALL_OK) {
+        /* pause it, and let system handle it later, as a normal paused task */
+        task_pause();
+    } else {
+        /* we errored out, clean up the stack */
+        pop(stack_pos);
+    }
+    store_stack();
+
+    cache_discard(method->object);
+    method_discard(method);
+    cache_discard(obj);
+
+    restore_vm(current);
+    ADD_TASK(vmstore, current);
+
+    return result;
+}
+
+/*
+// ---------------------------------------------------------------
+*/
 void task_suspend(void) {
     VMState * vm = vm_current();
 
@@ -464,10 +518,6 @@ void init_execute(void) {
 // No we dont, lets just rewrite the interpreter, this sucks.
 */
 void task(cObjnum objnum, Long name, Int num_args, ...) {
-#if DISABLED
-    Bool    curtask = NO;
-    Int     tid = 0;
-#endif
     va_list arg;
 
     /* Don't execute if a shutdown() has occured. */
@@ -475,14 +525,6 @@ void task(cObjnum objnum, Long name, Int num_args, ...) {
         va_end(arg);
         return;
     }
-
-#if DISABLED
-    if (cur_frame) {
-        tid = task_id;
-        task_suspend();
-        curtask = YES;
-    }
-#endif
 
     /* Set global variables. */
     frame_depth = 0;
@@ -495,7 +537,7 @@ void task(cObjnum objnum, Long name, Int num_args, ...) {
 
     /* start the task */
     ident_dup(name);
-    if (call_method(objnum, name, 0, 0) == CALL_OK) {
+    if (call_method(objnum, name, 0, 0, FROB_NO) == CALL_OK) {
         execute();
         if (stack_pos != 0) {
             int x;
@@ -505,23 +547,11 @@ void task(cObjnum objnum, Long name, Int num_args, ...) {
                 write_err("PANIC:     stack[%d] => %D", x, &stack[x]);
             panic("Attempting clean shutdown.");
         }
-        task_id++;
+        task_id = next_task_id++;
     } else {
         pop(stack_pos);
     }
     ident_discard(name);
-
-#if DISABLED
-    /* if we preempted a current task, start it back up, execute should
-       already be running, so when we exit 'task()' it will kick in */
-    if (curtask) {
-        VMState * vm = task_lookup(tid);
-
-        restore_vm(vm);
-        REMOVE_TASK(suspended, vm);
-        ADD_TASK(vmstore, vm);
-    }
-#endif
 }
 
 /*
@@ -531,7 +561,7 @@ void task(cObjnum objnum, Long name, Int num_args, ...) {
 //
 */
 void task_method(Obj *obj, Method *method) {
-    frame_start(obj, method, NOT_AN_IDENT, NOT_AN_IDENT, NOT_AN_IDENT, 0, 0);
+    frame_start(obj, method, NOT_AN_IDENT, NOT_AN_IDENT, NOT_AN_IDENT, 0, 0, FROB_NO);
 
     execute();
 
@@ -553,7 +583,8 @@ Int frame_start(Obj * obj,
                 cObjnum    caller,
                 cObjnum    user,
                 Int      stack_start,
-                Int      arg_start)
+                Int      arg_start,
+		Bool     is_frob)
 {
     Frame      * frame;
     Int          i,
@@ -619,6 +650,7 @@ Int frame_start(Obj * obj,
 
     frame->specifiers = NULL;
     frame->handler_info = NULL;
+    frame->is_frob=is_frob;
 
     /* Set up stack indices. */
     frame->stack_start = stack_start;
@@ -892,9 +924,21 @@ Int pass_method(Int stack_start, Int arg_start) {
     /* Find the next method to handle the message. */
     method = object_find_next_method(cur_frame->object->objnum,
                                      cur_frame->method->name,
-                                     cur_frame->method->object->objnum);
-    if (!method)
-        return CALL_METHNF;
+                                     cur_frame->method->object->objnum,
+				     cur_frame->is_frob);
+    if (!method) {
+	if (cur_frame->is_frob == FROB_YES) {
+	    method = object_find_next_method(cur_frame->object->objnum,
+					     cur_frame->method->name,
+					     cur_frame->method->object->objnum,
+					     cur_frame->is_frob);
+	    if (!method)
+		return CALL_METHNF;
+	}
+	else {
+	    return CALL_METHNF;
+	}
+    }
 
     if (cur_frame) {
         switch (method->m_access) {
@@ -913,7 +957,7 @@ Int pass_method(Int stack_start, Int arg_start) {
     if (method->native == -1) {
         result = frame_start(cur_frame->object, method, cur_frame->sender,
                              cur_frame->caller, cur_frame->user, stack_start,
-                             arg_start);
+                             arg_start, cur_frame->is_frob);
     } else {
 #if 0
         call_native_method(method, stack_start, arg_start, method->object->objnum);
@@ -929,10 +973,11 @@ Int pass_method(Int stack_start, Int arg_start) {
 /*
 // ---------------------------------------------------------------
 */
-Int call_method(cObjnum objnum,    /* the object */
+Int call_method(cObjnum objnum,     /* the object */
                 Ident name,         /* the method name */
                 Int stack_start,    /* start of the stack .. */
-                Int arg_start)      /* start of the args */
+                Int arg_start,      /* start of the args */
+		Bool is_frob)       /* how to look it up */
 {
     Obj * obj;
     Method * method;
@@ -946,10 +991,19 @@ Int call_method(cObjnum objnum,    /* the object */
         return CALL_OBJNF;
 
     /* Find the method to run. */
-    method = object_find_method(objnum, name);
+    method = object_find_method(objnum, name, is_frob);
     if (!method) {
-        cache_discard(obj);
-        return CALL_METHNF;
+	if (is_frob == FROB_YES) {
+	    method = object_find_method(objnum, name, FROB_RETRY);
+	    if (!method) {
+		cache_discard(obj);
+		return CALL_METHNF;
+	    }
+	}
+	else {
+		cache_discard(obj);
+		return CALL_METHNF;
+	}
     }
 
 #ifdef PROFILE_EXECUTE
@@ -1000,8 +1054,12 @@ Int call_method(cObjnum objnum,    /* the object */
         sender = (cur_frame) ? cur_frame->object->objnum : NOT_AN_IDENT;
         caller = (cur_frame) ? cur_frame->method->object->objnum : NOT_AN_IDENT;
         user   = (cur_frame) ? cur_frame->user : INV_OBJNUM;
-        result = frame_start(obj,method,sender,
-                             caller,user,stack_start,arg_start);
+        if (method->m_flags & MF_FORK)
+            result = fork_method(obj, method, sender, caller, user,
+                                 stack_start, arg_start, is_frob);
+        else
+            result = frame_start(obj, method, sender, caller, user,
+                                 stack_start, arg_start, is_frob);
     } else {
         call_native_method(method, stack_start, arg_start);
         result = CALL_NATIVE;

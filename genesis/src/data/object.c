@@ -657,7 +657,7 @@ static Var *object_find_var(Obj *object, Long cclass, Long name)
    fail when a parent's method sent a message to the child as
    a result of a message to teh child hanbdled by the parent
    (whew.) added 5/7/1995 Jeffrey P. kesselman */
-Method *object_find_method(Long objnum, Long name) {
+Method *object_find_method(Long objnum, Long name, Bool is_frob) {
     Search_params params;
     Obj *object;
     Method *method, *local_method;
@@ -665,7 +665,7 @@ Method *object_find_method(Long objnum, Long name) {
     cData *d;
 
     /* Look for cached value. */
-    method = method_cache_check(objnum, name, -1);
+    method = method_cache_check(objnum, name, -1, is_frob);
     if (method)
 	return method;
 
@@ -677,7 +677,7 @@ Method *object_find_method(Long objnum, Long name) {
         /* If the object has parents */
         if (list_length(parents) == 1) {
             /* If it has only one parent, call this function recursively. */
-            method = object_find_method(list_elem(parents, 0)->u.objnum, name);
+            method = object_find_method(list_elem(parents, 0)->u.objnum, name, is_frob);
         } else {
             /* We've hit a bulge; resort to the reverse depth-first search. */
             cur_search++;
@@ -685,6 +685,7 @@ Method *object_find_method(Long objnum, Long name) {
             params.stop_at = -1;
             params.done = 0;
             params.last_method_found = NULL;
+	    params.is_frob = is_frob;
             for (d = list_last(parents); d; d = list_prev(parents, d))
                 search_object(d->u.objnum, &params);
             method = params.last_method_found;
@@ -697,7 +698,7 @@ Method *object_find_method(Long objnum, Long name) {
        have found is overridable */
     if (!method || !(method->m_flags & MF_NOOVER)) {
 	object = cache_retrieve(objnum);
-	local_method = object_find_method_local(object, name);
+	local_method = object_find_method_local(object, name, is_frob);
 	if (local_method) {
 	    if (method)
 		cache_discard(method->object);
@@ -708,13 +709,13 @@ Method *object_find_method(Long objnum, Long name) {
     }
 
     if (method)
-	method_cache_set(objnum, name, -1, method->object->objnum);
+	method_cache_set(objnum, name, -1, method->object->objnum, is_frob);
     return method;
 }
 
 /* Reference-counting kludge: on return, the method's object field has an extra
  * reference count, in order to keep it in cache.  objnum must be valid. */
-Method *object_find_next_method(Long objnum, Long name, Long after)
+Method *object_find_next_method(Long objnum, Long name, Long after, Bool is_frob)
 {
     Search_params params;
     Obj *object;
@@ -724,7 +725,7 @@ Method *object_find_next_method(Long objnum, Long name, Long after)
     Long parent;
 
     /* Check cache. */
-    method = method_cache_check(objnum, name, after);
+    method = method_cache_check(objnum, name, after, is_frob);
     if (method)
 	return method;
 
@@ -736,9 +737,9 @@ Method *object_find_next_method(Long objnum, Long name, Long after)
 	parent = list_elem(parents, 0)->u.objnum;
 	cache_discard(object);
 	if (objnum == after)
-	    method = object_find_method(parent, name);
+	    method = object_find_method(parent, name, is_frob);
 	else
-	    method = object_find_next_method(parent, name, after);
+	    method = object_find_next_method(parent, name, after, is_frob);
     } else {
 	/* Object has more than one parent; use complicated search. */
 	cur_search++;
@@ -746,6 +747,7 @@ Method *object_find_next_method(Long objnum, Long name, Long after)
 	params.stop_at = (objnum == after) ? -1 : after;
 	params.done = 0;
 	params.last_method_found = NULL;
+	params.is_frob = is_frob;
 	for (d = list_last(parents); d; d = list_prev(parents, d))
 	    search_object(d->u.objnum, &params);
 	cache_discard(object);
@@ -753,7 +755,7 @@ Method *object_find_next_method(Long objnum, Long name, Long after)
     }
 
     if (method)
-	method_cache_set(objnum, name, after, method->object->objnum);
+	method_cache_set(objnum, name, after, method->object->objnum, is_frob);
     return method;
 }
 
@@ -801,7 +803,7 @@ static void search_object(Long objnum, Search_params *params)
 
     /* Visit this object.  First, get it back from the cache. */
     object = cache_retrieve(objnum);
-    method = object_find_method_local(object, params->name);
+    method = object_find_method_local(object, params->name, params->is_frob);
     if (method) {
 	/* We found a method on this object.  Discard the reference count on
 	 * the last method found's object, if we have one, and set this method
@@ -820,38 +822,56 @@ static void search_object(Long objnum, Search_params *params)
 }
 
 /* Look for a method on an object. */
-Method *object_find_method_local(Obj *object, Long name)
+Method *object_find_method_local(Obj *object, Long name, Bool is_frob)
 {
     Int ind, method;
+    Method *meth;
 
     /* Traverse hash table thread, stopping if we get a match on the name. */
     ind = hash(ident_name(name)) % object->methods.size;
     method = object->methods.hashtab[ind];
-    for (; method != -1; method = object->methods.tab[method].next) {
-	if (object->methods.tab[method].m->name == name)
-	    return object->methods.tab[method].m;
+    if (is_frob == FROB_ANY) {
+	for (; method != -1; method = object->methods.tab[method].next) {
+	    meth=object->methods.tab[method].m;
+	    if (meth->name == name)
+		return object->methods.tab[method].m;
+	}
+    }
+    else if (is_frob == FROB_YES) {
+	for (; method != -1; method = object->methods.tab[method].next) {
+	    meth=object->methods.tab[method].m;
+	    if (meth->name == name && meth->m_access == MS_FROB )
+		return object->methods.tab[method].m;
+	}
+    }
+    else {
+	for (; method != -1; method = object->methods.tab[method].next) {
+	    meth=object->methods.tab[method].m;
+	    if (meth->name == name && meth->m_access != MS_FROB )
+		return object->methods.tab[method].m;
+	}
     }
 
     return NULL;
 }
 
-static Method *method_cache_check(Long objnum, Long name, Long after)
+static Method *method_cache_check(Long objnum, Long name, Long after, Bool is_frob)
 {
     Obj *object;
     Int i;
 
-    i = (10 + objnum + (name << 4) + after) % METHOD_CACHE_SIZE;
+    i = (10 + objnum + (name << 4) + (is_frob << 8) + after) % METHOD_CACHE_SIZE;
     if (method_cache[i].stamp == cur_stamp && method_cache[i].objnum == objnum &&
 	method_cache[i].name == name && method_cache[i].after == after &&
-	method_cache[i].loc != -1) {
+	method_cache[i].loc != -1 && method_cache[i].is_frob==is_frob) {
 	object = cache_retrieve(method_cache[i].loc);
-	return object_find_method_local(object, name);
+	return object_find_method_local(object, name, is_frob);
     } else {
 	return NULL;
     }
 }
 
-static void method_cache_set(Long objnum, Long name, Long after, Long loc)
+static void method_cache_set(Long objnum, Long name, Long after, Long loc, Bool is_frob)
 {
     Int i;
 
@@ -865,6 +885,7 @@ static void method_cache_set(Long objnum, Long name, Long after, Long loc)
     method_cache[i].name = ident_dup(name);
     method_cache[i].after = after;
     method_cache[i].loc = loc;
+    method_cache[i].is_frob=(is_frob == FROB_RETRY) ? FROB_NO : is_frob;
 }
 
 /* this makes me rather wary, hope it works ... */
@@ -873,7 +894,7 @@ static void method_cache_set(Long objnum, Long name, Long after, Long loc)
 Int object_rename_method(Obj * object, Long oname, Long nname) {
     Method * method;
 
-    method = object_find_method_local(object, oname);
+    method = object_find_method_local(object, oname, FROB_ANY);
     if (!method)
         return 0;
 
@@ -989,21 +1010,21 @@ cList *object_list_method(Obj *object, Long name, Int indent, Int parens)
 {
     Method *method;
 
-    method = object_find_method_local(object, name);
+    method = object_find_method_local(object, name, FROB_ANY);
     return (method) ? decompile(method, object, indent, parens) : NULL;
 }
 
 Int object_get_method_flags(Obj * object, Long name) {
     Method * method;
 
-    method = object_find_method_local(object, name);
+    method = object_find_method_local(object, name, FROB_ANY);
     return (method) ? method->m_flags : -1;
 }
 
 Int object_set_method_flags(Obj * object, Long name, Int flags) {
     Method * method;
 
-    method = object_find_method_local(object, name);
+    method = object_find_method_local(object, name, FROB_ANY);
     if (method == NULL)
         return -1;
     method->m_flags = flags;
@@ -1014,18 +1035,19 @@ Int object_set_method_flags(Obj * object, Long name, Int flags) {
 Int object_get_method_access(Obj * object, Long name) {
     Method * method;
 
-    method = object_find_method_local(object, name);
+    method = object_find_method_local(object, name, FROB_ANY);
     return (method) ? method->m_access : -1;
 }
 
 Int object_set_method_access(Obj * object, Long name, Int access) {
     Method * method;
 
-    method = object_find_method_local(object, name);
+    method = object_find_method_local(object, name, FROB_ANY);
     if (method == NULL)
         return -1;
     method->m_access = access;
     object->dirty = 1;
+    cur_stamp++; /* to invalidate cached frob/!frob defaults */
     return access;
 }
 

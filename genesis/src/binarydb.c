@@ -414,7 +414,7 @@ static Int db_alloc(Int size)
     blocks_needed = NEEDED(size, BLOCK_SIZE);
     over_the_top = 0;
 
-    while (1) {
+    forever {
 
 	if (b < bitmap_blocks && bitmap[b >> 3] == (char)255) {
 	    /* 8 full blocks. Let's run away from this! */

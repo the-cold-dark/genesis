@@ -122,9 +122,6 @@
 #define CACHE_WIDTH    10
 #define CACHE_DEPTH    30
 
-#define FORCED_CLEANUP_LIMIT 64
-#define FORCED_CLEANUP_BOUND 40
-
 /*
 // ---------------------------------------------------------------------
 // size of name cache, this number is total magic--although primes make
@@ -342,7 +339,9 @@ typedef bool              Bool;
 
 #define ANY_TYPE 0
 
-#define INTERNAL static   /* personal preference */
+/* personal preference stuff */
+#define forever for (;;)
+#define INTERNAL static
 
 #define SERVER_NAME "Genesis (the ColdX driver)"
 

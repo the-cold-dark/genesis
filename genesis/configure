@@ -1511,6 +1511,7 @@ libcrypt=no
 echo $ac_n "  Checking for -lcrypt""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_lib_crypt'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
+  libcrypt=$ac_cv_lib_crypt
 else
   libcrypt=yes
   ac_save_LIBS="$LIBS"
@@ -2235,7 +2236,8 @@ EOF
     else
         ## nix libcrypt from the LIBS list
         if [ $libcrypt = yes ]; then
-            LIBS=`echo $LIBS | sed -e's: *-lcrypt *: :'`
+            echo "Purging -lcrypt from your libraries list";
+            LIBS=`echo $LIBS | sed -e 's: *-lcrypt *: :'`
         fi
     fi
 fi

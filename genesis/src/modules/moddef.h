@@ -11,14 +11,16 @@
 #include "cdc.h"
 #include "veil.h"
 #include "web.h"
+#include "ext_math.h"
 
-#define NUM_MODULES 3
+#define NUM_MODULES 4
 
 #ifdef _native_
 module_t * cold_modules[] = {
     &cdc_module,
     &veil_module,
     &web_module,
+    &ext_math_module,
 };
 #endif
 
@@ -65,23 +67,35 @@ module_t * cold_modules[] = {
 #define NATIVE_STRING_FORMAT 40
 #define NATIVE_STRING_TRIM 41
 #define NATIVE_STRING_SPLIT 42
-#define NATIVE_SYS_NEXT_OBJNUM 43
-#define NATIVE_SYS_STATUS 44
-#define NATIVE_SYS_VERSION 45
-#define NATIVE_TIME_FORMAT 46
-#define NATIVE_INTEGER_AND 47
-#define NATIVE_INTEGER_OR 48
-#define NATIVE_INTEGER_XOR 49
-#define NATIVE_INTEGER_SHLEFT 50
-#define NATIVE_INTEGER_SHRIGHT 51
-#define NATIVE_INTEGER_NOT 52
-#define NATIVE_BUFFER_TO_VEIL_PKTS 53
-#define NATIVE_BUFFER_FROM_VEIL_PKTS 54
-#define NATIVE_HTTP_DECODE 55
-#define NATIVE_HTTP_ENCODE 56
-#define NATIVE_LAST 57
+#define NATIVE_STRING_WORD 43
+#define NATIVE_STRING_DBQUOTE_EXPLODE 44
+#define NATIVE_SYS_NEXT_OBJNUM 45
+#define NATIVE_SYS_STATUS 46
+#define NATIVE_SYS_VERSION 47
+#define NATIVE_TIME_FORMAT 48
+#define NATIVE_INTEGER_AND 49
+#define NATIVE_INTEGER_OR 50
+#define NATIVE_INTEGER_XOR 51
+#define NATIVE_INTEGER_SHLEFT 52
+#define NATIVE_INTEGER_SHRIGHT 53
+#define NATIVE_INTEGER_NOT 54
+#define NATIVE_BUFFER_TO_VEIL_PKTS 55
+#define NATIVE_BUFFER_FROM_VEIL_PKTS 56
+#define NATIVE_HTTP_DECODE 57
+#define NATIVE_HTTP_ENCODE 58
+#define NATIVE_MATH_MINOR 59
+#define NATIVE_MATH_MAJOR 60
+#define NATIVE_MATH_ADD 61
+#define NATIVE_MATH_SUB 62
+#define NATIVE_MATH_DOT 63
+#define NATIVE_MATH_DISTANCE 64
+#define NATIVE_MATH_CROSS 65
+#define NATIVE_MATH_SCALE 66
+#define NATIVE_MATH_IS_LOWER 67
+#define NATIVE_MATH_TRANSPOSE 68
+#define NATIVE_LAST 69
 
-#define MAGIC_MODNUMBER 843403718
+#define MAGIC_MODNUMBER 846025768
 
 
 #ifdef _native_
@@ -129,6 +143,8 @@ native_t natives[NATIVE_LAST] = {
     {"string",       "format",            native_strfmt},
     {"string",       "trim",              native_trim},
     {"string",       "split",             native_split},
+    {"string",       "word",              native_word},
+    {"string",       "dbquote_explode",   native_dbquote_explode},
     {"sys",          "next_objnum",       native_next_objnum},
     {"sys",          "status",            native_status},
     {"sys",          "version",           native_version},
@@ -143,6 +159,16 @@ native_t natives[NATIVE_LAST] = {
     {"buffer",       "from_veil_pkts",    native_from_veil_pkts},
     {"http",         "decode",            native_decode},
     {"http",         "encode",            native_encode},
+    {"math",         "minor",             native_minor},
+    {"math",         "major",             native_major},
+    {"math",         "add",               native_add},
+    {"math",         "sub",               native_sub},
+    {"math",         "dot",               native_dot},
+    {"math",         "distance",          native_distance},
+    {"math",         "cross",             native_cross},
+    {"math",         "scale",             native_scale},
+    {"math",         "is_lower",          native_is_lower},
+    {"math",         "transpose",         native_transpose},
 };
 #else
 extern native_t natives[NATIVE_LAST];

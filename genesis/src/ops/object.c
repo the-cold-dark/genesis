@@ -166,7 +166,7 @@ COLDC_FUNC(add_method) {
               "%I is a reserved word, and cannot be used as a method name",
               SYM2))
 
-    method = object_find_method(cur_frame->object->objnum, args[1].u.symbol);
+    method = object_find_method(cur_frame->object->objnum, args[1].u.symbol, FROB_ANY);
 
     if (method && (method->m_flags & MF_LOCK))
         THROW((perm_id, "Method is locked, and cannot be changed."))
@@ -212,15 +212,14 @@ COLDC_FUNC(rename_method) {
     if (!func_init_2(&args, SYMBOL, SYMBOL))
         return;
 
-    method = object_find_method(cur_frame->object->objnum, args[1].u.symbol);
+    method = object_find_method_local(cur_frame->object, SYM2, FROB_ANY);
+
     if (method != NULL) {
-        cthrow(method_id, "Method %I already exists!", args[1].u.symbol);
+        cthrow(method_id, "Method %I already exists!", SYM2);
         return;
     }
 
-    if (!object_rename_method(cur_frame->object,
-                                  args[0].u.symbol,
-                                  args[1].u.symbol)) {
+    if (!object_rename_method(cur_frame->object, SYM1, SYM2)) {
         cthrow(methodnf_id, "Method not found.");
         return;
     }
@@ -249,6 +248,8 @@ INTERNAL cList * list_method_flags(Int flags) {
         LADD(sync_id);
     if (flags & MF_LOCK)
         LADD(locked_id);
+    if (flags & MF_FORK)
+        LADD(forked_id);
     if (flags & MF_NATIVE)
         LADD(native_id);
 
@@ -299,6 +300,8 @@ COLDC_FUNC(set_method_flags) {
             new_flags |= MF_SYNC;
         else if (d->u.symbol == locked_id)
             new_flags |= MF_LOCK;
+        else if (d->u.symbol == forked_id)
+            new_flags |= MF_FORK;
         else if (d->u.symbol == native_id)
             THROW((perm_id, "Native flag can only be set by the driver."))
         else
@@ -328,6 +331,7 @@ COLDC_FUNC(method_access) {
         case MS_PRIVATE:   push_symbol(private_id);   break;
         case MS_ROOT:      push_symbol(root_id);      break;
         case MS_DRIVER:    push_symbol(driver_id);    break;
+        case MS_FROB:      push_symbol(frob_id);      break;
         default:           push_int(0);               break;
     }
 }
@@ -351,6 +355,8 @@ COLDC_FUNC(set_method_access) {
         access = MS_ROOT;
     else if (sym == driver_id)
         access = MS_DRIVER;
+    else if (sym == frob_id)
+	access = MS_FROB;
     else
         cthrow(type_id, "Invalid method access flag.");
 
@@ -376,7 +382,7 @@ COLDC_FUNC(method_info) {
     if (!func_init_1(&args, SYMBOL))
 	return;
 
-    method = object_find_method(cur_frame->object->objnum, args[0].u.symbol);
+    method = object_find_method(cur_frame->object->objnum, args[0].u.symbol, FROB_ANY);
     if (!method) {
         cthrow(methodnf_id, "Method not found.");
         return;
@@ -419,6 +425,7 @@ COLDC_FUNC(method_info) {
         case MS_PRIVATE:   list[4].u.symbol = ident_dup(private_id);   break;
         case MS_ROOT:      list[4].u.symbol = ident_dup(root_id);      break;
         case MS_DRIVER:    list[4].u.symbol = ident_dup(driver_id);    break;
+        case MS_FROB:      list[4].u.symbol = ident_dup(frob_id);      break;
         default:           list[4].type = INTEGER; list[4].u.val = 0;  break;
     }
 
@@ -467,7 +474,7 @@ COLDC_FUNC(find_method) {
 	return;
 
     /* Look for the method on the current object. */
-    method = object_find_method(cur_frame->object->objnum, args[0].u.symbol);
+    method = object_find_method(cur_frame->object->objnum, args[0].u.symbol, FROB_ANY);
     pop(1);
     if (method) {
 	push_objnum(method->object->objnum);
@@ -488,7 +495,7 @@ COLDC_FUNC(find_next_method) {
 
     /* Look for the method on the current object. */
     method = object_find_next_method(cur_frame->object->objnum,
-				     args[0].u.symbol, args[1].u.objnum);
+				     args[0].u.symbol, args[1].u.objnum, FROB_ANY);
     if (method) {
 	push_objnum(method->object->objnum);
 	cache_discard(method->object);
@@ -872,7 +879,7 @@ COLDC_FUNC(method_bytecode) {
     if (!func_init_1(&args, SYMBOL))
         return;
 
-    method = object_find_method(cur_frame->object->objnum, args[0].u.symbol);
+    method = object_find_method(cur_frame->object->objnum, args[0].u.symbol, FROB_ANY);
 
     /* keep these for later reference, if its already around */
     if (!method)
@@ -906,4 +913,3 @@ COLDC_FUNC(method_bytecode) {
     push_list(list);
     list_discard(list);
 }
-

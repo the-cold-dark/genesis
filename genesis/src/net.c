@@ -62,7 +62,7 @@ int inet_aton (const char * cp, struct in_addr * addr) {
 
     part = 0;
 
-    for (;;) {
+    forever {
         if (!isdigit (*cp)) /* not decimal digit or leading 0, 0x */
             return 0;
 

@@ -653,7 +653,7 @@ char *val;
 
     /* Find last node. */
     scan = p;
-    for (;;) {
+    forever {
         temp = regnext(scan);
         if (temp == NULL)
             break;

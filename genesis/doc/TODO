@@ -1,9 +1,6 @@
 -----------------------
-Immediate (before 1.1):
+Immediate:
 
-* Change method scope to change based off the method access, so a frob
-  '.name()'  can exist alongside a public '.name()'.  Do this by using
-  the method access in matching.
 * force eval execution in coldcc to be atomic
 * sort x in (list|dict) where|with? (expr);
 * for x in (string) {..}
@@ -11,11 +8,6 @@ Immediate (before 1.1):
 
 -----------------------
 Bugs:
-
-* line counting with a simple catch statement gets off, (i.e. no braces):
-
-      catch any
-          (> do this <);
 
 * $dictionary.[add/del]_elem bad
 
@@ -39,26 +31,12 @@ Features:
 * have open_connection() accept a string for the port, where the string
   is interpreted as a service, i.e.:
 
-      open_connection("x.y.com", "ntp");
+      open_connection("x.y.com", "smtp");
 
   When the port is specified in this way, it looks up the port for the
-  service, based of the machine's configuration.
+  service, based of the machine's configuration (getservbyname()).
 
 * hack bind_native object renaming
-
-* $string.word(str, x) equivalent of $string.explode(str)[x]
-
-* flag for coldcc to decompile with object numbers wherever possible.
-
-  Do:
-
-  object #asdf: #asdf, #asdf;
-
-  eval {
-      set_objname(#asdf, 'normalname);
-  };
-
-  [normal decompile]
 
 * make -p with coldcc interactive, when replacing existing methods somehow
   decide if the method should be replace (perhaps keep EDITED comments?  Ugh)
@@ -67,14 +45,12 @@ Features:
 * get execute to use file i/o, so calling execute would be paramount
   to using fopen() on a file (shag code from apache CGI)
 
-* gut the database management code, pull from gdm.
-
 * PERL-extensions to regexps (i.e. \s etc)
 
 -----------------------
 Possiblilities:
 
-* multiple scopes to methods
+* multiple scopes to methods (2.0)
   
 * forking (requires a bit of rewriting in the actual interpreter)
 * 'retry' jump (ala continue, etc, for catch statements)

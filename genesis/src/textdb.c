@@ -1461,11 +1461,6 @@ Int text_dump(Bool objnames) {
     }
 
     last_length = 0;
-#if 0
-    START_SEARCH();
-    dump_object(ROOT_OBJNUM, fp, objnames);
-    END_SEARCH();
-#endif
     dump_hash = hash_new(0);
     dump_object(ROOT_OBJNUM, fp, objnames);
     hash_discard(dump_hash);

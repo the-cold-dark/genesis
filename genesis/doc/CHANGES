@@ -7,6 +7,23 @@ contributors to that version.
 -------------------------------------------------------------------------
 
 
+1.1p4b  [2-Jun-98] Brandon Gillespie
+      * really fixed the match_pattern bug--it passes all test conditions
+        (before it wasn't testing all conditions)  (Brandon)
+1.1p4a [27-May-98] Brandon Gillespie
+      * fixed a bug with the match_pattern change
+      * commited the test dir to the CVS tree so it shows up in the release
+1.1p4  [27-May-98] Bruce Mitchener, Brian Buchanen, Brandon Gillespie
+      * fixed some error reports (Bruce)
+      * fixed an include problem with Solaris, and some warnings (Bruce)
+      * fixed bug with set_method_access on an invalid method (Bruce)
+      * fixed bug with strsed throwing wrong error msg (Bruce)
+      * fixed bug with match_pattern and case sensitivity (Brian)
+      * fixed bug with `[x] * x (Brad)
+      * fixed *graft() function bugs (Bruce/Brandon)
+      * re-integrated and updated testing utility (Brandon/Bruce)
+      * fixed 'make lint' (Brandon)
+
 1.1p3  [2-Apr-98]
       * fixed a few minor memory leaks (Bruce)
       * fixed a maxint comparison problem (Brad)
@@ -23,7 +40,6 @@ contributors to that version.
         executing task (Brandon)
       * adjusted select() to also check for file descriptors with
         exceptions--allowing for later cleanup (Brandon)
-
 1.1p2  [22-Dec-97]
       * fixed problem with frame depth and forking methods (Bruce)
       * added tz offset as 12 element to localtime() -- this was

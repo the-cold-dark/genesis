@@ -341,7 +341,7 @@ COLDC_FUNC(strsed) {
 
     switch (argc) {
         case 5: if (args[4].type != INTEGER)
-                    THROW_TYPE_ERROR(STRING, "fifth", 4)
+                    THROW_TYPE_ERROR(INTEGER, "fifth", 4)
                 mult = args[4].u.val;
                 if (mult < 0)
                     mult = 2;
@@ -448,31 +448,36 @@ COLDC_FUNC(strgraft) {
     if (!func_init_3(&args, STRING, INTEGER, STRING))
         return;
 
-    pos = args[1].u.val - 1;
-    s1  = args[0].u.str;
-    s2  = args[2].u.str;
+    pos = INT2 - 1;
+    s1  = STR1;
+    s2  = STR3;
 
-    if (pos > string_length(s1) || pos < 0) {
-        cthrow(range_id,
-               "Position %D is outside of the range of the string.",
-               &args[1]);
-        return;
-    } else if (pos == 0) {
+    if (pos > string_length(s1) || pos < 0)
+        THROW((range_id, "Position %D is outside of the range of the string.",
+               &args[1]));
+
+    s1 = string_dup(s1);
+    s2 = string_dup(s2);
+    anticipate_assignment();
+    pop(3);
+
+    if (pos == 0) {
         s2 = string_add(s2, s1);
-        new = string_dup(s2);
+        push_string(s2);
     } else if (pos == string_length(s1)) {
         s1 = string_add(s1, s2);
-        new = string_dup(s1);
+        push_string(s1);
     } else {
         new = string_new(string_length(s1) + string_length(s2));
         new = string_add_chars(new, string_chars(s1), pos);
         new = string_add(new, s2);
         new =string_add_chars(new,string_chars(s1)+pos,string_length(s1)-pos+1);
+        push_string(new);
+        string_discard(new);
     }
 
-    pop(3);
-    push_string(new);
-    string_discard(new);
+    string_discard(s1);
+    string_discard(s2);
 }
 
 COLDC_FUNC(strfmt) {

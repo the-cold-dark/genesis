@@ -10,19 +10,19 @@ Help can be found through the web site, or on the mailing list
       http://www.cold.org/info/lists
 
 RELEASE INFORMATION:
-1.1p3  [2-Apr-98]
-      * fixed a few minor memory leaks (Bruce)
-      * fixed a maxint comparison problem (Brad)
-      * reduced unecessary buffer copies when reading data from a
-        connection, as well as redundant mallocs (Brandon)
-      * fixed some problems with cancelling tasks straight from the
-        driver (i.e. with kill -USR1) which caused a crash (Brandon)
-      * fixed a problem with set_method_access()--was not complaining
-        if the method did not exist (Bruce)
-      * added the ability to do `[buf] * INT like on strings (Brad)
-      * fixed a problem with the VEIL module (Brandon)
-      * added the System/OS token as an element to $sys.version() (Brandon)
-      * fixed a problem with cancelling or getting info on the currently
-        executing task (Brandon)
-      * adjusted select() to also check for file descriptors with
-        exceptions--allowing for later cleanup (Brandon)
+1.1p4b  [2-Jun-98] Brandon Gillespie
+      * really fixed the match_pattern bug--it passes all test conditions
+        (before it wasn't testing all conditions)  (Brandon)
+1.1p4a [27-May-98] Brandon Gillespie
+      * fixed a bug with the match_pattern change
+      * commited the test dir to the CVS tree so it shows up in the release
+1.1p4  [27-May-98] Bruce Mitchener, Brian Buchanen, Brandon Gillespie
+      * fixed some error reports (Bruce)
+      * fixed an include problem with Solaris, and some warnings (Bruce)
+      * fixed bug with set_method_access on an invalid method (Bruce)
+      * fixed bug with strsed throwing wrong error msg (Bruce)
+      * fixed bug with match_pattern and case sensitivity (Brian)
+      * fixed bug with `[x] * x (Brad)
+      * fixed *graft() function bugs (Bruce/Brandon)
+      * re-integrated and updated testing utility (Brandon/Bruce)
+      * fixed 'make lint' (Brandon)

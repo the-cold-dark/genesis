@@ -1187,7 +1187,7 @@ void op_multiply(void) {
                       "Multiplying buffer %D with negative number %D.", d1, d2);
                 return;
             }
-            s=buffer_new(d1->u.buffer->len*n);
+            s=buffer_new(0);
             while (n--)
                 s=buffer_append(s, d1->u.buffer);
             data_discard(d1);

@@ -1,0 +1,78 @@
+#!/bin/sh
+
+if [ "$1" != "" ]; then
+    cd $1
+fi
+
+testin=test.in
+testdb=test.cdc
+expected=expected
+binary=binary
+output=output
+prog="$$prog"
+
+trap "rm -rf $testdb $expected $binary $output $prog; exit" 0 1 2
+
+echo -n "Testing..."
+
+perl -e 'while (<>) {
+             if (s/^\t//) {
+                 if (s/^Output: // || s/^\t//) {
+                     print STDOUT;
+                 }
+             } else {
+                 print STDERR;
+             }
+         }' < $testin 1> $expected 2> $testdb
+
+coldcc -o -W -t $testdb 1> $output 2>/dev/null
+
+## temporary hack until I fix the problems with output files in
+## coldcc
+perl -e 'while (<>) { (!/^\r/) && print; }' < $output > ${output}.tmp
+mv ${output}.tmp $output
+
+if cmp -s $expected $output; then
+    echo "All Tests pass."
+    exit
+fi
+
+echo "FAILURE...The following test(s) failed:"
+ 
+echo '
+open(EXP, "expected") || die("open(expected): $!\n");
+$eline = 0;
+$test = "";
+$nextpos = <STDIN>;
+while (!eof(STDIN)) {
+    $pos = $nextpos;
+    $exp = "";
+    $rec = "";
+    while (<STDIN>) {
+       if (s/^([<>-])//) {
+            if ($1 eq "<") {
+                $exp .= "     $_";
+            } elsif ($1 eq ">") {
+                $rec .= "     $_";
+            }
+        } else {
+             $nextpos = $_;
+            last;
+        }
+    }
+    $xpos = int($pos);
+    if ($eline < $xpos) {
+        while (<EXP>) {
+            $eline++;
+            if ($eline >= $pos) {
+                last;
+            }
+            if (!/^\s/) {
+                chop($test = $_);
+            }
+        }
+    }
+    print "-- ${test}\n   Expected:\n${exp}   Received:\n${rec}";
+}' > $prog
+
+diff $expected $output | perl $prog 

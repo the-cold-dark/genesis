@@ -18,27 +18,31 @@ COLDC_FUNC(bufgraft) {
     b2  = BUF3;
 
     if (pos > buffer_len(b1) || pos < 0)
-        THROW((range_id, "Position %D is outside of the range of the string.",
+        THROW((range_id, "Position %D is outside of the range of the buffer.",
                &args[1]))
 
+    b1  = buffer_dup(b1);
+    b2  = buffer_dup(b2);
     anticipate_assignment();
+    pop(3);
 
     if (pos == 0) {
-        args[0].u.buffer = buffer_append(b2, b1);
-        pop(2);
+        b2 = buffer_append(b2, b1);
+        push_buffer(b2);
     } else if (pos == buffer_len(b1)) {
-        args[0].u.buffer = buffer_append(b1, b2);
-        pop(2);
+        b1 = buffer_append(b1, b2);
+        push_buffer(b1);
     } else {
         new = buffer_new(b1->len + b2->len);
         MEMCPY(new->s, b1->s, pos);
         MEMCPY(new->s + pos, b2->s, b2->len);
         MEMCPY(new->s + pos + b2->len, b1->s + pos, b1->len - pos + 1);
         new->len = b1->len + b2->len;
-        pop(3);
         push_buffer(new);
         buffer_discard(new);
     }
+    buffer_discard(b1);
+    buffer_discard(b2);
 }
 
 COLDC_FUNC(buflen) {

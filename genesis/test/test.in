@@ -1,0 +1,2061 @@
+// Syntax of this file:
+//
+// * Anything beginning with a single tab is stripped out before ColdCC gets
+//   ahold of it.
+// * Anticipated output is formatted starting with two tabs.  Names for
+//   the test being run start initially after the two tabs, and the
+//   anticipated output should have an additional two spaces prefixed,
+//   such as:
+//
+//       [tab][tab]Regression Test 5
+//       [tab][tab]  output1
+//       [tab][tab]  output2
+//
+//   Do not use two tabs for anything else, as the runtest script will
+//   be very confused and the results will not be what you expect.
+
+// Setup: create root and sys
+
+object $root;
+
+public method .foo() {
+    dblog("  method foo called, sender " + toliteral(sender()));
+};
+
+public method .chparents() {
+    arg parents;
+
+    return (> chparents(parents) <);
+};
+
+public method .destroy() {
+    return destroy();
+};
+
+	// --------------------
+	// testobj1
+	//
+	// This object, used by some tests, just provides a
+	// .parents() method to check the parents list before and after a
+	// chparents().
+
+new object $testobj1: $root;
+
+public method .parents() {
+    return parents();
+};
+
+	// --------------------
+	// Test 1: Language: comment
+	// Output:
+
+		Comment statement test
+eval {
+    dblog("Comment statement test");
+    // comment 1
+    // comment 2
+};
+
+// run tests on $sys
+object $sys;
+
+	// --------------------
+	// Test 2: Language: empty statement
+	// Output:
+
+		Empty statement test
+eval {
+    dblog("Empty statement test");
+    ;
+};
+
+	// --------------------
+	// Test 3: Language: expression statement
+	// Output:
+
+		Expression statement test
+eval {
+    dblog("Expression statement test");
+};
+
+	// --------------------
+	// Test 4: Language: compound statement
+	// Output:
+
+		Compound statement test
+		  1
+		  2
+eval {
+    dblog("Compound statement test");
+    {
+        dblog("  1");
+        dblog("  2");
+    }
+};
+
+	// --------------------
+	// Test 5: Language: assignment statement
+	// Output:
+
+		Assignment statement test
+		  varnf error resulted
+eval {
+    var a;
+
+    a = "Assignment statement test";
+    dblog(a);
+    catch ~varnf {
+        foo = 3;
+    } with {
+        dblog("  varnf error resulted");
+    }
+};
+
+	// --------------------
+	// Test 6: Language: if statement
+	// Output:
+
+		If statement test
+		  Test 1: reached body
+eval {
+    dblog("If statement test");
+    if (1)
+        dblog("  Test 1: reached body");
+    if (0)
+        dblog("  Test 2: reached body");
+};
+
+	// --------------------
+	// Test 7: Language: if-else statement
+	// Output:
+
+		If-else statement test
+		  Test 1: reached true body
+		  Test 2: reached false body
+eval {
+    dblog("If-else statement test");
+    if (1)
+        dblog("  Test 1: reached true body");
+    else
+        dblog("  Test 1: reached false body");
+    if (0)
+        dblog("  Test 2: reached true body");
+    else
+        dblog("  Test 2: reached false body");
+};
+
+	// --------------------
+	// Test 8: Language: for-range statement
+	// Output:
+
+		For-range statement test:
+		  Iteration -4
+		  Iteration -3
+		  Iteration -2
+		  Iteration -1
+		  Iteration 0
+		  Iteration 1
+		  Iteration 2
+		  Final value 2
+		  Type error resulted
+eval {
+    var i;
+
+    dblog("For-range statement test:");
+    for i in [-4..2]
+        dblog("  Iteration " + tostr(i));
+    dblog("  Final value " + tostr(i));
+    catch ~type {
+        for i in [-4.."foo"]
+        ;
+    } with {
+        dblog("  Type error resulted");
+    }
+};
+
+	// --------------------
+	// Test 9: Language: for-list statement
+	// Output:
+
+		For-list statement test:
+		  Iteration 1
+		  Iteration 'foo
+		  Iteration ['bar, 3]
+		  Iteration ~crayons
+		  Final value ~crayons
+		  Iteration ["foo", "bar"]
+		  Iteration [3, 'foo]
+		  Iteration [~baz, [3, 4]]
+		  Final value [~baz, [3, 4]]
+		  Type error resulted
+eval {
+    var i;
+
+    dblog("For-list statement test:");
+    for i in ([1, 'foo, ['bar, 3], ~crayons])
+        dblog("  Iteration " + toliteral(i));
+    dblog("  Final value " + toliteral(i));
+    for i in (#[["foo", "bar"], [3, 'foo], [~baz, [3, 4]]])
+        dblog("  Iteration " + toliteral(i));
+    dblog("  Final value " + toliteral(i));
+    catch ~type {
+        for i in (3)
+        ;
+    } with {
+        dblog("  Type error resulted");
+    }
+};
+
+	// --------------------
+	// Test 10: Language: while statement
+	// Output:
+
+		While statement test:
+		  Iteration 3
+		  Iteration 4
+		  Iteration 5
+		  Iteration 6
+		  Final value 7
+eval {
+    var i;
+
+    dblog("While statement test:");
+    i = 3;
+    while (i < 7) {
+        dblog("  Iteration " + tostr(i));
+        i = i + 1;
+    }
+    dblog("  Final value " + tostr(i));
+};
+
+	// --------------------
+	// Test 11: Language: switch
+	// Output:
+
+		Switch statement test
+		  Test 1: 1
+		  Test 2: 0..7
+		  Test 3: 0..7
+		  Test 4: "foo"
+		  Test 5: default
+		  Test 8: "a".."z"
+		  Type error resulted
+eval {
+    var i, count;
+
+    dblog("Switch statement test");
+    count = 1;
+    for i in ([1, 3, 7, "foo", 'foo]) {
+        switch (i) {
+        case 1:
+            dblog("  Test " + tostr(count) + ": 1");
+        case 0..7:
+            dblog("  Test " + tostr(count) + ": 0..7");
+        case "foo":
+            dblog("  Test " + tostr(count) + ": \"foo\"");
+        default:
+            dblog("  Test " + tostr(count) + ": default");
+        }
+        count = count + 1;
+    }
+    for i in ([1, 7, "foo", 'foo, 9]) {
+        switch (i) {
+        case 'baz:
+            dblog("  Test " + tostr(count) + ": 1");
+        case "a".."z":
+            dblog("  Test " + tostr(count) + ": \"a\"..\"z\"");
+        case "foo":
+            dblog("  Test " + tostr(count) + ": \"foo\"");
+        }
+        count = count + 1;
+    }
+    catch ~type {
+        switch (3) {
+        case 'baz:
+            ;
+        case "foo"..3:
+            dblog("WRONG");
+        }
+    } with {
+        dblog("  Type error resulted");
+    }
+};
+
+	// --------------------
+	// Test 12: Language: break
+	// Output:
+
+		Break statement test: for-range loop
+		  Iteration 7 start
+		  Iteration 7 finish
+		  Iteration 8 start
+		  Iteration 8 finish
+		  Iteration 9 start
+		  Final value 9
+		Break statement test: for-list loop
+		  Iteration 'foo start
+		  Iteration 'foo finish
+		  Iteration 3 start
+		  Final value 3
+		Break statement test: while loop
+		  Iteration 3 start
+		  Iteration 3 finish
+		  Iteration 4 start
+		  Iteration 4 finish
+		  Iteration 5 start
+		  Final value 5
+eval {
+    var i;
+
+    dblog("Break statement test: for-range loop");
+    for i in [7..12] {
+        dblog("  Iteration " + tostr(i) + " start");
+        if (i == 9)
+             break;
+        dblog("  Iteration " + tostr(i) + " finish");
+    }
+    dblog("  Final value " + tostr(i));
+    dblog("Break statement test: for-list loop");
+    for i in (['foo, 3, ~bar]) {
+        dblog("  Iteration " + toliteral(i) + " start");
+        if (i == 3)
+             break;
+        dblog("  Iteration " + toliteral(i) + " finish");
+    }
+    dblog("  Final value " + toliteral(i));
+    dblog("Break statement test: while loop");
+    i = 3;
+    while (i < 7) {
+        dblog("  Iteration " + tostr(i) + " start");
+        if (i == 5)
+             break;
+        dblog("  Iteration " + tostr(i) + " finish");
+        i = i + 1;
+    }
+    dblog("  Final value " + tostr(i));
+};
+
+	// --------------------
+	// Test 13: Language: continue
+	// Output:
+
+		Continue statement test: for-range loop
+		  Iteration 7 start
+		  Iteration 7 finish
+		  Iteration 8 start
+		  Iteration 8 finish
+		  Iteration 9 start
+		  Iteration 10 start
+		  Iteration 10 finish
+		  Iteration 11 start
+		  Iteration 11 finish
+		  Iteration 12 start
+		  Iteration 12 finish
+		  Final value 12
+		Continue statement test: for-list loop
+		  Iteration 'foo start
+		  Iteration 'foo finish
+		  Iteration 3 start
+		  Iteration ~bar start
+		  Iteration ~bar finish
+		  Final value ~bar
+		Continue statement test: while loop
+		  Iteration 3 start
+		  Iteration 3 finish
+		  Iteration 4 start
+		  Iteration 4 finish
+		  Iteration 5 start
+		  Iteration 6 start
+		  Iteration 6 finish
+		  Final value 7
+eval {
+    var i;
+
+    dblog("Continue statement test: for-range loop");
+    for i in [7..12] {
+        dblog("  Iteration " + tostr(i) + " start");
+        if (i == 9)
+            continue;
+        dblog("  Iteration " + tostr(i) + " finish");
+    }
+    dblog("  Final value " + tostr(i));
+    dblog("Continue statement test: for-list loop");
+    for i in (['foo, 3, ~bar]) {
+        dblog("  Iteration " + toliteral(i) + " start");
+        if (i == 3)
+            continue;
+        dblog("  Iteration " + toliteral(i) + " finish");
+    }
+    dblog("  Final value " + toliteral(i));
+    dblog("Continue statement test: while loop");
+    i = 3;
+    while (i < 7) {
+        dblog("  Iteration " + tostr(i) + " start");
+        i = i + 1;
+        if (i == 6)
+            continue;
+        dblog("  Iteration " + tostr(i - 1) + " finish");
+    }
+    dblog("  Final value " + tostr(i));
+};
+
+	// --------------------
+	// Test 14: Language: return
+	// Output:
+
+		Return statement test
+		  Before
+eval {
+    dblog("Return statement test");
+    dblog("  Before");
+    return;
+    dblog("  After");
+};
+
+	// --------------------
+	// Test 15: Language: catch and catch-with-handler
+	// Output:
+
+		Catch statement test
+		  Test 1: before error
+		  Test 1: after catch
+		  Test 2: before error
+		  Test 2: in handler
+		  Test 2: after catch
+eval {
+    dblog("Catch statement test");
+    catch ~div {
+        dblog("  Test 1: before error");
+        1 / 0;
+        dblog("  Test 1: after error");
+    }
+    dblog("  Test 1: after catch");
+    catch any {
+        dblog("  Test 2: before error");
+        1 / 0;
+        dblog("  Test 2: after error");
+    } with {
+        dblog("  Test 2: in handler");
+    }
+    dblog("  Test 2: after catch");
+};
+
+	// --------------------
+	// Test 16: Language: literals
+	// Output:
+
+		Literal expression test
+		  1
+		  "foo"
+		  #26
+		  'foo
+		  ~foo
+		  `[1, 2, 3, 4, 5]
+eval {
+    dblog("Literal expression test");
+    dblog("  " + toliteral(1));
+    dblog("  " + toliteral("foo"));
+    dblog("  " + toliteral(#26));
+    dblog("  " + toliteral('foo));
+    dblog("  " + toliteral(~foo));
+    dblog("  " + toliteral(`[1, 2, 3, 4, 5]));
+};
+
+	// --------------------
+	// Test 17: Language: function call
+	// Output:
+
+		Function call test
+		  6
+eval {
+    dblog("Function call test");
+    dblog("  " + tostr(strlen(substr(strsub("foobar", "ob", "oqqqq"), 4, 6))));
+};
+
+	// --------------------
+	// Test 18: Language: pass
+	// Output:
+
+		Pass expression test
+		  method foo called, sender $sys
+		  Completed
+public method .foo() {
+    dblog("Pass expression test");
+    pass();
+    dblog("  Completed");
+};
+
+eval {
+    .foo();
+};
+
+	// --------------------
+	// Test 19: Language: messages
+	// Output:
+
+		Message expression test
+		  method foo called, sender $sys
+		  .foo(3) ==> ~numargs
+		  #36.foo() ==> ~objnf
+		  .blarg() ==> ~methodnf
+eval {
+    dblog("Message expression test");
+    $root.foo();
+    dblog("  .foo(3) ==> " + toliteral((| .foo(3) |)));
+    dblog("  #36.foo() ==> " + toliteral((| #36.foo() |)));
+    dblog("  .blarg() ==> " + toliteral((| .blarg() |)));
+};
+
+	// --------------------
+	// Test 20: Language: expr-messages
+	// Output:
+
+		Expr-message expression test
+		  method foo called, sender $sys
+		  .("foo")() ==> ~type
+		  .('foo)(3) ==> ~numargs
+		  #36.('foo)() ==> ~objnf
+		  .('blarg)() ==> ~methodnf
+eval {
+    dblog("Expr-message expression test");
+    $root.('foo)();
+    dblog("  .(\"foo\")() ==> " + toliteral((| .("foo")() |)));
+    dblog("  .('foo)(3) ==> " + toliteral((| .('foo)(3) |)));
+    dblog("  #36.('foo)() ==> " + toliteral((| #36.('foo)() |)));
+    dblog("  .('blarg)() ==> " + toliteral((| .('blarg)() |)));
+};
+
+	// --------------------
+	// Test 21: Language: List, dictionary, frob construction
+	// Output:
+
+		Constructor expression test
+		  List: ['foo, 5, 'bar]
+		  Dictionary: #[['foo, ~bar], ["barc", 9]]
+		  Frob: <#14, #[['foo, ~bar], ["bar", 1]]>
+		  Invalid dictionary (association with three elements): ~type
+		  Invalid frob (association not a list): ~type
+eval {
+    dblog("Constructor expression test");
+    dblog("  List: " + toliteral(['foo, 2 + 3, 'bar]));
+    dblog("  Dictionary: " + toliteral(#[['foo, ~bar], ["bar" + "c", 3 + 6]]));
+    dblog("  Frob: " + toliteral(<#14, #[['foo, ~bar], ["bar", 3 - 2]]>));
+    dblog("  Invalid dictionary (association with three elements): " + toliteral((| #[['foo, ~bar], ["foo", "bar", "baz"]] |)));
+    dblog("  Invalid frob (association not a list): " + toliteral((| <#26, "foo"> |)));
+};
+
+	// --------------------
+	// Test 22: Language: Index expression
+	// Output:
+
+		Index expression test
+		  [2, 3, 4][3] ==> 4
+		  #[["foo", 7], [~bar, 'baz]]["fOo"] ==> 7
+		  "abcdefghijkl"[2] ==> "b"
+		  `[6, 5, 4, 3, 2, 1][3] ==> 4
+		  'foo[3] ==> ~type
+		  [2, 3, 4][7] ==> ~range
+		  [2, 3, 4][0] ==> ~range
+		  #[[7, 'foo], [~baz, "foo"]][~BAZ] ==> ~keynf
+		  "abcdefghijkl"[0] ==> ~range
+		  "abcdefghijkl"[13] ==> ~range
+		  `[6, 5, 4, 3, 2, 1][0] ==> ~range
+		  `[6, 5, 4, 3, 2, 1][7] ==> ~range
+eval {
+    dblog("Index expression test");
+    dblog("  [2, 3, 4][3] ==> " + toliteral([2, 3, 4][3]));
+    dblog("  #[[\"foo\", 7], [~bar, 'baz]][\"fOo\"] ==> " + toliteral(#[["foo", 7], [~baz, 'baz]]["fOo"]));
+    dblog("  \"abcdefghijkl\"[2] ==> " + toliteral("abcdefghijkl"[2]));
+    dblog("  `[6, 5, 4, 3, 2, 1][3] ==> " + toliteral(`[6, 5, 4, 3, 2, 1][3]));
+    dblog("  'foo[3] ==> " + toliteral((| 'foo[3] |)));
+    dblog("  [2, 3, 4][7] ==> " + toliteral((| [2, 3, 4][7] |)));
+    dblog("  [2, 3, 4][0] ==> " + toliteral((| [2, 3, 4][0] |)));
+    dblog("  #[[7, 'foo], [~baz, \"foo\"]][~BAZ] ==> " + toliteral((| #[[7, 'foo], [~baz, "foo"]][~BAZ] |)));
+    dblog("  \"abcdefghijkl\"[0] ==> " + toliteral((| "abcdefghijkl"[0] |)));
+    dblog("  \"abcdefghijkl\"[13] ==> " + toliteral((| "abcdefghijkl"[13] |)));
+    dblog("  `[6, 5, 4, 3, 2, 1][0] ==> " + toliteral((| `[6, 5, 4, 3, 2, 1][0] |)));
+    dblog("  `[6, 5, 4, 3, 2, 1][7] ==> " + toliteral((| `[6, 5, 4, 3, 2, 1][7] |)));
+};
+
+	// --------------------
+	// Test 23: Language: unary operators
+	// Output:
+
+		Unary operator expression test
+		  -(2 + 3) ==> -5
+		  +(2 + 3) ==> 5
+		  !0 ==> 1
+		  !1 ==> 0
+		  -"foo" ==> ~type
+eval {
+    dblog("Unary operator expression test");
+    dblog("  -(2 + 3) ==> " + toliteral(-(2 + 3)));
+    dblog("  +(2 + 3) ==> " + toliteral(+(2 + 3)));
+    dblog("  !0 ==> " + toliteral(!0));
+    dblog("  !1 ==> " + toliteral(!1));
+    dblog("  -\"foo\" ==> " + toliteral((| -"foo" |)));
+};
+
+	// --------------------
+	// Test 24: Language: binary operators
+	// Output:
+
+		Binary operator expression test
+		 Multiplication
+		  2 * 8 ==> 16
+		  2.0 * 8.0 ==> 16.0
+		  2.0 * 8 ==> 16.0
+		  2 * 8.0 ==> 16.0
+		  "ab" * 3 ==> "ababab"
+		  `[1, 2] * 3 ==> `[1, 2, 1, 2, 1, 2]
+		  3 * 'foo ==> ~type
+		  3 * `[1, 2] ==> ~type
+		  3 * "ab" ==> ~type
+		 Division
+		  9 / 4 ==> 2
+		  9.0 / 4 ==> 2.25
+		  9.0 / 4.0 ==> 2.25
+		  9 / 4.0 ==> 2.25
+		  3 / [3] ==> ~type
+		  1 / 0 ==> ~div
+		  1 / 0.0 ==> ~div
+		  1.0 / 0.0 ==> ~div
+		 Modulus
+		  143 % 15 ==> 8
+		  [3] % 4 ==> ~type
+		  1 % 0 ==> ~div
+		  1 % 0.0 ==> ~type
+		  1.3 % 1 ==> ~type
+		 Addition
+		  2 + 2 ==> 4
+		  2.0 + 3.5 ==> 5.5
+		  2 + 3.5 ==> 5.5
+		  2.5 + 3 ==> 5.5
+		  1 + 'foo ==> ~type
+		  1 + "1" ==> "11"
+		  "1" + 1 ==> "11"
+		  "foo" + "bar" ==> "foobar"
+		  "oo" + "rb" ==> "oorb"
+		  "oo" + 'fooo ==> "oofooo"
+		  'fooo + "aa" ==> "foooaa"
+		  [1, 2, 3] + [4, 5, 6] ==> [1, 2, 3, 4, 5, 6]
+		  [2, 3] + [5, 6] ==> [2, 3, 5, 6]
+		  `[1, 2] + `[3, 4] ==> `[1, 2, 3, 4]
+		  'foo + 'aa ==> ~type
+		 Subtraction
+		  1 - 2 ==> -1
+		  1.0 - 2.0 ==> -1.0
+		  1.0 - 2 ==> -1.0
+		  1 - 2.0 ==> -1.0
+		  [3] - [5] ==> ~type
+		 Equality
+		  3 == 3 ==> 1
+		  3 == 4 ==> 0
+		  "foo" == "foo" ==> 1
+		  "foo" == "fOo" ==> 1
+		  "foo" == "bar" ==> 0
+		  [1, 2, 3] == [1, 2, 3] ==> 1
+		  'foo == 'foo ==> 1
+		  'foo == 'fOo ==> 0
+		  #[[1, 2], ['bar, "baz"]] == #[[1, 2], ['bar, "baZ"]] ==> 1
+		  <#12, #[]> == <#12, #[[1, 2]]> ==> 0
+		  ~foo == ~foo ==> 1
+		  ~foo == ~bar ==> 0
+		 Inequality
+		  [1, 2, 3] != [4, 5, 6] ==> 1
+		  4 > 2 ==> 1
+		  4 > 5 ==> 0
+		  1.0 > 2.0 ==> 0
+		  1.0 > 2 ==> 0
+		  2.0 > 1.0 ==> 1
+		  2.0 > 2.0 ==> 0
+		  2.0 < 2.0 ==> 0
+		  1.0 < 2.0 ==> 1
+		  2.0 < 1.0 ==> 0
+		  2.0 < 1 ==> 0
+		  "Foo" > "bar" ==> 1
+		  "foo" <= "foo" ==> 1
+		 In
+		  4 in [1, 2, 3] ==> 0
+		  'foo in [4, 'foo, 6] ==> 2
+		  "a" in "cab" ==> 2
+		  "am" in "llama" ==> 3
+		  "bc" in "llama" ==> 0
+		  4 in 'foo ==> ~type
+		 Logic
+		  1 && 1 ==> 1
+		  1 && 0 ==> 0
+		  1 || dblog("foo") ==> 1
+		  1 ? "foo" | "bar" ==> "foo"
+		  0 ? "foo" | "bar" ==> "bar"
+		  'foo > 'bar ==> ~type
+		  ~foo <= ~bar ==> ~type
+eval {
+    dblog("Binary operator expression test");
+    dblog(" Multiplication");
+    dblog("  2 * 8 ==> " + toliteral(2 * 8));
+    dblog("  2.0 * 8.0 ==> " + toliteral(2.0 * 8.0));
+    dblog("  2.0 * 8 ==> " + toliteral(2.0 * 8));
+    dblog("  2 * 8.0 ==> " + toliteral(2 * 8.0));
+    dblog("  \"ab\" * 3 ==> " + toliteral("ab" * 3));
+    dblog("  `[1, 2] * 3 ==> " + toliteral(`[1, 2] * 3));
+    dblog("  3 * 'foo ==> " + toliteral((| 3 * 'foo |)));
+    dblog("  3 * `[1, 2] ==> " + toliteral((| 3 * `[1, 2] |)));
+    dblog("  3 * \"ab\" ==> " + toliteral((| 3 * "ab" |)));
+    dblog(" Division");
+    dblog("  9 / 4 ==> " + toliteral(9 / 4));
+    dblog("  9.0 / 4 ==> " + toliteral(9.0 / 4));
+    dblog("  9.0 / 4.0 ==> " + toliteral(9.0 / 4.0));
+    dblog("  9 / 4.0 ==> " + toliteral(9 / 4.0));
+    dblog("  3 / [3] ==> " + toliteral((| 3 / [3] |)));
+    dblog("  1 / 0 ==> " + toliteral((| 1 / 0 |)));
+    dblog("  1 / 0.0 ==> " + toliteral((| 1 / 0.0 |)));
+    dblog("  1.0 / 0.0 ==> " + toliteral((| 1.0 / 0.0 |)));
+    dblog(" Modulus");
+    dblog("  143 % 15 ==> " + toliteral(143 % 15));
+    dblog("  [3] % 4 ==> " + toliteral((| [3] / 4 |)));
+    dblog("  1 % 0 ==> " + toliteral((| 1 % 0 |)));
+    dblog("  1 % 0.0 ==> " + toliteral((| 1 % 0.0 |)));
+    dblog("  1.3 % 1 ==> " + toliteral((| 1.3 % 1 |)));
+    dblog(" Addition");
+    dblog("  2 + 2 ==> " + toliteral(2 + 2));
+    dblog("  2.0 + 3.5 ==> " + toliteral(2.0 + 3.5));
+    dblog("  2 + 3.5 ==> " + toliteral(2 + 3.5));
+    dblog("  2.5 + 3 ==> " + toliteral(2.5 + 3));
+    dblog("  1 + 'foo ==> " + toliteral((| 1 + 'foo |)));
+    dblog("  1 + \"1\" ==> " + toliteral(1 + "1"));
+    dblog("  \"1\" + 1 ==> " + toliteral("1" + 1));
+    dblog("  \"foo\" + \"bar\" ==> " + toliteral("foo" + "bar"));
+    dblog("  \"oo\" + \"rb\" ==> " + toliteral(substr("foobar", 2, 2) + substr("barbaz", 3, 2)));
+    dblog("  \"oo\" + 'fooo ==> " + toliteral("oo" + 'fooo));
+    dblog("  'fooo + \"aa\" ==> " + toliteral('fooo + "aa"));
+    dblog("  [1, 2, 3] + [4, 5, 6] ==> " + toliteral([1, 2, 3] + [4, 5, 6]));
+    dblog("  [2, 3] + [5, 6] ==> " + toliteral(sublist([1, 2, 3, 4], 2, 2) + sublist([4, 5, 6], 2, 2)));
+    dblog("  `[1, 2] + `[3, 4] ==> " + toliteral(`[1, 2] + `[3, 4]));
+    dblog("  'foo + 'aa ==> " + toliteral((| 'foo + 'aa |)));
+    dblog(" Subtraction");
+    dblog("  1 - 2 ==> " + toliteral(1 - 2));
+    dblog("  1.0 - 2.0 ==> " + toliteral(1.0 - 2.0));
+    dblog("  1.0 - 2 ==> " + toliteral(1.0 - 2));
+    dblog("  1 - 2.0 ==> " + toliteral(1 - 2.0));
+    dblog("  [3] - [5] ==> " + toliteral((| [3] - [5] |)));
+    dblog(" Equality");
+    dblog("  3 == 3 ==> " + toliteral(3 == 3));
+    dblog("  3 == 4 ==> " + toliteral(3 == 4));
+    dblog("  \"foo\" == \"foo\" ==> " + toliteral("foo" == "foo"));
+    dblog("  \"foo\" == \"fOo\" ==> " + toliteral(substr("foobar", 1, 3) == substr("afooa", 2, 3)));
+    dblog("  \"foo\" == \"bar\" ==> " + toliteral("foo" == "bar"));
+    dblog("  [1, 2, 3] == [1, 2, 3] ==> " + toliteral(sublist([1, 2, 3, 4], 1, 3) == sublist([0, 1, 2, 3, 4], 2, 3)));
+    dblog("  'foo == 'foo ==> " + toliteral('foo == 'foo));
+    dblog("  'foo == 'fOo ==> " + toliteral('foo == 'fOo));
+    dblog("  #[[1, 2], ['bar, \"baz\"]] == #[[1, 2], ['bar, \"baZ\"]] ==> " + toliteral(#[[1, 2], ['bar, "baz"]] == #[[1, 2], ['bar, "baZ"]]));
+    dblog("  <#12, #[]> == <#12, #[[1, 2]]> ==> " + toliteral(<#12, #[]> == <#12, #[[1, 2]]>));
+    dblog("  ~foo == ~foo ==> " + toliteral(~foo == ~foo));
+    dblog("  ~foo == ~bar ==> " + toliteral(~foo == ~bar));
+    dblog(" Inequality");
+    dblog("  [1, 2, 3] != [4, 5, 6] ==> " + toliteral([1, 2, 3] != [4, 5, 6]));
+    dblog("  4 > 2 ==> " + toliteral(4 > 2));
+    dblog("  4 > 5 ==> " + toliteral(4 > 5));
+    dblog("  1.0 > 2.0 ==> " + toliteral(1.0 > 2.0));
+    dblog("  1.0 > 2 ==> " + toliteral(1.0 > 2));
+    dblog("  2.0 > 1.0 ==> " + toliteral(2.0 > 1.0));
+    dblog("  2.0 > 2.0 ==> " + toliteral(2.0 > 2.0));
+    dblog("  2.0 < 2.0 ==> " + toliteral(2.0 < 2.0));
+    dblog("  1.0 < 2.0 ==> " + toliteral(1.0 < 2.0));
+    dblog("  2.0 < 1.0 ==> " + toliteral(2.0 < 1.0));
+    dblog("  2.0 < 1 ==> " + toliteral(2.0 < 1));
+    dblog("  \"Foo\" > \"bar\" ==> " + toliteral("foo" > "bar"));
+    dblog("  \"foo\" <= \"foo\" ==> " + toliteral("foo" <= "foo"));
+    dblog(" In");
+    dblog("  4 in [1, 2, 3] ==> " + toliteral(4 in [1, 2, 3]));
+    dblog("  'foo in [4, 'foo, 6] ==> " + toliteral('foo in [4, 'foo, 6]));
+    dblog("  \"a\" in \"cab\" ==> " + toliteral("a" in "cab"));
+    dblog("  \"am\" in \"llama\" ==> " + toliteral("am" in "llama"));
+    dblog("  \"bc\" in \"llama\" ==> " + toliteral("bc" in "llama"));
+    dblog("  4 in 'foo ==> " + toliteral((| 4 in 'foo |)));
+    dblog(" Logic");
+    dblog("  1 && 1 ==> " + toliteral(1 && 1));
+    dblog("  1 && 0 ==> " + toliteral(1 && 0));
+    dblog("  1 || dblog(\"foo\") ==> " + toliteral(1 || dblog("foo")));
+    dblog("  1 ? \"foo\" | \"bar\" ==> " + toliteral(1 ? "foo" | "bar"));
+    dblog("  0 ? \"foo\" | \"bar\" ==> " + toliteral(0 ? "foo" | "bar"));
+    dblog("  'foo > 'bar ==> " + toliteral((| 'foo > 'bar |)));
+    dblog("  ~foo <= ~bar ==> " + toliteral((| ~foo <= ~bar |)));
+};
+
+	// --------------------
+	// Test 25: Language: Propagation expressions and critical expressions
+	// Output:
+
+		Propagation expression and critical expression test
+		  .proptest1() ==> ~div
+		  .proptest2() ==> ~methoderr
+public method .proptest1() {
+    (> 1 / 0 <);
+};
+
+public method .proptest2() {
+    1 / 0;
+};
+
+eval {
+    dblog("Propagation expression and critical expression test");
+    dblog("  .proptest1() ==> " + toliteral((| .proptest1() |)));
+    dblog("  .proptest2() ==> " + toliteral((| .proptest2() |)));
+};
+
+	// --------------------
+	// Test 26: Language: Splicing
+	// Output:
+
+		Splicing test
+		  [1, @foo, 7] ==> [1, 3, 4, 5, 7]
+eval {
+    var foo;
+
+    dblog("Splicing test");
+    foo = [3, 4, 5];
+    dblog("  [1, @foo, 7] ==> " + toliteral([1, @foo, 7]));
+};
+
+	// --------------------
+	// Test 27: Data: Operations on integers
+	// Output:
+
+// this test is obviously not completed yet -Brandon
+// eval {
+// };
+
+	// --------------------
+	// Regression test 1
+	//
+	// Bug: setadd() and setremove() were corrupting lists.
+	//
+	// Fixed: 0.5
+	//
+	// Testing method: exercise setadd() and setremove().
+	//
+	// Output:
+
+		Regression test 1
+		  ["foo", 4, "bar"]
+
+eval {
+    var a;
+
+    a = setadd([2, "foo", 4], 4);
+    a = setadd(a, "bar");
+    a = setremove(a, 2);
+    a = setremove(a, 10);
+    a = setadd(a, "foo");
+    dblog("Regression test 1");
+    dblog("  " + toliteral(a));
+};
+
+	// --------------------
+	// Regression test 2
+	//
+	// Bug: empty substrings and sublists were coming up true if they
+	//      were of non-empty strings or lists.
+	//
+	// Fixed: 0.5
+	//
+	// Testing method: Create empty substrings and sublists of non-empty
+	//                 strings and lists, and check truth.
+	//
+	// Output:
+
+		Regression test 2
+		  false
+		  false
+
+eval {
+    var a, b;
+
+    a = substr("foo", 1, 0);
+    b = sublist([1, 2, 3], 1, 0);
+    dblog("Regression test 2");
+    dblog("  " + (a ? "true" | "false"));
+    dblog("  " + (b ? "true" | "false"));
+};
+
+	// --------------------
+	// Regression test 3
+	//
+	// Bug: rethrow() dumped core.
+	//
+	// Fixed: 0.5
+	//
+	// Testing method: Catch an error and do a rethrow() in the handler.
+	//
+	// Output:
+
+		Regression test 3
+
+eval {
+    dblog("Regression test 3");
+    catch ~div {
+        1 / 0;
+    } with {
+       rethrow(~foo);
+    }
+};
+
+	// --------------------
+	// Regression test 4
+	//
+	// Bug: delete() was corrupting lists.
+	//
+	// Fixed: 0.7
+	//
+	// Testing method: Exercise delete()
+	//
+	// Output:
+
+		Regression test 4
+		  [3, 5]
+
+eval {
+    var a;
+
+    a = delete([2, 3, 4, 5, 6], 1);
+    a = delete(a, 2);
+    a = delete(a, 3);
+    dblog("Regression test 4");
+    dblog("  " + toliteral(a));
+};
+
+
+	// --------------------
+	// Regression test 5
+	//
+	// Bug: chparents() had a series of problems, including: it was
+	//      crashing the server, it wasn't checking for an empty parents
+	//      list.
+	//
+	// Fixed: 0.7
+	//
+	// Testing method: Test chparents() on an empty list, and exercise it
+	//                 normally.
+	//
+	// Objects: testobj1
+	//
+	// Output:
+
+		Regression test 5
+		  ~perm
+		  Parents of $testobj1: [$root]
+		  Parents of $testobj1: [$sys]
+
+object $testobj1;
+
+eval {
+    dblog("Regression test 5");
+    dblog("  " + toliteral((| chparents([]) |)));
+    dblog("  Parents of $testobj1: " + toliteral($testobj1.parents()));
+    chparents([$sys]);
+    dblog("  Parents of $testobj1: " + toliteral($testobj1.parents()));
+};
+
+object $sys;
+
+	// --------------------
+	// Regression test 6
+	//
+	// Bug: Removing a method while it was running could have caused
+	//      crashes.
+	//
+	// Fixed: 0.7
+	//
+	// Testing method: Remove a method while it's running.
+	//
+	// Output:
+
+		Regression test 6
+		  Before removal
+		  After removal: 'regtest6 in methods() ==> 0
+
+public method .regtest6() {
+    dblog("Regression test 6");
+    dblog("  Before removal");
+    del_method('regtest6);
+    dblog("  After removal: 'regtest6 in methods() ==> " + toliteral('regtest6 in methods()));
+};
+
+eval {
+    .regtest6();
+};
+
+	// --------------------
+	// Regression test 7
+	//
+	// Bug: replace() was mutating its argument list
+	//
+	// Fixed: 0.7
+	//
+	// Testing method: Call replace() on a list, see if it changes
+	//
+	// Output:
+
+		Regression test 7
+		  a ==> [2, 'foo, 4]
+		  a ==> [2, 'foo, 4]
+
+eval {
+    var a;
+
+    dblog("Regression test 7");
+    a = [2, 'foo, 4];
+    dblog("  a ==> " + toliteral(a));
+    replace(a, 2, 3);
+    replace(a, 1, 4);
+    dblog("  a ==> " + toliteral(a));
+};
+
+	// --------------------
+	// Regression test 8
+	//
+	// Bug: String comparison was comparing strings instead of
+	//      substrings.
+	//
+	// Fixed: 0.7
+	//
+	// Testing method: Create substrings and compare them, making
+	//                 sure that text before and after a substring
+	//                 doesn't come into play.
+	//
+	// Output:
+
+		Regression test 8
+		  a == b ==> 1
+		  a == c ==> 0
+		  a == d ==> 0
+		  a == e ==> 0
+		  b == e ==> 0
+
+eval {
+    var a, b, c, d, e;
+
+    a = "foobar";
+    b = substr(" foobar ", 2, 6);
+    c = substr("foobar", 2, 5);
+    d = substr("foobar", 1, 5);
+    e = substr("foobar", 3, 3);
+    dblog("Regression test 8");
+    dblog("  a == b ==> " + toliteral(a == b));
+    dblog("  a == c ==> " + toliteral(a == c));
+    dblog("  a == d ==> " + toliteral(a == d));
+    dblog("  a == e ==> " + toliteral(a == e));
+    dblog("  b == e ==> " + toliteral(b == e));
+};
+
+	// --------------------
+	// Regression test 9
+	//
+	// Bug: 0.6-1
+	//
+	// Testing method: Compare equal and unequal dictionaries
+	//
+	// Output:
+
+		Regression test 9
+		  #[] == #[] ==> 1
+		  #[[1, 2]] == #[[1, 2]] ==> 1
+		  #[[1, 2]] == #[[3, 2]] ==> 0
+		  #[[1, 2]] == #[[3, 4]] ==> 0
+
+eval {
+    dblog("Regression test 9");
+    dblog("  #[] == #[] ==> " + toliteral(#[] == #[]));
+    dblog("  #[[1, 2]] == #[[1, 2]] ==> " + toliteral(#[[1, 2]] == #[[1, 2]]));
+    dblog("  #[[1, 2]] == #[[3, 2]] ==> " + toliteral(#[[1, 2]] == #[[3, 2]]));
+    dblog("  #[[1, 2]] == #[[3, 4]] ==> " + toliteral(#[[1, 2]] == #[[3, 4]]));
+};
+
+
+	// --------------------
+	// Regression test 10
+	//
+	// Bug: 0.6-2
+	//
+	// Testing method: Compare equal and unequal frobs
+	//
+	// Output:
+
+		Regression test 10
+		  <#19, #[]> == <#19, #[]> ==> 1
+		  <#19, #[[1, 2]]> == <#19, #[]> ==> 0
+		  <#19, #[[1, 2]]> == <#19, #[[1, 2]]> ==> 1
+		  <#19, #[[1, 2]]> == <#19, #[[3, 4]]> ==> 0
+		  <#19, #[[1, 2]]> == <#19, #[[3, 2]]> ==> 0
+
+eval {
+    dblog("Regression test 10");
+    dblog("  <#19, #[]> == <#19, #[]> ==> " + toliteral(<#19, #[]> == <#19, #[]>));
+    dblog("  <#19, #[[1, 2]]> == <#19, #[]> ==> " + toliteral(<#19, #[[1, 2]]> == <#19, #[]>));
+    dblog("  <#19, #[[1, 2]]> == <#19, #[[1, 2]]> ==> " + toliteral(<#19, #[[1, 2]]> == <#19, #[[1, 2]]>));
+    dblog("  <#19, #[[1, 2]]> == <#19, #[[3, 4]]> ==> " + toliteral(<#19, #[[1, 2]]> == <#19, #[[3, 4]]>));
+    dblog("  <#19, #[[1, 2]]> == <#19, #[[3, 2]]> ==> " + toliteral(<#19, #[[1, 2]]> == <#19, #[[3, 2]]>));
+};
+
+	// --------------------
+	// Regression test 11
+	//
+	// Bug: 0.7-2
+	//
+	// Testing method: Call size method twice in two methods, to see
+	//                 if the result changes.
+	//
+	// Output:
+
+		Regression test 11
+		  size1 - size2 ==> 0
+
+var size1 = 0;
+var size2 = 0;
+
+eval {
+    size1 = .size();
+};
+
+eval {
+    size2 = .size();
+};
+
+eval {
+    dblog("Regression test 11");
+    dblog("  size1 - size2 ==> " + toliteral(size1 - size2));
+};
+
+	// --------------------
+	// Regression test 12
+	//
+	// Bug: 0.7-8
+	//
+	// Testing method: Exercise splicing optimization, and verify that
+	//                 splicing a list into the end of a list constructor
+	//                 works.
+	//
+	// Output:
+
+		Regression test 12
+		  [1, 2, 3, 4, 5, 6]
+		  [1, 2, 3, 4, 5, 6]
+
+eval {
+    dblog("Regression test 12");
+    dblog("  " + toliteral([@[1, 2, 3], 4, 5, 6]));
+    dblog("  " + toliteral([1, 2, 3, @[4, 5, 6]]));
+};
+
+	// --------------------
+	// Regression test 13
+
+	// Bug: 0.7-9
+
+	// Testing method: Cause an error after a catch handler, and
+	// check the line number.
+
+		Regression test 13
+		  Error on line: 7
+
+public method .regtest13() {
+    catch any {
+    } with {
+        // Comment 1
+        // Comment 2
+        // Comment 3
+    }
+    .error("Line 7");
+};
+
+eval {
+    var str;
+
+    dblog("Regression test 13");
+    catch any {
+        .regtest13();
+    } with {
+            dblog("  Error on line: " + tostr(traceback()[3][5]));
+    }
+};
+
+	// --------------------
+	// Regression test 14
+	//
+	// Bug: 0.7-11
+	//
+	// Testing method: Exercise union() with empty lists.
+	//
+	// Output:
+
+		Regression test 14
+		  1
+		  2
+		  3
+
+eval {
+    var x;
+
+    dblog("Regression test 14");
+    for x in ([1, 2, 3]) {
+        union([], []);
+        dblog("  " + toliteral(x));
+    }
+};
+
+	// --------------------
+	// Regression test 15
+	//
+	// Bug: 0.7.1-1
+	//
+	// Testing method: Decompile a method with a self-message.
+	//
+	// Output:
+
+		Regression test 15
+		  .foo("bar");
+
+public method .regtest15() {
+    .foo("bar");
+};
+
+eval {
+    dblog("Regression test 15");
+    dblog("  " + list_method('regtest15)[1]);
+};
+
+	// --------------------
+	// Regression test 16
+	//
+	// Bug: 0.8-1
+	//
+	// Testing method: Use chparents(), destroy(), conn_assign() in a
+	//                 for-list loop.
+	//
+	// Output:
+
+		Regression test 16
+		  Done.
+
+eval {
+    var i, obj;
+
+    dblog("Regression test 16");
+    for i in [1 .. 3] {
+        obj = create([$root]);
+        obj.chparents([$root]);
+        obj.destroy();
+    }
+    dblog("  Done.");
+};
+
+	// --------------------
+	// Regression test 17
+	//
+	// Bug: 0.8-2
+	//
+	// Testing method: Read in a frob with a 'var' declaration.
+	//
+	// Output:
+
+		Regression test 17
+		  <#15, #[['type, 'true]]>
+
+var regtest17 = <#15, #[['type, 'true]]>;
+
+eval {
+    dblog("Regression test 17");
+    dblog("  " + toliteral(regtest17));
+};
+
+	// --------------------
+	// Regression test 18
+	//
+	// Bug: 0.8.1-3
+	//
+	// Testing method: Exercise has_ancestor().
+	//
+	// Output:
+
+		Regression test 18
+		  1
+		  1
+		  0
+
+eval {
+    dblog("Regression test 18");
+    dblog("  " + tostr(has_ancestor($sys)));
+    dblog("  " + tostr(has_ancestor($root)));
+    dblog("  " + tostr(has_ancestor(#56)));
+};
+
+	// --------------------
+	// Regression test 19
+	//
+	// Bug: 0.9-3
+	//
+	// Testing method: Test explode() on the failure case.
+	//
+	// Output:
+
+		Regression test 19
+		  ["foo bar ", " quux"]
+
+eval {
+    dblog("Regression test 19");
+    dblog("  " + toliteral(explode("foo bar baz quux", "baz")));
+};
+
+	// --------------------
+	// Regression test 20
+	//
+	// Bug: 0.9-4
+	//
+	// Testing method: Test chparents() on root.  Also test chparents()
+	//                 on setting an object to have itself as a parent.
+	//
+	// Output:
+
+		Regression test 20
+		  $root.chparents([$testobj1]) --> ~perm
+		  $testobj1.chparents([$testobj1]) --> ~parent
+
+eval {
+    dblog("Regression test 20");
+    dblog("  $root.chparents([$testobj1]) --> " + toliteral((| $root.chparents([$testobj1]) |)));
+    dblog("  $testobj1.chparents([$testobj1]) --> " + toliteral((| $testobj1.chparents([$testobj1]) |)));
+};
+
+	// --------------------
+	// Regression test 21
+	//
+	// Bug: 0.9-5
+	//
+	// Testing method: Test explode() with a zero-length separator.
+	//
+	// Output:
+
+		Regression test 21
+		  explode("foo bar", "") --> ~range
+
+eval {
+    dblog("Regression test 21");
+    dblog("  explode(\"foo bar\", \"\") --> " + toliteral((| explode("foo bar", "") |)));
+};
+
+	// --------------------
+	// Regression test 22
+	//
+	// Bug: 0.9-6
+	//
+	// Testing method: Run tostr() on a dictionary.
+	//
+	// Output:
+
+		Regression test 22
+		  tostr(#[]) --> "#[dict]"
+
+eval {
+    dblog("Regression test 22");
+    dblog("  tostr(#[]) --> " + toliteral(tostr(#[])));
+};
+
+	// --------------------
+	// Regression test 23
+	//
+	// Bug: 0.9-7
+	//
+	// Testing method: Run the failure case.
+	//
+	// Output:
+
+		Regression test 23
+		  2
+eval {
+    var a, b;
+
+    dblog("Regression test 23");
+    a = dict_add(#[], 1, 2);
+    b = a;
+    b = dict_del(b, 1);
+    dblog("  " + toliteral(a[1]));
+};
+
+	// --------------------
+	// Regression test 24
+	//
+	// Bug: 0.9-8
+	//
+	// Testing method: Run cwrite(), look at result.
+	//
+	// Output:
+
+		Regression test 24
+		  cwrite(`[1, 2]) --> 0
+
+eval {
+    dblog("Regression test 24");
+    dblog("  cwrite(`[1, 2]) --> " + toliteral(cwrite(`[1, 2])));
+};
+
+	// --------------------
+	// Regression test 25
+	//
+	// Bug: 0.9-14
+	//
+	// Testing method: Exercise delete() on a sublist.
+	//
+	// Output:
+
+		Regression test 25
+		  [2, 4, 5]
+eval {
+    dblog("Regression test 25");
+    dblog("  " + toliteral(delete(sublist([1, 2, 3, 4, 5], 2), 2)));
+};
+
+	// --------------------
+	// Regression test 26
+	//
+	// Bug: 0.9-15
+	//
+	// Testing method: Build a dictionary with duplicates.
+	//
+	// Output:
+
+		Regression test 26
+		  #[[1, 2], [2, 3], [3, 4]]
+
+eval {
+    dblog("Regression test 26");
+    dblog("  " + toliteral(#[[1, 2], [1, 3], [2, 3], [3, 4]]));
+};
+
+	// Buffer test 1
+	//
+	// Testing buffer construction
+	// Output:
+
+		Buffer test 1
+		  `[1, 2, 3, 4, 5, 6]
+
+eval {
+    dblog("Buffer test 1");
+    dblog("  " + toliteral(`[1, 2, 3, 4, 5, 6]));
+};
+
+	// Buffer test 2
+	//
+	// Testing str_to_buf()
+	// Output:
+
+		Buffer test 2
+		  `[97, 108, 97, 108]
+
+eval {
+    dblog("Buffer test 2");
+    dblog("  " + toliteral(str_to_buf("alal")));
+};
+
+	// Buffer test 3
+	//
+	// Testing buf_to_str()
+	// Output:
+
+		Buffer test 3
+		  alal
+
+eval {
+    dblog("Buffer test 3");
+    dblog("  " + buf_to_str(`[97, 108, 97, 108]));
+};
+
+	// Buffer test 4
+	//
+	// Testing subbuf()
+	// Output:
+
+		Buffer test 4
+		  `[1, 2, 3, 4, 5, 6, 7, 8]
+		  `[1, 2, 3, 4]
+		  `[2, 3, 4]
+		  `[6, 7, 8]
+		  ~range 1
+		  ~range 2
+		  `[]
+
+eval {
+    var a;
+
+    a = `[1, 2, 3, 4, 5, 6, 7, 8];
+    dblog("Buffer test 4");
+    dblog("  " + toliteral(a));
+    dblog("  " + toliteral(subbuf(a, 1, 4)));
+    dblog("  " + toliteral(subbuf(a, 2, 3)));
+    dblog("  " + toliteral(subbuf(a, 6)));
+    dblog("  " + toliteral((| subbuf(a, 7, 3) |)) + " 1");
+    dblog("  " + toliteral((| subbuf(a, 9, 1) |)) + " 2");
+    dblog("  " + toliteral(subbuf(a, 9)));
+};
+
+
+	// Buffer test 5
+	//
+	// Testing buflen()
+	// Output:
+
+		Buffer test 5
+		  `[1, 2, 3, 4, 5, 6, 7] -> 7
+		  `[1, 2, 3, 4] -> 4
+
+eval {
+    dblog("Buffer test 5");
+    dblog("  `[1, 2, 3, 4, 5, 6, 7] -> " + tostr(buflen(`[1, 2, 3, 4, 5, 6, 7])));
+    dblog("  `[1, 2, 3, 4] -> " + tostr(buflen(subbuf(`[1, 2, 3, 4, 5, 6, 7], 1, 4))));
+};
+
+	// Buffer test 6
+	//
+	// Testing bufidx()
+	// Output:
+
+		Buffer test 6
+		  `[1, 2, 3, 4, 5, 5], 1 -> 1
+		  `[1, 2, 3, 4, 5, 5], 5 -> 5
+		  `[1, 2, 3, 4, 5, 5], 5, -1 -> 6
+		  `[1, 2, 3, 4, 5, 5], `[5, 6] -> 0
+		  `[1, 2, 3, 4, 5, 5], `[2, 3] -> 2
+
+eval {
+    var a;
+
+    a = `[1, 2, 3, 4, 5, 5];
+
+    dblog("Buffer test 6");
+    dblog("  " + toliteral(a) + ", 1 -> " + toliteral(bufidx(a, 1)));
+    dblog("  " + toliteral(a) + ", 5 -> " + toliteral(bufidx(a, 5)));
+    dblog("  " + toliteral(a) + ", 5, -1 -> " + toliteral(bufidx(a, 5, -1)));
+    dblog("  " + toliteral(a) + ", `[5, 6] -> " + toliteral(bufidx(a, `[5, 6])));
+    dblog("  " + toliteral(a) + ", `[2, 3] -> " + toliteral(bufidx(a, `[2, 3])));
+};
+
+	// Buffer test 7
+	//
+	// Testing buf_replace()
+	// Output:
+
+		Buffer test 7
+		  `[1, 2, 3, 4, 5, 6, 7]
+		  `[1, 2, 3, 5, 5, 6, 7]
+		  ~range 1
+		  ~range 2
+
+eval {
+    var a;
+
+    a = `[1, 2, 3, 4, 5, 6, 7];
+
+    dblog("Buffer test 7");
+    dblog("  " + toliteral(a));
+    dblog("  " + toliteral(buf_replace(a, 4, 5)));
+    dblog("  " + toliteral((| buf_replace(a, 0, 1) |)) + " 1");
+    dblog("  " + toliteral((| buf_replace(a, 8, 1) |)) + " 2");
+};
+
+	// Buffer test 8
+	// 
+	// Testing buf_graft()
+	// Output:
+
+		Buffer test 8
+		  ~range 1
+		  `[8, 9, 1, 2, 3, 4, 5, 6, 7]
+		  `[1, 2, 3, 4, 8, 9, 5, 6, 7]
+		  `[1, 2, 3, 4, 5, 6, 7, 8, 9]
+		  ~range 2
+
+eval {
+    var a;
+
+    a = `[1, 2, 3, 4, 5, 6, 7];
+
+    dblog("Buffer test 8");
+    dblog("  " + toliteral((| bufgraft(a, 0, `[8, 9]) |)) + " 1");
+    dblog("  " + toliteral(bufgraft(a, 1, `[8, 9])));
+    dblog("  " + toliteral(bufgraft(a, 5, `[8, 9])));
+    dblog("  " + toliteral(bufgraft(a, 8, `[8, 9])));
+    dblog("  " + toliteral((| bufgraft(a, 10, `[8, 9]) |)) + " 2");
+};
+
+	// Buffer test 9
+	//
+	// Testing buf_to_strings
+	// Output:
+
+		Buffer test 9
+		  ["m", "lm", `[104]]
+		  ["", "l", `[10, 104]]
+
+eval {
+    var a;
+
+    a = `[109, 10, 108, 109, 10, 104];
+
+    dblog("Buffer test 9");
+    dblog("  " + toliteral(buf_to_strings(a)));
+    dblog("  " + toliteral(buf_to_strings(a, `[109])));
+};
+
+	// Buffer test 10
+	//
+	// Testing str_to_buf()
+	// Output:
+
+		Buffer test 10
+		  `[97, 108, 97, 109, 32, 97, 114, 13, 10]
+
+eval {
+    var a;
+
+    dblog("Buffer test 10");
+    dblog("  " + str_to_buf("alam ar\n"));
+};
+
+	// Buffer test 11
+	//
+	// testing strings_to_buf()
+	// Output:
+
+		Buffer test 11
+		  `[97, 13, 10, 98, 13, 10, 97, 108, 97, 108, 13, 10]
+
+eval {
+    dblog("Buffer test 11");
+    dblog("  " + toliteral(strings_to_buf(["a", "b", "alal"])));
+};
+
+	// Dictionary test 1
+	//
+	// Testing dict_values()
+	// Output
+
+		Dictionary test 1
+		  #[[1, 2], [3, 4], [5, 6], [7, 8]] ==> [2, 4, 6, 8]
+		  #[] ==> []
+
+eval {
+    var a;
+
+    a = #[[1, 2], [3, 4], [5, 6], [7, 8]];
+
+    dblog("Dictionary test 1");
+    dblog("  " + toliteral(a) + " ==> " + toliteral(dict_values(a)));
+    dblog("  #[] ==> " + toliteral(dict_values(#[])));
+};
+
+	// Dictionary test 2
+	//
+	// Testing dict_keys()
+	// Output
+
+		Dictionary test 2
+		  #[[1, 2], [3, 4], [5, 6], [7, 8]] ==> [1, 3, 5, 7]
+		  #[] ==> []
+
+eval {
+    var a;
+
+    a = #[[1, 2], [3, 4], [5, 6], [7, 8]];
+
+    dblog("Dictionary test 2");
+    dblog("  " + toliteral(a) + " ==> " + toliteral(dict_keys(a)));
+    dblog("  #[] ==> " + toliteral(dict_keys(#[])));
+};
+
+	// Dictionary test 3
+	//
+	// Testing dict_add()
+	// Output
+
+		Dictionary test 3
+		  #[[1, 2], [3, 4]] ==> #[[1, 2], [3, 4], [5, 6]]
+		  #[[1, 2], [3, 4]] ==> #[[1, 2], [3, 6]]
+		  #[] ==> #[[5, 6]]
+
+eval {
+    var a;
+
+    a = #[[1, 2], [3, 4]];
+
+    dblog("Dictionary test 3");
+    dblog("  " + toliteral(a) + " ==> " + toliteral(dict_add(a, 5, 6)));
+    dblog("  " + toliteral(a) + " ==> " + toliteral(dict_add(a, 3, 6)));
+    dblog("  #[] ==> " + toliteral(dict_add(#[], 5, 6)));
+};
+
+	// Dictionary test 4
+	//
+	// Testing dict_del()
+	// Output
+
+		Dictionary test 4
+		  #[[1, 2], [3, 4], [5, 6]] ==> #[[1, 2], [5, 6]]
+		  #[[1, 2], [3, 4], [5, 6]] ==> ~keynf
+		  #[] ==> ~keynf
+
+eval {
+    var a;
+
+    a = #[[1, 2], [3, 4], [5, 6]];
+
+    dblog("Dictionary test 4");
+    dblog("  " + toliteral(a) + " ==> " + toliteral(dict_del(a, 3)));
+    dblog("  " + toliteral(a) + " ==> " + toliteral((| dict_del(a, 7) |)));
+    dblog("  #[] ==> " + toliteral((| dict_del(a, 7) |)));
+};
+
+	// Dictionary test 5
+	//
+	// Testing dict_contains()
+	// Output
+
+		Dictionary test 5
+		  #[[1, 2], [3, 4], [5, 6]] ==> 0
+		  #[[1, 2], [3, 4], [5, 6]] ==> 1
+		  #[] ==> 0
+eval {
+    var a;
+
+    a = #[[1, 2], [3, 4], [5, 6]];
+
+    dblog("Dictionary test 5");
+    dblog("  " + toliteral(a) + " ==> " + toliteral(dict_contains(a, 7)));
+    dblog("  " + toliteral(a) + " ==> " + toliteral(dict_contains(a, 5)));
+    dblog("  #[] ==> " + toliteral(dict_contains(#[], 7)));
+};
+
+	// Dictionary test 6
+	//
+	// Testing dict_union()
+	// Output
+
+		Dictionary test 6
+		  #[[1, 2], [3, 10], [5, 6], [7, 8]]
+		  #[[1, 2], [3, 4], [5, 6], [7, 8]]
+		  #[[1, 2], [3, 4], [5, 6]]
+		  #[[7, 8], [3, 10]]
+		  #[]
+
+eval {
+    var a, b;
+
+    a = #[[1, 2], [3, 4], [5, 6]];
+    b = #[[7, 8], [3, 10]];
+
+    dblog("Dictionary test 6");
+    dblog("  " + toliteral(dict_union(a, b)));
+    dblog("  " + toliteral(dict_union(b, a)));
+    dblog("  " + toliteral(dict_union(a, #[])));
+    dblog("  " + toliteral(dict_union(#[], b)));
+    dblog("  " + toliteral(dict_union(#[], #[])));
+};
+
+	// Frob test 1
+	//
+	// Testing frob_class()
+	// Output:
+
+		Frob test 1
+		  <#14, #[['foo, 1], ['baz, 2]]> ==> #14
+		  <#15, #[['foo, 1], ['baz, 3]], 'handler> ==> #15
+		  "test" ==> ~type
+
+eval {
+    var a, b;
+
+    a = <#14, #[['foo, 1], ['baz, 2]]>;
+    b = <#15, #[['foo, 1], ['baz, 3]], 'handler>;
+
+    dblog("Frob test 1");
+    dblog("  " + toliteral(a) + " ==> " + toliteral(frob_class(a)));
+    dblog("  " + toliteral(b) + " ==> " + toliteral(frob_class(b)));
+    dblog("  \"test\" ==> " + toliteral((| frob_class("test") |)));
+};
+
+	// Frob test 2
+	//
+	// Testing frob_value()
+	// Output:
+
+		Frob test 2
+		  <#14, #[['foo, 1], ['baz, 2]]> ==> #[['foo, 1], ['baz, 2]]
+		  <#15, #[['foo, 1], ['baz, 3]], 'handler> ==> #[['foo, 1], ['baz, 3]]
+		  "test" ==> ~type
+
+eval {
+    var a, b;
+
+    a = <#14, #[['foo, 1], ['baz, 2]]>;
+    b = <#15, #[['foo, 1], ['baz, 3]], 'handler>;
+
+    dblog("Frob test 2");
+    dblog("  " + toliteral(a) + " ==> " + toliteral(frob_value(a)));
+    dblog("  " + toliteral(b) + " ==> " + toliteral(frob_value(b)));
+    dblog("  \"test\" ==> " + toliteral((| frob_value("test") |)));
+};
+
+	// Frob test 3
+	//
+	// Testing frob_handler()
+	// Output:
+
+		Frob test 3
+		  <#14, #[['foo, 1], ['baz, 2]]> ==> ~type
+		  <#15, #[['foo, 1], ['baz, 3]], 'handler> ==> 'handler
+		  "test" ==> ~type
+
+eval {
+    var a, b;
+
+    a = <#14, #[['foo, 1], ['baz, 2]]>;
+    b = <#15, #[['foo, 1], ['baz, 3]], 'handler>;
+
+    dblog("Frob test 3");
+    dblog("  " + toliteral(a) + " ==> " + toliteral((| frob_handler(a) |)));
+    dblog("  " + toliteral(b) + " ==> " + toliteral(frob_handler(b)));
+    dblog("  \"test\" ==> " + toliteral((| frob_handler("test") |)));
+};
+
+	// List test 1
+	// testing listlen()
+	// 
+	// Output
+
+		List test 1
+		  [1, 2, 3, 4, 5, 6, 7, 8] ==> 8
+		  [3] ==> 1
+		  [] ==> 0
+
+eval {
+    dblog("List test 1");
+    dblog("  [1, 2, 3, 4, 5, 6, 7, 8] ==> " + toliteral(listlen([1, 2, 3, 4, 5, 6, 7, 8])));
+    dblog("  [3] ==> " + toliteral(listlen([3])));
+    dblog("  [] ==> " + toliteral(listlen([])));
+};
+
+	// List test 2
+	// testing listgraft()
+	// 
+	// Output
+
+		List test 2
+		  [1, 2, 3, 4, 5], 0, ["a", "b", "c"] ==> ~range
+		  [1, 2, 3, 4, 5], 1, ["a", "b", "c"] ==> ["a", "b", "c", 1, 2, 3, 4, 5]
+		  [1, 2, 3, 4, 5], 3, ["a", "b", "c"] ==> [1, 2, "a", "b", "c", 3, 4, 5]
+		  [1, 2, 3, 4, 5], 6, ["a", "b", "c"] ==> [1, 2, 3, 4, 5, "a", "b", "c"]
+		  [1, 2, 3, 4, 5], 7, ["a", "b", "c"] ==> ~range
+
+eval {
+    var a, b;
+
+    a = [1, 2, 3, 4, 5];
+    b = ["a", "b", "c"];
+
+    dblog("List test 2");
+    dblog("  " + toliteral(a) + ", 0, " + toliteral(b) + " ==> " + toliteral((| listgraft(a, 0, b) |)));
+    dblog("  " + toliteral(a) + ", 1, " + toliteral(b) + " ==> " + toliteral(listgraft(a, 1, b)));
+    dblog("  " + toliteral(a) + ", 3, " + toliteral(b) + " ==> " + toliteral(listgraft(a, 3, b)));
+    dblog("  " + toliteral(a) + ", 6, " + toliteral(b) + " ==> " + toliteral(listgraft(a, 6, b)));
+    dblog("  " + toliteral(a) + ", 7, " + toliteral(b) + " ==> " + toliteral((| listgraft(a, 7, b) |)));
+};
+
+	// List test 3
+	// testing sublist()
+	// 
+	// Output
+
+		List test 3
+		  ~range 1
+		  [1, 2, 3, 4, 5, 6, 7, 8]
+		  [1, 2]
+		  [8]
+		  []
+		  ~range 2
+		  ~range 3
+		  ~range 4
+
+eval {
+    var a;
+
+    a = [1, 2, 3, 4, 5, 6, 7, 8];
+
+    dblog("List test 3");
+    dblog("  " + toliteral((| sublist(a, 0) |)) + " 1");
+    dblog("  " + toliteral(sublist(a, 1)));
+    dblog("  " + toliteral(sublist(a, 1, 2)));
+    dblog("  " + toliteral(sublist(a, 8)));
+    dblog("  " + toliteral(sublist(a, 9)));
+    dblog("  " + toliteral((| sublist(a, 9, 1) |)) + " 2");
+    dblog("  " + toliteral((| sublist(a, 10) |)) + " 3");
+    dblog("  " + toliteral((| sublist(a , 6, -1) |)) + " 4");
+};
+
+	// List test 4
+	// testing insert()
+	// 
+	// Output
+
+		List test 4
+
+eval {
+    dblog("List test 4");
+};
+
+	// List test 5
+	// testing join()
+	// 
+	// Output
+
+		List test 5
+
+eval {
+    dblog("List test 5");
+};
+
+	// List test 6
+	// testing listidx()
+	// 
+	// Output
+
+		List test 6
+
+eval {
+    dblog("List test 6");
+};
+
+	// List test 7
+	// testing replace()
+	// 
+	// Output
+
+		List test 7
+
+eval {
+    dblog("List test 7");
+};
+
+	// List test 8
+	// testing delete()
+	// 
+	// Output
+
+		List test 8
+
+eval {
+    dblog("List test 8");
+};
+
+	// List test 9
+	// testing setadd()
+	// 
+	// Output
+
+		List test 9
+
+eval {
+    dblog("List test 9");
+};
+
+	// List test 10
+	// testing setremove()
+	// 
+	// Output
+
+		List test 10
+
+eval {
+    dblog("List test 10");
+};
+
+	// List test 11
+	// testing union()
+	// 
+	// Output
+
+		List test 11
+
+eval {
+    dblog("List test 11");
+};
+
+	// List test 12
+	// testing join()
+	// 
+	// Output
+
+		List test 12
+
+eval {
+    dblog("List test 12");
+};
+
+	// String test 1
+	//
+	// testing strgraft()
+	// Output
+
+		String test 1
+		  ~range 1
+		  jklabcdefghi
+		  abcjkldefghi
+		  abcdefghijkl
+		  ~range 2
+
+eval {
+    var a;
+
+    a = "abcdefghi";
+
+    dblog("String test 1");
+    dblog("  " + toliteral((| strgraft(a, 0, "jkl") |)) + " 1");
+    dblog("  " + strgraft(a, 1, "jkl"));
+    dblog("  " + strgraft(a, 4, "jkl"));
+    dblog("  " + strgraft(a, 10, "jkl"));
+    dblog("  " + toliteral((| strgraft(a, 11, "jkl") |)) + " 2");
+};
+
+	// String matching test 1
+	//
+	// testing match_pattern()
+	// Output
+
+		String matching test 1
+		  []
+		  ["Barbaz"]
+		  ["FOOBar"]
+		  ["", "Barbaz"]
+		  ["FOOBar", ""]
+		  ["FOO", "baz"]
+		  ["FOO", "baz"]
+		  ["Barbaz"]
+		  ["FOOBar"]
+
+eval {
+    dblog("String matching test 1");
+    dblog("  " + match_pattern("FOOBarbaz", "fooBarbaz"));
+    dblog("  " + match_pattern("FOOBarbaz", "FOO*"));
+    dblog("  " + match_pattern("FOOBarbaz", "*baz"));
+    dblog("  " + match_pattern("FOOBarbaz", "*FOO*"));
+    dblog("  " + match_pattern("FOOBarbaz", "*baz*"));
+    dblog("  " + match_pattern("FOOBarbaz", "*bar*"));
+    dblog("  " + match_pattern("FOOBarbaz", "*BAR*"));
+    dblog("  " + match_pattern("FOOBarbaz", "foo*"));
+    dblog("  " + match_pattern("FOOBarbaz", "*BAZ"));
+};
+
+// -------------------------------------
+// Shut down the server--leave this last
+eval {
+    shutdown();
+};

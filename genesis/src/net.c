@@ -18,6 +18,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #endif
+#include <ctype.h>
 #include <fcntl.h>
 #include "net.h"
 #include "util.h"

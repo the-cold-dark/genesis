@@ -691,7 +691,7 @@ main()
 {
   FILE *f=fopen("conftestval", "w");
   if (!f) exit(1);
-  fprintf(f, "char %d\nshort %d\nint %d\nlong %d\nll %d\nfloat %d\ndouble %d\nld %d\n",
+  fprintf(f, "char %d\nshort %d\nint %d\nlong %d\nll %d\nfloat %d\ndouble %d\nld %d\nptr %d\n",
          sizeof(char),
          sizeof(short int),
          sizeof(int),
@@ -699,7 +699,8 @@ main()
          sizeof(long long),
          sizeof(float),
          sizeof(double),
-         sizeof(long double));
+         sizeof(long double),
+         sizeof(void*));
   exit(0);
 }
 END
@@ -718,9 +719,11 @@ ll 8
 float 4
 double 8
 ld 12
+ptr 8
 END
 fi
 
+ac_cv_sizeof_ptr=`cat conftestval | fgrep ptr | sed -e 's:ptr ::'`
 ac_cv_sizeof_char=`cat conftestval | fgrep char | sed -e 's:char ::'`
 ac_cv_sizeof_short=`cat conftestval | fgrep short | sed -e 's:short ::'`
 ac_cv_sizeof_int=`cat conftestval | fgrep int | sed -e 's:int ::'`
@@ -736,14 +739,15 @@ fi
 
 cat <<END 1>&6
 
-    char.. $ac_t$ac_cv_sizeof_char
-    short int.. $ac_t$ac_cv_sizeof_short
-    int.. $ac_t$ac_cv_sizeof_int
-    long int.. $ac_t$ac_cv_sizeof_long
-    long long.. $ac_t$ac_cv_sizeof_llong
-    float.. $ac_t$ac_cv_sizeof_float
-    double.. $ac_t$ac_cv_sizeof_double
-    long double.. $ac_t$ac_cv_sizeof_ldouble
+    pointer.. `expr $ac_t$ac_cv_sizeof_ptr "*" 8` bits
+    char.. `expr $ac_t$ac_cv_sizeof_char "*" 8` bits
+    short int.. `expr $ac_t$ac_cv_sizeof_short "*" 8` bits
+    int.. `expr $ac_t$ac_cv_sizeof_int "*" 8` bits
+    long int.. `expr $ac_t$ac_cv_sizeof_long "*" 8` bits
+    long long.. `expr $ac_t$ac_cv_sizeof_llong "*" 8` bits
+    float.. `expr $ac_t$ac_cv_sizeof_float "*" 8` bits
+    double.. `expr $ac_t$ac_cv_sizeof_double "*" 8` bits
+    long double.. `expr $ac_t$ac_cv_sizeof_ldouble "*" 8` bits
 END
 
 cat >> confdefs.h <<END

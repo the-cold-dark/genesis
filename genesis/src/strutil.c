@@ -317,7 +317,7 @@ INTERNAL void add_field(char *start, char *end, Bool strip) {
 /* Returns a backwards list of fields if <s> matches the
    pattern <pattern>, or NULL if it doesn't. */
 cList * match_pattern(char *pattern, char *s) {
-    char *p, *q;
+    char *p, *q, c;
     cList *list;
     cStr *str;
     cData d;
@@ -348,10 +348,10 @@ cList * match_pattern(char *pattern, char *s) {
     }
 
     /* Find first potential match of rest of pattern. */
-    for (q = s; *q && *q != p[1]; q++);
+    q = strcchr(s, p[1]);
 
     /* As long as we have a potential match... */
-    while (*q) {
+    while (q && *q) {
 	/* Check to see if this is actually a match. */
 	list = match_pattern(p + 1, q);
 	if (list) {
@@ -365,7 +365,7 @@ cList * match_pattern(char *pattern, char *s) {
 	}
 
 	/* Find next potential match. */
-	while (*++q && *q != p[1]);
+	q = strcchr(q+1, p[1]);
     }
 
     /* Return failure. */

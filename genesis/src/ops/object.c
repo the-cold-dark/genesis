@@ -385,7 +385,7 @@ COLDC_FUNC(set_method_access) {
     if (!func_init_2(&args, SYMBOL, SYMBOL))
         return;
 
-    sym = args[1].u.symbol;
+    sym = SYM2;
     if (sym == public_id)
         access = MS_PUBLIC;
     else if (sym == protected_id)
@@ -401,10 +401,10 @@ COLDC_FUNC(set_method_access) {
     else
         cthrow(type_id, "Invalid method access flag.");
 
-    access = object_set_method_access(cur_frame->object, args[0].u.symbol, access);
+    access = object_set_method_access(cur_frame->object, SYM1, access);
 
     if (access == -1)
-        cthrow(type_id, "Method %D not found.", args[0]);
+        cthrow(type_id, "Method %I not found.", SYM1);
 
     pop(2);
     push_int(access);

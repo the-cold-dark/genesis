@@ -16,6 +16,9 @@
 #include "cdc_pcode.h"
 #include "util.h"
 #include "sig.h"
+#ifdef __svr4__
+#include <ieeefp.h>
+#endif
 
 #define RESET_FPE (caught_fpe = 0)
 

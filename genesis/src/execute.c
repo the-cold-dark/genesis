@@ -537,7 +537,7 @@ cList * task_list(void) {
 /*
 // ---------------------------------------------------------------
 */
-cList * task_stack(void) {
+cList * task_stack(Frame * frame_to_trace, Bool calculate_line_numbers) {
     cList * r;
     cData   d,
            * list;
@@ -545,7 +545,7 @@ cList * task_stack(void) {
   
     r = list_new(0);
     d.type = LIST;
-    for (f = cur_frame; f; f = f->caller_frame) {
+    for (f = frame_to_trace; f; f = f->caller_frame) {
 
         d.u.list = list_new(5);
         list = list_empty_spaces(d.u.list, 5);
@@ -557,7 +557,10 @@ cList * task_stack(void) {
         list[2].type = SYMBOL;
         list[2].u.symbol = ident_dup(f->method->name);
         list[3].type = INTEGER;
-        list[3].u.val = line_number(f->method, f->pc - 1);
+        if (calculate_line_numbers)
+            list[3].u.val = line_number(f->method, f->pc - 1);
+        else
+            list[3].u.val = f->pc - 1;
         list[4].type = INTEGER;
         list[4].u.val = (Long) f->pc;
 

@@ -158,7 +158,7 @@ void func_stack(void) {
     if (!func_init_0())
         return;
 
-    list = task_stack();
+    list = task_stack(cur_frame, TRUE);
 
     push_list(list);
     list_discard(list);

@@ -214,7 +214,7 @@ void task_cancel(Long tid);
 void task_pause(void);
 VMState *task_lookup(Long tid);
 cList * task_list(void);
-cList * task_stack(void);
+cList * task_stack(Frame * frame_to_trace, Bool calculate_line_numbers);
 void run_paused_tasks(void);
 void bind_opcode(Int opcode, cObjnum objnum);
 

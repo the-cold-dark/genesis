@@ -268,7 +268,7 @@ Obj * cache_get_holder(Long objnum) {
 	if (obj->objnum != INV_OBJNUM) {
 	    LOCK_BUCKET("cache_get_holder", ind)
 	    if (obj->dirty) {
-		if (!db_put(obj, obj->objnum, &obj_size)) {
+		if (!simble_put(obj, obj->objnum, &obj_size)) {
 		    UNLOCK_BUCKET("cache_get_holder", ind)
 		    panic("Could not store an object.");
 		}
@@ -368,7 +368,7 @@ Obj *cache_retrieve(Long objnum) {
 
     /* Read the object into the place-holder, if it's on disk. */
     LOCK_BUCKET("cache_retrieve", ind)
-    if (!db_get(obj, objnum, &obj_size)) {
+    if (!simble_get(obj, objnum, &obj_size)) {
 	/* Oops.  add back to inactive list tail*/
 	obj->objnum = INV_OBJNUM;
 	cache_remove_from_list(&active[ind], obj);
@@ -430,9 +430,9 @@ void cache_discard(Obj *obj) {
 	/* The object is dead; remove it from the database, and install the
            holder at the tail of the inactive chain.  Be careful about this,
            since object_destroy() can fiddle with the cache.  We're safe as
-           long as obj isn't in any chains at the time of db_del(). */
+           long as obj isn't in any chains at the time of simble_del(). */
 	object_destroy(obj);
-	db_del(obj->objnum);
+	simble_del(obj->objnum);
 
 	LOCK_BUCKET("cache_discard", ind)
 
@@ -482,7 +482,7 @@ Int cache_check(Long objnum) {
     }
 
     /* Check database on disk. */
-    return db_check(objnum);
+    return simble_check(objnum);
 }
 
 /*
@@ -538,7 +538,7 @@ void cache_sync(void) {
 		        if (cache_log_flag & CACHE_LOG_DEAD_WRITE)
 		            write_err("cache_sync: skipping dead object");
 	            } else {
-                        if (!db_put(obj, obj->objnum, &obj_size)) {
+                        if (!simble_put(obj, obj->objnum, &obj_size)) {
 		            UNLOCK_BUCKET("cache_sync", i)
 		            panic("Could not store an object.");
 		        }
@@ -566,7 +566,7 @@ void cache_sync(void) {
 	UNLOCK_BUCKET("cache_sync", i)
     }
 
-    db_flush();
+    simble_flush();
 #ifdef USE_CLEANER_THREAD
     pthread_mutex_unlock(&cleaner_lock);
 #ifdef DEBUG_CLEANER_LOCK
@@ -625,7 +625,7 @@ void *cache_cleaner_worker(void *dummy)
 		            write_err("cache_cleaner_worker: skipping dead object");
 		    } else {
 		        wrote_something = 1;
-		        if (!db_put(tobj, tobj->objnum, &obj_size)) {
+		        if (!simble_put(tobj, tobj->objnum, &obj_size)) {
 			    UNLOCK_BUCKET("cache_cleaner_worker", cache_bucket)
 		            panic("Could not store an object.");
 		        }
@@ -748,7 +748,7 @@ void cache_cleanup(void) {
             if (obj->ucounter > 0)
                 continue;
             if (obj->objnum != INV_OBJNUM && obj->dirty) {
-                if (!db_put(obj, obj->objnum, &obj_size))
+                if (!simble_put(obj, obj->objnum, &obj_size))
                     panic("Could not store an object.");
 		if (cache_log_flag & CACHE_LOG_CLEANUP)
 		    write_err("cache_cleanup: wrote object %s (size: %d bytes) (dirty: %d)",

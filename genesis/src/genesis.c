@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
     pthread_join(cleaner, NULL);
 #endif
     cache_sync();
-    db_close();
+    simble_close();
     flush_output();
     close_files();
     uninit_scratch_file();
@@ -569,9 +569,9 @@ static void main_loop(void) {
         }
 
         /* push our dump along, diddle with the wait if we need to */
-        switch (dump_some_blocks(DUMP_BLOCK_SIZE)) {
+        switch (simble_dump_some_blocks(DUMP_BLOCK_SIZE)) {
             case DUMP_FINISHED:
-                finish_backup();
+                simble_dump_finish();
                 task(SYSTEM_OBJNUM, backup_done_id, 0);
                 break;
             case DUMP_DUMPED_BLOCKS:

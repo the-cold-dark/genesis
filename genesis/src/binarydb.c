@@ -58,12 +58,13 @@ pthread_mutex_t db_mutex;
 #define	LOGICAL_BLOCK(off)	((off) / BLOCK_SIZE)
 #define	BLOCK_OFFSET(block)	((block) * BLOCK_SIZE)
 
-static void db_mark(off_t start, Int size);
-static void db_unmark(off_t start, Int size);
-static void grow_bitmap(Int new_blocks);
-static Int db_alloc(Int size);
-static void db_is_clean(void);
-static void db_is_dirty(void);
+static void simble_mark(off_t start, Int size);
+static void simble_unmark(off_t start, Int size);
+static void simble_grow_bitmap(Int new_blocks);
+static Int  simble_alloc(Int size);
+static void simble_flag_as_clean(void);
+static void simble_flag_as_dirty(void);
+static void simble_verify_clean(void);
 
 static Int last_free = 0;	/* Last known or suspected free block */
 
@@ -126,7 +127,7 @@ extern Long num_objects;
                 FAIL("Database index (\"%s/index\") is inconsistent.\n"); \
             if (objnum >= db_top) \
                 db_top = objnum + 1; \
-            db_mark(LOGICAL_BLOCK(offset), size); \
+            simble_mark(LOGICAL_BLOCK(offset), size); \
             objnum = lookup_next_objnum(); \
         } \
     }
@@ -149,7 +150,7 @@ static Bool good_perms(struct stat * sb) {
 }
 #endif
 
-void verify_clean(void) {
+static void simble_verify_clean(void) {
     Bool isdirty = YES;
     char system[LINE],
          v_major[LINE],
@@ -239,7 +240,7 @@ void init_binary_db(void) {
 #endif
 
     /* check the clean file */
-    verify_clean();
+    simble_verify_clean();
 
     open_db_objects("rb+");
     lookup_open(fdb_index, 0);
@@ -274,7 +275,7 @@ void init_new_db(void) {
     lookup_open(fdb_index, 1);
     init_bitmaps();
     sync_index();
-    db_is_clean();
+    simble_flag_as_clean();
     UNLOCK_DB("init_new_db")
 }
 
@@ -305,7 +306,7 @@ static void display_bitmap()
 #endif
 
 /* Grow the bitmap to given size. */
-static void grow_bitmap(Int new_blocks)
+static void simble_grow_bitmap(Int new_blocks)
 {
     new_blocks = ROUND_UP(new_blocks, 8);
     bitmap = EREALLOC(bitmap, char, (new_blocks / 8) + 1);
@@ -313,7 +314,7 @@ static void grow_bitmap(Int new_blocks)
     bitmap_blocks = new_blocks;
 }
 
-static void db_mark(off_t start, Int size)
+static void simble_mark(off_t start, Int size)
 {
     Int i, blocks;
 
@@ -321,7 +322,7 @@ static void db_mark(off_t start, Int size)
     allocated_blocks+=blocks;
 
     while (start + blocks > bitmap_blocks)
-	grow_bitmap(bitmap_blocks + DB_BITBLOCK);
+	simble_grow_bitmap(bitmap_blocks + DB_BITBLOCK);
 
     for (i = start; i < start + blocks; i++)
 	bitmap[i >> 3] |= (1 << (i & 7));
@@ -329,7 +330,7 @@ static void db_mark(off_t start, Int size)
 
 /* This routine copies the object from the current binary to the
    dump binary. It will first check whether copying is needed.
-   Called from db_unmark and db_put (to prevent dirtying the undumped
+   Called from simble_unmark and simble_put (to prevent dirtying the undumped
    objects) */
 
 static void dump_copy (off_t start, Int blocks)
@@ -367,7 +368,7 @@ static void dump_copy (off_t start, Int blocks)
 /* open the dump database. return -1 on failure (can't open the file),
    -2 -> we are already dumping */
 
-Int db_start_dump(char *dump_objects_filename) {
+Int simble_dump_start(char *dump_objects_filename) {
     if (dump_db_file)
 	return -2;
     dump_db_file = fopen(dump_objects_filename, "wb+");
@@ -375,13 +376,13 @@ Int db_start_dump(char *dump_objects_filename) {
 	return -1;
     last_dumped = 0;
 
-    LOCK_DB("db_start_dump")
+    LOCK_DB("simble_dump_start")
 
     dump_blocks = bitmap_blocks;
     dump_bitmap = EMALLOC(char, (bitmap_blocks / 8)+1);
     memcpy(dump_bitmap, bitmap, (bitmap_blocks / 8)+1);
 
-    UNLOCK_DB("db_start_dump")
+    UNLOCK_DB("simble_dump_start")
 
     return 0;
 }
@@ -392,7 +393,7 @@ Int db_start_dump(char *dump_objects_filename) {
            1 -> dump finished, -1 -> unspecified error
 	   call it with maxblocks = between 8 and 64 */
 
-Int dump_some_blocks (Int maxblocks)
+Int simble_dump_some_blocks (Int maxblocks)
 {
     Int dofseek = 1;
     char buf[BLOCK_SIZE];
@@ -400,17 +401,17 @@ Int dump_some_blocks (Int maxblocks)
     if (!dump_db_file)
 	return DUMP_NOT_IN_PROGRESS;
 
-    LOCK_DB("dump_some_blocks")
+    LOCK_DB("simble_dump_some_blocks")
 
     while (maxblocks) {
 	if ( (dump_bitmap[last_dumped >> 3] & (1 << (last_dumped & 7))) ) {
 	    if (dofseek) {
 		if (fseek(database_file, BLOCK_OFFSET (last_dumped), SEEK_SET)) {
-		    UNLOCK_DB("dump_some_blocks")
+		    UNLOCK_DB("simble_dump_some_blocks")
                     panic("fseek(\"%s\"..): %s", database_file, strerror(errno));
 		}
 		if (fseek(dump_db_file,  BLOCK_OFFSET (last_dumped), SEEK_SET)) {
-		    UNLOCK_DB("dump_some_blocks")
+		    UNLOCK_DB("simble_dump_some_blocks")
                     panic("fseek(\"%s\"..): %s", dump_db_file, strerror(errno));
 		}
 		dofseek=0;
@@ -425,25 +426,25 @@ Int dump_some_blocks (Int maxblocks)
 
 	if (last_dumped++ >= dump_blocks) {
 	    if (fclose (dump_db_file)) {
-		UNLOCK_DB("dump_some_blocks")
+		UNLOCK_DB("simble_dump_some_blocks")
 	        panic("Unable to close dump file '%s'", dump_db_file);
 	    }
 	    dump_db_file = NULL;
 	    free (dump_bitmap);
 	    dump_bitmap=NULL;
 
-	    UNLOCK_DB("dump_some_blocks")
+	    UNLOCK_DB("simble_dump_some_blocks")
 
 	    return DUMP_FINISHED;
 	}
     }
 
-    UNLOCK_DB("dump_some_blocks")
+    UNLOCK_DB("simble_dump_some_blocks")
 
     return DUMP_DUMPED_BLOCKS;
 }
 
-static void db_unmark(off_t start, Int size)
+static void simble_unmark(off_t start, Int size)
 {
     Int i, blocks;
 
@@ -459,7 +460,7 @@ static void db_unmark(off_t start, Int size)
 	bitmap[i >> 3] &= ~(1 << (i & 7));
 }
 
-static Int db_alloc(Int size)
+static Int simble_alloc(Int size)
 {
     Int blocks_needed, b, count, starting_block, over_the_top;
 
@@ -484,7 +485,7 @@ static Int db_alloc(Int size)
 		over_the_top = 1;
 		continue;
 	    } else {
-		grow_bitmap(b + DB_BITBLOCK);
+		simble_grow_bitmap(b + DB_BITBLOCK);
 	    }
 	}
 
@@ -501,7 +502,7 @@ static Int db_alloc(Int size)
 		    over_the_top = 1;
 		    break;
 		} else {
-		    grow_bitmap(b + ROUND_UP(blocks_needed-count, DB_BITBLOCK));
+		    simble_grow_bitmap(b + ROUND_UP(blocks_needed-count, DB_BITBLOCK));
                 }
             }
 	}
@@ -519,7 +520,7 @@ static Int db_alloc(Int size)
     }
 }
 
-Int db_get(Obj *object, Long objnum, Long *sizeread)
+Int simble_get(Obj *object, Long objnum, Long *sizeread)
 {
     off_t offset;
     Int size;
@@ -533,11 +534,11 @@ Int db_get(Obj *object, Long objnum, Long *sizeread)
     if (!lookup_retrieve_objnum(objnum, &offset, &size))
 	return 0;
 
-    LOCK_DB("db_get")
+    LOCK_DB("simble_get")
 
     /* seek to location */
     if (fseek(database_file, offset, SEEK_SET)) {
-	UNLOCK_DB("db_get")
+	UNLOCK_DB("simble_get")
 	return 0;
     }
 
@@ -546,9 +547,9 @@ Int db_get(Obj *object, Long objnum, Long *sizeread)
     buf = buffer_new(size);
     buf->len = size;
     buf_pos = fread(buf->s, sizeof(uChar), size, database_file);
-    UNLOCK_DB("db_get")
+    UNLOCK_DB("simble_get")
     if (buf_pos != size)
-        panic("db_get: only read %d of %d bytes.", buf_pos, size);
+        panic("simble_get: only read %d of %d bytes.", buf_pos, size);
 
     buf_pos = 0;
     unpack_object(buf, &buf_pos, object);
@@ -573,7 +574,7 @@ static Int check_free_blocks(Int blocks_needed, Int b)
     return count == blocks_needed;
 }
 
-Int db_put(Obj *obj, Long objnum, Long *sizewritten)
+Int simble_put(Obj *obj, Long objnum, Long *sizewritten)
 {
     cBuf *buf;
     off_t old_offset, new_offset;
@@ -586,8 +587,8 @@ Int db_put(Obj *obj, Long objnum, Long *sizewritten)
 	    buf = buffer_append_uchars_single_ref(buf, pad_string->s, 256 - (buf->len % BLOCK_SIZE));
 	new_size = buf->len;
 
-        LOCK_DB("db_put")
-        db_is_dirty();
+        LOCK_DB("simble_put")
+        simble_flag_as_dirty();
 
 	if ((tmp1=NEEDED(new_size, BLOCK_SIZE)) > (tmp2=NEEDED(old_size, BLOCK_SIZE))) {
 	    /* check for the possible realloc */
@@ -595,18 +596,18 @@ Int db_put(Obj *obj, Long objnum, Long *sizewritten)
 		/* no, we don't have to move, just overwrite */
 		if (dump_db_file)
 		    dump_copy (LOGICAL_BLOCK(old_offset), tmp1);
-		db_mark(LOGICAL_BLOCK(old_offset) + tmp2,
+		simble_mark(LOGICAL_BLOCK(old_offset) + tmp2,
 			BLOCK_SIZE * (tmp1 - tmp2));
 		new_offset = old_offset;
 	    } else {
-		db_unmark(LOGICAL_BLOCK(old_offset), old_size);
-		new_offset = BLOCK_OFFSET(db_alloc(new_size));
+		simble_unmark(LOGICAL_BLOCK(old_offset), old_size);
+		new_offset = BLOCK_OFFSET(simble_alloc(new_size));
 	    }
         } else {
 	    if (dump_db_file)
 		dump_copy (LOGICAL_BLOCK(old_offset), tmp2);
 	    if (tmp1 < tmp2) {
-		db_unmark(LOGICAL_BLOCK(old_offset) + tmp1,
+		simble_unmark(LOGICAL_BLOCK(old_offset) + tmp1,
 			  BLOCK_SIZE * (tmp2 - tmp1));
 	    }
 	    new_offset = old_offset;
@@ -619,17 +620,17 @@ Int db_put(Obj *obj, Long objnum, Long *sizewritten)
 	    buf = buffer_append_uchars_single_ref(buf, pad_string->s, 256 - (buf->len % BLOCK_SIZE));
 	new_size = buf->len;
 
-        LOCK_DB("db_put")
-        db_is_dirty();
+        LOCK_DB("simble_put")
+        simble_flag_as_dirty();
 
-	new_offset = BLOCK_OFFSET(db_alloc(new_size));
+	new_offset = BLOCK_OFFSET(simble_alloc(new_size));
     }
 
     /* Don't store it if it hasn't changed! */
     if ((new_offset != old_offset) ||
       (new_size   != old_size)) {
         if (!lookup_store_objnum(objnum, new_offset, new_size)) {
-	    UNLOCK_DB("db_put")
+	    UNLOCK_DB("simble_put")
 	    buffer_discard(buf);
             if (sizewritten) *sizewritten = 0;
 	    return 0;
@@ -637,7 +638,7 @@ Int db_put(Obj *obj, Long objnum, Long *sizewritten)
     }
 
     if (fseek(database_file, new_offset, SEEK_SET)) {
-	UNLOCK_DB("db_put")
+	UNLOCK_DB("simble_put")
 	buffer_discard(buf);
 	write_err("ERROR: Seek failed for %l.", objnum);
         if (sizewritten) *sizewritten = 0;
@@ -647,16 +648,16 @@ Int db_put(Obj *obj, Long objnum, Long *sizewritten)
     old_size = fwrite(buf->s, sizeof(uChar), new_size, database_file);
     buffer_discard(buf);
     fflush(database_file);
-    UNLOCK_DB("db_put")
+    UNLOCK_DB("simble_put")
     if (old_size != new_size)
-        panic("db_put: only wrote %d of %d bytes.", old_size, new_size);
+        panic("simble_put: only wrote %d of %d bytes.", old_size, new_size);
 
     if (sizewritten) *sizewritten = new_size;
 
     return 1;
 }
 
-Int db_check(Long objnum)
+Int simble_check(Long objnum)
 {
     off_t offset;
     Int size;
@@ -664,7 +665,7 @@ Int db_check(Long objnum)
     return lookup_retrieve_objnum(objnum, &offset, &size);
 }
 
-Int db_del(Long objnum)
+Int simble_del(Long objnum)
 {
     off_t offset;
     Int size;
@@ -677,19 +678,19 @@ Int db_del(Long objnum)
     if (!lookup_remove_objnum(objnum))
 	return 0;
 
-    LOCK_DB("db_del")
+    LOCK_DB("simble_del")
 
     --num_objects;
-    db_is_dirty();
+    simble_flag_as_dirty();
 
     /* Mark free space in bitmap */
-    db_unmark(LOGICAL_BLOCK(offset), size);
+    simble_unmark(LOGICAL_BLOCK(offset), size);
 
     /* Mark object dead in file */
     if (fseek(database_file, offset, SEEK_SET)) {
 	write_err("ERROR: Failed to seek to object %l.", objnum);
 
-        UNLOCK_DB("db_del")
+        UNLOCK_DB("simble_del")
 
 	return 0;
     }
@@ -698,30 +699,30 @@ Int db_del(Long objnum)
     fwrite(pad_string->s, sizeof(uChar), BLOCK_SIZE-6, database_file);
     fflush(database_file);
 
-    UNLOCK_DB("db_del")
+    UNLOCK_DB("simble_del")
 
     return 1;
 }
 
-void db_close(void)
+void simble_close(void)
 {
-    LOCK_DB("db_close")
+    LOCK_DB("simble_close")
     lookup_close();
     fclose(database_file);
     efree(bitmap);
-    db_is_clean();
-    UNLOCK_DB("db_close")
+    simble_flag_as_clean();
+    UNLOCK_DB("simble_close")
 }
 
-void db_flush(void)
+void simble_flush(void)
 {
     lookup_sync();
 
-    LOCK_DB("db_flush")
+    LOCK_DB("simble_flush")
 
-    db_is_clean();
+    simble_flag_as_clean();
 
-    UNLOCK_DB("db_flush")
+    UNLOCK_DB("simble_flush")
 }
 
 #define write_clean_file(_fp_) \
@@ -729,7 +730,7 @@ void db_flush(void)
                 VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH,\
                 (long) MAGIC_MODNUMBER)\
 
-void finish_backup(void) {
+void simble_dump_finish(void) {
     FILE * fp;
     char buf[BUF];
     
@@ -742,7 +743,7 @@ void finish_backup(void) {
     close_scratch_file(fp);
 }
 
-static void db_is_clean(void) {
+static void simble_flag_as_clean(void) {
     FILE *fp;
 
     if (db_clean)
@@ -751,7 +752,7 @@ static void db_is_clean(void) {
     /* Create 'clean' file. */
     fp = open_scratch_file(c_clean_file, "wb");
     if (!fp) {
-	UNLOCK_DB("db_is_clean")
+	UNLOCK_DB("simble_flag_as_clean")
 	panic("Cannot create file 'clean'.");
     }
     write_clean_file(fp);
@@ -759,11 +760,11 @@ static void db_is_clean(void) {
     db_clean = 1;
 }
 
-static void db_is_dirty(void) {
+static void simble_flag_as_dirty(void) {
     if (db_clean) {
 	/* Remove 'clean' file. */
 	if (unlink(c_clean_file) == -1) {
-	    UNLOCK_DB("db_is_clean")
+	    UNLOCK_DB("simble_flag_as_clean")
 	    panic("Cannot remove file 'clean'.");
 	}
 	db_clean = 0;
@@ -784,7 +785,8 @@ static void _check_obj(Long objnum, cList * parents, char * name) {
 
     if (lookup_retrieve_name(id, &other)) {
         if (other != objnum)
-           printf("ACK: $%s is not bound to #%li!!, tweaking...\n",name,(long)objnum);
+           printf("ACK: $%s is not bound to #%li!!, tweaking...\n",
+                  name, (long)objnum);
 
         if ((obj2 = cache_retrieve(other))) {
             object_del_objname(obj2);

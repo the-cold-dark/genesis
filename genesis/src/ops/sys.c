@@ -163,9 +163,9 @@ void func_backup(void) {
     }
     closedir(dp);
 
-    /* start asyncrynous backup of the object db file */
+    /* start asynchronous backup of the object db file */
     strcat(buf, "/objects");
-    if (db_start_dump(buf))
+    if (simble_dump_start(buf))
         THROW((file_id, "Unable to open dump db file \"%s\"", buf))
 
 #ifdef USE_CLEANER_THREAD

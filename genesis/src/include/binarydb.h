@@ -21,18 +21,17 @@
 
 void   init_binary_db(void);
 void   init_new_db(void);
-Int    db_get(Obj * object, Long name, Long *obj_size);
-Int    db_put(Obj * object, Long name, Long *obj_size);
-Int    db_check(Long name);
-Int    db_del(Long name);
-Int    db_backup(char * out);
-void   db_close(void);
-void   db_flush(void);
 void   init_core_objects(void);
-Float  db_fragmentation(void);
-Int    db_start_dump (char *dump_objects_filename);
-Int    dump_some_blocks (Int maxblocks);
-void   finish_backup(void);
+Int    simble_get(Obj * object, Long name, Long *obj_size);
+Int    simble_put(Obj * object, Long name, Long *obj_size);
+Int    simble_check(Long name);
+Int    simble_del(Long name);
+void   simble_close(void);
+void   simble_flush(void);
+Float  simble_fragmentation(void);
+Int    simble_dump_start(char *dump_objects_filename);
+Int    simble_dump_some_blocks (Int maxblocks);
+void   simble_dump_finish(void);
 
 /* global primarily so we can know if we are dumping */
 #ifdef _binarydb_

@@ -48,7 +48,7 @@ void   shutdown_coldcc(void) {
     running = NO;
     write_err("Syncing binarydb...");
     cache_sync();
-    db_close();
+    simble_close();
     flush_output();
     close_files();
     write_err("Done");

@@ -8,6 +8,14 @@ New to do items:
  * add displaying the stuff available from config() on @status
    as an example for other cores
  * Thread pool, make DNS use it
+ * fix flag setting to be able to replace a native at runtime
+   as well as reacquire the native implementation
+ * finish the USE_PARENT_OBJS work
+   * fix the recursion deadlock during db_get
+   * fix the coldcc object-redefinition assumption
+   * once the basics work, look at areas that can no totally
+     avoid cache_retrieve/discard
+ * fix the cleaner thread to use a cond wait instead of sleep
 
 Merge candidates from the 1.2 branch:
  * Added performance metrics gathering code to the object, method

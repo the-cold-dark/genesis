@@ -6,7 +6,7 @@
 
 #include <string.h>
 #include <ctype.h>
-#include "operators.h"
+#include "functions.h"
 #include "execute.h"
 #include "strutil.h"
 #include "util.h"

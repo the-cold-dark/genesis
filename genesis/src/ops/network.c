@@ -5,6 +5,7 @@
 #include "defs.h"
 
 #include <string.h>
+#include "functions.h"
 #include "execute.h"
 #include "net.h"
 #include "util.h"

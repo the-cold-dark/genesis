@@ -3,10 +3,8 @@
 */
 
 #include "defs.h"
-
-#include "operators.h"
+#include "functions.h"
 #include "execute.h"
-#include "util.h" /* fformat() */
 
 COLDC_FUNC(listgraft) {
     cData * args, * d1, * d2;

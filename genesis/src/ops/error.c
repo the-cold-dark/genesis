@@ -3,11 +3,8 @@
 */
 
 #include "defs.h"
-
+#include "functions.h"
 #include "execute.h"
-#include "grammar.h"
-#include "cache.h"
-#include "opcodes.h"
 
 COLDC_FUNC(error) {
     if (!func_init_0())

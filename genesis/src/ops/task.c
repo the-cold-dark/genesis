@@ -3,11 +3,8 @@
 */
 
 #include "defs.h"
-
-#include "lookup.h"
+#include "functions.h"
 #include "execute.h"
-#include "grammar.h"
-#include "opcodes.h"
 
 /* ----------------------------------------------------------------- */
 /* cancel a suspended task                                           */

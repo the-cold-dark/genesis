@@ -3,6 +3,7 @@
 */
 
 #include "defs.h"
+#include "functions.h"
 #include "cdc_pcode.h"
 
 COLDC_FUNC(bufgraft) {

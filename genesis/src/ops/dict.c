@@ -3,7 +3,7 @@
 */
 
 #include "defs.h"
-#include "operators.h"
+#include "functions.h"
 #include "execute.h"
 
 COLDC_FUNC(dict_values) {

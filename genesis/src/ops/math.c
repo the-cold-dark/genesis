@@ -13,6 +13,7 @@
 
 #include <time.h>
 #include <math.h>
+#include "functions.h"
 #include "cdc_pcode.h"
 #include "util.h"
 #include "sig.h"

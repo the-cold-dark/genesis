@@ -10,6 +10,7 @@
 #include <sys/time.h>    /* for mtime() */
 #endif
 
+#include "functions.h"
 #include "operators.h"
 #include "execute.h"
 #include "util.h"

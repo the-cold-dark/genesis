@@ -3,7 +3,7 @@
 */
 
 #include "defs.h"
-
+#include "functions.h"
 #ifdef __UNIX__
 #include <sys/param.h>
 #endif

@@ -15,7 +15,6 @@
 */
 
 #include "defs.h"
-
 #ifdef __Win32__
 #define STDIN_FILENO (fileno(stdin))
 #define STDOUT_FILENO (fileno(stdout))
@@ -31,11 +30,10 @@
 #include <sys/stat.h>
 #include <dirent.h>  /* func_files() */
 #include <fcntl.h>
+#include "functions.h"
 #include "execute.h"
-#include "cache.h"
 #include "util.h"      /* some file functions */
 #include "file.h"
-#include "token.h"     /* is_valid_ident() */
 
 #define GET_FILE_CONTROLLER(__f) { \
         __f = find_file_controller(cur_frame->object); \

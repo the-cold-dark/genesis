@@ -15,7 +15,7 @@
 */
 
 #include "defs.h"
-
+#include "functions.h"
 #include "cdc_pcode.h"
 #include "cdc_db.h"
 

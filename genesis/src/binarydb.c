@@ -20,6 +20,10 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "cdc_types.h"
+#include "cdc_string.h"
+#include "buffer.h"
+
 #ifdef USE_CLEANER_THREAD
 pthread_mutex_t db_mutex;
 
@@ -76,6 +80,7 @@ static Int allocated_blocks = 0;
 char c_clean_file[255];
 
 static Int db_clean;
+static cStr *pad_string;
 
 extern Long db_top;
 extern Long num_objects;
@@ -214,6 +219,7 @@ void init_binary_db(void) {
     pthread_mutex_init (&db_mutex, NULL);
 #endif
 
+    pad_string = string_of_char(0, 256);
     sprintf(c_clean_file, "%s/.clean", c_dir_binary);
     DBFILE(fdb_objects, "objects");
     DBFILE(fdb_index,   "index");
@@ -258,6 +264,7 @@ void init_new_db(void) {
 #endif
     LOCK_DB("init_new_db")
 
+    pad_string = string_of_char(0, 256);
     sprintf(c_clean_file, "%s/.clean", c_dir_binary);
     DBFILE(fdb_objects, "objects");
     DBFILE(fdb_index,   "index");
@@ -510,12 +517,15 @@ static Int db_alloc(Int size)
     }
 }
 
-Int db_get(Obj *object, Long objnum)
+Int db_get(Obj *object, Long objnum, Long *sizeread)
 {
     off_t offset;
     Int size;
     cBuf *buf;
     Long buf_pos;
+
+    if (sizeread)
+        *sizeread = -1;
 
     /* Get the object location for the objnum. */
     if (!lookup_retrieve_objnum(objnum, &offset, &size))
@@ -529,6 +539,8 @@ Int db_get(Obj *object, Long objnum)
 	return 0;
     }
 
+    if (sizeread)
+        *sizeread = size;
     buf = buffer_new(size);
     buf->len = size;
     buf_pos = fread(buf->s, sizeof(uChar), size, database_file);
@@ -568,6 +580,8 @@ Int db_put(Obj *obj, Long objnum, Long *sizewritten)
     if (lookup_retrieve_objnum(objnum, &old_offset, &old_size)) {
         buf = buffer_new(old_size);
         buf = pack_object(buf, obj);
+	if (buf->len % BLOCK_SIZE)
+	    buf = buffer_append_uchars_single_ref(buf, pad_string->s, 256 - (buf->len % BLOCK_SIZE));
 	new_size = buf->len;
 
         LOCK_DB("db_put")
@@ -599,6 +613,8 @@ Int db_put(Obj *obj, Long objnum, Long *sizewritten)
 	++num_objects;
 	buf = buffer_new(0);
 	buf = pack_object(buf, obj);
+	if (buf->len % BLOCK_SIZE)
+	    buf = buffer_append_uchars_single_ref(buf, pad_string->s, 256 - (buf->len % BLOCK_SIZE));
 	new_size = buf->len;
 
         LOCK_DB("db_put")
@@ -673,6 +689,7 @@ Int db_del(Long objnum)
     }
 
     fputs("delobj", database_file);
+    fwrite(pad_string->s, sizeof(uChar), BLOCK_SIZE-6, database_file);
     fflush(database_file);
 
     UNLOCK_DB("db_del")

@@ -46,7 +46,7 @@
  * In general, modifying start and len is the responsibility of this routine;
  * modifying the contents is the responsibility of the calling routine. */
 
-static list_t *prepare_to_modify(list_t *list, int start, int len) {
+list_t * list_prep(list_t *list, int start, int len) {
     list_t * cnew;
     int      i,
              resize,
@@ -176,7 +176,7 @@ int list_cmp(list_t *l1, list_t *l2) {
 
 /* Error-checking on pos is the job of the calling function. */
 list_t *list_insert(list_t *list, int pos, data_t *elem) {
-    list = prepare_to_modify(list, list->start, list->len + 1);
+    list = list_prep(list, list->start, list->len + 1);
     pos += list->start;
     MEMMOVE(list->el + pos + 1, list->el + pos, list->len - 1 - pos);
     data_dup(&list->el[pos], elem);
@@ -184,16 +184,16 @@ list_t *list_insert(list_t *list, int pos, data_t *elem) {
 }
 
 list_t *list_add(list_t *list, data_t *elem) {
-    list = prepare_to_modify(list, list->start, list->len + 1);
+    list = list_prep(list, list->start, list->len + 1);
     data_dup(&list->el[list->start + list->len - 1], elem);
     return list;
 }
 
 /* Error-checking on pos is the job of the calling function. */
 list_t *list_replace(list_t *list, int pos, data_t *elem) {
-    /* prepare_to_modify needed here only for multiply referenced lists */
+    /* list_prep needed here only for multiply referenced lists */
     if (list->refs > 1)
-      list = prepare_to_modify(list, list->start, list->len);
+      list = list_prep(list, list->start, list->len);
     pos += list->start;
     data_discard(&list->el[pos]);
     data_dup(&list->el[pos], elem);
@@ -204,21 +204,21 @@ list_t *list_replace(list_t *list, int pos, data_t *elem) {
 list_t *list_delete(list_t *list, int pos) {
     /* Special-case deletion of last element. */
     if (pos == list->len - 1)
-        return prepare_to_modify(list, list->start, list->len - 1);
+        return list_prep(list, list->start, list->len - 1);
 
-    /* prepare_to_modify needed here only for multiply referenced lists */
+    /* list_prep needed here only for multiply referenced lists */
     if (list->refs > 1)
-        list = prepare_to_modify(list, list->start, list->len);
+        list = list_prep(list, list->start, list->len);
 
     pos += list->start;
     data_discard(&list->el[pos]);
     MEMMOVE(list->el + pos, list->el + pos + 1, list->len - pos);
     list->len--;
 
-    /* prepare_to_modify needed here only if list has shrunk */
+    /* list_prep needed here only if list has shrunk */
     if (((list->len - list->start) * 4 < list->size)
         && (list->size > STARTING_SIZE))
-        list = prepare_to_modify(list, list->start, list->len);
+        list = list_prep(list, list->start, list->len);
 
     return list;
 }
@@ -232,7 +232,7 @@ list_t *list_append(list_t *list1, list_t *list2) {
     int i;
     data_t *p, *q;
 
-    list1 = prepare_to_modify(list1, list1->start, list1->len + list2->len);
+    list1 = list_prep(list1, list1->start, list1->len + list2->len);
     p = list1->el + list1->start + list1->len - list2->len;
     q = list2->el + list2->start;
     for (i = 0; i < list2->len; i++)
@@ -244,9 +244,9 @@ list_t *list_reverse(list_t *list) {
     data_t *d, tmp;
     int i;
 
-    /* prepare_to_modify needed here only for multiply referenced lists */
+    /* list_prep needed here only for multiply referenced lists */
     if (list->refs > 1)
-        list = prepare_to_modify(list, list->start, list->len);
+        list = list_prep(list, list->start, list->len);
 
     d = list->el + list->start;
     for (i = 0; i < list->len / 2; i++) {
@@ -285,7 +285,7 @@ list_t *list_union(list_t *list1, list_t *list2) {
 }
 
 list_t *list_sublist(list_t *list, int start, int len) {
-    return prepare_to_modify(list, list->start + start, len);
+    return list_prep(list, list->start + start, len);
 }
 
 /* Warning: do not discard a list before initializing its data elements. */

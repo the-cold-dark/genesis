@@ -149,7 +149,7 @@ void func_cwritef(void) {
     size_t        block, r;
     data_t      * args;
     FILE        * fp;
-    Buffer      * buf;
+    buffer_t    * buf;
     string_t    * str;
     struct stat   statbuf;
     int           nargs;

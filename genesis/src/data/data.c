@@ -213,7 +213,7 @@ void data_dup(data_t *dest, data_t *src)
 	break;
 
       case FROB:
-	dest->u.frob = TMALLOC(Frob, 1);
+	dest->u.frob = TMALLOC(frob_t, 1);
 	dest->u.frob->cclass = src->u.frob->cclass;
 	data_dup(&dest->u.frob->rep, &src->u.frob->rep);
 	break;

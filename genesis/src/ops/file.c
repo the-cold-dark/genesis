@@ -502,7 +502,7 @@ void func_fread(void) {
     }
 
     if (file->f.binary) {
-        Buffer * buf = NULL;
+        buffer_t * buf = NULL;
         int      block = DEF_BLOCKSIZE;
 
         if (nargs) {

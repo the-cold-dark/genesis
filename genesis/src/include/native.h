@@ -23,7 +23,7 @@
 typedef struct native_s {
     char     * bindobj;
     char     * name;
-    int       (*func)(int stack_pos, data_t * rval);
+    int       (*func)(int stack_start, int arg_start);
 #if 0
     int        args;
     int        rest;

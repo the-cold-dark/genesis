@@ -18,20 +18,21 @@
 #include "data.h"
 #endif
 
-Dict * dict_new(list_t * keys, list_t * values);
-Dict * dict_new_empty(void);
-Dict * dict_from_slices(list_t * slices);
-Dict * dict_dup(Dict * dict);
-void dict_discard(Dict * dict);
-int dict_cmp(Dict * dict1, Dict * dict2);
-Dict * dict_add(Dict * dict, data_t * key, data_t * value);
-Dict * dict_del(Dict * dict, data_t * key);
-long dict_find(Dict * dict, data_t * key, data_t * ret);
-int dict_contains(Dict * dict, data_t * key);
-list_t * dict_keys(Dict * dict);
-list_t * dict_key_value_pair(Dict * mapping, int i);
-int dict_size(Dict * dict);
-string_t * dict_add_literal_to_str(string_t * str, Dict * dict);
+dict_t * dict_new(list_t * keys, list_t * values);
+dict_t * dict_new_empty(void);
+dict_t * dict_from_slices(list_t * slices);
+dict_t * dict_dup(dict_t * dict);
+void dict_discard(dict_t * dict);
+int dict_cmp(dict_t * dict1, dict_t * dict2);
+dict_t * dict_add(dict_t * dict, data_t * key, data_t * value);
+dict_t * dict_del(dict_t * dict, data_t * key);
+dict_t * dict_prep(dict_t *);
+long dict_find(dict_t * dict, data_t * key, data_t * ret);
+int dict_contains(dict_t * dict, data_t * key);
+list_t * dict_keys(dict_t * dict);
+list_t * dict_key_value_pair(dict_t * mapping, int i);
+int dict_size(dict_t * dict);
+string_t * dict_add_literal_to_str(string_t * str, dict_t * dict);
 
 #endif
 

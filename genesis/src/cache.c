@@ -13,6 +13,8 @@
 // all rights reserved.
 */
 
+#define _cache_
+
 #include "config.h"
 #include "defs.h"
 
@@ -55,16 +57,16 @@ void init_cache(void) {
     object_t *obj;
     int	i, j;
 
-    active = EMALLOC(object_t, CACHE_WIDTH);
-    inactive = EMALLOC(object_t, CACHE_WIDTH);
+    active = EMALLOC(object_t, cache_width);
+    inactive = EMALLOC(object_t, cache_width);
 
-    for (i = 0; i < CACHE_WIDTH; i++) {
+    for (i = 0; i < cache_width; i++) {
 	/* Active list starts out empty. */
 	active[i].next = active[i].prev = &active[i];
 
 	/* Inactive list begins as a chain of empty objects. */
 	inactive[i].next = inactive[i].prev = &inactive[i];
-	for (j = 0; j < CACHE_DEPTH; j++) {
+	for (j = 0; j < cache_depth; j++) {
 	    obj = EMALLOC(object_t, 1);
 	    obj->objnum = INV_OBJNUM;
             obj->ucounter=0;
@@ -88,7 +90,7 @@ void init_cache(void) {
 */
 
 object_t * cache_get_holder(long objnum) {
-    int ind = objnum % CACHE_WIDTH;
+    int ind = objnum % cache_width;
     object_t *obj;
 
     if (inactive[ind].next != &inactive[ind]) {
@@ -147,7 +149,7 @@ object_t * cache_get_holder(long objnum) {
 //
 */
 object_t *cache_retrieve(long objnum) {
-    int ind = objnum % CACHE_WIDTH;
+    int ind = objnum % cache_width;
     object_t *obj;
 
     if (objnum < 0)
@@ -243,7 +245,7 @@ void cache_discard(object_t *obj) {
 #if DEBUG_CACHE
     _acounter--;
 #endif
-    ind = obj->objnum % CACHE_WIDTH;
+    ind = obj->objnum % cache_width;
 
     /* Reference count hit 0; remove from active chain. */
     obj->prev->next = obj->next;
@@ -280,7 +282,7 @@ void cache_discard(object_t *obj) {
 */
 
 int cache_check(long objnum) {
-    int ind = objnum % CACHE_WIDTH;
+    int ind = objnum % cache_width;
     object_t *obj;
 
     if (objnum < 0)
@@ -316,7 +318,7 @@ void cache_sync(void) {
     object_t *obj;
 
     /* Traverse all the active and inactive chains. */
-    for (i = 0; i < CACHE_WIDTH; i++) {
+    for (i = 0; i < cache_width; i++) {
 	/* Check active chain. */
 	for (obj = active[i].next; obj != &active[i]; obj = obj->next) {
 	    if (obj->dirty) {
@@ -381,7 +383,7 @@ void cache_sanity_check(void) {
     VMState  * task;
 
     /* using labels was the best way I could come up with, I'm sorry... */
-    for (i = 0; i < CACHE_WIDTH; i++) {
+    for (i = 0; i < cache_width; i++) {
         for (obj = active[i].next; obj != &active[i]; obj = obj->next) {
 
             /* check suspended tasks */
@@ -421,7 +423,7 @@ void cache_cleanup(void) {
     object_t * obj;
     int        i;
 
-    for (i = 0; i < CACHE_WIDTH; i++) {
+    for (i = 0; i < cache_width; i++) {
         for (obj = inactive[i].next; obj != &inactive[i]; obj = obj->next) {
             obj->ucounter >>= 1;
             if(obj->ucounter > 0) {
@@ -458,3 +460,5 @@ void cache_cleanup(void) {
         }
     }
 }
+
+#undef _cache_

@@ -14,9 +14,11 @@
 #include "config.h"
 #include "defs.h"
 
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <ctype.h>
 #include <time.h>
 #include <errno.h>
 #include "codegen.h"
@@ -105,19 +107,9 @@ INTERNAL void initialize(int argc, char **argv) {
     /* Ditch stdin, so we can reuse the file descriptor */
     fclose(stdin);
 
+    /* basic initialization */
     init_defs();
-
-    /* Initialize internal tables and variables. */
-    init_codegen();
-    init_ident();
-    init_op_table();
     init_match();
-    init_util();
-    init_sig();
-    init_execute();
-    init_scratch_file();
-    init_token();
-    init_modules(argc, argv);
 
     /* db argument list */
     args = list_new(0);
@@ -155,6 +147,29 @@ INTERNAL void initialize(int argc, char **argv) {
                         argv += getarg(name,&buf,opt,argv,&argc,usage);
                         NEWFILE(c_pidfile, buf);
                         break;
+                    case 's': {
+                        char * p;
+    
+                        argv += getarg(name, &buf, opt, argv, &argc, usage);
+                        p = buf;
+                        cache_width = atoi(p);
+                        while (*p && isdigit(*p))
+                            p++;
+                        if (LCASE(*p) == 'x') {
+                            p++;
+                            cache_depth = atoi(p);
+                        } else {
+                            usage(name);
+                            printf("\n** Invalid WIDTHxDEPTH: '%s'\n", buf);
+                            exit(0);
+                        }
+                        if (cache_width == 0 && cache_depth == 0) {
+                            usage(name);
+                         puts("\n** The WIDTH and DEPTH cannot both be zero\n");
+                            exit(0);
+                        }
+                        break;
+                    }
                     case 'f':
                         dofork = 0;
                         break;
@@ -185,6 +200,18 @@ INTERNAL void initialize(int argc, char **argv) {
         argc--;
     }
 
+    /* Initialize internal tables and variables. */
+    init_codegen();
+    init_ident();
+    init_op_table();
+    init_util();
+    init_sig();
+    init_execute();
+    init_scratch_file();
+    init_token();
+    init_modules(argc, argv);
+
+    /* where is the base db directory ? */
     if (basedir == NULL)
         basedir = ".";
 
@@ -335,14 +362,15 @@ Usage: %s [base dir] [options]\n\n\
     Note: specifying \"stdin\" or \"stderr\" for either of the logs will\n\
     direct them appropriately.\n\n\
 Options:\n\n\
-    -v               version.\n\
-    -b binary        binary database directory name, default: \"%s\"\n\
-    -r root          root file directory name, default: \"%s\"\n\
-    -x bindir        db executables directory, default: \"%s\"\n\
-    -d log           alternate database logfile, default: \"%s\"\n\
-    -e log           alternate error (driver) file, default: \"%s\"\n\
-    -p pidfile       alternate pid file, default: \"%s\"\n\
-    -f               do not fork on startup\n\
+        -v              version.\n\
+        -b binary       binary database directory name, default: \"%s\"\n\
+        -r root         root file directory name, default: \"%s\"\n\
+        -x bindir       db executables directory, default: \"%s\"\n\
+        -d log          alternate database logfile, default: \"%s\"\n\
+        -e log          alternate error (driver) file, default: \"%s\"\n\
+        -p pidfile      alternate pid file, default: \"%s\"\n\
+        -f              do not fork on startup\n\
+        -s WIDTHxDEPTH  Cache size, default 10x30\n\
 \n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, name, c_dir_binary,
      c_dir_root, c_dir_bin, c_logfile, c_errfile, c_pidfile);
 }

@@ -41,6 +41,7 @@ list_t * list_setremove(list_t * list, data_t * elem);
 list_t * list_union(list_t * list1, list_t * list2);
 list_t * list_sublist(list_t * list, int start, int len);
 void     list_discard(list_t * list);
+list_t * list_prep(list_t * list, int start, int len);
 
 #endif
 

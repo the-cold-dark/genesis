@@ -96,7 +96,7 @@ COLDC_FUNC(buf_to_strings) {
     data_t *args;
     int num_args;
     list_t *list;
-    Buffer *sep;
+    buffer_t *sep;
 
     if (!func_init_1_or_2(&args, &num_args, BUFFER, BUFFER))
 	return;
@@ -111,7 +111,7 @@ COLDC_FUNC(buf_to_strings) {
 
 COLDC_FUNC(str_to_buf) {
     data_t *args;
-    Buffer *buf;
+    buffer_t *buf;
 
     if (!func_init_1(&args, STRING))
 	return;
@@ -125,7 +125,7 @@ COLDC_FUNC(str_to_buf) {
 COLDC_FUNC(strings_to_buf) {
     data_t *args, *d;
     int num_args, i;
-    Buffer *buf, *sep;
+    buffer_t *buf, *sep;
     list_t *list;
 
     if (!func_init_1_or_2(&args, &num_args, LIST, BUFFER))

@@ -430,7 +430,7 @@ void func_uppercase(void) {
     if (!func_init_1(&args, STRING))
 	return;
 
-    args[0].u.str = string_uppercase(string_dup_or_copy(args[0].u.str));
+    args[0].u.str = string_uppercase(args[0].u.str);
 }
 
 void func_lowercase(void) {
@@ -440,7 +440,7 @@ void func_lowercase(void) {
     if (!func_init_1(&args, STRING))
 	return;
 
-    args[0].u.str = string_lowercase(string_dup_or_copy(args[0].u.str));
+    args[0].u.str = string_lowercase(args[0].u.str);
 }
 
 void func_strcmp(void) {

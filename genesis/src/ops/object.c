@@ -28,7 +28,7 @@
 #include "grammar.h"
 #include "cache.h"
 
-void func_add_var(void) {
+COLDC_FUNC(add_var) {
     data_t * args;
     long     result;
 
@@ -45,7 +45,7 @@ void func_add_var(void) {
     push_int(1);
 }
 
-void func_del_var(void) {
+COLDC_FUNC(del_var) {
     data_t * args;
     long     result;
 
@@ -62,7 +62,7 @@ void func_del_var(void) {
     }
 }
 
-void func_variables(void) {
+COLDC_FUNC(variables) {
     list_t   * vars;
     object_t * obj;
     int        i;
@@ -90,7 +90,7 @@ void func_variables(void) {
     list_discard(vars);
 }
 
-void func_set_var(void) {
+COLDC_FUNC(set_var) {
     data_t * args,
              d;
     long     result;
@@ -112,7 +112,7 @@ void func_set_var(void) {
     }
 }
 
-void func_get_var(void) {
+COLDC_FUNC(get_var) {
     data_t * args,
              d;
     long     result;
@@ -132,7 +132,7 @@ void func_get_var(void) {
     }
 }
 
-void func_clear_var(void) {
+COLDC_FUNC(clear_var) {
     data_t * args;
     long     result = 0;
 
@@ -156,7 +156,7 @@ void func_clear_var(void) {
     }
 }
 
-void func_add_method(void) {
+COLDC_FUNC(add_method) {
     data_t   * args,
              * d;
     method_t * method;
@@ -205,7 +205,7 @@ void func_add_method(void) {
     list_discard(errors);
 }
 
-void func_rename_method(void) {
+COLDC_FUNC(rename_method) {
     data_t   * args;
     method_t * method;
 
@@ -257,7 +257,7 @@ INTERNAL list_t * list_method_flags(int flags) {
 
 #undef LADD
 
-void func_method_flags(void) {
+COLDC_FUNC(method_flags) {
     data_t  * args;
     list_t  * list;
 
@@ -271,7 +271,7 @@ void func_method_flags(void) {
     list_discard(list);
 }
 
-void func_set_method_flags(void) {
+COLDC_FUNC(set_method_flags) {
     data_t  * args,
             * d;
     list_t  * list;
@@ -311,7 +311,7 @@ void func_set_method_flags(void) {
     push_int(new_flags);
 }
 
-void func_method_access(void) {
+COLDC_FUNC(method_access) {
     int       access;
     data_t  * args;
 
@@ -332,7 +332,7 @@ void func_method_access(void) {
     }
 }
 
-void func_set_method_access(void) {
+COLDC_FUNC(set_method_access) {
     int       access = 0;
     data_t  * args;
     Ident     sym;
@@ -363,7 +363,7 @@ void func_set_method_access(void) {
     push_int(access);
 }
 
-void func_method_info(void) {
+COLDC_FUNC(method_info) {
     data_t   * args,
              * list;
     list_t   * output;
@@ -430,7 +430,7 @@ void func_method_info(void) {
     list_discard(output);
 }
 
-void func_methods(void) {
+COLDC_FUNC(methods) {
     list_t   * methods;
     data_t     d;
     object_t * obj;
@@ -457,7 +457,7 @@ void func_methods(void) {
     list_discard(methods);
 }
 
-void func_find_method(void) {
+COLDC_FUNC(find_method) {
     data_t   * args;
     method_t * method;
 
@@ -476,7 +476,7 @@ void func_find_method(void) {
     }
 }
 
-void func_find_next_method(void) {
+COLDC_FUNC(find_next_method) {
     data_t   * args;
     method_t * method;
 
@@ -496,7 +496,7 @@ void func_find_next_method(void) {
     }
 }
 
-void func_decompile(void) {
+COLDC_FUNC(decompile) {
     int      num_args,
              indent,
              parens;
@@ -524,7 +524,7 @@ void func_decompile(void) {
     }
 }
 
-void func_del_method(void) {
+COLDC_FUNC(del_method) {
     data_t * args;
     int      status;
 
@@ -543,7 +543,7 @@ void func_del_method(void) {
     }
 }
 
-void func_parents(void) {
+COLDC_FUNC(parents) {
     /* Accept no arguments. */
     if (!func_init_0())
 	return;
@@ -552,7 +552,7 @@ void func_parents(void) {
     push_list(cur_frame->object->parents);
 }
 
-void func_children(void) {
+COLDC_FUNC(children) {
     /* Accept no arguments. */
     if (!func_init_0())
 	return;
@@ -561,7 +561,7 @@ void func_children(void) {
     push_list(cur_frame->object->children);
 }
 
-void func_descendants(void) {
+COLDC_FUNC(descendants) {
     list_t * desc;
 
     if (!func_init_0())
@@ -573,7 +573,7 @@ void func_descendants(void) {
     list_discard(desc);
 }
 
-void func_ancestors(void) {
+COLDC_FUNC(ancestors) {
     list_t * ancestors;
 
     /* Accept no arguments. */
@@ -586,7 +586,7 @@ void func_ancestors(void) {
     list_discard(ancestors);
 }
 
-void func_has_ancestor(void) {
+COLDC_FUNC(has_ancestor) {
     data_t * args;
     int result;
 
@@ -599,7 +599,7 @@ void func_has_ancestor(void) {
     push_int(result);
 }
 
-void func_create(void) {
+COLDC_FUNC(create) {
     data_t *args, *d;
     list_t *parents;
     object_t *obj;
@@ -630,7 +630,7 @@ void func_create(void) {
     cache_discard(obj);
 }
 
-void func_chparents(void) {
+COLDC_FUNC(chparents) {
     data_t   * args,
              * d,
                d2;
@@ -672,39 +672,32 @@ void func_chparents(void) {
     }
 }
 
-void func_destroy(void) {
-    data_t   * args;
+COLDC_FUNC(destroy) {
     object_t * obj;
 
-    /* Accept a objnum to destroy. */
-    if (!func_init_1(&args, OBJNUM))
+    if (!func_init_0())
         return;
 
-    if (args[0].u.objnum == ROOT_OBJNUM) {
-        cthrow(perm_id, "You can't destroy the root object.");
-    } else if (args[0].u.objnum == SYSTEM_OBJNUM) {
-        cthrow(perm_id, "You can't destroy the system object.");
-    } else {
-        obj = cache_retrieve(args[0].u.objnum);
-        if (!obj) {
-            cthrow(objnf_id, "Object #%l not found.", args[0].u.objnum);
-            return;
-        }
-        /* Set the object dead, so it will go away when nothing is holding onto
-         * it.  cache_discard() will notice the dead flag, and call
-         * object_destroy(). */
-        obj->dead = 1;
-        cache_discard(obj);
-        pop(1);
-        push_int(1);
-    }
+    obj = cur_frame->object;
+    if (obj->objnum == ROOT_OBJNUM)
+        THROW((perm_id, "You can't destroy the root object."))
+    else if (obj->objnum == SYSTEM_OBJNUM)
+        THROW((perm_id, "You can't destroy the system object."))
+     
+    /*
+    // Set the object dead, so it will go away when nothing is
+    // holding onto it.  cache_discard() will notice the dead
+    // flag, and call object_destroy().
+    */
+    obj->dead = 1;
+    push_int(1);
 }
 
-void func_data(void) {
+COLDC_FUNC(data) {
     data_t   * args,
                key,
                value;
-    Dict     * dict;
+    dict_t   * dict;
     object_t * obj = cur_frame->object;
     int        i,
                nargs;
@@ -756,7 +749,7 @@ void func_data(void) {
 // -----------------------------------------------------------------
 */
 
-void func_set_objname(void) {
+COLDC_FUNC(set_objname) {
     data_t *args;
 
     if (!func_init_1(&args, SYMBOL))
@@ -775,7 +768,7 @@ void func_set_objname(void) {
 // -----------------------------------------------------------------
 */
 
-void func_del_objname(void) {
+COLDC_FUNC(del_objname) {
     if (!func_init_0())
         return;
 
@@ -792,7 +785,7 @@ void func_del_objname(void) {
 // -----------------------------------------------------------------
 */
 
-void func_objname(void) {
+COLDC_FUNC(objname) {
     if (!func_init_0())
         return;
   
@@ -808,7 +801,7 @@ void func_objname(void) {
 // -----------------------------------------------------------------
 */
 
-void func_lookup(void) {
+COLDC_FUNC(lookup) {
     data_t *args;
     long objnum;
 
@@ -828,20 +821,20 @@ void func_lookup(void) {
 // -----------------------------------------------------------------
 */
 
-void func_objnum(void) {
+COLDC_FUNC(objnum) {
     if (!func_init_0())
         return;
   
     push_int(cur_frame->object->objnum);
 }
 
-void func_compile(void) {
+COLDC_FUNC(compile) {
     if (!func_init_0())
         return;
     push_int(1);
 }
 
-void func_get_method(void) {
+COLDC_FUNC(get_method) {
     data_t       * args, d;
     method_t     * method;
     list_t       * list;

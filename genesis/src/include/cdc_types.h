@@ -14,10 +14,10 @@
 
 typedef struct string       string_t;
 typedef struct list         list_t;
-typedef struct buffer       Buffer;
-typedef struct frob         Frob;
+typedef struct buffer       buffer_t;
+typedef struct frob         frob_t;
 typedef struct data         data_t;
-typedef struct dict         Dict;
+typedef struct dict         dict_t;
 typedef        long         Ident;
 typedef        long         objnum_t;
 typedef struct ident_entry  Ident_entry;
@@ -56,9 +56,9 @@ struct data {
         Ident      error;
         string_t * str;
         list_t   * list;
-        Frob     * frob;
-        Dict     * dict;
-        Buffer   * buffer;
+        frob_t   * frob;
+        dict_t   * dict;
+        buffer_t * buffer;
     } u;
 };
 

@@ -512,12 +512,15 @@ void op_message(void) {
     int arg_start, ind;
     data_t *target;
     long message, objnum;
-    Frob *frob;
+    frob_t *frob;
 
     ind = cur_frame->opcodes[cur_frame->pc++];
     message = object_get_ident(cur_frame->method->object, ind);
 
+    /* figure up the start of the args in the stack */
     arg_start = arg_starts[--arg_pos];
+
+    /* our target 'object' or data */
     target = &stack[arg_start - 1];
 
     switch (target->type) {
@@ -631,7 +634,7 @@ void op_dict(void) {
     int start, len;
     list_t *list;
     data_t *d;
-    Dict *dict;
+    dict_t *dict;
 
     start = arg_starts[--arg_pos];
     len = stack_pos - start;
@@ -655,7 +658,7 @@ void op_dict(void) {
 
 void op_buffer(void) {
     int start, len, i;
-    Buffer *buf;
+    buffer_t *buf;
 
     start = arg_starts[--arg_pos];
     len = stack_pos - start;
@@ -686,7 +689,7 @@ void op_frob(void) {
     } else {
       objnum_t objnum = cclass->u.objnum;
       cclass->type = FROB;
-      cclass->u.frob = TMALLOC(Frob, 1);
+      cclass->u.frob = TMALLOC(frob_t, 1);
       cclass->u.frob->cclass = objnum;
       data_dup(&cclass->u.frob->rep, rep);
       pop(1);
@@ -1328,7 +1331,7 @@ void op_doeq_add(void) {
       case BUFFER:
 
         if (d2->type == BUFFER) {
-            Buffer * buf = d2->u.buffer;
+            buffer_t * buf = d2->u.buffer;
 
 	    anticipate_assignment();
             d2->u.buffer = d1->u.buffer;
@@ -1766,7 +1769,7 @@ void op_in(void)
         }
         case BUFFER: {
             uchar * s;
-            Buffer * buf = d2->u.buffer;
+            buffer_t * buf = d2->u.buffer;
 
             if (d1->type == INTEGER) {
                 s = (uchar *) memchr(buf->s, (uchar) d1->u.val, buf->len);

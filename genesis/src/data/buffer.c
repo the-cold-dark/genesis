@@ -16,13 +16,11 @@
 #include "memory.h"
 #include "util.h"
 
-#define BUFALLOC(len)		(Buffer *)emalloc(sizeof(Buffer) + (len) - 1)
-#define BUFREALLOC(buf, len)	(Buffer *)erealloc(buf, sizeof(Buffer) + (len) - 1)
+#define BUFALLOC(len)		(buffer_t *)emalloc(sizeof(buffer_t) + (len) - 1)
+#define BUFREALLOC(buf, len)	(buffer_t *)erealloc(buf, sizeof(buffer_t) + (len) - 1)
 
-INTERNAL Buffer *prepare_to_modify(Buffer *buf);
-
-Buffer *buffer_new(int len) {
-    Buffer *buf;
+buffer_t *buffer_new(int len) {
+    buffer_t *buf;
 
     buf = BUFALLOC(len);
     buf->len = len;
@@ -30,70 +28,70 @@ Buffer *buffer_new(int len) {
     return buf;
 }
 
-Buffer *buffer_dup(Buffer *buf) {
+buffer_t *buffer_dup(buffer_t *buf) {
     buf->refs++;
     return buf;
 }
 
-void buffer_discard(Buffer *buf) {
+void buffer_discard(buffer_t *buf) {
     buf->refs--;
     if (!buf->refs)
 	efree(buf);
 }
 
-Buffer *buffer_append(Buffer *buf1, Buffer *buf2) {
+buffer_t *buffer_append(buffer_t *buf1, buffer_t *buf2) {
     if (!buf2->len)
 	return buf1;
-    buf1 = prepare_to_modify(buf1);
+    buf1 = buffer_prep(buf1);
     buf1 = BUFREALLOC(buf1, buf1->len + buf2->len);
     MEMCPY(buf1->s + buf1->len, buf2->s, buf2->len);
     buf1->len += buf2->len;
     return buf1;
 }
 
-int buffer_retrieve(Buffer *buf, int pos) {
+int buffer_retrieve(buffer_t *buf, int pos) {
     return buf->s[pos];
 }
 
-Buffer *buffer_replace(Buffer *buf, int pos, unsigned int c) {
+buffer_t *buffer_replace(buffer_t *buf, int pos, unsigned int c) {
     if (buf->s[pos] == c)
 	return buf;
-    buf = prepare_to_modify(buf);
+    buf = buffer_prep(buf);
     buf->s[pos] = OCTET_VALUE(c);
     return buf;
 }
 
-Buffer *buffer_add(Buffer *buf, unsigned int c) {
-    buf = prepare_to_modify(buf);
+buffer_t *buffer_add(buffer_t *buf, unsigned int c) {
+    buf = buffer_prep(buf);
     buf = BUFREALLOC(buf, buf->len + 1);
     buf->s[buf->len] = OCTET_VALUE(c);
     buf->len++;
     return buf;
 }
 
-Buffer *buffer_resize(Buffer *buf, int len) {
+buffer_t *buffer_resize(buffer_t *buf, int len) {
     if (len == buf->len)
 	return buf;
-    buf = prepare_to_modify(buf);
+    buf = buffer_prep(buf);
     buf = BUFREALLOC(buf, len);
     buf->len = len;
     return buf;
 }
 
-Buffer *buffer_tail(Buffer *buf, int pos) {
-    Buffer *outbuf;
+buffer_t *buffer_tail(buffer_t *buf, int pos) {
+    buffer_t *outbuf;
 
     if (pos == 1)
 	return buf;
 
-    outbuf = prepare_to_modify(buf);
+    outbuf = buffer_prep(buf);
     outbuf->len = buf->len - (pos-1);
     MEMCPY(outbuf->s, buf->s+(pos-1), outbuf->len);
     outbuf = BUFREALLOC(outbuf,outbuf->len);
     return(outbuf);
 }
 
-string_t * buffer_to_string(Buffer * buf) {
+string_t * buffer_to_string(buffer_t * buf) {
     string_t * str, * out;
     unsigned char * string_start, *p, *q;
     char * s;
@@ -135,7 +133,7 @@ string_t * buffer_to_string(Buffer * buf) {
 }
 
 /* If sep (separator buffer) is NULL, separate by newlines. */
-list_t *buffer_to_strings(Buffer *buf, Buffer *sep)
+list_t *buffer_to_strings(buffer_t *buf, buffer_t *sep)
 {
     data_t d;
     string_t *str;
@@ -143,7 +141,7 @@ list_t *buffer_to_strings(Buffer *buf, Buffer *sep)
     unsigned char sepchar, *string_start, *p, *q;
     char *s;
     int seplen;
-    Buffer *end;
+    buffer_t *end;
 
     sepchar = (sep) ? *sep->s : '\n';
     seplen = (sep) ? sep->len : 1;
@@ -192,8 +190,8 @@ list_t *buffer_to_strings(Buffer *buf, Buffer *sep)
     return result;
 }
 
-Buffer *buffer_from_string(string_t * string) {
-    Buffer * buf;
+buffer_t *buffer_from_string(string_t * string) {
+    buffer_t * buf;
     int      new;
 
     buf = buffer_new(string_length(string));
@@ -207,9 +205,9 @@ Buffer *buffer_from_string(string_t * string) {
     return buf;
 }
 
-Buffer *buffer_from_strings(list_t * string_list, Buffer * sep) {
+buffer_t *buffer_from_strings(list_t * string_list, buffer_t * sep) {
     data_t * string_data;
-    Buffer *buf;
+    buffer_t *buf;
     int num_strings, i, len, pos;
     unsigned char *s;
 
@@ -241,8 +239,8 @@ Buffer *buffer_from_strings(list_t * string_list, Buffer * sep) {
     return buf;
 }
 
-Buffer * buffer_subrange(Buffer * buf, int start, int len) {
-    Buffer * cnew = buffer_new(len);
+buffer_t * buffer_subrange(buffer_t * buf, int start, int len) {
+    buffer_t * cnew = buffer_new(len);
 
     MEMCPY(cnew->s, buf->s + start, (len > buf->len ? buf->len : len));
     cnew->len = len;
@@ -251,9 +249,8 @@ Buffer * buffer_subrange(Buffer * buf, int start, int len) {
     return cnew;
 }
 
-INTERNAL Buffer *prepare_to_modify(Buffer *buf)
-{
-    Buffer *cnew;
+buffer_t *buffer_prep(buffer_t *buf) {
+    buffer_t *cnew;
 
     if (buf->refs == 1)
 	return buf;

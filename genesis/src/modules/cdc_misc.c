@@ -29,12 +29,12 @@ NATIVE_METHOD(strftime) {
     time_t      tt;
     struct tm * t;
 
-    INIT_1_OR_2_ARGS(STRING, INTEGER)
+    INIT_1_OR_2_ARGS(STRING, INTEGER);
 
-    tt = ((argc == 2) ? (time_t) _INT(ARG2) : time(NULL));
+    tt = ((argc == 2) ? (time_t) INT2 : time(NULL));
     t  = localtime(&tt);
  
-    fmt = string_chars(_STR(ARG1));
+    fmt = string_chars(STR1);
 
     /* some OS's are weird and do odd things when you end in %
        (accidentally or no) */
@@ -44,13 +44,13 @@ NATIVE_METHOD(strftime) {
     if (strftime(s, LINE, fmt, t) == (size_t) 0)
        THROW((range_id,"Format results in a string longer than 80 characters."))
 
-    RETURN_STRING(string_from_chars(s, strlen(s)))
+    CLEAN_RETURN_STRING(string_from_chars(s, strlen(s)));
 }
 
 NATIVE_METHOD(next_objnum) {
-    INIT_NO_ARGS()
+    INIT_NO_ARGS();
 
-    RETURN_OBJNUM(db_top)
+    CLEAN_RETURN_OBJNUM(db_top);
 }
 
 #ifdef HAVE_GETRUSAGE
@@ -67,7 +67,7 @@ NATIVE_METHOD(status) {
     data_t *d;
     int x;
 
-    INIT_NO_ARGS()
+    INIT_NO_ARGS();
 
 #define __LLENGTH__ 19
 
@@ -106,14 +106,14 @@ NATIVE_METHOD(status) {
     d[18].u.val = (int) atomic;
 #undef __LLENGTH__
 
-    RETURN_LIST(status)
+    CLEAN_RETURN_LIST(status);
 }
 
 NATIVE_METHOD(version) {
     list_t *version;
     data_t *d;
 
-    INIT_NO_ARGS()
+    INIT_NO_ARGS();
 
     /* Construct a list of the version numbers and push it. */
     version = list_new(3);
@@ -123,24 +123,32 @@ NATIVE_METHOD(version) {
     d[1].u.val = VERSION_MINOR;
     d[2].u.val = VERSION_PATCH;
 
-    RETURN_LIST(version);
+    CLEAN_RETURN_LIST(version);
 }
 
 /*
 // -----------------------------------------------------------------
 */
 NATIVE_METHOD(hostname) {
-    INIT_1_ARG(STRING)
+    string_t * name;
 
-    RETURN_STRING(hostname(string_chars(_STR(ARG1))))
+    INIT_1_ARG(STRING);
+
+    name = hostname(string_chars(STR1));
+
+    CLEAN_RETURN_STRING(name);
 }
 
 /*
 // -----------------------------------------------------------------
 */
 NATIVE_METHOD(ip) {
-    INIT_1_ARG(STRING)
+    string_t * sip;
 
-    RETURN_STRING(ip(string_chars(_STR(ARG1))))
+    INIT_1_ARG(STRING);
+
+    sip = ip(string_chars(STR1));
+
+    CLEAN_RETURN_STRING(sip);
 }
 

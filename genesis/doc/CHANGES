@@ -6,6 +6,21 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-[56]  [26-Apr-96] Brandon Gillespie
+      * I regressed from patch five back to patch four, due to some changes
+        which ended up being incorrect.  The updated source became patch 6.
+      * changed how natives are handled (again), they now _MUST_ call
+        pop_native_stack() (Macro'd to CLEAN_STACK()) before native_pushing
+        a value and returning.  This cleans up the args list and cleans
+        up the method call info (handled in methods with frame_return()).
+      * -s option added for cache WIDTHxDEPTH definition at execution time
+      * prepare_to_modify() in each data type should now be [data]_prep(),
+        and is globally available (some natives need these).
+      * destroy() should not take args, I forgot to change it earlier
+      * Forgot to #include <sys/time.h> for gettimeofday() in genesis.c
+      * Added '*' characters to pad and precision in strfmt(), like in
+        standard printf()'s.
+      * Fixed strfmt(), it was dying on '%%' => '%' escapes.
 1.0-4  [26-Apr-96] Brandon Gillespie
       * Maintenance
       * 'compile()' now is a clone of 'add_method()', when the full

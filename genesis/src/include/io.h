@@ -20,8 +20,8 @@ typedef struct pending_s    pending_t;
 
 struct connection_s {
     int fd;                   /* File descriptor for input and output. */
-    Buffer * write_buf;       /* Buffer for network output. */
-    objnum_t    objnum;           /* Object connection is associated with. */
+    buffer_t * write_buf;     /* Buffer for network output. */
+    objnum_t    objnum;       /* Object connection is associated with. */
     struct {
         char readable;        /* Connection has new data pending. */
         char writable;        /* Connection can be written to. */
@@ -56,7 +56,7 @@ void handle_io_event_wait(int seconds);
 void handle_connection_input(void);
 void handle_connection_output(void);
 connection_t * find_connection(object_t * obj);
-connection_t * tell(object_t * obj, Buffer *buf);
+connection_t * tell(object_t * obj, buffer_t *buf);
 int  boot(object_t * obj);
 int  add_server(int port, long objnum);
 int  remove_server(int port);

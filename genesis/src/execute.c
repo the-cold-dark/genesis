@@ -565,16 +565,14 @@ INTERNAL void execute(void) {
 
     while (cur_frame) {
         tick++;
-
         if ((--(cur_frame->ticks)) == 0) {
             out_of_ticks_error();
-            return;
+        } else {
+            opcode = cur_frame->opcodes[cur_frame->pc];
+            cur_frame->last_opcode = opcode;
+            cur_frame->pc++;
+            (*op_table[opcode].func)();
         }
-
-        opcode = cur_frame->opcodes[cur_frame->pc];
-        cur_frame->last_opcode = opcode;
-        cur_frame->pc++;
-        (*op_table[opcode].func)();
     }
 }
 
@@ -615,20 +613,54 @@ void anticipate_assignment(void) {
 
 /*
 // ---------------------------------------------------------------
+//
+// Ok, our stack looks like:
+//
+//  [ ... | target | arg1 | arg2 | ... ]
+//          ^^^^^^-- stack_start
+//
+// make SURE that native methods are clearly duping their data
 */
-INTERNAL void call_native_method(method_t * method, int stack_start, int arg_start, objnum_t objnum) {
+
+#if DISABLED
+INTERNAL void
+call_native_method(method_t * method,
+                   int        stack_start,
+                   int        arg_start,
+                   objnum_t   objnum)
+{
     data_t rval;
     register int i;
 
-    rval.type = OBJNUM;
-    rval.u.objnum = objnum;
     if ((*natives[method->native].func)(arg_start, &rval)) {
-        for (i = stack_start + 1; i < stack_pos; i++)
+        /* push ALL of the old stack off, including the target and name */
+        for (i = stack_start; i < stack_pos; i++)
             data_discard(&stack[i]);
+
+        /* 'pop' the return value back on the stack */
         stack_pos = stack_start;
         stack[stack_pos] = rval;
         stack_pos++;
     }
+}
+#else
+#define call_native_method(method, sstart, astart) \
+    (*natives[method->native].func)(sstart, astart)
+#endif
+
+/*
+// because we want to keep references straight, one oft may want to
+// grab the data they want off the stack, dup it for their own copy,
+// then pop everything off the stack so references would still be
+// one (in the cases that matter)
+*/
+
+void pop_native_stack(int start) {
+    register int i;
+
+    for (i = start; i < stack_pos; i++)
+        data_discard(&stack[i]);
+    stack_pos = start;
 }
 
 /*
@@ -667,8 +699,11 @@ int pass_method(int stack_start, int arg_start) {
                              cur_frame->caller, cur_frame->user, stack_start,
                              arg_start);
     } else {
+#if 0
         call_native_method(method, stack_start, arg_start, method->object->objnum);
-       /* method_discard(method); */
+#else
+        call_native_method(method, stack_start, arg_start);
+#endif
         result = CALL_NATIVE;
     }
     cache_discard(method->object);
@@ -740,8 +775,7 @@ int call_method(objnum_t objnum,    /* the object */
         result = frame_start(obj,method,sender,
                              caller,user,stack_start,arg_start);
     } else {
-        call_native_method(method, stack_start, arg_start, objnum);
-        /* method_discard(method); */
+        call_native_method(method, stack_start, arg_start);
         result = CALL_NATIVE;
     }
 
@@ -777,144 +811,42 @@ void check_stack(int n) {
 /*
 // ---------------------------------------------------------------
 */
-void push_int(long n) {
-
-#ifdef DEBUG
-    write_err("push(%d)", n);
-#endif
-
-    check_stack(1);
-    stack[stack_pos].type = INTEGER;
-    stack[stack_pos].u.val = n;
-    stack_pos++;
+#define PUSH_DATA(_x_, _name_, _cold_type_, _c_type_, _member_, _what_) \
+void CAT(_x_, _name_) (_c_type_ var) { \
+    check_stack(1); \
+    stack[stack_pos].type = _cold_type_; \
+    stack[stack_pos].u._member_ = _what_; \
+    stack_pos++; \
 }
+
+#define PUSH_FUNC(_name_, _cold_type_, _c_type_, _member_, _what_) \
+    PUSH_DATA(push_, _name_, _cold_type_, _c_type_, _member_, _what_)
+#define PUSH_NATIVE(_name_, _cold_type_, _c_type_, _member_) \
+    PUSH_DATA(native_push_, _name_, _cold_type_, _c_type_, _member_, var)
+
+PUSH_FUNC(int,    INTEGER, long,       val,    var)
+PUSH_FUNC(float,  FLOAT,   float,      fval,   var)
+PUSH_FUNC(string, STRING,  string_t *, str,    string_dup(var))
+PUSH_FUNC(objnum, OBJNUM,  objnum_t,   objnum, var)
+PUSH_FUNC(list,   LIST,    list_t *,   list,   list_dup(var))
+PUSH_FUNC(dict,   DICT,    dict_t *,   dict,   dict_dup(var))
+PUSH_FUNC(symbol, SYMBOL,  Ident,      symbol, ident_dup(var))
+PUSH_FUNC(error,  ERROR,   Ident,      error,  ident_dup(var))
+PUSH_FUNC(buffer, BUFFER,  buffer_t *, buffer, buffer_dup(var))
+
+PUSH_NATIVE(int,    INTEGER, long,       val)
+PUSH_NATIVE(float,  FLOAT,   float,      fval)
+PUSH_NATIVE(string, STRING,  string_t *, str)
+PUSH_NATIVE(objnum, OBJNUM,  objnum_t,   objnum)
+PUSH_NATIVE(list,   LIST,    list_t *,   list)
+PUSH_NATIVE(dict,   DICT,    dict_t *,   dict)
+PUSH_NATIVE(symbol, SYMBOL,  Ident,      symbol)
+PUSH_NATIVE(error,  ERROR,   Ident,      error)
+PUSH_NATIVE(buffer, BUFFER,  buffer_t *, buffer)
 
 /*
 // ---------------------------------------------------------------
 */
-void push_float(float f) {
-
-#ifdef DEBUG
-    write_err("push(%f)", f);
-#endif
-
-    check_stack(1);
-    stack[stack_pos].type = FLOAT;
-    stack[stack_pos].u.fval = f;
-    stack_pos++;
-}
-
-/*
-// ---------------------------------------------------------------
-*/
-void push_string(string_t *str) {
-
-#ifdef DEBUG
-    write_err("push(\"%S\")", str);
-#endif
-
-    check_stack(1);
-    stack[stack_pos].type = STRING;
-    stack[stack_pos].u.str = string_dup(str);
-    stack_pos++;
-}
-
-/*
-// ---------------------------------------------------------------
-*/
-void push_objnum(objnum_t objnum) {
-
-#ifdef DEBUG
-    write_err("push($%d)", objnum);
-#endif
-
-    check_stack(1);
-    stack[stack_pos].type = OBJNUM;
-    stack[stack_pos].u.objnum = objnum;
-    stack_pos++;
-}
-
-/*
-// ---------------------------------------------------------------
-*/
-void push_list(list_t * list) {
-#ifdef DEBUG
-    string_t *str = string_new(0);
-
-    write_err("push(%S)", data_add_list_literal_to_str(str, list));
-
-    string_discard(str);
-#endif
-
-    check_stack(1);
-    stack[stack_pos].type = LIST;
-    stack[stack_pos].u.list = list_dup(list);
-    stack_pos++;
-}
-
-/*
-// ---------------------------------------------------------------
-*/
-void push_dict(Dict *dict) {
-#ifdef DEBUG
-    string_t *str = string_new(0);
-
-    write_err("push(%S)", dict_add_literal_to_str(str, dict));
-
-    string_discard(str);
-#endif
-
-    check_stack(1);
-    stack[stack_pos].type = DICT;
-    stack[stack_pos].u.dict = dict_dup(dict);
-    stack_pos++;
-}
-
-/*
-// ---------------------------------------------------------------
-*/
-void push_symbol(Ident id) {
-
-#ifdef DEBUG
-    write_err("push(\'%s)", ident_name(id));
-#endif
-
-    check_stack(1);
-    stack[stack_pos].type = SYMBOL;
-    stack[stack_pos].u.symbol = ident_dup(id);
-    stack_pos++;
-}
-
-/*
-// ---------------------------------------------------------------
-*/
-void push_error(Ident id) {
-
-#ifdef DEBUG
-    write_err("push(\'%s)", ident_name(id));
-#endif
-
-    check_stack(1);
-    stack[stack_pos].type = ERROR;
-    stack[stack_pos].u.error = ident_dup(id);
-    stack_pos++;
-}
-
-/*
-// ---------------------------------------------------------------
-*/
-void push_buffer(Buffer *buf) {
-
-#ifdef DEBUG
-    write_err("push() buffer");
-#endif
-
-    check_stack(1);
-    stack[stack_pos].type = BUFFER;
-    stack[stack_pos].u.buffer = buffer_dup(buf);
-    stack_pos++;
-}
-
 int func_init_0(void) {
     int arg_start = arg_starts[--arg_pos];
     int num_args = stack_pos - arg_start;
@@ -928,8 +860,7 @@ int func_init_0(void) {
     return 0;
 }
 
-int func_init_1(data_t **args, int type1)
-{
+int func_init_1(data_t **args, int type1) {
     int arg_start = arg_starts[--arg_pos];
     int num_args = stack_pos - arg_start;
 

@@ -1,0 +1,4228 @@
+# 1 "cdc_dict.c"
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+# 1 "../include/config.h" 1
+ 
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 
+
+ 
+ 
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+ 
+
+ 
+ 
+
+ 
+
+
+ 
+ 
+
+ 
+ 
+
+ 
+ 
+
+ 
+
+
+ 
+ 
+
+ 
+ 
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+ 
+
+ 
+ 
+
+ 
+ 
+
+ 
+ 
+
+ 
+ 
+
+ 
+ 
+
+ 
+ 
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+ 
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+
+
+
+
+
+
+
+
+# 14 "cdc_dict.c" 2
+
+# 1 "../include/defs.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+  
+
+
+
+
+    
+
+
+
+      
+    
+  
+
+
+ 
+
+
+
+
+
+# 1 "/usr/include/stdlib.h" 1 3
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 1 "/usr/include/machine/ansi.h" 1 3
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 39 "/usr/include/stdlib.h" 2 3
+
+
+
+typedef	unsigned int 	size_t;
+
+
+
+
+
+typedef	int 	rune_t;
+
+typedef	int 	wchar_t;
+
+
+
+typedef struct {
+	int quot;		 
+	int rem;		 
+} div_t;
+
+typedef struct {
+	long quot;		 
+	long rem;		 
+} ldiv_t;
+
+
+
+
+
+
+
+
+
+
+extern int __mb_cur_max;
+
+
+# 1 "/usr/include/sys/cdefs.h" 1 3
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 100 "/usr/include/sys/cdefs.h" 3
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 76 "/usr/include/stdlib.h" 2 3
+
+
+ 
+  void
+	 abort  (void)   __attribute__((noreturn)) ;
+  int
+	 abs  (int)   __attribute__((const)) ;
+int	 atexit  (void (*)(void))  ;
+double	 atof  (const char *)  ;
+int	 atoi  (const char *)  ;
+long	 atol  (const char *)  ;
+void	*bsearch  (const void *, const void *, size_t,
+	    size_t, int (*)(const void *, const void *))  ;
+void	*calloc  (size_t, size_t)  ;
+  div_t
+	 div  (int, int)   __attribute__((const)) ;
+  void
+	 exit  (int)   __attribute__((noreturn)) ;
+void	 free  (void *)  ;
+char	*getenv  (const char *)  ;
+  long
+	 labs  (long)   __attribute__((const)) ;
+  ldiv_t
+	 ldiv  (long, long)   __attribute__((const)) ;
+void	*malloc  (size_t)  ;
+void	 qsort  (void *, size_t, size_t,
+	    int (*)(const void *, const void *))  ;
+int	 rand  (void)  ;
+void	*realloc  (void *, size_t)  ;
+void	 srand  (unsigned)  ;
+double	 strtod  (const char *, char **)  ;
+long	 strtol  (const char *, char **, int)  ;
+unsigned long
+	 strtoul  (const char *, char **, int)  ;
+int	 system  (const char *)  ;
+
+int	 mblen  (const char *, size_t)  ;
+size_t	 mbstowcs  (wchar_t *, const char *, size_t)  ;
+int	 wctomb  (char *, wchar_t)  ;
+int	 mbtowc  (wchar_t *, const char *, size_t)  ;
+size_t	 wcstombs  (char *, const wchar_t *, size_t)  ;
+
+
+int	 putenv  (const char *)  ;
+int	 setenv  (const char *, const char *, int)  ;
+
+double	 drand48  (void)  ;
+double	 erand48  (unsigned short[3])  ;
+long	 jrand48  (unsigned short[3])  ;
+void	 lcong48  (unsigned short[7])  ;
+long	 lrand48  (void)  ;
+long	 mrand48  (void)  ;
+long	 nrand48  (unsigned short[3])  ;
+unsigned short
+	*seed48  (unsigned short[3])  ;
+void	 srand48  (long)  ;
+
+void	*alloca  (size_t)  ;		 
+					 
+char	*getbsize  (int *, long *)  ;
+char	*cgetcap  (char *, char *, int)  ;
+int	 cgetclose  (void)  ;
+int	 cgetent  (char **, char **, char *)  ;
+int	 cgetfirst  (char **, char **)  ;
+int	 cgetmatch  (char *, char *)  ;
+int	 cgetnext  (char **, char **)  ;
+int	 cgetnum  (char *, char *, long *)  ;
+int	 cgetset  (char *)  ;
+int	 cgetstr  (char *, char *, char **)  ;
+int	 cgetustr  (char *, char *, char **)  ;
+
+int	 daemon  (int, int)  ;
+char	*devname  (int, int)  ;
+int	 getloadavg  (double [], int)  ;
+
+extern char *optarg;			 
+extern int opterr, optind, optopt;
+int	 getopt  (int, char * const *, const char *)  ;
+
+extern char *suboptarg;			 
+int	 getsubopt  (char **, char * const *, char **)  ;
+
+char	*group_from_gid  (unsigned long, int)  ;
+int	 heapsort  (void *, size_t, size_t,
+	    int (*)(const void *, const void *))  ;
+char	*initstate  (unsigned, char *, int)  ;
+int	 mergesort  (void *, size_t, size_t,
+	    int (*)(const void *, const void *))  ;
+int	 radixsort  (const unsigned char **, int, const unsigned char *,
+	    unsigned)  ;
+int	 sradixsort  (const unsigned char **, int, const unsigned char *,
+	    unsigned)  ;
+long	 random  (void)  ;
+char	*realpath  (const char *, char resolved_path[])  ;
+char	*setstate  (char *)  ;
+void	 srandom  (unsigned)  ;
+char	*user_from_uid  (unsigned long, int)  ;
+
+long long
+	 strtoq  (const char *, char **, int)  ;
+unsigned long long
+	 strtouq  (const char *, char **, int)  ;
+
+void	 unsetenv  (const char *)  ;
+
+ 
+
+
+# 37 "../include/defs.h" 2
+
+# 1 "/usr/include/stdio.h" 1 3
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 1 "/usr/include/sys/types.h" 1 3
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+# 1 "/usr/include/machine/endian.h" 1 3
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 92 "/usr/include/machine/endian.h" 3
+
+
+ 
+
+
+# 108 "/usr/include/machine/endian.h" 3
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 48 "/usr/include/sys/types.h" 2 3
+
+
+
+typedef	unsigned char	u_char;
+typedef	unsigned short	u_short;
+typedef	unsigned int	u_int;
+typedef	unsigned long	u_long;
+typedef	unsigned short	ushort;		 
+typedef	unsigned int	uint;		 
+
+
+typedef	unsigned long long u_quad_t;	 
+typedef	long long	quad_t;
+typedef	quad_t *	qaddr_t;
+
+typedef	char *		caddr_t;	 
+typedef	long		daddr_t;	 
+typedef	unsigned long	dev_t;		 
+typedef unsigned long	fixpt_t;	 
+typedef	unsigned long	gid_t;		 
+typedef	unsigned long	ino_t;		 
+typedef	unsigned short	mode_t;		 
+typedef	unsigned short	nlink_t;	 
+typedef	quad_t		off_t;		 
+typedef	long		pid_t;		 
+typedef	long		segsz_t;	 
+typedef	long		swblk_t;	 
+typedef	unsigned long	uid_t;		 
+
+ 
+
+
+
+
+
+ 
+off_t	 lseek  (int, off_t, int)  ;
+ 
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+# 1 "/usr/include/machine/types.h" 1 3
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+typedef struct _physadr {
+	int r[1];
+} *physadr;
+
+typedef struct label_t {
+	int val[6];
+} label_t;
+
+
+typedef	unsigned long	vm_offset_t;
+typedef	unsigned long	vm_size_t;
+
+ 
+
+
+
+typedef	signed  char		   int8_t;
+typedef	unsigned char		 u_int8_t;
+typedef	short			  int16_t;
+typedef	unsigned short		u_int16_t;
+typedef	int			  int32_t;
+typedef	unsigned int		u_int32_t;
+typedef	long long		  int64_t;
+typedef	unsigned long long	u_int64_t;
+
+
+# 100 "/usr/include/sys/types.h" 2 3
+
+
+
+typedef	unsigned long 	clock_t;
+
+
+
+
+
+
+
+
+
+typedef	int 	ssize_t;
+
+
+
+
+typedef	long 	time_t;
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+typedef long	fd_mask;
+
+
+
+
+
+
+typedef	struct fd_set {
+	fd_mask	fds_bits[((( 256  )+((  (sizeof(fd_mask) * 8 )  )-1))/(  (sizeof(fd_mask) * 8 )  )) ];
+} fd_set;
+
+
+
+
+
+
+
+# 166 "/usr/include/sys/types.h" 3
+
+
+
+
+# 43 "/usr/include/stdio.h" 2 3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+typedef off_t fpos_t;
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+struct __sbuf {
+	unsigned char *_base;
+	int	_size;
+};
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+typedef	struct __sFILE {
+	unsigned char *_p;	 
+	int	_r;		 
+	int	_w;		 
+	short	_flags;		 
+	short	_file;		 
+	struct	__sbuf _bf;	 
+	int	_lbfsize;	 
+
+	 
+	void	*_cookie;	 
+	int	(*_close)  (void *)  ;
+	int	(*_read)   (void *, char *, int)  ;
+	fpos_t	(*_seek)   (void *, fpos_t, int)  ;
+	int	(*_write)  (void *, const char *, int)  ;
+
+	 
+	struct	__sbuf _ub;	 
+	unsigned char *_up;	 
+	int	_ur;		 
+
+	 
+	unsigned char _ubuf[3];	 
+	unsigned char _nbuf[1];	 
+
+	 
+	struct	__sbuf _lb;	 
+
+	 
+	int	_blksize;	 
+	fpos_t	_offset;	 
+} FILE;
+
+ 
+extern FILE __sF[];
+ 
+
+
+
+
+
+	 
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+				 
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+ 
+void	 clearerr  (FILE *)  ;
+int	 fclose  (FILE *)  ;
+int	 feof  (FILE *)  ;
+int	 ferror  (FILE *)  ;
+int	 fflush  (FILE *)  ;
+int	 fgetc  (FILE *)  ;
+int	 fgetpos  (FILE *, fpos_t *)  ;
+char	*fgets  (char *, size_t, FILE *)  ;
+FILE	*fopen  (const char *, const char *)  ;
+int	 fprintf  (FILE *, const char *, ...)  ;
+int	 fputc  (int, FILE *)  ;
+int	 fputs  (const char *, FILE *)  ;
+size_t	 fread  (void *, size_t, size_t, FILE *)  ;
+FILE	*freopen  (const char *, const char *, FILE *)  ;
+int	 fscanf  (FILE *, const char *, ...)  ;
+int	 fseek  (FILE *, long, int)  ;
+int	 fsetpos  (FILE *, const fpos_t *)  ;
+long	 ftell  (const FILE *)  ;
+size_t	 fwrite  (const void *, size_t, size_t, FILE *)  ;
+int	 getc  (FILE *)  ;
+int	 getchar  (void)  ;
+char	*gets  (char *)  ;
+
+extern const  int sys_nerr;		 
+extern const  char *const  sys_errlist[];
+
+void	 perror  (const char *)  ;
+int	 printf  (const char *, ...)  ;
+int	 putc  (int, FILE *)  ;
+int	 putchar  (int)  ;
+int	 puts  (const char *)  ;
+int	 remove  (const char *)  ;
+int	 rename   (const char *, const char *)  ;
+void	 rewind  (FILE *)  ;
+int	 scanf  (const char *, ...)  ;
+void	 setbuf  (FILE *, char *)  ;
+int	 setvbuf  (FILE *, char *, int, size_t)  ;
+int	 sprintf  (char *, const char *, ...)  ;
+int	 sscanf  (const char *, const char *, ...)  ;
+FILE	*tmpfile  (void)  ;
+char	*tmpnam  (char *)  ;
+int	 ungetc  (int, FILE *)  ;
+int	 vfprintf  (FILE *, const char *, char * )  ;
+int	 vprintf  (const char *, char * )  ;
+int	 vsprintf  (char *, const char *, char * )  ;
+ 
+
+ 
+
+
+
+
+
+
+ 
+char	*ctermid  (char *)  ;
+FILE	*fdopen  (int, const char *)  ;
+int	 fileno  (FILE *)  ;
+ 
+
+
+ 
+
+
+
+ 
+char	*fgetln  (FILE *, size_t *)  ;
+int	 fpurge  (FILE *)  ;
+int	 getw  (FILE *)  ;
+int	 pclose  (FILE *)  ;
+FILE	*popen  (const char *, const char *)  ;
+int	 putw  (int, FILE *)  ;
+void	 setbuffer  (FILE *, char *, int)  ;
+int	 setlinebuf  (FILE *)  ;
+char	*tempnam  (const char *, const char *)  ;
+int	 snprintf  (char *, size_t, const char *, ...)  ;
+int	 vsnprintf  (char *, size_t, const char *, char * )  ;
+int	 vscanf  (const char *, char * )  ;
+int	 vsscanf  (const char *, const char *, char * )  ;
+FILE	*zopen  (const char *, const char *, int)  ;
+ 
+
+ 
+
+
+
+
+
+
+ 
+
+
+ 
+FILE	*funopen  (const void *,
+		int (*)(void *, char *, int),
+		int (*)(void *, const char *, int),
+		fpos_t (*)(void *, fpos_t, int),
+		int (*)(void *))  ;
+ 
+
+
+
+
+ 
+
+
+ 
+int	__srget  (FILE *)  ;
+int	__svfscanf  (FILE *, const char *, char * )  ;
+int	__swbuf  (int, FILE *)  ;
+ 
+
+ 
+
+
+
+
+
+static __inline int __sputc(int _c, FILE *_p) {
+	if (--_p->_w >= 0 || (_p->_w >= _p->_lbfsize && (char)_c != '\n'))
+		return (*_p->_p++ = _c);
+	else
+		return (__swbuf(_c, _p));
+}
+# 356 "/usr/include/stdio.h" 3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 38 "../include/defs.h" 2
+
+# 1 "/usr/include/setjmp.h" 1 3
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+typedef struct { int _sjb[8  + 1]; } sigjmp_buf[1];
+
+
+typedef struct { int _jb[8  + 1]; } jmp_buf[1];
+
+
+
+ 
+int	setjmp  (jmp_buf)  ;
+ 
+void	longjmp  (jmp_buf, int)   __attribute__((noreturn)) ;
+
+
+int	sigsetjmp  (sigjmp_buf, int)  ;
+ 
+void	siglongjmp  (sigjmp_buf, int)   __attribute__((noreturn)) ;
+
+
+
+int	_setjmp  (jmp_buf)  ;
+ 
+void	_longjmp  (jmp_buf, int)   __attribute__((noreturn)) ;
+void	longjmperror  (void)  ;
+
+ 
+
+
+# 39 "../include/defs.h" 2
+
+
+# 1 "../include/parse.h" 1
+typedef union {
+	long			 num;
+	float			 fnum;
+	char			*s;
+	struct arguments	*args;
+	struct stmt		*stmt;
+	struct expr		*expr;
+	struct id_list		*id_list;
+	struct stmt_list	*stmt_list;
+	struct expr_list	*expr_list;
+	struct case_list	*case_list;
+	struct case_entry	*case_entry;
+} YYSTYPE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+extern YYSTYPE yylval;
+# 41 "../include/defs.h" 2
+
+
+# 1 "../include/cdc_types.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+typedef struct string       string_t;
+typedef struct list         list_t;
+typedef struct buffer       buffer_t;
+typedef struct frob         frob_t;
+typedef struct data         data_t;
+typedef struct dict         dict_t;
+typedef        long         Ident;
+typedef        long         objnum_t;
+typedef struct ident_entry  Ident_entry;
+typedef struct string_entry String_entry;
+typedef struct var          Var;
+typedef struct object       object_t;
+typedef struct method       method_t;
+typedef struct error_list   Error_list;
+typedef int                 Object_string;
+typedef int                 Object_ident;
+
+# 1 "../include/regexp.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+typedef struct regexp regexp;
+
+
+struct regexp {
+	char *startp[10 ];
+	char *endp[10 ];
+	char regstart;		 
+	char reganch;		 
+	char *regmust;		 
+	int regmlen;		 
+	char program[1];	 
+};
+
+extern regexp *regcomp(char *exp);
+extern int regexec(regexp *prog, char *string, int case_flag);
+extern int regsub(regexp *prog, char *src, char *dest);
+extern char *regerror(char *msg);
+
+
+
+# 32 "../include/cdc_types.h" 2
+
+
+struct string {
+    int start;
+    int len;
+    int size;
+    int refs;
+    regexp * reg;
+    char s[1];
+};
+
+struct buffer {
+    int len;
+    int refs;
+    unsigned char s[1];
+};
+
+struct data {
+    int type;
+    union {
+        long       val;
+        float      fval;
+        objnum_t   objnum;
+        Ident      symbol;
+        Ident      error;
+        string_t * str;
+        list_t   * list;
+        frob_t   * frob;
+        dict_t   * dict;
+        buffer_t * buffer;
+    } u;
+};
+
+struct list {
+    int start;
+    int len;
+    int size;
+    int refs;
+    data_t el[1];
+};
+
+struct dict {
+    list_t * keys;
+    list_t * values;
+    int    * links;
+    int    * hashtab;
+    int      hashtab_size;
+    int      refs;
+};
+
+struct frob {
+    long cclass;
+    data_t rep;
+};
+
+# 1 "../include/ident.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 1 "../include/cdc_types.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+# 95 "../include/cdc_types.h"
+
+
+# 17 "../include/ident.h" 2
+
+
+ 
+extern Ident perm_id, type_id, div_id, integer_id, float_id, string_id, objnum_id;
+extern Ident list_id, symbol_id, error_id, frob_id, unrecognized_id;
+extern Ident methodnf_id, methoderr_id, parent_id, maxdepth_id, objnf_id;
+extern Ident numargs_id, range_id, varnf_id, file_id, ticks_id, connect_id;
+extern Ident disconnect_id, parse_id, startup_id, socket_id, bind_id;
+extern Ident servnf_id, varexists_id, dictionary_id, keynf_id, address_id;
+extern Ident refused_id, net_id, timeout_id, other_id, failed_id;
+extern Ident heartbeat_id, regexp_id, buffer_id, namenf_id, salt_id;
+extern Ident function_id, opcode_id, method_id, interpreter_id;
+extern Ident directory_id, eof_id;
+
+extern Ident public_id, protected_id, private_id, root_id, driver_id;
+extern Ident noover_id, sync_id, locked_id, native_id, fork_id, atomic_id;
+extern Ident fpe_id;
+
+ 
+extern Ident signal_id;
+
+void   init_ident(void);
+Ident  ident_get(char *s);
+void   ident_discard(Ident id);
+Ident  ident_dup(Ident id);
+char * ident_name(Ident id);
+
+
+
+# 87 "../include/cdc_types.h" 2
+
+# 1 "../include/list.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+# 1 "../include/cdc_types.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+# 95 "../include/cdc_types.h"
+
+
+# 19 "../include/list.h" 2
+
+
+list_t * list_new(int len);
+list_t * list_dup(list_t * list);
+int      list_length(list_t * list);
+data_t * list_first(list_t * list);
+data_t * list_next(list_t * list, data_t * d);
+data_t * list_last(list_t * list);
+data_t * list_prev(list_t * list, data_t * d);
+data_t * list_elem(list_t * list, int i);
+data_t * list_empty_spaces(list_t * list, int spaces);
+int      list_search(list_t * list, data_t * data);
+int      list_cmp(list_t * l1, list_t * l2);
+list_t * list_insert(list_t * list, int pos, data_t * elem);
+list_t * list_add(list_t * list, data_t * elem);
+list_t * list_replace(list_t * list, int pos, data_t * elem);
+list_t * list_delete(list_t * list, int pos);
+list_t * list_delete_element(list_t * list, data_t * elem);
+list_t * list_append(list_t * list1, list_t * list2);
+list_t * list_reverse(list_t * list);
+list_t * list_setadd(list_t * list, data_t * elem);
+list_t * list_setremove(list_t * list, data_t * elem);
+list_t * list_union(list_t * list1, list_t * list2);
+list_t * list_sublist(list_t * list, int start, int len);
+void     list_discard(list_t * list);
+list_t * list_prep(list_t * list, int start, int len);
+
+
+
+# 88 "../include/cdc_types.h" 2
+
+# 1 "../include/cdc_string.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 1 "../include/cdc_types.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+# 95 "../include/cdc_types.h"
+
+
+# 16 "../include/cdc_string.h" 2
+
+
+
+string_t * string_new(int len);
+string_t * string_empty(int size);
+string_t * string_from_chars(char * s, int len);
+string_t * string_of_char(int c, int len);
+string_t * string_dup(string_t * str);
+
+
+
+
+void       string_pack(string_t * str, FILE * fp);
+string_t * string_unpack(FILE * fp);
+int        string_packed_size(string_t * str);
+int        string_cmp(string_t * str1, string_t * str2);
+string_t * string_add(string_t * str1, string_t * str2);
+string_t * string_add_chars(string_t * str, char * s, int len);
+string_t * string_addc(string_t * str, int c);
+string_t * string_add_padding(string_t * str,
+                              char     * filler,
+                              int        len,
+                              int        padding);
+string_t * string_truncate(string_t * str, int len);
+string_t * string_substring(string_t * str, int start, int len);
+string_t * string_uppercase(string_t * str);
+string_t * string_lowercase(string_t * str);
+regexp   * string_regexp(string_t * str);
+void       string_discard(string_t * str);
+string_t * string_parse(char * *sptr);
+string_t * string_add_unparsed(string_t * str, char * s, int len);
+char     * regerror(char * msg);
+string_t * string_prep(string_t *str, int start, int len); 
+
+
+
+
+
+
+# 89 "../include/cdc_types.h" 2
+
+# 1 "../include/buffer.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 1 "../include/cdc_types.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+# 95 "../include/cdc_types.h"
+
+
+# 15 "../include/buffer.h" 2
+
+
+buffer_t * buffer_new(int len);
+buffer_t * buffer_dup(buffer_t *buf);
+void       buffer_discard(buffer_t *buf);
+buffer_t * buffer_append(buffer_t *buf1, buffer_t *buf2);
+int        buffer_retrieve(buffer_t *buf, int pos);
+buffer_t * buffer_replace(buffer_t *buf, int pos, unsigned int c);
+buffer_t * buffer_add(buffer_t *buf, unsigned int c);
+buffer_t * buffer_resize(buffer_t *buf, int len);
+buffer_t * buffer_tail(buffer_t *buf, int pos);
+string_t * buffer_to_string(buffer_t *buf);
+buffer_t * buffer_from_string(string_t * string);
+list_t   * buffer_to_strings(buffer_t *buf, buffer_t *sep);
+buffer_t * buffer_from_strings(list_t *string_list, buffer_t *sep);
+buffer_t * buffer_subrange(buffer_t *buf, int start, int len);
+buffer_t * buffer_prep(buffer_t *buf);
+
+
+
+
+
+# 90 "../include/cdc_types.h" 2
+
+# 1 "../include/dict.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 1 "../include/cdc_types.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+# 95 "../include/cdc_types.h"
+
+
+# 15 "../include/dict.h" 2
+
+
+
+
+
+
+dict_t * dict_new(list_t * keys, list_t * values);
+dict_t * dict_new_empty(void);
+dict_t * dict_from_slices(list_t * slices);
+dict_t * dict_dup(dict_t * dict);
+void dict_discard(dict_t * dict);
+int dict_cmp(dict_t * dict1, dict_t * dict2);
+dict_t * dict_add(dict_t * dict, data_t * key, data_t * value);
+dict_t * dict_del(dict_t * dict, data_t * key);
+dict_t * dict_prep(dict_t *);
+long dict_find(dict_t * dict, data_t * key, data_t * ret);
+int dict_contains(dict_t * dict, data_t * key);
+list_t * dict_keys(dict_t * dict);
+list_t * dict_key_value_pair(dict_t * mapping, int i);
+int dict_size(dict_t * dict);
+string_t * dict_add_literal_to_str(string_t * str, dict_t * dict);
+
+
+
+# 91 "../include/cdc_types.h" 2
+
+# 1 "../include/object.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 1 "../include/cdc_types.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+# 95 "../include/cdc_types.h"
+
+
+# 19 "../include/object.h" 2
+
+# 1 "../include/io.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+typedef struct connection_s connection_t;
+typedef struct server_s     server_t;
+typedef struct pending_s    pending_t;
+
+# 1 "../include/cdc_types.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+# 95 "../include/cdc_types.h"
+
+
+# 19 "../include/io.h" 2
+
+
+struct connection_s {
+    int fd;                    
+    buffer_t * write_buf;      
+    objnum_t    objnum;        
+    struct {
+        char readable;         
+        char writable;         
+        char dead;             
+    } flags;
+    connection_t * next;
+};
+
+struct server_s {
+    int server_socket;
+    unsigned short port;
+    objnum_t objnum;
+    int dead;
+    int client_socket;
+    char client_addr[20];
+    unsigned short client_port;
+    server_t *next;
+};
+
+struct pending_s {
+    int fd;
+    long task_id;
+    objnum_t objnum;
+    long error;
+    int finished;
+    pending_t *next;
+};
+
+void flush_defunct(void);
+void handle_new_and_pending_connections(void);
+void handle_io_event_wait(int seconds);
+void handle_connection_input(void);
+void handle_connection_output(void);
+connection_t * find_connection(object_t * obj);
+connection_t * tell(object_t * obj, buffer_t *buf);
+int  boot(object_t * obj);
+int  add_server(int port, long objnum);
+int  remove_server(int port);
+long make_connection(char *addr, int port, objnum_t receiver);
+void flush_output(void);
+
+
+
+# 20 "../include/object.h" 2
+
+# 1 "../include/file.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+typedef struct filec_s       filec_t;
+
+
+# 1 "/usr/include/sys/stat.h" 1 3
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+# 1 "/usr/include/sys/time.h" 1 3
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+struct timeval {
+	long	tv_sec;		 
+	long	tv_usec;	 
+};
+
+ 
+
+
+struct timespec {
+	long	ts_sec;		 
+	long	ts_nsec;	 
+};
+
+
+
+
+
+
+
+
+
+
+struct timezone {
+	int	tz_minuteswest;	 
+	int	tz_dsttime;	 
+};
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+struct	itimerval {
+	struct	timeval it_interval;	 
+	struct	timeval it_value;	 
+};
+
+ 
+
+
+struct clockinfo {
+	int	hz;		 
+	int	tick;		 
+	int	stathz;		 
+	int	profhz;		 
+};
+
+# 118 "/usr/include/sys/time.h" 3
+
+# 1 "/usr/include/time.h" 1 3
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+struct tm {
+	int	tm_sec;		 
+	int	tm_min;		 
+	int	tm_hour;	 
+	int	tm_mday;	 
+	int	tm_mon;		 
+	int	tm_year;	 
+	int	tm_wday;	 
+	int	tm_yday;	 
+	int	tm_isdst;	 
+	long	tm_gmtoff;	 
+	char	*tm_zone;	 
+};
+
+
+
+ 
+char *asctime  (const struct tm *)  ;
+clock_t clock  (void)  ;
+char *ctime  (const time_t *)  ;
+double difftime  (time_t, time_t)  ;
+struct tm *gmtime  (const time_t *)  ;
+struct tm *localtime  (const time_t *)  ;
+time_t mktime  (struct tm *)  ;
+size_t strftime  (char *, size_t, const char *, const struct tm *)  ;
+time_t time  (time_t *)  ;
+
+
+void tzset  (void)  ;
+
+
+
+char *timezone  (int, int)  ;
+void tzsetwall  (void)  ;
+time_t timelocal  (struct tm * const)  ;
+time_t timegm  (struct tm * const)  ;
+
+ 
+
+
+# 119 "/usr/include/sys/time.h" 2 3
+
+
+
+
+
+ 
+int	adjtime  (const struct timeval *, struct timeval *)  ;
+int	getitimer  (int, struct itimerval *)  ;
+int	gettimeofday  (struct timeval *, struct timezone *)  ;
+int	setitimer  (int, const struct itimerval *, struct itimerval *)  ;
+int	settimeofday  (const struct timeval *, const struct timezone *)  ;
+int	utimes  (const char *, const struct timeval *)  ;
+ 
+
+
+
+
+
+# 50 "/usr/include/sys/stat.h" 2 3
+
+
+
+struct ostat {
+	unsigned short	st_dev;		 
+	ino_t	st_ino;			 
+	mode_t	st_mode;		 
+	nlink_t	st_nlink;		 
+	unsigned short	st_uid;		 
+	unsigned short	st_gid;		 
+	unsigned short	st_rdev;	 
+	long	st_size;		 
+	struct	timespec st_atimespec;	 
+	struct	timespec st_mtimespec;	 
+	struct	timespec st_ctimespec;	 
+	long	st_blksize;		 
+	long	st_blocks;		 
+	unsigned long	st_flags;	 
+	unsigned long	st_gen;		 
+};
+
+
+struct stat {
+	dev_t	st_dev;			 
+	ino_t	st_ino;			 
+	mode_t	st_mode;		 
+	nlink_t	st_nlink;		 
+	uid_t	st_uid;			 
+	gid_t	st_gid;			 
+	dev_t	st_rdev;		 
+	struct	timespec st_atimespec;	 
+	struct	timespec st_mtimespec;	 
+	struct	timespec st_ctimespec;	 
+	off_t	st_size;		 
+	quad_t	st_blocks;		 
+	unsigned long	st_blksize;	 
+	unsigned long	st_flags;	 
+	unsigned long	st_gen;		 
+	long	st_lspare;
+	quad_t	st_qspare[2];
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							 
+
+							 
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+int	chmod  (const char *, mode_t)  ;
+int	fstat  (int, struct stat *)  ;
+int	mkdir  (const char *, mode_t)  ;
+int	mkfifo  (const char *, mode_t)  ;
+int	stat  (const char *, struct stat *)  ;
+mode_t	umask  (mode_t)  ;
+
+int	chflags  (const char *, u_long)  ;
+int	fchflags  (int, u_long)  ;
+int	fchmod  (int, mode_t)  ;
+int	lstat  (const char *, struct stat *)  ;
+
+ 
+
+
+
+
+# 18 "../include/file.h" 2
+
+# 1 "../include/cdc_types.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+# 95 "../include/cdc_types.h"
+
+
+# 19 "../include/file.h" 2
+
+
+
+
+
+struct filec_s {
+    FILE     * fp;
+    objnum_t   objnum;
+    filec_t  * next;
+    string_t * path;
+
+
+
+
+    struct {
+        unsigned int readable : 1;
+        unsigned int writable : 1;
+        unsigned int closed   : 1;
+        unsigned int binary   : 1;  
+    } f;
+};
+
+void file_discard(filec_t * file, object_t * obj);
+filec_t * file_new(void);
+void file_add(filec_t * file);
+filec_t * find_file_controller(object_t * obj);
+int close_file(filec_t * file);
+int flush_file(filec_t * file);
+buffer_t * read_binary_file(filec_t * file, int block);
+string_t * read_file(filec_t * file);
+int abort_file(filec_t * file);
+int stat_file(filec_t * file, struct stat * sbuf);
+string_t * build_path(char * fname, struct stat * sbuf, int nodir);
+list_t * statbuf_to_list(struct stat * sbuf);
+list_t * open_file(string_t * name, string_t * smode, object_t * obj);
+void flush_files(void);
+void close_files(void);
+
+
+
+# 21 "../include/object.h" 2
+
+
+struct object {
+    list_t * parents;
+    list_t * children;
+
+     
+
+
+    struct {
+	Var * tab;
+	int * hashtab;
+	int   blanks;
+	int   size;
+    } vars;
+
+     
+
+
+    struct {
+	struct mptr {
+	    method_t * m;
+	    int next;
+	}   * tab;
+	int * hashtab;
+	int   blanks;
+	int   size;
+    } methods;
+
+     
+    String_entry *strings;
+    int num_strings;
+    int strings_size;
+
+     
+    Ident_entry	*idents;
+    int num_idents;
+    int idents_size;
+
+     
+    objnum_t objnum;
+    int   refs;
+    char  dirty;                  
+    char  dead;	                  
+    int   ucounter;               
+
+    long search;                  
+
+    Ident objname;                
+
+     
+    object_t * next;
+    object_t * prev;
+
+     
+    connection_t * conn;
+    filec_t      * file;
+};
+
+ 
+
+
+
+
+
+ 
+
+
+
+struct string_entry {
+    string_t *str;
+    int refs;
+};
+
+ 
+struct ident_entry {
+    Ident id;
+    int refs;
+};
+
+struct var {
+    Ident name;
+    objnum_t cclass;
+    data_t val;
+    int next;
+};
+
+struct method {
+    Ident name;
+    object_t *object;
+    int num_args;
+    Object_ident *argnames;
+    Object_ident rest;
+    int num_vars;
+    Object_ident *varnames;
+    int num_opcodes;
+    long *opcodes;
+    int num_error_lists;
+    Error_list *error_lists;
+
+     
+
+    int native;
+
+     
+    int m_access;        
+    int m_flags;        
+    int refs;
+};
+
+ 
+
+
+
+
+
+
+ 
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+struct error_list {
+    int num_errors;
+    int *error_ids;
+};
+
+ 
+ 
+
+# 256 "../include/object.h"
+
+
+extern object_t *object_new(long objnum, list_t *parents);
+extern void    object_free(object_t *object);
+extern void    object_destroy(object_t *object);
+extern void    object_construct_ancprec(object_t *object);
+extern int     object_change_parents(object_t *object, list_t *parents);
+extern list_t   *object_ancestors(long objnum);
+extern list_t   *object_descendants(long objnum);
+extern int     object_has_ancestor(long objnum, long ancestor);
+extern void    object_reconstruct_descendent_ancprec(long objnum);
+extern int     object_add_string(object_t *object, string_t *string);
+extern void    object_discard_string(object_t *object, int ind);
+extern string_t *object_get_string(object_t *object, int ind);
+extern int     object_add_ident(object_t *object, char *ident);
+extern void    object_discard_ident(object_t *object, int ind);
+extern long    object_get_ident(object_t *object, int ind);
+extern long    object_add_var(object_t *object, long name);
+extern long    object_del_var(object_t *object, long name);
+extern long    object_assign_var(object_t *object, object_t *cclass, long name,
+                                 data_t *val);
+extern long    object_delete_var(object_t *object, object_t *cclass, long name);
+extern long    object_retrieve_var(object_t *object, object_t *cclass, long name,
+                                   data_t *ret);
+extern void    object_put_var(object_t *object, long cclass, long name,
+                              data_t *val);
+extern method_t *object_find_method(long objnum, long name);
+extern method_t *object_find_next_method(long objnum, long name, long after);
+extern int     object_rename_method(object_t * object, long oname, long nname);
+extern void    object_add_method(object_t *object, long name, method_t *method);
+extern int     object_del_method(object_t *object, long name);
+extern list_t   *object_list_method(object_t *object, long name, int indent,
+                                  int parens);
+extern void    method_free(method_t *method);
+extern method_t *method_dup(method_t *method);
+extern void    method_discard(method_t *method);
+extern int     object_set_objname(object_t * object, long name);
+extern int     object_del_objname(object_t * object);
+extern int     object_get_method_flags(object_t * object, long name);
+extern int     object_get_method_access(object_t * object, long name);
+extern int     object_set_method_flags(object_t * object, long name, int flags);
+extern int     object_set_method_access(object_t * object, long name, int access);
+
+ 
+extern long db_top;
+extern long cur_search;
+
+
+
+
+# 92 "../include/cdc_types.h" 2
+
+# 1 "../include/data.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 1 "../include/cdc_types.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+# 95 "../include/cdc_types.h"
+
+
+# 15 "../include/data.h" 2
+
+
+ 
+
+
+
+int           data_cmp(data_t * d1, data_t * d2);
+int           data_true(data_t * data);
+unsigned long data_hash(data_t * d);
+void          data_dup(data_t * dest, data_t * src);
+void          data_discard(data_t * data);
+string_t    * data_tostr(data_t * data);
+string_t    * data_to_literal(data_t * data);
+string_t    * data_add_list_literal_to_str(string_t * str, list_t * list);
+string_t    * data_add_literal_to_str(string_t * str, data_t * data);
+long          data_type_id(int type);
+
+
+
+# 93 "../include/cdc_types.h" 2
+
+
+
+
+# 43 "../include/defs.h" 2
+
+
+jmp_buf main_jmp;
+
+char * c_dir_binary;
+char * c_dir_textdump;
+char * c_dir_bin;
+char * c_dir_root;
+char * c_logfile;
+char * c_errfile;
+char * c_pidfile;
+
+FILE * logfile;
+FILE * errfile;
+string_t * str_tzname;
+
+int  c_interactive;
+int  running;
+int  atomic;
+int  heartbeat_freq;
+
+void init_defs(void);
+
+
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+
+
+
+
+ 
+
+
+
+
+ 
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+ 
+
+
+ 
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+# 15 "cdc_dict.c" 2
+
+# 1 "../include/operators.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+void op_comment(void);
+void op_pop(void);
+void op_set_local(void);
+void op_set_obj_var(void);
+void op_if(void);
+void op_else(void);
+void op_for_range(void);
+void op_for_list(void);
+void op_while(void);
+void op_switch(void);
+void op_case_value(void);
+void op_case_range(void);
+void op_last_case_value(void);
+void op_last_case_range(void);
+void op_end_case(void);
+void op_default(void);
+void op_end(void);
+void op_break(void);
+void op_continue(void);
+void op_return(void);
+void op_return_expr(void);
+void op_catch(void);
+void op_catch_end(void);
+void op_handler_end(void);
+void op_zero(void);
+void op_one(void);
+void op_integer(void);
+void op_float(void);
+void op_string(void);
+void op_objnum(void);
+void op_symbol(void);
+void op_error(void);
+void op_objname(void);
+void op_get_local(void);
+void op_get_obj_var(void);
+void op_start_args(void);
+void op_pass(void);
+void op_message(void);
+void op_expr_message(void);
+void op_list(void);
+void op_dict(void);
+void op_buffer(void);
+void op_frob(void);
+void op_index(void);
+void op_and(void);
+void op_or(void);
+void op_splice(void);
+void op_critical(void);
+void op_critical_end(void);
+void op_propagate(void);
+void op_propagate_end(void);
+void op_not(void);
+void op_negate(void);
+void op_multiply(void);
+void op_doeq_multiply(void);
+void op_divide(void);
+void op_doeq_divide(void);
+void op_modulo(void);
+void op_add(void);
+void op_doeq_add(void);
+void op_splice_add(void);
+void op_subtract(void);
+void op_doeq_subtract(void);
+void op_p_increment(void);
+void op_p_decrement(void);
+void op_increment(void);
+void op_decrement(void);
+void op_equal(void);
+void op_not_equal(void);
+void op_greater(void);
+void op_greater_or_equal(void);
+void op_less(void);
+void op_less_or_equal(void);
+void op_in(void);
+void op_bwand(void);
+void op_bwor(void);
+void op_bwshr(void);
+void op_bwshl(void);
+
+
+# 16 "cdc_dict.c" 2
+
+# 1 "../include/execute.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+typedef struct frame Frame;
+typedef struct error_action_specifier Error_action_specifier;
+typedef struct handler_info Handler_info;
+typedef struct vmstate VMState;
+typedef struct vmstack VMStack;
+typedef struct task_s task_t;
+
+
+# 1 "/usr/include/stdarg.h" 1 3
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+typedef char *va_list;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 23 "../include/execute.h" 2
+
+
+
+
+# 1 "../include/opcodes.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+typedef struct op_info Op_info;
+
+
+
+
+struct op_info {
+    long opcode;
+    char *name;
+    void (*func)(void);
+    int arg1;
+    int arg2;
+    Ident symbol;
+    objnum_t binding;   
+};
+
+extern Op_info op_table[529 ];
+
+void init_op_table(void);
+int find_function(char *name);
+
+
+
+# 27 "../include/execute.h" 2
+
+
+ 
+
+
+
+
+struct vmstack {
+    data_t  * stack;
+    int       stack_size,
+            * arg_starts,
+              arg_size;
+    VMStack * next;
+};
+
+struct vmstate {
+    Frame   * cur_frame;
+    data_t  * stack;
+    int       stack_pos,
+              stack_size,
+            * arg_starts,
+              arg_pos,
+              arg_size;
+    int       task_id;
+    int       preempted;
+    VMState * next;
+};
+
+struct task_s {
+    objnum_t   objnum;
+    Ident      method;
+    int        stack_start;
+    int        arg_start;
+    task_t   * next;
+};
+
+struct frame {
+    object_t *object;
+    objnum_t sender;
+    objnum_t caller;
+    objnum_t user;
+    method_t *method;
+    long *opcodes;
+    int pc;
+    int last_opcode;
+    int ticks;
+    int stack_start;
+    int var_start;
+    Error_action_specifier *specifiers;
+    Handler_info *handler_info;
+    Frame *caller_frame;
+};
+
+struct error_action_specifier {
+    int type;
+    int stack_pos;
+    union {
+	struct {
+	    int end;
+	} critical;
+	struct {
+	    int end;
+	} propagate;
+	struct {
+	    int error_list;
+	    int handler;
+	} ccatch;
+    } u;
+    Error_action_specifier *next;
+};
+
+struct handler_info {
+    list_t *traceback;
+    Ident error;
+    Handler_info *next;
+};
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+extern Frame *cur_frame;
+extern data_t *stack;
+extern int stack_pos, stack_size;
+extern int *arg_starts, arg_pos, arg_size;
+extern string_t *numargs_str;
+extern long task_id;
+extern long tick;
+extern VMState * preempted;
+extern VMState * suspended;
+
+void init_execute(void);
+void task(objnum_t objnum, long message, int num_args, ...);
+void task_method(object_t *obj, method_t *method);
+int  frame_start(object_t *obj,
+                 method_t *method,
+                 objnum_t sender,
+                 objnum_t caller,
+                 objnum_t user,
+		 int stack_start,
+                 int arg_start);
+void pop_native_stack(int start);
+void frame_return(void);
+void anticipate_assignment(void);
+int pass_method(int stack_start, int arg_start);
+int call_method(objnum_t objnum, Ident message, int stack_start, int arg_start);
+void pop(int n);
+void check_stack(int n);
+
+
+
+
+
+
+void  push_int    (     long  var) ;
+void  push_float    (   float  var) ;
+void  push_string    (  string_t *  var) ;
+void  push_objnum    (  objnum_t  var) ;
+void  push_list    (    list_t *  var) ;
+void  push_symbol    (  Ident  var) ;
+void  push_error    (   Ident  var) ;
+void  push_buffer    (  buffer_t *  var) ;
+
+void  native_push_int    (     long  var) ;
+void  native_push_float    (   float  var) ;
+void  native_push_string    (  string_t *  var) ;
+void  native_push_objnum    (  objnum_t  var) ;
+void  native_push_list    (    list_t *  var) ;
+void  native_push_symbol    (  Ident  var) ;
+void  native_push_error    (   Ident  var) ;
+void  native_push_buffer    (  buffer_t *  var) ;
+
+
+
+
+int func_init_0(void);
+int func_init_1(data_t **args, int type1);
+int func_init_2(data_t **args, int type1, int type2);
+int func_init_3(data_t **args, int type1, int type2, int type3);
+int func_init_0_or_1(data_t **args, int *num_args, int type1);
+int func_init_1_or_2(data_t **args, int *num_args, int type1, int type2);
+int func_init_2_or_3(data_t **args, int *num_args, int type1, int type2,
+		     int type3);
+int func_init_1_to_3(data_t **args, int *num_args, int type1, int type2,
+		     int type3);
+void func_num_error(int num_args, char *required);
+void func_type_error(char *which, data_t *wrong, char *required);
+ 
+void cthrow(long id, char *fmt, ...);
+void unignorable_error(Ident id, string_t *str);
+void interp_error(Ident error, string_t *str);
+void user_error(Ident error, string_t *str, data_t *arg);
+void propagate_error(list_t *traceback, Ident error);
+void pop_error_action_specifier(void);
+void pop_handler_info(void);
+void task_suspend(void);
+void task_resume(long tid, data_t *ret);
+void task_cancel(long tid);
+void task_pause(void);
+VMState *task_lookup(long tid);
+list_t * task_list(void);
+list_t * task_stack(void);
+void run_paused_tasks(void);
+void bind_opcode(int opcode, objnum_t objnum);
+
+
+
+
+
+
+
+
+# 1 "../include/macros.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 1 "../include/native.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 1 "../include/execute.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+# 209 "../include/execute.h"
+
+
+# 18 "../include/native.h" 2
+
+
+ 
+ 
+ 
+typedef struct native_s {
+    char     * bindobj;
+    char     * name;
+    int       (*func)(int stack_start, int arg_start);
+
+
+
+
+} native_t;
+
+typedef struct module_s {
+    void (*init)(int argc, char ** argv);
+    void (*uninit)();
+} module_t;
+
+int init_modules(int argc, char ** argv);
+int uninit_modules(void);
+int add_native_methods(void);
+
+# 1 "../include/macros.h" 1
+ 
+
+
+
+
+
+
+
+
+
+# 224 "../include/macros.h"
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 42 "../include/native.h" 2
+
+
+
+# 15 "../include/macros.h" 2
+
+# 1 "../include/util.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+typedef char Number_buf[32 ];
+
+
+
+
+
+
+
+
+void init_util(void);
+unsigned long hash(char *s);
+unsigned long hash_case(char *s, int n);
+long atoln(char *s, int n);
+char *long_to_ascii(long num, Number_buf nbuf);
+char *float_to_ascii(float num, Number_buf nbuf);
+int strccmp(char *s1, char *s2);
+int strnccmp(char *s1, char *s2, int n);
+char *strcchr(char *s, int c);
+char *strcstr(char *s, char *search);
+long random_number(long n);
+char *crypt_string(char *key, char *salt);
+string_t *vformat(char *fmt, va_list arg);
+string_t *format(char *fmt, ...);
+char * timestamp(char * str);
+void fformat(FILE *fp, char *fmt, ...);
+string_t *fgetstring(FILE *fp);
+char *english_type(int type);
+char *english_integer(int n, Number_buf nbuf);
+long parse_ident(char **sptr);
+FILE *open_scratch_file(char *name, char *type);
+void close_scratch_file(FILE *fp);
+void init_scratch_file(void);
+int parse_strcpy(char * s1, char * s2, int len);
+int getarg(char * n, char ** buf, char * opt, char **argv, int * argc, void (*usage)(char *));
+int is_valid_id(char * str, int len);
+
+extern char lowercase[128];
+extern char uppercase[128];
+
+
+
+# 16 "../include/macros.h" 2
+
+
+ 
+
+
+
+
+
+  
+  
+
+
+
+
+
+ 
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 69 "../include/macros.h"
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 129 "../include/macros.h"
+
+
+
+
+
+
+
+
+
+
+# 149 "../include/macros.h"
+
+
+# 161 "../include/macros.h"
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+# 1 "../include/execute.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+# 209 "../include/execute.h"
+
+
+# 177 "../include/macros.h" 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 222 "../include/macros.h"
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 207 "../include/execute.h" 2
+
+
+
+
+# 17 "cdc_dict.c" 2
+
+
+# 1 "../include/memory.h" 1
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+typedef struct pile Pile;
+
+
+
+# 1 "/usr/include/string.h" 1 3
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+void	*memchr  (const void *, int, size_t)  ;
+int	 memcmp  (const void *, const void *, size_t)  ;
+void	*memcpy  (void *, const void *, size_t)  ;
+void	*memmove  (void *, const void *, size_t)  ;
+void	*memset  (void *, int, size_t)  ;
+char	*strcat  (char *, const char *)  ;
+char	*strchr  (const char *, int)  ;
+int	 strcmp  (const char *, const char *)  ;
+int	 strcoll  (const char *, const char *)  ;
+char	*strcpy  (char *, const char *)  ;
+size_t	 strcspn  (const char *, const char *)  ;
+char	*strerror  (int)  ;
+size_t	 strlen  (const char *)  ;
+char	*strncat  (char *, const char *, size_t)  ;
+int	 strncmp  (const char *, const char *, size_t)  ;
+char	*strncpy  (char *, const char *, size_t)  ;
+char	*strpbrk  (const char *, const char *)  ;
+char	*strrchr  (const char *, int)  ;
+size_t	 strspn  (const char *, const char *)  ;
+char	*strstr  (const char *, const char *)  ;
+char	*strtok  (char *, const char *)  ;
+size_t	 strxfrm  (char *, const char *, size_t)  ;
+
+ 
+
+int	 bcmp  (const void *, const void *, size_t)  ;
+void	 bcopy  (const void *, void *, size_t)  ;
+void	 bzero  (void *, size_t)  ;
+int	 ffs  (int)  ;
+char	*index  (const char *, int)  ;
+void	*memccpy  (void *, const void *, int, size_t)  ;
+char	*rindex  (const char *, int)  ;
+int	 strcasecmp  (const char *, const char *)  ;
+char	*strdup  (const char *)  ;
+void	 strmode  (int, char *)  ;
+int	 strncasecmp  (const char *, const char *, size_t)  ;
+char	*strsep  (char **, const char *)  ;
+void	 swab  (const void *, void *, size_t)  ;
+
+ 
+
+
+# 19 "../include/memory.h" 2
+
+
+void * emalloc(size_t size);
+void * erealloc(void *ptr, size_t size);
+void * tmalloc(size_t size);
+void   tfree(void *ptr, size_t size);
+void * trealloc(void *ptr, size_t oldsize, size_t newsize);
+char * tstrdup(char *s);
+char * tstrndup(char *s, int len);
+void   tfree_chars(char *s);
+Pile * new_pile(void);
+void * pmalloc(Pile *pile, size_t size);
+void  pfree(Pile *pile);
+void efree(void * block);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 19 "cdc_dict.c" 2
+
+
+int  native_dict_keys    (int stack_start, int arg_start)  {
+    list_t * list;
+
+    data_t * args = &stack[arg_start] ;   if ( stack_pos - arg_start   !=   1 ) { func_num_error(  stack_pos - arg_start   ,     "one"  ); return 0 ; }   if (args[ 0 ].type !=     336    ) { func_type_error(    "first"  , &stack[arg_start+   0  ],english_type(     336     )); return 0 ; }    ;
+
+    list = dict_keys(args[0].u.dict );
+
+    pop_native_stack(stack_start) ; native_push_list(  list  );   return 1   ;
+}
+
+ 
+int  native_dict_add    (int stack_start, int arg_start)  {
+    dict_t * dict;
+    data_t   arg1, arg2;
+    data_t * args = &stack[arg_start] ;
+
+    if ( stack_pos - arg_start   !=   3 ) { func_num_error(  stack_pos - arg_start   ,     "three"  ); return 0 ; }  ;
+    if (args[ 0 ].type !=    336   ) { func_type_error(    "first"  , &stack[arg_start+   0  ],english_type(    336    )); return 0 ; }   ;
+
+    dict = dict_dup(args[0].u.dict );
+    data_dup(&arg1, &args[1]);
+    data_dup(&arg2, &args[2]);
+
+    pop_native_stack(stack_start) ;
+
+    anticipate_assignment();
+    dict = dict_add(dict, &arg1, &arg2);
+    data_discard(&arg1);
+    data_discard(&arg2);
+
+    native_push_dict( dict );   return 1  ;
+}
+
+int  native_dict_del    (int stack_start, int arg_start)  {
+    data_t arg1;
+    dict_t * dict;
+    data_t * args = &stack[arg_start] ;
+
+    if ( stack_pos - arg_start   !=   2 ) { func_num_error(  stack_pos - arg_start   ,     "two"  ); return 0 ; }  ;
+    if (args[ 0 ].type !=    336   ) { func_type_error(    "first"  , &stack[arg_start+   0  ],english_type(    336    )); return 0 ; }   ;
+
+    if (!dict_contains(args[0].u.dict , &args[1]))
+        { cthrow  (keynf_id, "Key (%D) is not in the dictionary.", &args[1])  ; return 0 ; } ;
+
+    dict = dict_dup(args[0].u.dict );
+    data_dup(&arg1, &args[1]);
+
+    pop_native_stack(stack_start) ;
+    anticipate_assignment();
+
+    dict = dict_del(dict, &arg1);
+    data_discard(&arg1);
+
+    native_push_dict( dict );   return 1  ;
+}
+
+int  native_dict_contains    (int stack_start, int arg_start)  {
+    int val;
+    data_t * args = &stack[arg_start] ;
+
+    if ( stack_pos - arg_start   !=   2 ) { func_num_error(  stack_pos - arg_start   ,     "two"  ); return 0 ; }  ;
+    if (args[ 0 ].type !=    336   ) { func_type_error(    "first"  , &stack[arg_start+   0  ],english_type(    336    )); return 0 ; }   ;
+
+    val = dict_contains(args[0].u.dict , &args[1]);
+
+    pop_native_stack(stack_start) ; native_push_int(  val  );    return 1   ;
+}
+

@@ -80,12 +80,12 @@ void uninit_veil(void) {
 // -------------------------------------------------------------------
 // internal function for buffer -> VEIL packet
 */
-list_t * buffer_to_veil_packets(Buffer * buf) {
+list_t * buffer_to_veil_packets(buffer_t * buf) {
     int             flags,
                     session,
                     length,
                     blen;
-    Buffer        * databuf,
+    buffer_t        * databuf,
                   * incomplete;
     data_t          d,
                   * list;
@@ -171,7 +171,7 @@ list_t * buffer_to_veil_packets(Buffer * buf) {
 // Convert from a buffer to the standard 'VEIL packet' format
 */
 NATIVE_METHOD(to_veil_pkts) {
-    Buffer * buf;
+    buffer_t * buf;
     list_t * packets;
 
     INIT_1_OR_2_ARGS(BUFFER, BUFFER);
@@ -187,7 +187,7 @@ NATIVE_METHOD(to_veil_pkts) {
 
     buffer_discard(buf);
 
-    RETURN_LIST(packets);
+    CLEAN_RETURN_LIST(packets);
 }
 
 /*
@@ -200,7 +200,7 @@ NATIVE_METHOD(to_veil_pkts) {
 NATIVE_METHOD(from_veil_pkts) {
     data_t        * d,
                   * pa;
-    Buffer        * out,
+    buffer_t        * out,
                   * header;
     list_t        * p, * packets;
     int             len;
@@ -213,7 +213,7 @@ NATIVE_METHOD(from_veil_pkts) {
     header->s[5] = (unsigned char) 0;
 
     out = buffer_new(0);
-    packets = _LIST(ARG1);
+    packets = LIST1;
 
     for (d = list_first(packets); d; d = list_next(packets, d)) {
         if (d->type != LIST)
@@ -254,13 +254,13 @@ NATIVE_METHOD(from_veil_pkts) {
         header->s[7] = (unsigned char) pa->u.buffer->len%256;
 
         len = out->len + header->len + pa->u.buffer->len - 2;
-        out = (Buffer *) erealloc(out, sizeof(Buffer) + len);
+        out = (buffer_t *) erealloc(out, sizeof(buffer_t) + len);
         MEMCPY(out->s + out->len, header->s, header->len);
         out->len += header->len;
         MEMCPY(out->s + out->len, pa->u.buffer->s, pa->u.buffer->len);
         out->len += pa->u.buffer->len;
     }
 
-    RETURN_BUFFER(out);
+    CLEAN_RETURN_BUFFER(out);
 }
 

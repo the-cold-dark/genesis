@@ -9,41 +9,9 @@ around, generally you should just copy 'coldcc' and 'genesis' to your
 world directory (wherever it may be).
 
 ------------------------------------------------------------------------
-1.0-1 RELEASE INFORMATION
+RELEASE INFORMATION
 
-If you are using a 0.4-0 database, you can upgrade easilly.  Dump your
-database to text (coldcc -d), edit it and search for the following
-functions, replacing them with their native counterparts.  Make sure
-you have the objects in your database for those counterparts, and that
-the methods they are using are not already defined:
-
-      hostname()      =>   $network.hostname()
-      ip()            =>   $network.ip()
-      status()        =>   $sys.status()
-      next_objnum()   =>   $sys.next_objnum()
-      version()       =>   $sys.version()
-      strftime()      =>   $time.format()
-      encode()        =>   $http.encode()
-      decode()        =>   $http.decode()
-
-The following function has also changed, in leiu of using the function name
-'log()' for the logarithmic float function.
-
-      log()           =>   dblog()
-
-You will also have to update any calls to strfmt(), two changes to the
-function have been made:
-
-      1 - Data arguments are no longer specified in a list, instead
-          they simply follow the format.
-      2 - Formatting has changed, read the documentation at:
-
-             http://www.cold.org/ColdC/Functions/strfmt.html
-
-If you want coldcc to force override regular method definitions, when they
-conflict with away native method definitions, use the '-f' (force override)
-flag when you compile the binary database.  You can list the compiled native
-methods and their default objects with the '-n' flag in coldcc.
+Read doc/CHANGES for information on release changes.
 
 ------------------------------------------------------------------------
 FURTHER INFORMATION
@@ -131,7 +99,7 @@ Possiblilities:
           arg 'string cmd, 'integer num, [more];
           var 'integer i, some, other, that;
 
-      When the type is set, it is always that.
+      When the type is set, it is always that type (allowing optimizations).
 
     * Declare the default value of a variable when starting, such as:
 
@@ -141,3 +109,4 @@ Possiblilities:
 
           var i = .default_value();
 
+    * with this allow multiple 'var' declarations.

@@ -14,6 +14,14 @@
 
 #include "object.h"
 
+#ifndef _cache_
+extern int cache_width;
+extern int cache_depth;
+#else
+int cache_width = 10;
+int cache_depth = 30;
+#endif
+
 void init_cache(void);
 object_t *cache_get_holder(long objnum);
 object_t *cache_retrieve(long objnum);

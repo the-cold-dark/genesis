@@ -34,8 +34,6 @@
 #define MALLOC_DELTA	(sizeof(string_t) + 32)
 #define STARTING_SIZE	(128 - MALLOC_DELTA)
 
-string_t * prepare_to_modify_str(string_t *str, int start, int len);
-
 string_t *string_new(int size_needed) {
     string_t *cnew;
     int size;
@@ -118,13 +116,13 @@ int string_cmp(string_t *str1, string_t *str2) {
 }
 
 string_t *string_fread(string_t *str, int len, FILE *fp) {
-    str = prepare_to_modify_str(str, str->start, str->len + len);
+    str = string_prep(str, str->start, str->len + len);
     fread(str->s + str->start + str->len - len, sizeof(char), len, fp);
     return str;
 }
 
 string_t *string_add(string_t *str1, string_t *str2) {
-    str1 = prepare_to_modify_str(str1, str1->start, str1->len + str2->len);
+    str1 = string_prep(str1, str1->start, str1->len + str2->len);
     MEMCPY(str1->s + str1->start + str1->len - str2->len,
 	   str2->s + str2->start, str2->len);
     str1->s[str1->start + str1->len] = 0;
@@ -133,7 +131,7 @@ string_t *string_add(string_t *str1, string_t *str2) {
 
 /* calling this with len == 0 can be a problem */
 string_t *string_add_chars(string_t *str, char *s, int len) {
-    str = prepare_to_modify_str(str, str->start, str->len + len);
+    str = string_prep(str, str->start, str->len + len);
     MEMCPY(str->s + str->start + str->len - len, s, len);
     /*str->s[str->len + str->start + len] = 0;*/
     str->s[str->start + str->len] = 0;
@@ -141,14 +139,14 @@ string_t *string_add_chars(string_t *str, char *s, int len) {
 }
 
 string_t *string_addc(string_t *str, int c) {
-    str = prepare_to_modify_str(str, str->start, str->len + 1);
+    str = string_prep(str, str->start, str->len + 1);
     str->s[str->start + str->len - 1] = c;
     str->s[str->start + str->len] = 0;
     return str;
 }
 
 string_t *string_add_padding(string_t *str, char *filler, int len, int padding) {
-    str = prepare_to_modify_str(str, str->start, str->len + padding);
+    str = string_prep(str, str->start, str->len + padding);
 
     if (len == 1) {
 	/* Optimize this case using memset(). */
@@ -165,45 +163,36 @@ string_t *string_add_padding(string_t *str, char *filler, int len, int padding) 
 }
 
 string_t *string_truncate(string_t *str, int len) {
-    str = prepare_to_modify_str(str, str->start, len);
+    str = string_prep(str, str->start, len);
     str->s[str->start + len] = 0;
     return str;
 }
 
 string_t *string_substring(string_t *str, int start, int len) {
-    str = prepare_to_modify_str(str, str->start + start, len);
+    str = string_prep(str, str->start + start, len);
     str->s[str->start + str->len] = 0;
     return str;
 }
 
-string_t * string_dup_or_copy(string_t * str) {
-    if (str->refs > 1) {
-        string_t * cnew = string_new(str->len);
-        MEMCPY(cnew->s, string_chars(str), string_length(str));
-        cnew->len = string_length(str);
-        return cnew;
-    } else {
-        return string_dup(str);
-    }
-}
-
 string_t * string_uppercase(string_t *str) {
     char *s, *start, *end;
-
+ 
+    str = string_prep(str, str->start, str->len);
     start = str->s + str->start;
     end = start + str->len;
     for (s = start; s < end; s++)
-	*s = UCASE(*s);
+        *s = UCASE(*s);
     return str;
 }
 
 string_t * string_lowercase(string_t *str) {
     char *s, *start, *end;
 
+    str = string_prep(str, str->start, str->len);
     start = str->s + str->start;
     end = start + str->len;
     for (s = start; s < end; s++)
-	*s = LCASE(*s);
+        *s = LCASE(*s);
     return str;
 }
 
@@ -293,7 +282,7 @@ char *regerror(char *msg) {
 // In general, modifying start and len is the responsibility of this routine;
 // modifying the contents is the responsibility of the calling routine.
 */
-string_t * prepare_to_modify_str(string_t *str, int start, int len) {
+string_t * string_prep(string_t *str, int start, int len) {
     string_t *cnew;
     int need_to_move, need_to_resize, size;
 

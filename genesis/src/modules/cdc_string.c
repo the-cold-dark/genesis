@@ -24,33 +24,41 @@
 #include "memory.h"
 
 NATIVE_METHOD(strlen) {
+    int len;
     INIT_1_ARG(STRING)
 
-    RETURN_INTEGER(string_length(_STR(ARG1)))
+    len = string_length(STR1);
+    CLEAN_RETURN_INTEGER(len);
 }
 
 NATIVE_METHOD(substr) {
-    int  start,
-         len,
-         string_len;
+    int        start,
+               len,
+               slen;
+    string_t * str;
 
     INIT_2_OR_3_ARGS(STRING, INTEGER, INTEGER)
 
-    string_len = string_length(_STR(ARG1));
-    start = _INT(ARG2) - 1;
-    len = (argc == 3) ? _INT(ARG3) : string_len - start;
+    slen = string_length(STR1);
+    start = INT2 - 1;
+    len = (argc == 3) ? INT3 : slen - start;
 
     /* Make sure range is in bounds. */
     if (start < 0)
         THROW((range_id, "Start (%d) is less than one.", start + 1))
     else if (len < 0)
         THROW((range_id, "Length (%d) is less than zero.", len))
-    else if (start + len > string_len)
+    else if (start + len > slen)
         THROW((range_id,
               "The substring extends to %d, past the end of the string (%d).",
-              start + len, string_len))
+              start + len, slen))
 
-    RETURN_STRING(string_substring(_STR(ARG1), start, len));
+    str = string_dup(STR1);
+
+    CLEAN_STACK();
+    anticipate_assignment();
+
+    RETURN_STRING(string_substring(str, start, len));
 }
 
 NATIVE_METHOD(explode) {
@@ -69,8 +77,8 @@ NATIVE_METHOD(explode) {
     switch(ARG_COUNT) {
         case 3:  want_blanks = data_true(&args[2]);
         case 2:  INIT_ARG2(STRING)
-                 sep = string_chars(_STR(ARG2));
-                 sep_len = string_length(_STR(ARG2));
+                 sep = string_chars(STR2);
+                 sep_len = string_length(STR2);
         case 1:  INIT_ARG1(STRING)
                  break;
         default: THROW_NUM_ERROR(ARG_COUNT, "one to three")
@@ -79,8 +87,8 @@ NATIVE_METHOD(explode) {
     if (!*sep)
       THROW((range_id, "Null string as separator."))
 
-    s   = string_chars(_STR(ARG1));
-    len = string_length(_STR(ARG1));
+    s   = string_chars(STR1);
+    len = string_length(STR1);
 
     exploded = list_new(0);
     p = s;
@@ -106,7 +114,7 @@ NATIVE_METHOD(explode) {
     }
 
     /* Pop the arguments and push the list onto the stack. */
-    RETURN_LIST(exploded)
+    CLEAN_RETURN_LIST(exploded);
 }
 
 NATIVE_METHOD(strsub) {
@@ -116,15 +124,15 @@ NATIVE_METHOD(strsub) {
 
     INIT_3_ARGS(STRING, STRING, STRING)
 
-    s = string_chars(_STR(ARG1));
-    len = string_length(_STR(ARG1));
-    search = string_chars(_STR(ARG2));
-    search_len = string_length(_STR(ARG2));
-    replace = string_chars(_STR(ARG3));
-    replace_len = string_length(_STR(ARG3));
+    s = string_chars(STR1);
+    len = string_length(STR1);
+    search = string_chars(STR2);
+    search_len = string_length(STR2);
+    replace = string_chars(STR3);
+    replace_len = string_length(STR3);
 
     if (*s == NULL || *search == NULL) {
-        subbed = string_dup(_STR(ARG1));
+        subbed = string_dup(STR1);
     } else {
         subbed = string_new(search_len);
         p = s;
@@ -137,7 +145,7 @@ NATIVE_METHOD(strsub) {
         subbed = string_add_chars(subbed, p, len - (p - s));
     }
 
-    RETURN_STRING(subbed)
+    CLEAN_RETURN_STRING(subbed);
 }
 
 /* Pad a string on the left (positive length) or on the right (negative
@@ -145,46 +153,57 @@ NATIVE_METHOD(strsub) {
 NATIVE_METHOD(pad) {
     int len, padding, filler_len = 1;
     char     * filler = " ";
-    string_t * padded;
+    string_t * padded,
+             * sfill = NULL,
+             * str;
     DEF_args;
 
     switch (ARG_COUNT) {
         case 3:    INIT_ARG3(STRING)
-                   filler = string_chars(_STR(ARG3));
-                   filler_len = string_length(_STR(ARG3));
+                   sfill = string_dup(STR3);
+                   filler = string_chars(sfill);
+                   filler_len = string_length(sfill);
         case 2:    INIT_ARG2(INTEGER)
                    INIT_ARG1(STRING)
                    break;
         default:   THROW_NUM_ERROR(ARG_COUNT, "two or three")
     } 
 
-    len = (_INT(ARG2) > 0) ? _INT(ARG2) : -_INT(ARG2);
-    padding = len - string_length(_STR(ARG1));
+    str = string_dup(STR1);
+    len = (INT2 > 0) ? INT2 : -INT2;
+    padding = len - string_length(str);
+
+    CLEAN_STACK();
+    anticipate_assignment();
 
     /* Construct the padded string. */
-    padded = _STR(ARG1);
     if (padding == 0) {
         /* Do nothing.  Easiest case. */
     } else if (padding < 0) {
         /* We're shortening the string.  Almost as easy. */
-        padded = string_truncate(padded, len);
+        str = string_truncate(str, len);
     } else if (args[1].u.val > 0) {
         /* We're lengthening the string on the right. */
-        padded = string_add_padding(padded, filler, filler_len, padding);
+        str = string_add_padding(str, filler, filler_len, padding);
     } else {
         /* We're lengthening the string on the left. */
-        padded = string_new(padding + _STR(ARG1)->len);
+        padded = string_new(padding + str->len);
         padded = string_add_padding(padded, filler, filler_len, padding);
-        padded = string_add(padded, _STR(ARG1));
-        string_discard(_STR(ARG1));
+        padded = string_add(padded, str);
+        string_discard(str);
+        str = padded;
     }
 
-    RETURN_STRING(padded);
+    if (sfill != NULL)
+        string_discard(sfill);
+
+    RETURN_STRING(str);
 }
 
 NATIVE_METHOD(match_begin) {
     int    sep_len = 1,
-           search_len;
+           search_len,
+           bool = 0;
     char * sep = " ",
          * search,
          * s,
@@ -193,25 +212,27 @@ NATIVE_METHOD(match_begin) {
 
     switch (ARG_COUNT) {
         case 3:    INIT_ARG3(STRING)
-                   sep     = string_chars(_STR(ARG3));
-                   sep_len = string_length(_STR(ARG3));
+                   sep     = string_chars(STR3);
+                   sep_len = string_length(STR3);
         case 2:    INIT_ARG2(STRING)
                    INIT_ARG1(STRING)
                    break;
         default:   THROW_NUM_ERROR(ARG_COUNT, "two or three")
     } 
 
-    s = string_chars(_STR(ARG1));
+    s = string_chars(STR1);
 
-    search = string_chars(_STR(ARG2));
-    search_len = string_length(_STR(ARG2));
+    search = string_chars(STR2);
+    search_len = string_length(STR2);
 
     for (p = s - sep_len; p; p = strcstr(p + 1, sep)) {
-        if (strnccmp(p + sep_len, search, search_len) == 0)
-            RETURN_INTEGER(1)
+        if (strnccmp(p + sep_len, search, search_len) == 0) {
+            bool = 1;
+            break;
+        }
     }
 
-    RETURN_INTEGER(0)
+    CLEAN_RETURN_INTEGER(bool);
 }
 
 /* Match against a command template. */
@@ -220,15 +241,16 @@ NATIVE_METHOD(match_template) {
     char   * ctemplate,
            * str;
 
-    INIT_2_ARGS(STRING, STRING)
+    INIT_2_ARGS(STRING, STRING);
 
-    ctemplate = string_chars(_STR(ARG1));
-    str = string_chars(_STR(ARG2));
+    ctemplate = string_chars(STR1);
+    str = string_chars(STR2);
 
-    if ((fields = match_template(ctemplate, str)))
-        RETURN_LIST(fields)
-    else
-        RETURN_INTEGER(0)
+    if ((fields = match_template(ctemplate, str))) {
+        CLEAN_RETURN_LIST(fields);
+    } else {
+        CLEAN_RETURN_INTEGER(0);
+    }
 }
 
 /* Match against a command template. */
@@ -239,13 +261,14 @@ NATIVE_METHOD(match_pattern) {
 
     INIT_2_ARGS(STRING, STRING)
 
-    pattern = string_chars(_STR(ARG1));
-    str = string_chars(_STR(ARG2));
+    pattern = string_chars(STR1);
+    str = string_chars(STR2);
 
-    if ((fields = match_pattern(pattern, str)))
-        RETURN_LIST(list_reverse(fields))
-    else
-        RETURN_INTEGER(0)
+    if ((fields = match_pattern(pattern, str))) {
+        CLEAN_RETURN_LIST(list_reverse(fields));
+    } else {
+        CLEAN_RETURN_INTEGER(0);
+    }
 }
 
 NATIVE_METHOD(match_regexp) {
@@ -261,12 +284,13 @@ NATIVE_METHOD(match_regexp) {
         default: THROW_NUM_ERROR(ARG_COUNT, "two or three")
     }
 
-    fields = match_regexp(_STR(ARG1), string_chars(_STR(ARG2)), sensitive);
+    fields = match_regexp(STR1, string_chars(STR2), sensitive);
 
-    if (fields)
-        RETURN_LIST(fields)
-    else
-        RETURN_INTEGER(0)
+    if (fields) {
+        CLEAN_RETURN_LIST(fields);
+    } else {
+        CLEAN_RETURN_INTEGER(0);
+    }
 }
 
 NATIVE_METHOD(regexp) {
@@ -282,15 +306,14 @@ NATIVE_METHOD(regexp) {
         default: THROW_NUM_ERROR(ARG_COUNT, "two or three")
     }
 
-    fields = regexp_matches(_STR(ARG1), string_chars(_STR(ARG2)), sensitive);
+    fields = regexp_matches(STR1, string_chars(STR2), sensitive);
     
-    if (fields)
-        RETURN_LIST(fields)
-    else
-        RETURN_INTEGER(0)
+    if (fields) {
+        CLEAN_RETURN_LIST(fields);
+    } else {
+        CLEAN_RETURN_INTEGER(0);
+    }
 }
-
-#define S(_x_) args[_x_].u.str
 
 NATIVE_METHOD(strsed) {
     string_t * out;
@@ -320,70 +343,94 @@ NATIVE_METHOD(strsed) {
                  break;
         default: THROW_NUM_ERROR(ARG_COUNT, "three to five")
     }
+
                  /* regexp *//* string *//* replace */
-    out = strsed(S(ARG1), S(ARG2), S(ARG3), global, sensitive, mult, &err);
+    out = strsed(STR1, STR2, STR3, global, sensitive, mult, &err);
 
     if (!out) {
         if (err)
             return 0;
-        RETURN_INTEGER(0)
-    } else
-        RETURN_STRING(out)
+        CLEAN_RETURN_INTEGER(0);
+    }
+
+    CLEAN_RETURN_STRING(out);
 }
 
 /* Encrypt a string. */
 NATIVE_METHOD(crypt) {
     char     * s,
              * str;
+    string_t * crypt;
 
     INIT_1_OR_2_ARGS(STRING, STRING)
 
-    s = string_chars(_STR(ARG1));
+    s = string_chars(STR1);
 
     if (argc == 2) {
-        if (string_length(_STR(ARG2)) != 2)
+        if (string_length(STR2) != 2)
             THROW((salt_id, "Salt (%S) is not two characters.", args[1].u.str))
         str = crypt_string(s, string_chars(args[1].u.str));
     } else {
         str = crypt_string(s, NULL);
     }
 
-    RETURN_STRING(string_from_chars(str, strlen(str)))
+    crypt = string_from_chars(str, strlen(str));
+
+    CLEAN_RETURN_STRING(crypt);
 }
 
 NATIVE_METHOD(uppercase) {
     string_t * str;
+
     INIT_1_ARG(STRING)
 
-    str = string_dup_or_copy(args[0].u.str);
-    RETURN_STRING(string_uppercase(str))
+    str = string_dup(STR1);
+
+    CLEAN_STACK();
+    anticipate_assignment();
+
+    RETURN_STRING(string_uppercase(str));
 }
 
 NATIVE_METHOD(lowercase) {
     string_t * str;
+
     INIT_1_ARG(STRING)
 
-    str = string_dup_or_copy(args[0].u.str);
-    RETURN_STRING(string_lowercase(str))
+    str = string_dup(STR1);
+
+    CLEAN_STACK();
+    anticipate_assignment();
+
+    RETURN_STRING(string_lowercase(str));
 }
 
 NATIVE_METHOD(capitalize) {
     char     * s;
     string_t * str;
 
-    INIT_1_ARG(STRING)
+    INIT_1_ARG(STRING);
 
-    str = string_dup_or_copy(args[0].u.str);
+    str = string_dup(ARG1);
+
+    CLEAN_STACK();
+    anticipate_assignment();
+
+    str = string_prep(str, str->start, str->len);
     s = string_chars(str);
     *s = UCASE(*s);
 
-    RETURN_STRING(str)
+    RETURN_STRING(str);
 }
 
 NATIVE_METHOD(strcmp) {
+    int lex;
+
     INIT_2_ARGS(STRING, STRING)
 
-    RETURN_INTEGER(strcmp(string_chars(_STR(ARG1)), string_chars(_STR(ARG2))))
+    lex = strcmp(string_chars(STR1), string_chars(STR2));
+
+    CLEAN_RETURN_INTEGER(lex);
 }
 
 NATIVE_METHOD(strfmt) {
@@ -399,15 +446,12 @@ NATIVE_METHOD(strfmt) {
         THROW((type_id, "First argument (%D) not a string.", &stack[arg_start]))
 
     fmt = stack[arg_start].u.str;
-
-    if (argc == 1)
-        RETURN_STRING(string_dup(fmt));
-
     args = &stack[arg_start + 1];
 
+    /* if out is NULL, strfmt() threw an error */
     if ((out = strfmt(fmt, args, argc - 1)) == (string_t *) NULL)
-        return 0;
+        RETURN_FALSE;
 
-    RETURN_STRING(out);
+    CLEAN_RETURN_STRING(out);
 }
 

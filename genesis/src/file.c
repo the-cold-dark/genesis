@@ -162,8 +162,8 @@ int flush_file(filec_t * file) {
     return F_FAILURE;
 }
 
-Buffer * read_binary_file(filec_t * file, int block) {
-    Buffer * buf = buffer_new(block);
+buffer_t * read_binary_file(filec_t * file, int block) {
+    buffer_t * buf = buffer_new(block);
 
     if (feof(file->fp)) {
         cthrow(eof_id, "End of file.");
@@ -371,8 +371,8 @@ list_t * open_file(string_t * name, string_t * smode, object_t * obj) {
 // --------------------------------------------------------------------
 // called by fread()
 */
-Buffer * read_from_file(object_t * obj) {
-    Buffer * buf;
+buffer_t * read_from_file(object_t * obj) {
+    buffer_t * buf;
     filec_t * file = find_file_controller(obj);
 
     if (file == NULL)
@@ -394,7 +394,7 @@ Buffer * read_from_file(object_t * obj) {
 // --------------------------------------------------------------------
 // called by fwrite()
 */
-int write_to_file(object_t * obj, Buffer * buf) {
+int write_to_file(object_t * obj, buffer_t * buf) {
     filec_t * file = find_file_controller(obj);
 
     if (file == NULL || !file->f.writable)

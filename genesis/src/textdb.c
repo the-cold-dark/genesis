@@ -1359,7 +1359,7 @@ char * data_from_literal(data_t *d, char *s) {
     } else if (*s == '`' && s[1] == '[') {
 	data_t *p, byte_data;
 	list_t *bytes;
-	Buffer *buf;
+	buffer_t *buf;
 	int i;
 
 	/* Get the contents of the buffer. */
@@ -1411,7 +1411,7 @@ char * data_from_literal(data_t *d, char *s) {
 	    while (isspace(*s))
 		s++;
 	    d->type = FROB;
-	    d->u.frob = TMALLOC(Frob, 1);
+	    d->u.frob = TMALLOC(frob_t, 1);
 	    d->u.frob->cclass = cclass.u.objnum;
 	    s = data_from_literal(&d->u.frob->rep, s);
 	    if (d->u.frob->rep.type == -1) {

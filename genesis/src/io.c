@@ -234,7 +234,7 @@ connection_t * find_connection(object_t * obj) {
 // there is no connection, it will be NULL, and we will know.
 */
 
-connection_t * tell(object_t * obj, Buffer * buf) {
+connection_t * tell(object_t * obj, buffer_t * buf) {
     connection_t * conn = find_connection(obj);
 
     if (conn != NULL)
@@ -314,7 +314,7 @@ int remove_server(int port) {
 INTERNAL void connection_read(connection_t *conn) {
     unsigned char temp[BIGBUF];
     int len;
-    Buffer *buf;
+    buffer_t *buf;
     data_t d;
 
     len = read(conn->fd, (char *) temp, BIGBUF);
@@ -343,7 +343,7 @@ INTERNAL void connection_read(connection_t *conn) {
 // --------------------------------------------------------------------
 */
 INTERNAL void connection_write(connection_t *conn) {
-    Buffer *buf = conn->write_buf;
+    buffer_t *buf = conn->write_buf;
     int r;
 
     r = write(conn->fd, buf->s, buf->len);

@@ -18,44 +18,55 @@
 #include "execute.h"
 
 NATIVE_METHOD(bufgraft) {
-    INIT_NO_ARGS()
+    INIT_NO_ARGS();
 
-    RETURN_INTEGER(0)
+    CLEAN_RETURN_INTEGER(0);
 }
 
 NATIVE_METHOD(buflen) {
-    INIT_1_ARG(BUFFER)
+    int val;
 
-    RETURN_INTEGER(buffer_len(_BUF(ARG1)))
+    INIT_1_ARG(BUFFER);
+
+    val = buffer_len(BUF1);
+
+    CLEAN_RETURN_INTEGER(val);
 }
 
 NATIVE_METHOD(buf_replace) {
-    int pos;
+    buffer_t * buf;
+    int pos, ch;
 
-    INIT_3_ARGS(BUFFER, INTEGER, INTEGER)
+    INIT_3_ARGS(BUFFER, INTEGER, INTEGER);
 
-    pos = _INT(ARG2) - 1;
+    pos = INT2 - 1;
 
     if (pos < 0)
         THROW((range_id, "Position (%d) is less than one.", pos + 1))
-    else if (pos >= buffer_len(_BUF(ARG1)))
+    else if (pos >= buffer_len(BUF1))
 	THROW((range_id, "Position (%d) is greater than buffer length (%d).",
-	      pos + 1, buffer_len(_BUF(ARG1))))
+	      pos + 1, buffer_len(BUF1)))
 
-    RETURN_BUFFER(buffer_replace(_BUF(ARG1), pos, _INT(ARG3)));
+    ch = INT3;
+    buf = buffer_dup(BUF1);
+
+    anticipate_assignment();
+
+    CLEAN_RETURN_BUFFER(buffer_replace(buf, pos, ch));
 }
 
 NATIVE_METHOD(subbuf) {
     int      start,
              len,
              blen;
+    buffer_t * buf;
 
     INIT_2_OR_3_ARGS(BUFFER, INTEGER, INTEGER);
 
-    blen = _BUF(ARG1)->len;
-    start = _INT(ARG2) - 1;
+    blen = BUF1->len;
+    start = INT2 - 1;
 
-    len = (argc == 3) ? _INT(ARG3) : blen - start;
+    len = (argc == 3) ? INT3 : blen - start;
 
     if (start < 0)
         THROW((range_id, "Start (%d) is less than one.", start + 1))
@@ -66,50 +77,66 @@ NATIVE_METHOD(subbuf) {
               "The subrange extends to %d, past the end of the buffer (%d).",
               start + len, blen))
 
-    RETURN_BUFFER(buffer_subrange(_BUF(ARG1), start, len));
+    buf = buffer_dup(BUF1);
+
+    anticipate_assignment();
+
+    CLEAN_RETURN_BUFFER(buffer_subrange(buf, start, len));
 }
 
 NATIVE_METHOD(buf_to_str) {
+    buffer_t * buf;
+
     INIT_1_ARG(BUFFER);
 
-    RETURN_STRING(buffer_to_string(_BUF(ARG1)));
+    buf = buffer_dup(BUF1);
+
+    CLEAN_RETURN_STRING(buffer_to_string(buf));
 }
 
 NATIVE_METHOD(buf_to_strings) {
-    list_t *list;
-    Buffer *sep;
+    list_t * list;
+    buffer_t * sep;
 
     INIT_1_OR_2_ARGS(BUFFER, BUFFER);
 
-    sep = (argc == 2) ? _BUF(ARG2) : NULL;
-    list = buffer_to_strings(_BUF(ARG1), sep);
+    sep = (argc == 2) ? BUF2 : NULL;
+    list = buffer_to_strings(BUF1, sep);
 
-    RETURN_LIST(list);
+    CLEAN_RETURN_LIST(list);
 }
 
 NATIVE_METHOD(str_to_buf) {
+    buffer_t * buf;
+
     INIT_1_ARG(STRING);
 
-    RETURN_BUFFER(buffer_from_string(_STR(ARG1)));
+    anticipate_assignment();
+    buf = buffer_from_string(STR1);
+
+    CLEAN_RETURN_BUFFER(buf);
 }
 
 
 NATIVE_METHOD(strings_to_buf) {
     data_t * d;
     int      i;
-    Buffer * sep;
+    buffer_t * sep,
+           * buf;
     list_t * list;
 
     INIT_1_OR_2_ARGS(LIST, BUFFER);
 
-    list = args[0].u.list;
-    sep = (argc == 2) ? args[1].u.buffer : NULL;
+    list = LIST1;
+    sep = (argc == 2) ? BUF2 : NULL;
 
     for (d = list_first(list), i=0; d; d = list_next(list, d),i++) {
 	if (d->type != STRING)
-            THROW((type_id, "List element %d (%D) not a string.", i + 1, d));
+            THROW((type_id, "List element %d (%D) not a string.", i + 1, d))
     }
 
-    RETURN_BUFFER(buffer_from_strings(list, sep));
+    buf = buffer_from_strings(list, sep);
+
+    CLEAN_RETURN_BUFFER(buf);
 }
 

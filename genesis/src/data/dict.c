@@ -19,18 +19,17 @@
 #define MALLOC_DELTA			 5
 #define HASHTAB_STARTING_SIZE		(32 - MALLOC_DELTA)
 
-static Dict *prepare_to_modify(Dict *dict);
-static void insert_key(Dict *dict, int i);
-static int search(Dict *dict, data_t *key);
-static void double_hashtab_size(Dict *dict);
+static void insert_key(dict_t *dict, int i);
+static int search(dict_t *dict, data_t *key);
+static void double_hashtab_size(dict_t *dict);
 
-Dict *dict_new(list_t *keys, list_t *values)
+dict_t *dict_new(list_t *keys, list_t *values)
 {
-    Dict *cnew;
+    dict_t *cnew;
     int i, j;
 
     /* Construct a new dictionary. */
-    cnew = EMALLOC(Dict, 1);
+    cnew = EMALLOC(dict_t, 1);
     cnew->keys = list_dup(keys);
     cnew->values = list_dup(values);
 
@@ -68,10 +67,10 @@ Dict *dict_new(list_t *keys, list_t *values)
     return cnew;
 }
 
-Dict *dict_new_empty(void)
+dict_t *dict_new_empty(void)
 {
     list_t *l1, *l2;
-    Dict *dict;
+    dict_t *dict;
 
     l1 = list_new(0);
     l2 = list_new(0);
@@ -81,10 +80,10 @@ Dict *dict_new_empty(void)
     return dict;
 }
 
-Dict *dict_from_slices(list_t *slices)
+dict_t *dict_from_slices(list_t *slices)
 {
     list_t *keys, *values;
-    Dict *dict;
+    dict_t *dict;
     data_t *d;
 
     /* Make lists for keys and values. */
@@ -109,13 +108,13 @@ Dict *dict_from_slices(list_t *slices)
     return dict;
 }
 
-Dict *dict_dup(Dict *dict)
+dict_t *dict_dup(dict_t *dict)
 {
     dict->refs++;
     return dict;
 }
 
-void dict_discard(Dict *dict)
+void dict_discard(dict_t *dict)
 {
     dict->refs--;
     if (!dict->refs) {
@@ -127,7 +126,7 @@ void dict_discard(Dict *dict)
     }
 }
 
-int dict_cmp(Dict *dict1, Dict *dict2)
+int dict_cmp(dict_t *dict1, dict_t *dict2)
 {
     if (list_cmp(dict1->keys, dict2->keys) == 0 &&
 	list_cmp(dict1->values, dict2->values) == 0)
@@ -136,11 +135,11 @@ int dict_cmp(Dict *dict1, Dict *dict2)
 	return 1;
 }
 
-Dict *dict_add(Dict *dict, data_t *key, data_t *value)
+dict_t *dict_add(dict_t *dict, data_t *key, data_t *value)
 {
     int pos;
 
-    dict = prepare_to_modify(dict);
+    dict = dict_prep(dict);
 
     /* Just replace the value for the key if it already exists. */
     pos = search(dict, key);
@@ -163,11 +162,11 @@ Dict *dict_add(Dict *dict, data_t *key, data_t *value)
 
 /* Error-checking is the caller's responsibility; this routine assumes that it
  * will find the key in the dictionary. */
-Dict *dict_del(Dict *dict, data_t *key)
+dict_t *dict_del(dict_t *dict, data_t *key)
 {
     int ind, *ip, i = -1, j;
 
-    dict = prepare_to_modify(dict);
+    dict = dict_prep(dict);
 
     /* Search for a pointer to the key, either in the hash table entry or in
      * the chain links. */
@@ -207,7 +206,7 @@ Dict *dict_del(Dict *dict, data_t *key)
     return dict;
 }
 
-long dict_find(Dict *dict, data_t *key, data_t *ret)
+long dict_find(dict_t *dict, data_t *key, data_t *ret)
 {
     int pos;
 
@@ -219,7 +218,7 @@ long dict_find(Dict *dict, data_t *key, data_t *ret)
     return NOT_AN_IDENT;
 }
 
-int dict_contains(Dict *dict, data_t *key)
+int dict_contains(dict_t *dict, data_t *key)
 {
     int pos;
 
@@ -227,12 +226,12 @@ int dict_contains(Dict *dict, data_t *key)
     return (pos != -1);
 }
 
-list_t *dict_keys(Dict *dict)
+list_t *dict_keys(dict_t *dict)
 {
     return list_dup(dict->keys);
 }
 
-list_t *dict_key_value_pair(Dict *dict, int i)
+list_t *dict_key_value_pair(dict_t *dict, int i)
 {
     list_t *l;
 
@@ -245,7 +244,7 @@ list_t *dict_key_value_pair(Dict *dict, int i)
     return l;
 }
 
-string_t *dict_add_literal_to_str(string_t *str, Dict *dict)
+string_t *dict_add_literal_to_str(string_t *str, dict_t *dict)
 {
     int i;
 
@@ -262,15 +261,14 @@ string_t *dict_add_literal_to_str(string_t *str, Dict *dict)
     return string_addc(str, ']');
 }
 
-static Dict *prepare_to_modify(Dict *dict)
-{
-    Dict *cnew;
+dict_t *dict_prep(dict_t *dict) {
+    dict_t *cnew;
 
     if (dict->refs == 1)
 	return dict;
 
     /* Duplicate the old dictionary. */
-    cnew = EMALLOC(Dict, 1);
+    cnew = EMALLOC(dict_t, 1);
     cnew->keys = list_dup(dict->keys);
     cnew->values = list_dup(dict->values);
     cnew->hashtab_size = dict->hashtab_size;
@@ -283,7 +281,7 @@ static Dict *prepare_to_modify(Dict *dict)
     return cnew;
 }
 
-static void insert_key(Dict *dict, int i)
+static void insert_key(dict_t *dict, int i)
 {
     int ind;
 
@@ -292,7 +290,7 @@ static void insert_key(Dict *dict, int i)
     dict->hashtab[ind] = i;
 }
 
-static int search(Dict *dict, data_t *key)
+static int search(dict_t *dict, data_t *key)
 {
     int ind, i;
 
@@ -305,12 +303,12 @@ static int search(Dict *dict, data_t *key)
     return -1;
 }
 
-int dict_size(Dict *dict)
+int dict_size(dict_t *dict)
 {
     return list_length(dict->keys);
 }
 
-static void double_hashtab_size(Dict *dict)
+static void double_hashtab_size(dict_t *dict)
 {
     int i;
 

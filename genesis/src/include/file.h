@@ -44,7 +44,7 @@ void file_add(filec_t * file);
 filec_t * find_file_controller(object_t * obj);
 int close_file(filec_t * file);
 int flush_file(filec_t * file);
-Buffer * read_binary_file(filec_t * file, int block);
+buffer_t * read_binary_file(filec_t * file, int block);
 string_t * read_file(filec_t * file);
 int abort_file(filec_t * file);
 int stat_file(filec_t * file, struct stat * sbuf);

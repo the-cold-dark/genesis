@@ -705,27 +705,31 @@ string_t * strsed(string_t * reg,  /* the regexp string */
             break;\
     }
 
-#define x_THROW(_what_) \
-    cthrow _what_; return NULL;
+#define x_THROW(_what_) { \
+    cthrow _what_; \
+    return NULL; \
+}
 
 string_t * strfmt(string_t * str, data_t * args, int argc) {
     string_t * out,
              * value;
+    register char * s;
     char     * fmt,
-             * s,
              * tmp,
                buf[LINE],
                fill[LINE];
-    int        len, pad, prec, trunc;
+    register int pad, prec, trunc;
     int        cur = -1;
 
     fmt = string_chars(str);
-    len = string_length(str);
-    out = string_new(len * 2); /* better more than less and having to resize */
+
+    /* better more than less and having to resize */
+    out = string_new(string_length(str) * 2);
 
     for (;;) {
         s = strchr(fmt, '%');
-        if (s == (char) NULL || s[1] == (char) NULL) {
+
+        if (s == (char) NULL || *s == (char) NULL) {
             out = string_add_chars(out, fmt, strlen(fmt));
             break;
         }
@@ -733,47 +737,68 @@ string_t * strfmt(string_t * str, data_t * args, int argc) {
         out = string_add_chars(out, fmt, s - fmt);
         s++;
 
-        len -= (s - fmt);
-
         if (*s == '%') {
             out = string_addc(out, '%');
+            fmt = ++s;
             continue;
         }
 
-        if (++cur > argc) {
+        if (++cur >= argc) {
             string_discard(out);
-            x_THROW((type_id, "No argument for format."))
+            x_THROW((type_id, "Not enough arguments for format."))
         }
 
         pad = prec = trunc = 0;
-        while (isdigit(*s) && len--)
-            pad = pad * 10 + *s++ - '0';
+        if (*s == '*') {
+            if (args[cur].type != INTEGER)
+                x_THROW((type_id, "Argument for '*' is not an integer."))
+            pad = args[cur].u.val;
+            s++;
+            if (++cur >= argc) {
+                string_discard(out);
+                x_THROW((type_id, "Not enough arguments for format."))
+            }
+        } else {
+            while (isdigit(*s))
+                pad = pad * 10 + *s++ - '0';
+        }
 
         if (*s == '.') {
             s++;
-            while (isdigit(*s) && len--)
-                prec = prec * 10 + *s++ - '0';
+            if (*s == '*') {
+                if (args[cur].type != INTEGER)
+                    x_THROW((type_id, "Argument for '*' is not an integer."))
+                prec = args[cur].u.val;
+                s++;
+                if (++cur >= argc) {
+                    string_discard(out);
+                    x_THROW((type_id, "Not enough arguments for format."))
+                }
+            } else {
+                while (isdigit(*s))
+                    prec = prec * 10 + *s++ - '0';
+            }
         }
 
         /* get the pad char */
         if (*s == '{') {
             int    x = 0;
 
-            s++, len--;
-            for (; *s != '}' && len; s++, len--) {
+            s++;
+            for (; *s && *s != '}'; s++) {
                 if (s[0] == '\\' && (s[1] == '\\' || s[1] == '}'))
-                    s++, len--;
+                    s++;
                 fill[x++] = *s;
             }
             fill[x] = (char) NULL;
-            s++, len--;
+            s++;
         } else {
             fill[0] = ' ';
             fill[1] = (char) NULL;
         }
 
         /* invalid format, just abort, they need to know when it is wrong */
-        if (len <= 0) {
+        if (*s == (char) NULL) {
             string_discard(out);
             x_THROW((type_id, "Invalid format"))
         }
@@ -869,7 +894,6 @@ string_t * strfmt(string_t * str, data_t * args, int argc) {
         string_discard(value);
 
         fmt = ++s;
-        len--;
     }
 
     return out;

@@ -14,23 +14,23 @@
 
 #include "cdc_types.h"
 
-Buffer   * buffer_new(int len);
-Buffer   * buffer_dup(Buffer *buf);
-void       buffer_discard(Buffer *buf);
-Buffer   * buffer_append(Buffer *buf1, Buffer *buf2);
-int        buffer_retrieve(Buffer *buf, int pos);
-Buffer   * buffer_replace(Buffer *buf, int pos, unsigned int c);
-Buffer   * buffer_add(Buffer *buf, unsigned int c);
-Buffer   * buffer_resize(Buffer *buf, int len);
-Buffer   * buffer_tail(Buffer *buf, int pos);
-string_t * buffer_to_string(Buffer *buf);
-Buffer   * buffer_from_string(string_t * string);
-list_t   * buffer_to_strings(Buffer *buf, Buffer *sep);
-Buffer   * buffer_from_strings(list_t *string_list, Buffer *sep);
-Buffer   * buffer_subrange(Buffer *buf, int start, int len);
+buffer_t * buffer_new(int len);
+buffer_t * buffer_dup(buffer_t *buf);
+void       buffer_discard(buffer_t *buf);
+buffer_t * buffer_append(buffer_t *buf1, buffer_t *buf2);
+int        buffer_retrieve(buffer_t *buf, int pos);
+buffer_t * buffer_replace(buffer_t *buf, int pos, unsigned int c);
+buffer_t * buffer_add(buffer_t *buf, unsigned int c);
+buffer_t * buffer_resize(buffer_t *buf, int len);
+buffer_t * buffer_tail(buffer_t *buf, int pos);
+string_t * buffer_to_string(buffer_t *buf);
+buffer_t * buffer_from_string(string_t * string);
+list_t   * buffer_to_strings(buffer_t *buf, buffer_t *sep);
+buffer_t * buffer_from_strings(list_t *string_list, buffer_t *sep);
+buffer_t * buffer_subrange(buffer_t *buf, int start, int len);
+buffer_t * buffer_prep(buffer_t *buf);
 
 #define buffer_len(__b) (__b->len)
-/* int      buffer_len(Buffer *buf); */
 
 #endif
 

@@ -142,11 +142,13 @@ NATIVE_METHOD(decode) {
     /* Accept a string to take the length of. */
     INIT_1_ARG(STRING);
 
-    /* decode directly munches the string, so force duplicate it, we should
-       actually just have prepare_to_modify here, but its a string only func */
-    str = decode(string_from_chars(args[0].u.str->s, args[0].u.str->len));
+    str = string_dup(STR1);
 
-    RETURN_STRING(str);
+    CLEAN_STACK();
+    anticipate_assignment();
+
+    /* decode should prep it, but its easier for us to do it */
+    RETURN_STRING(decode(string_prep(str, str->start, str->len)));
 }
 
 NATIVE_METHOD(encode) {
@@ -154,8 +156,8 @@ NATIVE_METHOD(encode) {
 
     INIT_1_ARG(STRING);
 
-    str = encode(string_chars(args[0].u.str));
+    str = encode(string_chars(STR1));
 
-    RETURN_STRING(str);
+    CLEAN_RETURN_STRING(str);
 }
 

@@ -71,7 +71,7 @@
 /* this macro is mainly handy when you want to parse the args yourself */
 #define INIT_ARGC(_argc_, _expected_, _str_) \
         if (_argc_ != _expected_) \
-            THROW_NUM_ERROR(_argc_, _str_);
+            THROW_NUM_ERROR(_argc_, _str_)
 
 #define CHECK_TYPE(_pos_, _type_, _str_) \
         if (args[_pos_].type != _type_) \
@@ -161,7 +161,7 @@
 
 #define COLDC_FUNC(_name_) void CAT(func_, _name_) (void)
 #define NATIVE_METHOD(_name_) \
-        int CAT(native_, _name_) (int arg_start, data_t * rval)
+        int CAT(native_, _name_) (int stack_start, int arg_start)
 
 /*
 // -----------------------------------------------------------------------
@@ -174,18 +174,34 @@
 #define FIXED    0
 #define ANY_DATA 0
 
-#define RETURN_INTEGER(d){rval->type = INTEGER; rval->u.val = d; RETURN_TRUE;}
-#define RETURN_FLOAT(d)  {rval->type = FLOAT; rval->u.fval = d; RETURN_TRUE;}
-#define RETURN_OBJNUM(d) {rval->type = OBJNUM; rval->u.objnum = d; RETURN_TRUE;}
-#define RETURN_SYMBOL(d) {rval->type = SYMBOL; rval->u.symbol = d; RETURN_TRUE;}
-#define RETURN_ERROR(d)  {rval->type = ERROR; rval->u.error = d; RETURN_TRUE;}
-#define RETURN_STRING(d) {rval->type = STRING; rval->u.str = d; RETURN_TRUE;}
-#define RETURN_BUFFER(d) {rval->type = BUFFER; rval->u.buffer = d; RETURN_TRUE;}
-#define RETURN_FROB(d)   {rval->type = FROB; rval->u.frob = d; RETURN_TRUE;}
-#define RETURN_DICT(d)   {rval->type = DICT; rval->u.dict = d; RETURN_TRUE;}
-#define RETURN_LIST(d)   {rval->type = LIST; rval->u.list = d; RETURN_TRUE;}
+#include "execute.h"
+
+#define CLEAN_STACK() pop_native_stack(stack_start)
+
+#define RETURN_INTEGER(d) native_push_int(d);    RETURN_TRUE
+#define RETURN_FLOAT(d)   native_push_float(d);  RETURN_TRUE
+#define RETURN_OBJNUM(d)  native_push_objnum(d); RETURN_TRUE
+#define RETURN_SYMBOL(d)  native_push_symbol(d); RETURN_TRUE
+#define RETURN_ERROR(d)   native_push_error(d);  RETURN_TRUE
+#define RETURN_STRING(d)  native_push_string(d); RETURN_TRUE
+#define RETURN_BUFFER(d)  native_push_buffer(d); RETURN_TRUE
+#define RETURN_FROB(d)    native_push_frob(d);   RETURN_TRUE
+#define RETURN_DICT(d)    native_push_dict(d);   RETURN_TRUE
+#define RETURN_LIST(d)    native_push_list(d);   RETURN_TRUE
+
+#define CLEAN_RETURN_INTEGER(d) CLEAN_STACK(); RETURN_INTEGER(d)
+#define CLEAN_RETURN_FLOAT(d)   CLEAN_STACK(); RETURN_FLOAT(d)
+#define CLEAN_RETURN_OBJNUM(d)  CLEAN_STACK(); RETURN_OBJNUM(d)
+#define CLEAN_RETURN_SYMBOL(d)  CLEAN_STACK(); RETURN_SYMBOL(d)
+#define CLEAN_RETURN_ERROR(d)   CLEAN_STACK(); RETURN_ERROR(d)
+#define CLEAN_RETURN_STRING(d)  CLEAN_STACK(); RETURN_STRING(d)
+#define CLEAN_RETURN_BUFFER(d)  CLEAN_STACK(); RETURN_BUFFER(d)
+#define CLEAN_RETURN_FROB(d)    CLEAN_STACK(); RETURN_FROB(d)
+#define CLEAN_RETURN_DICT(d)    CLEAN_STACK(); RETURN_DICT(d)
+#define CLEAN_RETURN_LIST(d)    CLEAN_STACK(); RETURN_LIST(d)
 
 #else /* NATIVE_MODULE */
+
 /*
 // -----------------------------------------------------------------------
 // function-specific defines
@@ -233,4 +249,35 @@
 #define _BUF(_pos_)    args[_pos_].u.buffer
 #define _FROB(_pos_)   args[_pos_].u.frob
 #define _DICT(_pos_)   args[_pos_].u.dict
+
+#define INT1           args[0].u.val
+#define INT2           args[1].u.val
+#define INT3           args[2].u.val
+#define FLOAT1         args[0].u.fval
+#define FLOAT2         args[1].u.fval
+#define FLOAT3         args[2].u.fval
+#define OBJNUM1        args[0].u.objnum
+#define OBJNUM2        args[1].u.objnum
+#define OBJNUM3        args[2].u.objnum
+#define SYM1           args[0].u.symbol
+#define SYM2           args[1].u.symbol
+#define SYM3           args[2].u.symbol
+#define ERR1           args[0].u.error
+#define ERR2           args[1].u.error
+#define ERR3           args[2].u.error
+#define STR1           args[0].u.str
+#define STR2           args[1].u.str
+#define STR3           args[2].u.str
+#define LIST1          args[0].u.list
+#define LIST2          args[1].u.list
+#define LIST3          args[2].u.list
+#define BUF1           args[0].u.buffer
+#define BUF2           args[1].u.buffer
+#define BUF3           args[2].u.buffer
+#define FROB1          args[0].u.frob
+#define FROB2          args[1].u.frob
+#define FROB3          args[2].u.frob
+#define DICT1          args[0].u.dict
+#define DICT2          args[1].u.dict
+#define DICT3          args[2].u.dict
 

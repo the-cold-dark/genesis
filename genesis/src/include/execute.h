@@ -133,21 +133,42 @@ int  frame_start(object_t *obj,
                  objnum_t user,
 		 int stack_start,
                  int arg_start);
+void pop_native_stack(int start);
 void frame_return(void);
 void anticipate_assignment(void);
 int pass_method(int stack_start, int arg_start);
 int call_method(objnum_t objnum, Ident message, int stack_start, int arg_start);
 void pop(int n);
 void check_stack(int n);
-void push_int(long n);
-void push_float(float f);
-void push_string(string_t *str);
-void push_objnum(objnum_t objnum);
-void push_list(list_t *list);
-void push_symbol(Ident id);
-void push_error(Ident id);
-void push_dict(Dict *dict);
-void push_buffer(Buffer *buffer);
+
+#define F_PUSH(_name_, _c_type_) \
+    void CAT(push_, _name_) (_c_type_ var)
+#define N_PUSH(_name_, _c_type_) \
+    void CAT(native_push_, _name_) (_c_type_ var)
+
+F_PUSH(int,    long);
+F_PUSH(float,  float);
+F_PUSH(string, string_t *);
+F_PUSH(objnum, objnum_t);
+F_PUSH(list,   list_t *);
+F_PUSH(dict,   dict_t *);
+F_PUSH(symbol, Ident);
+F_PUSH(error,  Ident);
+F_PUSH(buffer, buffer_t *);
+
+N_PUSH(int,    long);
+N_PUSH(float,  float);
+N_PUSH(string, string_t *);
+N_PUSH(objnum, objnum_t);
+N_PUSH(list,   list_t *);
+N_PUSH(dict,   dict_t *);
+N_PUSH(symbol, Ident);
+N_PUSH(error,  Ident);
+N_PUSH(buffer, buffer_t *);
+
+#undef F_PUSH
+#undef N_PUSH
+
 int func_init_0(void);
 int func_init_1(data_t **args, int type1);
 int func_init_2(data_t **args, int type1, int type2);

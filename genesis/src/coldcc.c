@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <signal.h>
+#include <ctype.h>
 #include "cdc_string.h"               /* strccmp() */
 #include "codegen.h"
 #include "cdc_types.h"
@@ -229,24 +230,13 @@ INTERNAL void initialize(int argc, char **argv) {
 
     name = *argv;
 
-    init_defs();
-
-    init_sig();
-    init_codegen();
-    init_ident();
-    init_op_table();
-    init_match();
-    init_util();
-    init_execute();
-    init_scratch_file();
-    init_token();
-    init_modules(argc, argv);
-    init_cache();
-
     use_natives = 0;
 
     argv++;
     argc--;
+
+    init_util();
+    init_defs();
 
     while (argc) {
         if (**argv == '-') {
@@ -275,6 +265,29 @@ INTERNAL void initialize(int argc, char **argv) {
                 case 'p':
                     c_opt = OPT_PARTIAL;
                     break;
+                case 's': {
+                    char * p;
+
+                    argv += getarg(name, &buf, opt, argv, &argc, usage);
+                    p = buf;
+                    cache_width = atoi(p);
+                    while (*p && isdigit(*p))
+                        p++;
+                    if (LCASE(*p) == 'x') {
+                        p++;
+                        cache_depth = atoi(p);
+                    } else {
+                        usage(name);
+                        printf("\n** Invalid WIDTHxDEPTH: '%s'\n", buf);
+                        exit(0);
+                    }
+                    if (cache_width == 0 && cache_depth == 0) {
+                        usage(name);
+                        puts("\n** The WIDTH and DEPTH cannot both be zero\n");
+                        exit(0);
+                    }
+                    break;
+                }
                 case 'w':
                     fputs("\n** Unsupported option: -w\n", stderr);
                     c_nowrite = 0;
@@ -301,6 +314,17 @@ INTERNAL void initialize(int argc, char **argv) {
         argv++;
         argc--;
     }
+
+    init_sig();
+    init_codegen();
+    init_ident();
+    init_op_table();
+    init_match();
+    init_execute();
+    init_scratch_file();
+    init_token();
+    init_modules(argc, argv);
+    init_cache();
 }
 
 /*
@@ -324,6 +348,7 @@ Options:\n\n\
         -p              Partial compile, compile object(s) and insert\n\
                         into database accordingly.  Can be used with -w\n\
                         for a ColdC code verification program.\n\
+        -s WIDTHxDEPTH  Cache size, default 10x30\n\n\
 Anticipated Options:\n\n\
         -w              Compile for parse only, do not write output.\n\
                         This option can only be used with partial compile.\n\

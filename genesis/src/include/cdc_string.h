@@ -45,8 +45,7 @@ void       string_discard(string_t * str);
 string_t * string_parse(char * *sptr);
 string_t * string_add_unparsed(string_t * str, char * s, int len);
 char     * regerror(char * msg);
-string_t * prepare_to_modify_str(string_t *str, int start, int len); 
-string_t * string_dup_or_copy(string_t * str);
+string_t * string_prep(string_t *str, int start, int len); 
 
 #define string_length(__s) ((int) __s->len)
 #define string_chars(__s) ((char *) __s->s + __s->start)

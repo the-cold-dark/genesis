@@ -182,7 +182,7 @@ INTERNAL int size_list(list_t *list)
     return size;
 }
 
-INTERNAL void pack_dict(Dict *dict, FILE *fp)
+INTERNAL void pack_dict(dict_t *dict, FILE *fp)
 {
     int i;
 
@@ -195,12 +195,12 @@ INTERNAL void pack_dict(Dict *dict, FILE *fp)
     }
 }
 
-INTERNAL Dict *unpack_dict(FILE *fp)
+INTERNAL dict_t *unpack_dict(FILE *fp)
 {
-    Dict *dict;
+    dict_t *dict;
     int i;
 
-    dict = EMALLOC(Dict, 1);
+    dict = EMALLOC(dict_t, 1);
     dict->keys = unpack_list(fp);
     dict->values = unpack_list(fp);
     dict->hashtab_size = read_long(fp);
@@ -214,7 +214,7 @@ INTERNAL Dict *unpack_dict(FILE *fp)
     return dict;
 }
 
-INTERNAL int size_dict(Dict *dict)
+INTERNAL int size_dict(dict_t *dict)
 {
     int size = 0, i;
 
@@ -645,7 +645,7 @@ INTERNAL void unpack_data(data_t *data, FILE *fp)
 	break;
 
       case FROB:
-        data->u.frob = TMALLOC(Frob, 1);
+        data->u.frob = TMALLOC(frob_t, 1);
 	data->u.frob->cclass = read_long(fp);
 	unpack_data(&data->u.frob->rep, fp);
 	break;

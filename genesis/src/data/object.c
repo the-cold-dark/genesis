@@ -236,7 +236,7 @@ INTERNAL cList *object_ancestors_aux(Long objnum, cList *ancestors) {
 	cache_discard(object);
 	return ancestors;
     }
-    /* object->dirty = 1; */
+    object->dirty = 1;
     object->search = cur_search;
 
     parents = list_dup(object->parents);
@@ -277,7 +277,7 @@ static Int object_has_ancestor_aux(Long objnum, Long ancestor)
 	cache_discard(object);
 	return 0;
     }
-    /* object->dirty = 1; */
+    object->dirty = 1;
     object->search = cur_search;
 
     parents = list_dup(object->parents);
@@ -588,13 +588,13 @@ Long object_default_var(Obj *object, Obj *cclass, Long name, cData *ret)
 
 Long object_inherited_var(Obj *object, Obj *cclass, Long name, cData *ret)
 {
-    Var   * var;
+    Var   * var, * dvar;
     cList * ancestors;
     cData * d;
     Obj   * a;
 
     /* Make sure variable exists on cclass. */
-    if (!object_find_var(cclass, cclass->objnum, name))
+    if (!(dvar = object_find_var(cclass, cclass->objnum, name)))
         return varnf_id;
 
     var = object_find_var(object, cclass->objnum, name);
@@ -617,9 +617,8 @@ Long object_inherited_var(Obj *object, Obj *cclass, Long name, cData *ret)
             cache_discard(a);
         }
 
-        /* safety net--should NEVER occur, but could */
-	ret->type = INTEGER;
-	ret->u.val = 0;
+        /* If we didn't find it above, default to the definer's value */
+        data_dup(ret, &dvar->val);
 
         DONE:
         list_discard(ancestors);
@@ -641,6 +640,7 @@ INTERNAL Bool object_inherited_var_aux(Long objnum, Long definer,  Long name, cD
 	cache_discard(object);
 	return ancestors;
     }
+    object->dirty = 1;
     object->search = cur_search;
 
     if (var = object_find_var(object, definer, name))
@@ -897,7 +897,7 @@ static void search_object(Long objnum, Search_params *params)
 	cache_discard(object);
 	return;
     }
-    /* object->dirty = 1; */
+    object->dirty = 1;
     object->search = cur_search;
 
     /* Grab the parents list and discard the object. */

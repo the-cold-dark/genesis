@@ -896,7 +896,8 @@ COLDC_FUNC(objnum) {
     push_int(cur_frame->object->objnum);
 }
 
-INTERNAL cList * add_op_arg(cList * out, Int type, Long op, Obj * obj) {
+INTERNAL cList * add_op_arg(cList * out, Int type, Long op, Method * method) {
+    Obj * obj = method->object;
     cData d;
 
     switch (type) {
@@ -913,10 +914,35 @@ INTERNAL cList * add_op_arg(cList * out, Int type, Long op, Obj * obj) {
             d.u.error = object_get_ident(obj, op);
             break;
         case IDENT:
-        case VAR:
             d.type = SYMBOL;
             d.u.symbol = object_get_ident(obj, op);
             break;
+        case VAR: {
+            Long id;
+    
+            d.type = SYMBOL;
+    
+            if (op < method->num_args) {
+                op = method->num_args - op - 1;
+                id = object_get_ident(obj, method->argnames[op]);
+                d.u.symbol = id;
+                break;
+            }
+            op -= method->num_args;
+    
+            if (method->rest != -1) {
+                if (op == 0) {
+                   id = object_get_ident(obj, method->rest);
+                   d.u.symbol = id;
+                   break;
+                }
+                op--;
+            }
+
+            id = object_get_ident(obj, method->varnames[op]);
+            d.u.symbol = id;
+            break;
+            }
         case STRING:
             d.type = STRING;
             d.u.str = object_get_string(obj, op);
@@ -971,12 +997,12 @@ COLDC_FUNC(method_bytecode) {
         x++;
 
         if (info->arg1) {
-            list = add_op_arg(list, info->arg1, ops[x], method->object);
+            list = add_op_arg(list, info->arg1, ops[x], method);
             x++;
         }
 
         if (info->arg2) {
-            list = add_op_arg(list, info->arg1, ops[x], method->object);
+            list = add_op_arg(list, info->arg1, ops[x], method);
             x++;
         }
     }

@@ -147,11 +147,8 @@ struct error_list {
     Int *error_ids;
 };
 
-#define START_SEARCH() \
-    if (last_search >= MAX_LONG) \
-        last_search = 0; \
-    cur_search = ++last_search
-#define END_SEARCH() cur_search = 0
+#define START_SEARCH() cur_search++
+#define END_SEARCH()
 
 /* ..................................................................... */
 /* function prototypes */

@@ -1389,7 +1389,7 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
     }
 
     /* ok, lets do it then, mark it dirty and update cur_search */
-    /*obj->dirty = 1;*/
+    obj->dirty = 1;
     obj->search = cur_search;
 
     /* let them know? */

@@ -384,7 +384,8 @@ INTERNAL int buf_rindexc(uChar * buf, int len, uChar sub, int origin) {
 int buffer_index(cBuf * buf, uChar * ss, int slen, int origin) {
     int     len;
     uChar * s,
-          * p;
+          * p,
+          * lastp;
     Bool    reverse = NO;
 
     s = buf->s;
@@ -417,10 +418,12 @@ int buffer_index(cBuf * buf, uChar * ss, int slen, int origin) {
             return p ? ((p - s) + 1) : 0;
         } else {
             slen--;
+            lastp = s - 1;
             while (p) {
                 if (MEMCMP(p + 1, ss + 1, slen) == 0)
                     return (p - s) + 1;
-                len -= (p - s)+1;
+                    len -= p - lastp;
+                    lastp = p;
                 p = (uChar *) memchr(p+1, *ss, len);
             }
         }

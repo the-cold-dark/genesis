@@ -250,7 +250,7 @@ typedef bool              Bool;
   typedef int               Int;
   typedef unsigned int      uInt;
 # define MAX_INT  2147483647
-# define MAX_UINT 4294967295
+# define MAX_UINT 4294967295U
 #elif SIZEOF_LONG == 4
   typedef long              Int;
   typedef unsigned long     uInt; 

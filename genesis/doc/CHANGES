@@ -6,7 +6,14 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
-1.0-27 [-Mar-97] Miro, Brian
+1.0-28 [29-Apr-97] Brian, Miro, Brandon
+      * fixed bug in inherit_var() (Brian)
+      * fixed bug in bufidx() (Miro)
+      * fixed buggy method_bytecode (Miro)
+      * fixed bug in += with STR on the left and a SYM on the right (Brian)
+      * fixed my braindead changes to cache searching, by simply reverting
+        back to how it was--will re-write (and debug) in p29 (Brandon)
+1.0-27 [10-Apr-97] Miro, Brian
       * fixed a bug, removed an extra cache_discard that completely bombed
         the server if the object got swapped while task still used the
         method  (Miro)

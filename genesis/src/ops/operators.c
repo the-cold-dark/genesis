@@ -1683,11 +1683,11 @@ void op_doeq_add(void) {
             char * s;
 
             if (var->type == SYMBOL) {
-                s = ident_name(arg->u.symbol);
+                s = ident_name(var->u.symbol);
                 str = string_from_chars(s, strlen(s));
-                ident_discard(arg->u.symbol);
-                arg->type = STRING;
-                arg->u.str = str;
+                ident_discard(var->u.symbol);
+                var->type = STRING;
+                var->u.str = str;
             } else {
                 str = data_to_literal(var, TRUE);
                 data_discard(var);

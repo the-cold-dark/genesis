@@ -1,17 +1,12 @@
+/*
+// Full copyright information is available in the file ../doc/CREDITS
+*/
+
 #define _defs_
 
+#include <sys/types.h>
+#include <time.h>
 #include "defs.h"
-#include "memory.h"
-
-/*char c_dir_binary[32];
-#char c_dir_textdump[32];
-#char c_dir_bin[32];
-#char c_dir_root[32];
-int  c_interactive;
-int  running;
-int  atomic;
-long heartbeat_freq;
-*/
 
 #define INIT_VAR(var, name, len) { \
         var = EMALLOC(char, len + 1); \
@@ -20,9 +15,13 @@ long heartbeat_freq;
     }
 
 void init_defs(void) {
-    c_interactive = 0;
-    running = 1;
-    atomic = 0;
+#ifdef HAVE_TM_ZONE
+    struct tm * tms;
+    time_t t;
+#endif
+    c_interactive = NO;
+    running = YES;
+    atomic = NO;
     heartbeat_freq = 5;
 
     INIT_VAR(c_dir_binary, "binary", 6);
@@ -37,13 +36,15 @@ void init_defs(void) {
     errfile = stderr;
 
 #ifdef HAVE_TM_ZONE
+    time(&t);
+    tms = localtime(&t);
     str_tzname = string_from_chars(tms->tm_zone, strlen(tms->tm_zone));
 #else
-  #ifdef HAVE_TZNAME 
+# ifdef HAVE_TZNAME 
     str_tzname = string_from_chars(tzname[0], strlen(tzname[0]));
-  #else 
+# else 
     str_tzname = string_new(0);
-  #endif
+# endif
 #endif
 }
 

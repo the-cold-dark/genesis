@@ -1,41 +1,25 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: io.c
-// ---
-// Network routines.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
 #define _io_
 
-#include "config.h"
 #include "defs.h"
 
 #include <ctype.h>
 #include <string.h>
-#include <errno.h>
-#include <unistd.h>
-#include "io.h"
-#include "net.h"
-#include "execute.h"
-#include "memory.h"
-#include "grammar.h"
-#include "cdc_types.h"
-#include "data.h"
+#include "cdc_pcode.h"
 #include "util.h"
 #include "cache.h"
 
-INTERNAL void connection_read(connection_t *conn);
-INTERNAL void connection_write(connection_t *conn);
-INTERNAL connection_t *connection_add(int fd, long objnum);
-INTERNAL void connection_discard(connection_t *conn);
+INTERNAL void connection_read(Conn *conn);
+INTERNAL void connection_write(Conn *conn);
+INTERNAL Conn *connection_add(Int fd, Long objnum);
+INTERNAL void connection_discard(Conn *conn);
 INTERNAL void pend_discard(pending_t *pend);
 INTERNAL void server_discard(server_t *serv);
 
-INTERNAL connection_t * connections;  /* List of client connections. */
+INTERNAL Conn * connections;  /* List of client connections. */
 INTERNAL server_t     * servers;      /* List of server sockets. */
 INTERNAL pending_t    * pendings;     /* List of pending connections. */
 
@@ -47,10 +31,9 @@ INTERNAL pending_t    * pendings;     /* List of pending connections. */
 */
 
 void flush_defunct(void) {
-    connection_t **connp, *conn;
+    Conn **connp, *conn;
     server_t     **servp, *serv;
     pending_t    **pendp, *pend;
-    /* filec_t       **filep, *file; */
 
     connp = &connections;
     while (*connp) {
@@ -84,19 +67,6 @@ void flush_defunct(void) {
             pendp = &pend->next;
         }
     }
-
-#if DISABLED
-    filep = &files;
-    while (*filep) {
-        file = *filep;
-        if (file->flags.closed) {
-            *filep = file->next;
-            file_discard(file);
-        } else {
-            filep = &file->next;
-        }
-    }
-#endif
 }
 
 /*
@@ -107,7 +77,7 @@ void flush_defunct(void) {
 // connection; otherwise, it is set to -1.
 */
 
-void handle_io_event_wait(int seconds) {
+void handle_io_event_wait(Int seconds) {
     io_event_wait(seconds, connections, servers, pendings);
 }
 
@@ -116,7 +86,7 @@ void handle_io_event_wait(int seconds) {
 */
 
 void handle_connection_input(void) {
-    connection_t * conn;
+    Conn * conn;
 
     for (conn = connections; conn; conn = conn->next) {
         if (conn->flags.readable && !conn->flags.dead)
@@ -128,31 +98,23 @@ void handle_connection_input(void) {
 // --------------------------------------------------------------------
 */
 void handle_connection_output(void) {
-    connection_t * conn;
-    /*filec_t       * file;*/
+    Conn * conn;
 
     for (conn = connections; conn; conn = conn->next) {
         if (conn->flags.writable)
             connection_write(conn);
     }
-
-#if DISABLED
-    for (file = files; file; file = file->next) {
-        if (file->flags.writable && file->wbuf)
-            file_write(file);
-    }
-#endif
 }
 
 /*
 // --------------------------------------------------------------------
 */
 void handle_new_and_pending_connections(void) {
-    connection_t *conn;
+    Conn *conn;
     server_t *serv;
     pending_t *pend;
-    string_t *str;
-    data_t d1, d2;
+    cStr *str;
+    cData d1, d2;
 
     /* Look for new connections on the server sockets. */
     for (serv = servers; serv; serv = serv->next) {
@@ -178,10 +140,10 @@ void handle_new_and_pending_connections(void) {
                 d1.u.val = pend->task_id;
                 task(conn->objnum, connect_id, 1, &d1);
             } else {
-                close(pend->fd);
+                SOCK_CLOSE(pend->fd);
                 d1.type = INTEGER;
                 d1.u.val = pend->task_id;
-                d2.type = ERROR;
+                d2.type = T_ERROR;
                 d2.u.error = pend->error;
                 task(pend->objnum, failed_id, 2, &d1, &d2);
             }
@@ -209,11 +171,11 @@ void handle_new_and_pending_connections(void) {
 // away.
 */
 
-connection_t * find_connection(object_t * obj) {
+Conn * find_connection(Obj * obj) {
 
     /* obj->conn is only for faster lookups */
     if (obj->conn == NULL) {
-        connection_t * conn;
+        Conn * conn;
 
         /* lets try and find the connection */
         for (conn = connections; conn; conn = conn->next) {
@@ -234,8 +196,8 @@ connection_t * find_connection(object_t * obj) {
 // there is no connection, it will be NULL, and we will know.
 */
 
-connection_t * tell(object_t * obj, buffer_t * buf) {
-    connection_t * conn = find_connection(obj);
+Conn * tell(Obj * obj, cBuf * buf) {
+    Conn * conn = find_connection(obj);
 
     if (conn != NULL)
         conn->write_buf = buffer_append(conn->write_buf, buf);
@@ -247,8 +209,8 @@ connection_t * tell(object_t * obj, buffer_t * buf) {
 // --------------------------------------------------------------------
 */
 
-int boot(object_t * obj) {
-    connection_t * conn = find_connection(obj);
+Int boot(Obj * obj) {
+    Conn * conn = find_connection(obj);
 
     if (conn != NULL) {
         conn->flags.dead = 1;
@@ -262,9 +224,9 @@ int boot(object_t * obj) {
 // --------------------------------------------------------------------
 */
 
-int add_server(int port, long objnum) {
+Int add_server(Int port, Long objnum) {
     server_t *cnew;
-    int server_socket;
+    SOCKET server_socket;
 
     /* Check if a server already exists for this port. */
     for (cnew = servers; cnew; cnew = cnew->next) {
@@ -277,8 +239,8 @@ int add_server(int port, long objnum) {
 
     /* Get a server socket for the port. */
     server_socket = get_server_socket(port);
-    if (server_socket < 0)
-    return 0;
+    if (server_socket == SOCKET_ERROR)
+        return 0;
 
     cnew = EMALLOC(server_t, 1);
     cnew->server_socket = server_socket;
@@ -295,7 +257,7 @@ int add_server(int port, long objnum) {
 /*
 // --------------------------------------------------------------------
 */
-int remove_server(int port) {
+Int remove_server(Int port) {
     server_t **servp;
 
     for (servp = &servers; *servp; servp = &((*servp)->next)) {
@@ -311,17 +273,16 @@ int remove_server(int port) {
 /*
 // --------------------------------------------------------------------
 */
-INTERNAL void connection_read(connection_t *conn) {
+INTERNAL void connection_read(Conn *conn) {
     unsigned char temp[BIGBUF];
-    int len;
-    buffer_t *buf;
-    data_t d;
+    Int len;
+    cBuf *buf;
+    cData d;
 
-    len = read(conn->fd, (char *) temp, BIGBUF);
-    if (len == F_FAILURE && errno == EINTR) {
-        /* We were interrupted; deal with this next time around. */
+    len = SOCK_READ(conn->fd, (char *) temp, BIGBUF);
+    if (len == SOCKET_ERROR && GETERR() == ERR_INTR)
         return;
-    }
+
     conn->flags.readable = 0;
 
     if (len <= 0) {
@@ -342,15 +303,15 @@ INTERNAL void connection_read(connection_t *conn) {
 /*
 // --------------------------------------------------------------------
 */
-INTERNAL void connection_write(connection_t *conn) {
-    buffer_t *buf = conn->write_buf;
-    int r;
+INTERNAL void connection_write(Conn *conn) {
+    cBuf *buf = conn->write_buf;
+    Int r;
 
-    r = write(conn->fd, buf->s, buf->len);
+    r = SOCK_WRITE(conn->fd, buf->s, buf->len);
     conn->flags.writable = 0;
 
-    if (r <= 0) {
-       /* We lost the connection. */
+    /* We lost the connection. */
+    if (r == SOCKET_ERROR) {
        conn->flags.dead = 1;
        buf = buffer_resize(buf, 0);
     } else {
@@ -364,8 +325,8 @@ INTERNAL void connection_write(connection_t *conn) {
 /*
 // --------------------------------------------------------------------
 */
-INTERNAL connection_t * connection_add(int fd, long objnum) {
-    connection_t * conn;
+INTERNAL Conn * connection_add(Int fd, Long objnum) {
+    Conn * conn;
 
     /* clear old connections to this objnum */
     for (conn = connections; conn; conn = conn->next) {
@@ -374,7 +335,7 @@ INTERNAL connection_t * connection_add(int fd, long objnum) {
     }
 
     /* initialize new connection */
-    conn = EMALLOC(connection_t, 1);
+    conn = EMALLOC(Conn, 1);
     conn->fd = fd;
     conn->write_buf = buffer_new(0);
     conn->objnum = objnum;
@@ -390,8 +351,8 @@ INTERNAL connection_t * connection_add(int fd, long objnum) {
 /*
 // --------------------------------------------------------------------
 */
-INTERNAL void connection_discard(connection_t *conn) {
-    object_t * obj;
+INTERNAL void connection_discard(Conn *conn) {
+    Obj * obj;
 
     /* Notify connection object that the connection is gone. */
     task(conn->objnum, disconnect_id, 0);
@@ -404,7 +365,7 @@ INTERNAL void connection_discard(connection_t *conn) {
     }
 
     /* Free the data associated with the connection. */
-    close(conn->fd);
+    SOCK_CLOSE(conn->fd);
     buffer_discard(conn->write_buf);
     efree(conn);
 }
@@ -420,20 +381,20 @@ INTERNAL void pend_discard(pending_t *pend) {
 // --------------------------------------------------------------------
 */
 INTERNAL void server_discard(server_t *serv) {
-    close(serv->server_socket);
+    SOCK_CLOSE(serv->server_socket);
 }
 
 /*
 // --------------------------------------------------------------------
 */
-long make_connection(char *addr, int port, objnum_t receiver) {
+Long make_connection(char *addr, Int port, cObjnum receiver) {
     pending_t *cnew;
-    int socket;
-    long result;
+    SOCKET socket;
+    Long result;
 
     result = non_blocking_connect(addr, port, &socket);
     if (result == address_id || result == socket_id)
-    return result;
+        return result;
     cnew = TMALLOC(pending_t, 1);
     cnew->fd = socket;
     cnew->task_id = task_id;
@@ -452,29 +413,22 @@ long make_connection(char *addr, int port, objnum_t receiver) {
 */
 
 void flush_output(void) {
-    connection_t  * conn;
-/*    filec_t        * file; */
+    Conn  * conn;
     unsigned char * s;
-    int len, r;
+    Int len, r;
 
     /* do connections */
     for (conn = connections; conn; conn = conn->next) {
         s = conn->write_buf->s;
         len = conn->write_buf->len;
         while (len) {
-            r = write(conn->fd, s, len);
-            if (r <= 0)
-            break;
+            r = SOCK_WRITE(conn->fd, s, len);
+            if (r == SOCKET_ERROR)
+                break;
             len -= r;
             s += r;
         }
     }
-
-#if DISABLED
-    /* do files */
-    for (file = files; file; file = file->next)
-        close_file(file);
-#endif
 }
 
 #undef _io_

@@ -1,30 +1,18 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: modules/cdc_string.c
-// ---
-// Function operators acting on strings.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
 #define NATIVE_MODULE "$string"
 
-#include "config.h"
-#include "defs.h"
+#include "cdc.h"
 
 #include <string.h>
 #include <ctype.h>
-#include "operators.h"
-#include "execute.h"
-#include "cdc_types.h"
-#include "match.h"
+#include "strutil.h"
 #include "util.h"
-#include "memory.h"
 
 NATIVE_METHOD(strlen) {
-    int len;
+    Int len;
     INIT_1_ARG(STRING)
 
     len = string_length(STR1);
@@ -32,10 +20,10 @@ NATIVE_METHOD(strlen) {
 }
 
 NATIVE_METHOD(substr) {
-    int        start,
+    Int        start,
                len,
                slen;
-    string_t * str;
+    cStr * str;
 
     INIT_2_OR_3_ARGS(STRING, INTEGER, INTEGER)
 
@@ -62,20 +50,14 @@ NATIVE_METHOD(substr) {
 }
 
 NATIVE_METHOD(explode) {
-    int        sep_len=1,
-               len,
-               want_blanks=0;
-    data_t     d;
-    list_t   * exploded;
-    string_t * word;
-    char     * sep = " ",
-             * s,
-             * p,
-             * q;
+    Int        sep_len=1;
+    Bool       want_blanks=NO;
+    cList   * exploded;
+    char     * sep = " ";
     DEF_args;
 
     switch(ARG_COUNT) {
-        case 3:  want_blanks = data_true(&args[2]);
+        case 3:  want_blanks = (Bool) data_true(&args[2]);
         case 2:  INIT_ARG2(STRING)
                  sep = string_chars(STR2);
                  sep_len = string_length(STR2);
@@ -87,40 +69,16 @@ NATIVE_METHOD(explode) {
     if (!*sep)
       THROW((range_id, "Null string as separator."))
 
-    s   = string_chars(STR1);
-    len = string_length(STR1);
-
-    exploded = list_new(0);
-    p = s;
-    for (q = strcstr(p, sep); q; q = strcstr(p, sep)) {
-        if (want_blanks || q > p) {
-            /* Add the word. */
-            word = string_from_chars(p, q - p);
-            d.type = STRING;
-            d.u.str = word;
-            exploded = list_add(exploded, &d);
-            string_discard(word);
-        }
-        p = q + sep_len;
-    }
-
-    if (*p || want_blanks) {
-        /* Add the last word. */
-        word = string_from_chars(p, len - (p - s));
-        d.type = STRING;
-        d.u.str = word;
-        exploded = list_add(exploded, &d);
-        string_discard(word);
-    }
+    exploded = strexplode(STR1, sep, sep_len, want_blanks);
 
     /* Pop the arguments and push the list onto the stack. */
     CLEAN_RETURN_LIST(exploded);
 }
 
 NATIVE_METHOD(strsub) {
-    int len, search_len, replace_len;
+    Int len, search_len, replace_len;
     char *search, *replace, *s, *p, *q;
-    string_t *subbed;
+    cStr *subbed;
 
     INIT_3_ARGS(STRING, STRING, STRING)
 
@@ -151,9 +109,9 @@ NATIVE_METHOD(strsub) {
 /* Pad a string on the left (positive length) or on the right (negative
  * length).  The optional third argument gives the fill character. */
 NATIVE_METHOD(pad) {
-    int len, padding, filler_len = 1;
+    Int len, padding, filler_len = 1;
     char     * filler = " ";
-    string_t * padded,
+    cStr * padded,
              * sfill = NULL,
              * str;
     DEF_args;
@@ -201,9 +159,9 @@ NATIVE_METHOD(pad) {
 }
 
 NATIVE_METHOD(match_begin) {
-    int    sep_len = 1,
+    Int    sep_len = 1,
            search_len,
-           bool = 0;
+           yn = 0;
     char * sep = " ",
          * search,
          * s,
@@ -227,17 +185,17 @@ NATIVE_METHOD(match_begin) {
 
     for (p = s - sep_len; p; p = strcstr(p + 1, sep)) {
         if (strnccmp(p + sep_len, search, search_len) == 0) {
-            bool = 1;
+            yn = 1;
             break;
         }
     }
 
-    CLEAN_RETURN_INTEGER(bool);
+    CLEAN_RETURN_INTEGER(yn);
 }
 
 /* Match against a command template. */
 NATIVE_METHOD(match_template) {
-    list_t * fields;
+    cList * fields;
     char   * ctemplate,
            * str;
 
@@ -255,7 +213,7 @@ NATIVE_METHOD(match_template) {
 
 /* Match against a command template. */
 NATIVE_METHOD(match_pattern) {
-    list_t * fields;
+    cList * fields;
     char   * pattern,
            * str;
 
@@ -272,12 +230,12 @@ NATIVE_METHOD(match_pattern) {
 }
 
 NATIVE_METHOD(match_regexp) {
-    list_t * fields;
-    int      sensitive=0;
+    cList * fields;
+    Bool     sensitive=NO;
     DEF_args;
 
     switch (ARG_COUNT) {
-        case 3:  sensitive = data_true(&args[2]);
+        case 3:  sensitive = (Bool) data_true(&args[2]);
         case 2:  INIT_ARG2(STRING)
                  INIT_ARG1(STRING)
                  break;
@@ -294,12 +252,12 @@ NATIVE_METHOD(match_regexp) {
 }
 
 NATIVE_METHOD(regexp) {
-    list_t * fields;
-    int      sensitive=0;
+    cList * fields;
+    Bool     sensitive=NO;
     DEF_args;
 
     switch (ARG_COUNT) {
-        case 3:  sensitive = data_true(&args[2]);
+        case 3:  sensitive = (Bool) data_true(&args[2]);
         case 2:  INIT_ARG2(STRING)
                  INIT_ARG1(STRING)
                  break;
@@ -316,27 +274,20 @@ NATIVE_METHOD(regexp) {
 }
 
 NATIVE_METHOD(strsed) {
-    string_t * out;
-    int        sensitive=0,
-               global=0,
-               mult=2,
-               err=0;
+    cStr * out;
+    Int        flags=RF_NONE,
+               mult=2;
     DEF_args;
 
     switch (ARG_COUNT) {
         case 5:  CHECK_TYPE(4, INTEGER, "fifth")
-                 mult = _INT(ARG5);
+                 mult = INT5;
                  if (mult < 0)
                      mult = 2;
                 if (mult > 10)
                     THROW((perm_id, "You can only specify a size multiplier of 1-10, sorry!"))
         case 4:  INIT_ARG4(STRING)
-                 if (!parse_strsed_args(string_chars(_STR(ARG4)),
-                                        &global,
-                                        &sensitive))
-                     THROW((type_id,
-                            "Invalid flags \"%D\", must be one of \"gcis\"",
-                            _STR(ARG4)))
+                 flags = parse_regfunc_args(string_chars(_STR(ARG4)));
         case 3:  INIT_ARG3(STRING);
                  INIT_ARG2(STRING);
                  INIT_ARG1(STRING);
@@ -345,27 +296,24 @@ NATIVE_METHOD(strsed) {
     }
 
                  /* regexp *//* string *//* replace */
-    out = strsed(STR1, STR2, STR3, global, sensitive, mult, &err);
+    out = strsed(STR1, STR2, STR3, flags, mult);
 
-    if (!out) {
-        if (err)
-            return 0;
-        CLEAN_RETURN_INTEGER(0);
-    }
+    if (!out)
+        RETURN_FALSE;
 
     CLEAN_RETURN_STRING(out);
 }
 
 /* Encrypt a string. */
 NATIVE_METHOD(crypt) {
-    char     * s,  
+    char     * s,
                salt[3],
              * ss,
              * crypted;
-    
+
     INIT_1_OR_2_ARGS(STRING, STRING)
-    
-    s = string_chars(STR1); 
+
+    s = string_chars(STR1);
 
     if (argc == 2) {
         if (string_length(STR2) < 2)
@@ -383,7 +331,7 @@ NATIVE_METHOD(crypt) {
 }
 
 NATIVE_METHOD(uppercase) {
-    string_t * str;
+    cStr * str;
 
     INIT_1_ARG(STRING)
 
@@ -396,7 +344,7 @@ NATIVE_METHOD(uppercase) {
 }
 
 NATIVE_METHOD(lowercase) {
-    string_t * str;
+    cStr * str;
 
     INIT_1_ARG(STRING)
 
@@ -410,7 +358,7 @@ NATIVE_METHOD(lowercase) {
 
 NATIVE_METHOD(capitalize) {
     char     * s;
-    string_t * str;
+    cStr * str;
 
     INIT_1_ARG(STRING);
 
@@ -427,7 +375,7 @@ NATIVE_METHOD(capitalize) {
 }
 
 NATIVE_METHOD(strcmp) {
-    int lex;
+    Int lex;
 
     INIT_2_ARGS(STRING, STRING)
 
@@ -437,7 +385,7 @@ NATIVE_METHOD(strcmp) {
 }
 
 NATIVE_METHOD(strfmt) {
-    string_t * fmt,
+    cStr * fmt,
              * out;
     DEF_argc;
     DEF_args;
@@ -452,9 +400,64 @@ NATIVE_METHOD(strfmt) {
     args = &stack[arg_start + 1];
 
     /* if out is NULL, strfmt() threw an error */
-    if ((out = strfmt(fmt, args, argc - 1)) == (string_t *) NULL)
+    if ((out = strfmt(fmt, args, argc - 1)) == (cStr *) NULL)
         RETURN_FALSE;
 
     CLEAN_RETURN_STRING(out);
+}
+
+NATIVE_METHOD(trim) {
+    register char * s;
+    char          * ss;
+    cStr      * str;
+    Int             start;
+    Int             len;
+
+    INIT_1_ARG(STRING);
+
+    str = string_dup(STR1);
+
+    /* get the start and length of the 'sub' trimmed string */
+    len = string_length(str);
+
+    /* they gave us an empty string, dup it and return it */
+    if (!len) {
+        CLEAN_RETURN_STRING(str);
+    }
+
+    ss = string_chars(str);
+
+    for (s=ss; *s == ' '; s++);
+    start = s - ss;
+
+    /* if start is len set len to zero and jump past the length figuring */
+    if (start == len) {
+        len = 0;
+    } else {
+        for (s=(ss + len-1); *s == ' '; s--);
+        len = ((s+1) - start) - ss;
+    }
+
+    CLEAN_STACK();
+    anticipate_assignment();
+
+    /* ok, push it on the stack */
+    RETURN_STRING(string_substring(str, start, len));
+}
+
+NATIVE_METHOD(split) {
+    Int      flags = RF_NONE;
+    cList * list;
+    
+    INIT_2_OR_3_ARGS(STRING, STRING, STRING);
+
+    if (argc == 3)  
+        flags = parse_regfunc_args(string_chars(STR3));
+
+    /* if list is NULL strsplit() threw an error */
+    if (!(list = strsplit(STR1, STR2, flags)))
+        RETURN_FALSE;
+
+    CLEAN_RETURN_LIST(list);
 }
 

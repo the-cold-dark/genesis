@@ -1,64 +1,53 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: codegen.c
-// ---
 // Generate internal representation for ColdC code.
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include <string.h>
-#include "cdc_types.h"
-#include "codegen.h"
-#include "code_prv.h"
-#include "memory.h"
-#include "opcodes.h"
-#include "grammar.h"
-#include "object.h"
+
+#include "cdc_pcode.h"
 #include "util.h"
-#include "token.h"
 
 /* We use MALLOC_DELTA to keep instr_buf thirty-two bytes less than a power of
- * two, assuming an Instr and int is four bytes. */
+ * two, assuming an Instr and Int is four bytes. */
+/* HACKNOTE: BAD */
 #define MALLOC_DELTA		8
 #define INSTR_BUF_START 	(512 - MALLOC_DELTA)
 #define JUMP_TABLE_START	(128 - MALLOC_DELTA)
 #define MAX_VARS		128
 
-static void compile_stmt_list(Stmt_list *stmt_list, int loop, int catch_level);
-static void compile_stmt(Stmt *stmt, int loop, int catch_level);
-static void compile_cases(Case_list *cases, int loop, int catch_level,
-			  int end_dest);
-static void compile_case_values(Expr_list *values, int body_dest);
+static void compile_stmt_list(Stmt_list *stmt_list, Int loop, Int catch_level);
+static void compile_stmt(Stmt *stmt, Int loop, Int catch_level);
+static void compile_cases(Case_list *cases, Int loop, Int catch_level,
+			  Int end_dest);
+static void compile_case_values(Expr_list *values, Int body_dest);
 static void compile_expr_list(Expr_list *expr_list);
 static void compile_expr(Expr *expr);
-static int find_local_var(char *id);
-static void check_instr_buf(int pos);
-static void code(long val);
+static Int find_local_var(char *id);
+static void check_instr_buf(Int pos);
+static void code(Long val);
 static void code_str(char *str);
 static void code_errors(Id_list *errors);
-static int new_jump_dest(void);
-static void set_jump_dest_here(int dest);
-static int id_list_size(Id_list *id_list);
-static method_t *final_pass(object_t *object);
+static Int new_jump_dest(void);
+static void set_jump_dest_here(Int dest);
+static Int id_list_size(Id_list *id_list);
+static Method *final_pass(Obj *object);
 
 /* Temporary instruction storage. */
 static Instr *instr_buf;
-static int instr_loc, instr_size;
+static Int instr_loc, instr_size;
 
 /* The jump destination table. */
-static int *jump_table, jump_loc, jump_size;
+static Int *jump_table, jump_loc, jump_size;
 
 /* For convenience.  Set by generate_method(). */
 static Prog *the_prog;
 
 /* Keep track of the number of error lists we'll need. */
-static int num_error_lists;
+static Int num_error_lists;
 
 Pile *compiler_pile;			/* Temporary storage pile. */
 
@@ -76,14 +65,14 @@ void init_codegen(void)
     instr_size = INSTR_BUF_START;
 
     /* Initialize jump table. */
-    jump_table = EMALLOC(int, JUMP_TABLE_START);
+    jump_table = EMALLOC(Int, JUMP_TABLE_START);
     jump_size = JUMP_TABLE_START;
 }
 
 /* All constructors allocate memory from compiler_pile, so their results are
  * only good until the next pfree() of compiler_pile.  Their effects should
  * all be self-explanatory unless otherwise noted. */
-Prog *make_prog(int overridable, Arguments *args, Id_list *vars,
+Prog *make_prog(Int overridable, Arguments *args, Id_list *vars,
 		Stmt_list *stmts)
 {
     Prog *cnew = PMALLOC(compiler_pile, Prog, 1);
@@ -258,7 +247,7 @@ Stmt *catch_stmt(Id_list *errors, Stmt *body, Stmt *handler)
     return cnew;
 }
 
-Expr *integer_expr(long num)
+Expr *integer_expr(Long num)
 {
     Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
 
@@ -288,7 +277,7 @@ Expr *string_expr(char *s)
     return cnew;
 }
 
-Expr *objnum_expr(long objnum)
+Expr *objnum_expr(Long objnum)
 {
     Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
 
@@ -312,7 +301,7 @@ Expr *error_expr(char *error)
 {
     Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
 
-    cnew->type = ERROR;
+    cnew->type = T_ERROR;
     cnew->lineno = cur_lineno();
     cnew->u.error = error;
     return cnew;
@@ -446,7 +435,7 @@ Expr *index_expr(Expr *list, Expr *offset)
     return cnew;
 }
 
-Expr *unary_expr(int opcode, Expr *expr)
+Expr *unary_expr(Int opcode, Expr *expr)
 {
     Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
 
@@ -457,7 +446,7 @@ Expr *unary_expr(int opcode, Expr *expr)
     return cnew;
 }
 
-Expr *binary_expr(int opcode, Expr *left, Expr *right)
+Expr *binary_expr(Int opcode, Expr *left, Expr *right)
 {
     Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
 
@@ -470,7 +459,7 @@ Expr *binary_expr(int opcode, Expr *left, Expr *right)
 }
 
 /* use doeq structure, it has all we need */
-Expr *indecr_expr(int opcode, char *var)
+Expr *indecr_expr(Int opcode, char *var)
 {
     Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
 
@@ -482,7 +471,7 @@ Expr *indecr_expr(int opcode, char *var)
     return cnew;
 }
 
-Expr *doeq_expr(int opcode, char *var, Expr *value)
+Expr *doeq_expr(Int opcode, char *var, Expr *value)
 {
     Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
 
@@ -623,7 +612,7 @@ Case_list *case_list(Case_entry *case_entry, Case_list *next)
  *	     error list.  Uses the instruction buffer.
  * Effects: Returns a method suitable for adding to an object with
  *	    object_add_method(), or NULL if there were errors. */
-method_t *generate_method(Prog *prog, object_t *object)
+Method *generate_method(Prog *prog, Obj *object)
 {
     /* Reset the error list counter to 0. */
     num_error_lists = 0;
@@ -646,7 +635,7 @@ method_t *generate_method(Prog *prog, object_t *object)
 /* Requires: Same as compile_stmt() below.
  * Modifies: Uses the instruction buffer and may call compiler_error().
  * Effects: Compiles the statements in stmt_list, in reverse order. */
-static void compile_stmt_list(Stmt_list *stmt_list, int loop, int catch_level)
+static void compile_stmt_list(Stmt_list *stmt_list, Int loop, Int catch_level)
 {
     if (stmt_list) {
 	compile_stmt_list(stmt_list->next, loop, catch_level);
@@ -660,7 +649,7 @@ static void compile_stmt_list(Stmt_list *stmt_list, int loop, int catch_level)
  *			the current loop, if we're in a loop.
  * Modifies:	Uses the instruction buffer and may call compiler_error().
  * Effects:	compiles stmt into instr_buf. */
-static void compile_stmt(Stmt *stmt, int loop, int catch_level)
+static void compile_stmt(Stmt *stmt, Int loop, Int catch_level)
 {
     switch (stmt->type) {
 
@@ -697,7 +686,7 @@ static void compile_stmt(Stmt *stmt, int loop, int catch_level)
 	break;
 
      case IF: {
-	  int end_dest = new_jump_dest();
+	  Int end_dest = new_jump_dest();
 
 	  /* Compile the condition expression. */
 	  compile_expr(stmt->u.if_.cond);
@@ -715,7 +704,7 @@ static void compile_stmt(Stmt *stmt, int loop, int catch_level)
       }
 
       case IF_ELSE: {
-	  int false_stmt_dest = new_jump_dest(), end_dest = new_jump_dest();
+	  Int false_stmt_dest = new_jump_dest(), end_dest = new_jump_dest();
 
 	  /* Compile the condition expression. */
 	  compile_expr(stmt->u.if_.cond);
@@ -744,7 +733,7 @@ static void compile_stmt(Stmt *stmt, int loop, int catch_level)
       }
 
       case FOR_RANGE: {
-	  int n, begin_dest = new_jump_dest(), end_dest = new_jump_dest();
+	  Int n, begin_dest = new_jump_dest(), end_dest = new_jump_dest();
 
 	  /* Find the variable in the method's local variables. */
 	  n = find_local_var(stmt->u.for_range.var);
@@ -778,7 +767,7 @@ static void compile_stmt(Stmt *stmt, int loop, int catch_level)
       }
 
       case FOR_LIST: {
-	  int n, begin_dest = new_jump_dest(), end_dest = new_jump_dest();
+	  Int n, begin_dest = new_jump_dest(), end_dest = new_jump_dest();
 
 	  /* Find the variable in the method's local variables. */
 	  n = find_local_var(stmt->u.for_list.var);
@@ -813,8 +802,8 @@ static void compile_stmt(Stmt *stmt, int loop, int catch_level)
       }
 
       case WHILE: {
-	  int cond_dest = new_jump_dest(), begin_dest = new_jump_dest();
-	  int end_dest = new_jump_dest();
+	  Int cond_dest = new_jump_dest(), begin_dest = new_jump_dest();
+	  Int end_dest = new_jump_dest();
 
 	  /* Set begin_dest to here, and compile the loop condition. */
 	  set_jump_dest_here(cond_dest);
@@ -839,7 +828,7 @@ static void compile_stmt(Stmt *stmt, int loop, int catch_level)
       }
 
       case SWITCH: {
-	  int end_dest = new_jump_dest();
+	  Int end_dest = new_jump_dest();
 	  Case_list *cases;
 	  Stmt_list *default_case_stmts = NULL;
 
@@ -923,7 +912,7 @@ static void compile_stmt(Stmt *stmt, int loop, int catch_level)
 	break;
 
       case CATCH: {
-	  int handler_dest = new_jump_dest(), end_dest = new_jump_dest();
+	  Int handler_dest = new_jump_dest(), end_dest = new_jump_dest();
 
 	  /* Increment the number of error lists we'll need, if there was an
 	   * error list.  (No list is needed for a 'catch any'.) */
@@ -962,10 +951,10 @@ static void compile_stmt(Stmt *stmt, int loop, int catch_level)
     }
 }
 
-static void compile_cases(Case_list *cases, int loop, int catch_level,
-			  int end_dest)
+static void compile_cases(Case_list *cases, Int loop, Int catch_level,
+			  Int end_dest)
 {
-    int body_dest, next_dest;
+    Int body_dest, next_dest;
     Case_entry *entry;
     Expr *expr;
 
@@ -1011,7 +1000,7 @@ static void compile_cases(Case_list *cases, int loop, int catch_level,
     set_jump_dest_here(next_dest);
 }
 
-static void compile_case_values(Expr_list *values, int body_dest)
+static void compile_case_values(Expr_list *values, Int body_dest)
 {
     if (values) {
 	compile_case_values(values->next, body_dest);
@@ -1055,7 +1044,7 @@ static void compile_expr(Expr *expr)
       case FLOAT:
 
         code(FLOAT);
-  	code(*((long*)(&expr->u.fnum)));
+  	code(*((Long*)(&expr->u.fnum)));
 
   	break;
 	
@@ -1080,9 +1069,9 @@ static void compile_expr(Expr *expr)
 
 	break;
 
-      case ERROR:
+      case T_ERROR:
 
-	code(ERROR);
+	code(T_ERROR);
 	code_str(expr->u.error);
 
 	break;
@@ -1095,7 +1084,7 @@ static void compile_expr(Expr *expr)
 	break;
 
       case VAR: {
-	  int n;
+	  Int n;
 
 	  /* Determine whether the variable is a local or global variable, and
 	   * code the appropriate retrieval opcode. */
@@ -1113,7 +1102,7 @@ static void compile_expr(Expr *expr)
 
       case ASSIGN: {
           Expr *value = expr->u.assign.value;
-          int n;
+          Int n;
 
           /* Compile the expression we're assigning or adding. */
           compile_expr(value);
@@ -1134,7 +1123,7 @@ static void compile_expr(Expr *expr)
       }
 
       case FUNCTION_CALL: {
-	  int n;
+	  Int n;
 
 	  code(START_ARGS);
 	  compile_expr_list(expr->u.function.args);
@@ -1255,7 +1244,7 @@ static void compile_expr(Expr *expr)
 	break;
 
       case INDECR: {
-          int n;
+          Int n;
 
           n = find_local_var(expr->u.doeq.var);
           if (n != -1) {
@@ -1276,7 +1265,7 @@ static void compile_expr(Expr *expr)
 
       case DOEQ: {
           Expr *value = expr->u.doeq.value;
-          int n, otherop = 0;
+          Int n, otherop = 0;
 
           n = find_local_var(expr->u.doeq.var);
 
@@ -1319,7 +1308,7 @@ static void compile_expr(Expr *expr)
       }
 
       case AND: {
-	  int end_dest = new_jump_dest();
+	  Int end_dest = new_jump_dest();
 
 	  /* Compile ther left-hand expression. */
 	  compile_expr(expr->u.and.left);
@@ -1337,7 +1326,7 @@ static void compile_expr(Expr *expr)
       }
 
       case OR: {
-	  int end_dest = new_jump_dest();
+	  Int end_dest = new_jump_dest();
 
 	  /* Compile the left-hand expression. */
 	  compile_expr(expr->u.and.left);
@@ -1355,7 +1344,7 @@ static void compile_expr(Expr *expr)
       }
 
       case CONDITIONAL: {
-	  int false_dest = new_jump_dest(), end_dest = new_jump_dest();
+	  Int false_dest = new_jump_dest(), end_dest = new_jump_dest();
 
 	  /* Compile the condition expression. */
 	  compile_expr(expr->u.cond.cond);
@@ -1384,7 +1373,7 @@ static void compile_expr(Expr *expr)
       }
 
       case CRITICAL: {
-	  int end_dest = new_jump_dest();
+	  Int end_dest = new_jump_dest();
 
 	  /* Code a CRITICAL opcode with a jump argument pointing to the end of
 	   * the critical expression. */
@@ -1402,7 +1391,7 @@ static void compile_expr(Expr *expr)
       }
 
       case PROPAGATE: {
-	  int end_dest = new_jump_dest();
+	  Int end_dest = new_jump_dest();
 
 	  /* Code a PROPAGATE opcode with a jump argument pointing to the end
 	   * of the critical expression. */
@@ -1437,9 +1426,9 @@ static void compile_expr(Expr *expr)
 
 /* Effects: Returns the number of id as a local variable, or -1 if it doesn't
  *	    match any of the local variable names. */
-static int find_local_var(char *id)
+static Int find_local_var(char *id)
 {
-    int count = 0;
+    Int count = 0;
     Id_list *id_list;
 
     /* Check arguments. */
@@ -1471,7 +1460,7 @@ static int find_local_var(char *id)
  * Modifies: instr_buf, instr_size.
  * Effects: Roughly doubles the size of the instruction buffer until it can
  *	    hold an instruction at the location specified by pos. */
-static void check_instr_buf(int pos)
+static void check_instr_buf(Int pos)
 {
     while (pos >= instr_size) {
 	instr_size = instr_size * 2 + MALLOC_DELTA;
@@ -1480,8 +1469,8 @@ static void check_instr_buf(int pos)
 }
 
 /* Modifies: instr_buf, instr_loc, maybe instr_size.
- * Effects: Appends the long integer val to the instruction buffer. */
-static void code(long val)
+ * Effects: Appends the Long integer val to the instruction buffer. */
+static void code(Long val)
 {
     check_instr_buf(instr_loc);
     instr_buf[instr_loc++].val = val;
@@ -1511,12 +1500,12 @@ static void code_errors(Id_list *errors)
 
 /* Modifies: jump_loc, maybe jump_size and jump_table.
  * Effects: Returns a location in the jump table for use as a destination. */
-static int new_jump_dest(void)
+static Int new_jump_dest(void)
 {
     /* Resize jump table if we need to. */
     if (jump_loc == jump_size) {
 	jump_size = jump_size * 2 + MALLOC_DELTA;
-	jump_table = EREALLOC(jump_table, int, jump_size);
+	jump_table = EREALLOC(jump_table, Int, jump_size);
     }
 
     /* Increment jump_loc, and return the old value. */
@@ -1527,14 +1516,14 @@ static int new_jump_dest(void)
  *	     pos is a valid instruction in the instruction stream.
  * Modifies: Contents of jump_table.
  * Effects: Sets the destination numbered by dest to the current location. */
-static void set_jump_dest_here(int dest)
+static void set_jump_dest_here(Int dest)
 {
     jump_table[dest] = instr_loc;
 }
 
-static int id_list_size(Id_list *id_list)
+static Int id_list_size(Id_list *id_list)
 {
-    int count = 0;
+    Int count = 0;
 
     for (; id_list; id_list = id_list->next)
 	count++;
@@ -1546,15 +1535,15 @@ static int id_list_size(Id_list *id_list)
  *	     any errors.  the_prog->vars is what it originally was.
  * Modifies: Adds global identifiers, adds strings to object.
  * Effects: Converts the data in the instruction buffer into a method. */
-static method_t *final_pass(object_t *object)
+static Method *final_pass(Obj *object)
 {
-    method_t * method;
+    Method * method;
     Id_list  * idl;
     Op_info  * info;
-    string_t * string;
-    int i, j, opcode, arg_type, cur_error_list;
+    cStr * string;
+    Int i, j, opcode, arg_type, cur_error_list;
 
-    method = EMALLOC(method_t, 1);
+    method = EMALLOC(Method, 1);
     method->m_flags  = MF_NONE;
     method->m_access = MS_PUBLIC;
     method->native   = -1;
@@ -1562,7 +1551,7 @@ static method_t *final_pass(object_t *object)
     /* Set argument names. */
     method->num_args = id_list_size(the_prog->args->ids);
     if (method->num_args) {
-	method->argnames = TMALLOC(int, method->num_args);
+	method->argnames = TMALLOC(Int, method->num_args);
 	i = 0;
 	for (idl = the_prog->args->ids; idl; idl = idl->next)
 	    method->argnames[i++] = object_add_ident(object, idl->ident);
@@ -1577,7 +1566,7 @@ static method_t *final_pass(object_t *object)
     /* Set variable names. */
     method->num_vars = id_list_size(the_prog->vars);
     if (method->num_vars) {
-	method->varnames = TMALLOC(int, method->num_vars);
+	method->varnames = TMALLOC(Int, method->num_vars);
 	i = 0;
 	for (idl = the_prog->vars; idl; idl = idl->next)
 	    method->varnames[i++] = object_add_ident(object, idl->ident);
@@ -1590,7 +1579,7 @@ static method_t *final_pass(object_t *object)
     cur_error_list = 0;
 
     /* Copy the opcodes, translating from intermediate instruction forms. */
-    method->opcodes = TMALLOC(long, instr_loc);
+    method->opcodes = TMALLOC(Long, instr_loc);
     method->num_opcodes = instr_loc;
     i = 0;
     while (i < instr_loc) {
@@ -1624,9 +1613,9 @@ static method_t *final_pass(object_t *object)
 		    method->opcodes[i] = jump_table[instr_buf[i].val];
 		    break;
 
-		  case ERROR: {
-		      int count;
-		      int *ids;
+		  case T_ERROR: {
+		      Int count;
+		      Int *ids;
 
 		      if (!instr_buf[i].errors) {
 			  /* This is a 'catch any'.  Just code a -1. */
@@ -1640,7 +1629,7 @@ static method_t *final_pass(object_t *object)
 			  count++;
 
 		      /* Allocate space in an error list. */
-		      ids = TMALLOC(int, count);
+		      ids = TMALLOC(Int, count);
 		      method->error_lists[cur_error_list].num_errors = count;
 		      method->error_lists[cur_error_list].error_ids = ids;
 

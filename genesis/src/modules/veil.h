@@ -2,12 +2,11 @@
 #define _veil_h_
 
 #include "defs.h"
-#include "native.h"
-#include "ident.h"
+#include "cdc_pcode.h"
 
 Ident pabort_id, pclose_id, popen_id;
 
-void init_veil(int argc, char ** argv);
+void init_veil(Int argc, char ** argv);
 void uninit_veil(void);
 
 #ifndef _veil_

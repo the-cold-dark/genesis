@@ -1,25 +1,15 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
+// Full copyright information is available in the file ../doc/CREDITS
 //
 // File: decode.c
 // ---
 // Routines to decompile a method.
 */
 
-#include "config.h"
 #include "defs.h"
 
-#include "decode.h"
-#include "code_prv.h"
-#include "cdc_types.h"
-#include "memory.h"
-#include "log.h"
+#include "cdc_pcode.h"
 #include "util.h"
-#include "opcodes.h"
-#include "token.h"
 
 #define TOKEN_SIZE (sizeof(binary_tokens) / sizeof(*binary_tokens))
 #define PREC_SIZE (sizeof(precedences) / sizeof(*precedences))
@@ -38,51 +28,51 @@ typedef struct context Context;
 
 struct context {
     short type;
-    int end;
+    Int end;
     Context *enclosure;
 };
 
-INTERNAL int count_lines(int start, int end, unsigned *flags);
-INTERNAL Stmt_list *decompile_stmt_list(int start, int end);
-INTERNAL Stmt *decompile_stmt(int *pos_ptr);
-INTERNAL Stmt *decompile_body(int start, int end);
-INTERNAL Stmt *decompile_until(int *start, int marker);
+INTERNAL Int count_lines(Int start, Int end, unsigned *flags);
+INTERNAL Stmt_list *decompile_stmt_list(Int start, Int end);
+INTERNAL Stmt *decompile_stmt(Int *pos_ptr);
+INTERNAL Stmt *decompile_body(Int start, Int end);
+INTERNAL Stmt *decompile_until(Int *start, Int marker);
 INTERNAL Stmt *body_from_stmt_list(Stmt_list *stmts);
-INTERNAL Case_list *decompile_cases(int start, int end);
-INTERNAL Case_entry *decompile_case(int *pos_ptr, int switch_end);
-INTERNAL Expr_list *decompile_case_values(int *pos_ptr, int *end_ret);
-INTERNAL Id_list *make_error_id_list(int which);
-INTERNAL Expr_list *decompile_expressions(int *pos_ptr);
-INTERNAL Expr_list *decompile_expressions_bounded(int *pos_ptr, int end);
-INTERNAL list_t *unparse_stmt_list(list_t *output, Stmt_list *stmts, int indent);
-INTERNAL list_t *unparse_stmt(list_t *output, Stmt *stmt, int indent, Stmt *last);
-INTERNAL int is_complex_if_else_stmt(Stmt *stmt);
-INTERNAL int is_complex_type(int type);
-INTERNAL list_t *unparse_body(list_t *output, Stmt *body, string_t *str, int indent);
-INTERNAL list_t *unparse_cases(list_t *output, Case_list *cases, int indent);
-INTERNAL list_t *unparse_case(list_t *output, Case_entry *case_entry, int indent);
-INTERNAL string_t *unparse_expr(string_t *str, Expr *expr, int paren);
-INTERNAL int is_this(Expr *expr);
-INTERNAL string_t *unparse_args(string_t *str, Expr_list *args);
-INTERNAL string_t *unparse_expr_prec(string_t *str, Expr *expr, int caller_type,
-				 int assoc);
-INTERNAL int prec_level(int opcode);
-INTERNAL char *binary_token(int opcode);
-INTERNAL list_t *add_and_discard_string(list_t *output, string_t *str);
-INTERNAL char *varname(int ind);
+INTERNAL Case_list *decompile_cases(Int start, Int end);
+INTERNAL Case_entry *decompile_case(Int *pos_ptr, Int switch_end);
+INTERNAL Expr_list *decompile_case_values(Int *pos_ptr, Int *end_ret);
+INTERNAL Id_list *make_error_id_list(Int which);
+INTERNAL Expr_list *decompile_expressions(Int *pos_ptr);
+INTERNAL Expr_list *decompile_expressions_bounded(Int *pos_ptr, Int end);
+INTERNAL cList *unparse_stmt_list(cList *output, Stmt_list *stmts, Int indent);
+INTERNAL cList *unparse_stmt(cList *output, Stmt *stmt, Int indent, Stmt *last);
+INTERNAL Int is_complex_if_else_stmt(Stmt *stmt);
+INTERNAL Int is_complex_type(Int type);
+INTERNAL cList *unparse_body(cList *output, Stmt *body, cStr *str, Int indent);
+INTERNAL cList *unparse_cases(cList *output, Case_list *cases, Int indent);
+INTERNAL cList *unparse_case(cList *output, Case_entry *case_entry, Int indent);
+INTERNAL cStr *unparse_expr(cStr *str, Expr *expr, Int paren);
+INTERNAL Int is_this(Expr *expr);
+INTERNAL cStr *unparse_args(cStr *str, Expr_list *args);
+INTERNAL cStr *unparse_expr_prec(cStr *str, Expr *expr, Int caller_type,
+				 Int assoc);
+INTERNAL Int prec_level(Int opcode);
+INTERNAL char *binary_token(Int opcode);
+INTERNAL cList *add_and_discard_string(cList *output, cStr *str);
+INTERNAL char *varname(Int ind);
 
 /* These globals get set at the start and are never modified. */
-INTERNAL object_t *the_object;
-INTERNAL method_t *the_method;
-INTERNAL long *the_opcodes;
-INTERNAL int the_increment;
-INTERNAL int the_parens_flag;
+INTERNAL Obj *the_object;
+INTERNAL Method *the_method;
+INTERNAL Long *the_opcodes;
+INTERNAL Int the_increment;
+INTERNAL Int the_parens_flag;
 
 static struct {
-    int opcode;
+    Int opcode;
     char *token;
 } binary_tokens[] = {
-    { IN,	"in" },
+    { OP_IN,	"in" },
     { EQ,	"==" },
     { NE,	"!=" },
     { '>',	">" },
@@ -97,8 +87,8 @@ static struct {
 };
 
 static struct {
-    int opcode;
-    int level;
+    Int opcode;
+    Int level;
 } precedences[] = {
     { OP_ASSIGN,	 1 },
     { PLUS_EQ,		 1 },
@@ -108,7 +98,7 @@ static struct {
     { CONDITIONAL,	 2 },
     { OR,		 3 },
     { AND,		 4 },
-    { IN,		 5 },
+    { OP_IN,		 5 },
     { EQ,		 6 },
     { NE,		 6 },
     { '>',		 6 },
@@ -130,8 +120,8 @@ static struct {
     { INDEX,		12 }
 };
 
-int line_number(method_t *method, int pc) {
-    int count = 1;
+Int line_number(Method *method, Int pc) {
+    Int count = 1;
     unsigned flags;
 
 #if DISABLED
@@ -151,9 +141,9 @@ int line_number(method_t *method, int pc) {
     return count + count_lines(0, pc, &flags);
 }
 
-static int count_lines(int start, int end, unsigned *flags)
+static Int count_lines(Int start, Int end, unsigned *flags)
 {
-    int count = 0, last = -1, next;
+    Int count = 0, last = -1, next;
 
     *flags = 0x0;
 
@@ -193,7 +183,7 @@ static int count_lines(int start, int end, unsigned *flags)
 	    break;
 
 	  case IF_ELSE: {
-	      int body_end;
+	      Int body_end;
 	      unsigned if_flags = 0x0, else_flags = 0x0;
 
 	      /* Count "if (expr)" line and consider if body. */
@@ -269,7 +259,7 @@ static int count_lines(int start, int end, unsigned *flags)
 	  case WHILE:
 	  case LAST_CASE_VALUE:
 	  case LAST_CASE_RANGE: {
-	      int opcode = the_opcodes[start], body_end;
+	      Int opcode = the_opcodes[start], body_end;
 	      unsigned body_flags;
 
 	      /* Count header line and consider body. */
@@ -310,7 +300,7 @@ static int count_lines(int start, int end, unsigned *flags)
 	  }
 
 	  case SWITCH: {
-	      int body_end;
+	      Int body_end;
 	      unsigned body_flags;
 
 	      /* Count switch header and consider body. */
@@ -348,7 +338,7 @@ static int count_lines(int start, int end, unsigned *flags)
 	  }
 
 	  case CATCH: {
-	      int body_end;
+	      Int body_end;
 	      unsigned body_flags;
 
 	      /* Count catch line and consider body. */
@@ -395,12 +385,12 @@ static int count_lines(int start, int end, unsigned *flags)
     return count;
 }
 
-list_t *decompile(method_t *method, object_t *object, int increment, int parens)
+cList *decompile(Method *method, Obj *object, Int increment, Int parens)
 {
     Stmt_list *body;
-    list_t *output;
-    string_t *str;
-    int i;
+    cList *output;
+    cStr *str;
+    Int i;
     char *s;
 
     /* Set globals so we don't have to pass method and object around. */
@@ -449,7 +439,7 @@ list_t *decompile(method_t *method, object_t *object, int increment, int parens)
     if (output->len && method->num_opcodes)
 	output = add_and_discard_string(output, string_new(0));
 
-    /* Decompile opcodes into parse tree. */
+    /* Decompile opcodes Into parse tree. */
     body = decompile_stmt_list(0, method->num_opcodes);
 
     /* The first statement in the body (the last statement in the method) will
@@ -465,9 +455,9 @@ list_t *decompile(method_t *method, object_t *object, int increment, int parens)
     return output;
 }
 
-static Stmt *decompile_stmt(int *pos_ptr)
+static Stmt *decompile_stmt(Int *pos_ptr)
 {
-    int pos = *pos_ptr, end;
+    Int pos = *pos_ptr, end;
     Expr_list *exprs;
     Stmt *stmt, *body;
     char *var, *comment;
@@ -593,7 +583,7 @@ static Stmt *decompile_stmt(int *pos_ptr)
     }
 }
 
-static Stmt_list *decompile_stmt_list(int start, int end)
+static Stmt_list *decompile_stmt_list(Int start, Int end)
 {
     Stmt_list *stmts = NULL;
 
@@ -602,7 +592,7 @@ static Stmt_list *decompile_stmt_list(int start, int end)
     return stmts;
 }
 
-static Stmt *decompile_until(int *start, int marker)
+static Stmt *decompile_until(Int *start, Int marker)
 {
     Stmt_list *stmts = NULL;
 
@@ -611,7 +601,7 @@ static Stmt *decompile_until(int *start, int marker)
     return body_from_stmt_list(stmts);
 }
 
-static Stmt *decompile_body(int start, int end)
+static Stmt *decompile_body(Int start, Int end)
 {
     return body_from_stmt_list(decompile_stmt_list(start, end));
 }
@@ -626,7 +616,7 @@ static Stmt *body_from_stmt_list(Stmt_list *stmts)
 	return stmts->stmt;
 }
 
-static Case_list *decompile_cases(int start, int end)
+static Case_list *decompile_cases(Int start, Int end)
 {
     Case_list *cases = NULL;
 
@@ -640,11 +630,11 @@ static Case_list *decompile_cases(int start, int end)
     return cases;
 }
 
-static Case_entry *decompile_case(int *pos_ptr, int switch_end)
+static Case_entry *decompile_case(Int *pos_ptr, Int switch_end)
 {
     Expr_list *values;
     Stmt_list *stmts;
-    int end;
+    Int end;
 
     values = decompile_case_values(pos_ptr, &end);
     if (!values) {
@@ -659,11 +649,11 @@ static Case_entry *decompile_case(int *pos_ptr, int switch_end)
     return case_entry(values, stmts);
 }
 
-static Expr_list *decompile_case_values(int *pos_ptr, int *end_ret)
+static Expr_list *decompile_case_values(Int *pos_ptr, Int *end_ret)
 {
     Expr_list *exprs, *values = NULL;
     Expr *range;
-    int pos = *pos_ptr;
+    Int pos = *pos_ptr;
 
     if (the_opcodes[pos] == DEFAULT) {
 	(*pos_ptr) = pos + 1;
@@ -702,11 +692,11 @@ static Expr_list *decompile_case_values(int *pos_ptr, int *end_ret)
     }
 }
 
-static Id_list *make_error_id_list(int which)
+static Id_list *make_error_id_list(Int which)
 {
     Error_list *elist;
     Id_list *idl = NULL;
-    int i;
+    Int i;
 
     /* A -1 indicates a 'catch all' expression; return a null ID list. */
     if (which == -1)
@@ -726,7 +716,7 @@ static Id_list *make_error_id_list(int which)
 }
 
 /* Decompile an unbounded list of expressions. */
-static Expr_list *decompile_expressions(int *pos_ptr)
+static Expr_list *decompile_expressions(Int *pos_ptr)
 {
     return decompile_expressions_bounded(pos_ptr, -1);
 }
@@ -734,9 +724,9 @@ static Expr_list *decompile_expressions(int *pos_ptr)
 /* This function constructs the list of expressions that would result from
  * interpreting the opcodes starting at (*pos_ptr).  We stop at end, at a
  * statement token, or at a token which pops an argument list off the stack. */
-static Expr_list *decompile_expressions_bounded(int *pos_ptr, int expr_end)
+static Expr_list *decompile_expressions_bounded(Int *pos_ptr, Int expr_end)
 {
-    int pos = *pos_ptr, end;
+    Int pos = *pos_ptr, end;
     Expr_list *stack = NULL;
     char *s;
 
@@ -759,7 +749,7 @@ static Expr_list *decompile_expressions_bounded(int *pos_ptr, int expr_end)
 	    break;
 
           case FLOAT:
-            stack = expr_list(float_expr(the_opcodes[pos+1]), stack);
+            stack = expr_list(float_expr(*((float*)(&the_opcodes[pos+1]))), stack);
             pos += 2;
             break;
 
@@ -779,7 +769,7 @@ static Expr_list *decompile_expressions_bounded(int *pos_ptr, int expr_end)
 	    pos += 2;
 	    break;
 
-	  case ERROR:
+	  case T_ERROR:
 	    s = ident_name(object_get_ident(the_object, the_opcodes[pos + 1]));
 	    stack = expr_list(error_expr(s), stack);
 	    pos += 2;
@@ -986,7 +976,7 @@ static Expr_list *decompile_expressions_bounded(int *pos_ptr, int expr_end)
 	  case GE:
 	  case '<':
 	  case LE:
-	  case IN:
+	  case OP_IN:
 	    stack->next->expr = binary_expr(the_opcodes[pos],
 					    stack->next->expr, stack->expr);
 	    stack = stack->next;
@@ -1029,7 +1019,7 @@ static Expr_list *decompile_expressions_bounded(int *pos_ptr, int expr_end)
 }
 
 /* Write a statement list onto the output list, backwards. */
-static list_t *unparse_stmt_list(list_t *output, Stmt_list *stmts, int indent)
+static cList *unparse_stmt_list(cList *output, Stmt_list *stmts, Int indent)
 {
     Stmt *last;
 
@@ -1042,14 +1032,19 @@ static list_t *unparse_stmt_list(list_t *output, Stmt_list *stmts, int indent)
     }
 }
 
-static list_t *unparse_stmt(list_t *output, Stmt *stmt, int indent, Stmt *last)
+static cList *unparse_stmt(cList *output, Stmt *stmt, Int indent, Stmt *last)
 {
-    string_t *str;
+    cStr *str;
 
     switch (stmt->type) {
 
       /* This switch doesn't include no-op statements or RETURN statements,
        * since we never see them here. */
+
+      case NOOP:
+        str = string_of_char(' ', indent);
+        str = string_addc(str, ';');
+        return add_and_discard_string(output, str);
 
       case COMMENT:
 	/* Add a blank line if there is a previous line and it is not a
@@ -1079,7 +1074,7 @@ static list_t *unparse_stmt(list_t *output, Stmt *stmt, int indent, Stmt *last)
 	return unparse_body(output, stmt->u.if_.true, str, indent);
 
       case IF_ELSE: {
-	  int complex;
+	  Int complex;
 
 	  /* This is the most complicated unparsing job, because we need to
 	   * decide to format both the if-true and if-false statements, and we
@@ -1223,7 +1218,7 @@ static list_t *unparse_stmt(list_t *output, Stmt *stmt, int indent, Stmt *last)
 
       case CATCH: {
 	  Id_list *errors;
-          int complex = 0;
+          Int complex = 0;
 
           if ((stmt->u.ccatch.body != NULL &&
                is_complex_type(stmt->u.ccatch.body->type)) ||
@@ -1278,7 +1273,7 @@ static list_t *unparse_stmt(list_t *output, Stmt *stmt, int indent, Stmt *last)
  * clause's if statment on the same line as our own else statement, so we must
  * check to see if the false clause itself is complex.  Apart from that, it's
  * just a matter of testing if either the true or false clause is complex. */
-static int is_complex_if_else_stmt(Stmt *stmt)
+static Int is_complex_if_else_stmt(Stmt *stmt)
 {
     if (is_complex_type(stmt->u.if_.true->type))
 	return 1;
@@ -1290,13 +1285,13 @@ static int is_complex_if_else_stmt(Stmt *stmt)
 	return is_complex_type(stmt->u.if_.false->type);
 }
 
-static int is_complex_type(int type)
+static Int is_complex_type(Int type)
 {
     return (type != NOOP && type != EXPR && type != ASSIGN && type != BREAK &&
 	    type != CONTINUE && type != RETURN && type != RETURN_EXPR);
 }
 
-static list_t *unparse_body(list_t *output, Stmt *body, string_t *str, int indent)
+static cList *unparse_body(cList *output, Stmt *body, cStr *str, Int indent)
 {
     if (is_complex_type(body->type)) {
 	str = string_add_chars(str, " {", 2);
@@ -1311,7 +1306,7 @@ static list_t *unparse_body(list_t *output, Stmt *body, string_t *str, int inden
     }
 }
 
-static list_t *unparse_cases(list_t *output, Case_list *cases, int indent)
+static cList *unparse_cases(cList *output, Case_list *cases, Int indent)
 {
     if (cases) {
 	output = unparse_cases(output, cases->next, indent);
@@ -1320,9 +1315,9 @@ static list_t *unparse_cases(list_t *output, Case_list *cases, int indent)
     return output;
 }
 
-static list_t *unparse_case(list_t *output, Case_entry *case_entry, int indent)
+static cList *unparse_case(cList *output, Case_entry *case_entry, Int indent)
 {
-    string_t *str;
+    cStr *str;
 
     str = string_of_char(' ', indent);
     if (!case_entry->values) {
@@ -1337,7 +1332,7 @@ static list_t *unparse_case(list_t *output, Case_entry *case_entry, int indent)
 			     indent + the_increment);
 }
 
-static string_t *unparse_expr(string_t *str, Expr *expr, int paren) {
+static cStr *unparse_expr(cStr *str, Expr *expr, Int paren) {
     char *s;
 
     switch (expr->type) {
@@ -1375,7 +1370,7 @@ static string_t *unparse_expr(string_t *str, Expr *expr, int paren) {
 	else
 	    return string_add_unparsed(str, s, strlen(s));
 
-      case ERROR:
+      case T_ERROR:
 	s = expr->u.error;
 	str = string_addc(str, '~');
 	if (is_valid_ident(expr->u.error))
@@ -1517,14 +1512,14 @@ static string_t *unparse_expr(string_t *str, Expr *expr, int paren) {
 	return string_addc(str, ']');
 
       case UNARY: {
-	  int opcode = expr->u.unary.opcode;
+	  Int opcode = expr->u.unary.opcode;
 
 	  str = string_addc(str, (opcode == NEG) ? '-' : opcode);
 	  return unparse_expr_prec(str, expr->u.unary.expr, opcode, 0);
       }
 
       case BINARY: {
-	  int opcode = expr->u.binary.opcode;
+	  Int opcode = expr->u.binary.opcode;
 
 	  s = binary_token(opcode);
 	  str = unparse_expr_prec(str, expr->u.binary.left, opcode, 0);
@@ -1582,7 +1577,7 @@ static string_t *unparse_expr(string_t *str, Expr *expr, int paren) {
     }
 }
 
-static int is_this(Expr *expr)
+static Int is_this(Expr *expr)
 {
     return (expr->type == FUNCTION_CALL && !expr->u.function.args &&
 	    strcmp(expr->u.function.name, "this") == 0);
@@ -1590,7 +1585,7 @@ static int is_this(Expr *expr)
 
 /* Unparse an argument list, backwards.  The double check on args and
  * args->next is not redundant, since an argument list may be empty. */
-static string_t *unparse_args(string_t *str, Expr_list *args)
+static cStr *unparse_args(cStr *str, Expr_list *args)
 {
     if (args) {
 	if (args->next) {
@@ -1607,10 +1602,10 @@ static string_t *unparse_args(string_t *str, Expr_list *args)
  * should put parentheses around the expression if it is at the same
  * precedence level because of assocation (e.g. a / (b * c)) then assoc
  * should be 1. */
-static string_t *unparse_expr_prec(string_t *str, Expr *expr, int caller_type,
-				 int assoc)
+static cStr *unparse_expr_prec(cStr *str, Expr *expr, Int caller_type,
+				 Int assoc)
 {
-    int caller_prec = prec_level(caller_type), type, prec;
+    Int caller_prec = prec_level(caller_type), type, prec;
 
     type = (expr->type == BINARY) ? expr->u.binary.opcode :
 	(expr->type == UNARY) ? expr->u.unary.opcode : expr->type;
@@ -1625,9 +1620,9 @@ static string_t *unparse_expr_prec(string_t *str, Expr *expr, int caller_type,
     }
 }
 
-static int prec_level(int opcode)
+static Int prec_level(Int opcode)
 {
-    int i;
+    Int i;
 
     for (i = 0; i < PREC_SIZE; i++) {
 	if (precedences[i].opcode == opcode)
@@ -1638,9 +1633,9 @@ static int prec_level(int opcode)
     return -1;
 }
 
-static char *binary_token(int opcode)
+static char *binary_token(Int opcode)
 {
-    int i;
+    Int i;
 
     for (i = 0; i < TOKEN_SIZE; i++) {
 	if (binary_tokens[i].opcode == opcode)
@@ -1649,9 +1644,9 @@ static char *binary_token(int opcode)
     return "??";
 }
 
-static list_t *add_and_discard_string(list_t *output, string_t *str)
+static cList *add_and_discard_string(cList *output, cStr *str)
 {
-    data_t d;
+    cData d;
 
     d.type = STRING;
     d.u.str = str;
@@ -1661,9 +1656,9 @@ static list_t *add_and_discard_string(list_t *output, string_t *str)
 }
 
 /* Get the variable name for an index. */
-static char *varname(int ind)
+static char *varname(Int ind)
 {
-    long id;
+    Long id;
 
     if (ind < the_method->num_args) {
 	ind = the_method->num_args - ind - 1;

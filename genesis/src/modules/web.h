@@ -1,9 +1,10 @@
 #ifndef _web_h_
 #define _web_h_
 
-#include "native.h"
+#include "defs.h"
+#include "cdc_pcode.h"
 
-void init_web(int argc, char ** argv);
+void init_web(Int argc, char ** argv);
 void uninit_web(void);
 
 #ifndef _web_

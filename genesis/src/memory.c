@@ -1,25 +1,17 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: memory.c
-// ---
 // Memory management.
 //
 // This code is not ANSI-conformant, because it plays some games with pointer
-// conversions which ANSI does not allow.  It also assumes that a long has the
+// conversions which ANSI does not allow.  It also assumes that a Long has the
 // most restrictive alignment.  I do the pile and tray mallocs this way because
 // they work on most systems and save space.
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include <sys/types.h>
-#include "memory.h"
-#include "log.h"
 
 /* This file supports a tray malloc and a pile malloc.  The tray malloc
  * enhances allocation efficiency by keeping trays for small pieces of
@@ -44,7 +36,7 @@
 #define PILE_BLOCK_SIZE 254
 #define MAX_PILE_BLOCKS 8
 
-typedef long Align;
+typedef Long Align;
 typedef union tlist Tlist;
 typedef struct block Block;
 typedef struct oversized Oversized;
@@ -61,7 +53,7 @@ struct pile {
 
 struct block {
     Align data[PILE_BLOCK_SIZE];
-    int pos;
+    Int pos;
     Block *next;
 };
 
@@ -99,7 +91,7 @@ void *erealloc(void *ptr, size_t size)
 
 void *tmalloc(size_t size)
 {
-    int t, n, i;
+    Int t, n, i;
     void *p;
 
     /* If the block isn't fairly small, fall back on malloc(). */
@@ -131,7 +123,7 @@ void *tmalloc(size_t size)
 
 void tfree(void *ptr, size_t size)
 {
-    int t;
+    Int t;
 
     /* If the block size is greater than MAX_USE_TRAY, then tmalloc() didn't
      * pull it out of a tray, so just free it normally. */
@@ -170,7 +162,7 @@ void *trealloc(void *ptr, size_t oldsize, size_t newsize)
 
 /* Duplicate a string, using tray memory. */
 char *tstrdup(char *s) {
-    int len = strlen(s);
+    Int len = strlen(s);
     char *cnew;
 
     cnew = TMALLOC(char, len + 1);
@@ -182,7 +174,7 @@ char *tstrdup(char *s) {
     return cnew;
 }
 
-char *tstrndup(char *s, int len) {
+char *tstrndup(char *s, Int len) {
     char *cnew;
 
     cnew = TMALLOC(char, len + 1);
@@ -214,7 +206,7 @@ Pile * new_pile(void) {
 
 void * pmalloc(Pile *pile, size_t size) {
     Block *b;
-    int aligns = (size - 1) / sizeof(Align) + 1;
+    Int aligns = (size - 1) / sizeof(Align) + 1;
 
     /* If the size is larger than a block, then make an oversized block and
      * link it in. */
@@ -248,7 +240,7 @@ void * pmalloc(Pile *pile, size_t size) {
 void pfree(Pile *pile) {
     Oversized *o, *nexto;
     Block *b, *nextb;
-    int count;
+    Int count;
 
     /* Free all the oversized blocks. */
     for (o = pile->over; o; o = nexto) {
@@ -286,7 +278,7 @@ void pfree(Pile *pile) {
 /* new routines courtesy of Dancer */
 Pile *new_pile(void) {
     Pile *tmp;
-    /* static int pile_counter=0; */
+    /* static Int pile_counter=0; */
 
     tmp=emalloc(sizeof(Pile));
     tmp->blocks=NULL;

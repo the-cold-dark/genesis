@@ -1,15 +1,9 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: util.c
-// ---
 // General utilities.
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include <ctype.h>
@@ -21,12 +15,7 @@
 #include <stdarg.h>
 #include <fcntl.h>
 #include "util.h"
-#include "cdc_string.h"
-#include "data.h"
-#include "ident.h"
 #include "token.h"
-#include "memory.h"
-#include "log.h"
 
 #define FORMAT_BUF_INITIAL_LENGTH 48
 #define MAX_SCRATCH 2
@@ -36,14 +25,13 @@ extern char * crypt(const char *, const char *);
 
        char lowercase[128];
        char uppercase[128];
-static int  reserve_fds[MAX_SCRATCH];
-static int  fds_used;
+static Int  reserve_fds[MAX_SCRATCH];
+static Int  fds_used;
 
-INTERNAL void claim_fd(int i);
+INTERNAL void claim_fd(Int i);
 
-void init_util(void)
-{
-    int i;
+void init_util(void) {
+    Int i;
 
     for (i = 0; i < 128; i++) {
 	lowercase[i] = (isupper(i) ? tolower(i) : i);
@@ -52,9 +40,8 @@ void init_util(void)
     srand(time(NULL) + getpid());
 }
 
-unsigned long hash(char *s)
-{
-    unsigned long hashval = 0, g;
+uLong hash(char *s) {
+    uLong hashval = 0, g;
 
     /* Algorithm by Peter J. Weinberger. */
     for (; *s; s++) {
@@ -68,10 +55,9 @@ unsigned long hash(char *s)
     return hashval;
 }
 
-unsigned long hash_case(char *s, int n)
-{
-    unsigned long hashval = 0, g;
-    int i;
+uLong hash_case(char *s, Int n) {
+    uLong hashval = 0, g;
+    Int i;
 
     /* Algorithm by Peter J. Weinberger. */
     for (i = 0; i < n; i++) {
@@ -85,20 +71,18 @@ unsigned long hash_case(char *s, int n)
     return hashval;
 }
 
-long atoln(char *s, int n)
-{
-    long val = 0;
+Long atoln(char *s, Int n) {
+    Long val = 0;
 
     while (n-- && isdigit(*s))
 	val = val * 10 + *s++ - '0';
     return val;
 }
 
-char *long_to_ascii(long num, Number_buf nbuf)
-{
+char *long_to_ascii(Long num, Number_buf nbuf) {
 #if DISABLED /* why?? */
     char *p = &nbuf[NUMBER_BUF_SIZE - 1];
-    int sign = 0;
+    Int sign = 0;
 
     *p-- = 0;
     if (num < 0) {
@@ -122,28 +106,26 @@ char *long_to_ascii(long num, Number_buf nbuf)
 }
 
 char * float_to_ascii(float num, Number_buf nbuf) {
-    sprintf (nbuf, "%f", num);
+    sprintf (nbuf, "%g", num);
     return nbuf;
 }
 
 /* Compare two strings, ignoring case. */
-int strccmp(char *s1, char *s2)
-{
+Int strccmp(char *s1, char *s2) {
     while (*s1 && LCASE(*s1) == LCASE(*s2))
 	s1++, s2++;
     return LCASE(*s1) - LCASE(*s2);
 }
 
 /* Compare two strings up to n characters, ignoring case. */
-int strnccmp(char *s1, char *s2, int n)
-{
+Int strnccmp(char *s1, char *s2, Int n) {
     while (n-- && *s1 && LCASE(*s1) == LCASE(*s2))
 	s1++, s2++;
     return (n >= 0) ? LCASE(*s1) - LCASE(*s2) : 0;
 }
 
 /* Look for c in s, ignoring case. */
-char *strcchr(char *s, int c) {
+char *strcchr(char *s, Int c) {
     c = LCASE(c);
 
     for (; *s; s++) {
@@ -155,7 +137,7 @@ char *strcchr(char *s, int c) {
 
 char *strcstr(char *s, char *search) {
     char *p;
-    int search_len = strlen(search);
+    Int search_len = strlen(search);
 
     for (p = strcchr(s, *search); p; p = strcchr(p + 1, *search)) {
 	if (strnccmp(p, search, search_len) == 0)
@@ -168,8 +150,8 @@ char *strcstr(char *s, char *search) {
 /* A random number generator.  A lot of Unix rand() implementations don't
  * produce very random low bits, so we shift by eight bits if we can do that
  * without truncating the range. */
-long random_number(long n) {
-    long num = rand();
+Long random_number(Long n) {
+    Long num = rand();
     if (!n)
       return 0;
 
@@ -183,7 +165,10 @@ long random_number(long n) {
 }
 
 /* Encrypt a string.  The salt can be NULL. */
-char *crypt_string(char *key, char *salt) {
+char * crypt_string(char * key, char * salt) {
+#ifdef __Win32__
+    return key;
+#else
     char rsalt[2];
 
     if (!salt) {
@@ -193,11 +178,12 @@ char *crypt_string(char *key, char *salt) {
     }
 
     return crypt(key, salt);
+#endif
 }
 
 /* Result must be copied before it can be re-used.  Non-reentrant. */
-string_t *vformat(char *fmt, va_list arg) {
-    string_t   * buf,
+cStr * vformat(char * fmt, va_list arg) {
+    cStr   * buf,
                * str;
     char       * p,
                * s;
@@ -228,22 +214,22 @@ string_t *vformat(char *fmt, va_list arg) {
 	    break;
 
 	  case 'S':
-	    str = va_arg(arg, string_t *);
+	    str = va_arg(arg, cStr *);
 	    buf = string_add(buf, str);
 	    break;
 
 	  case 'd':
-	    s = long_to_ascii(va_arg(arg, int), nbuf);
+	    s = long_to_ascii(va_arg(arg, Int), nbuf);
 	    buf = string_add_chars(buf, s, strlen(s));
 	    break;
 
 	  case 'l':
-	    s = long_to_ascii(va_arg(arg, long), nbuf);
+	    s = long_to_ascii(va_arg(arg, Long), nbuf);
 	    buf = string_add_chars(buf, s, strlen(s));
 	    break;
 
 	  case 'D':
-	    str = data_to_literal(va_arg(arg, data_t *));
+	    str = data_to_literal(va_arg(arg, cData *));
 	    if (string_length(str) > MAX_DATA_DISPLAY) {
 		str = string_truncate(str, MAX_DATA_DISPLAY - 3);
 		str = string_add_chars(str, "...", 3);
@@ -253,9 +239,9 @@ string_t *vformat(char *fmt, va_list arg) {
 	    break;
 
           case 'O': {
-            data_t d;
+            cData d;
             d.type = OBJNUM;
-            d.u.objnum = va_arg(arg, objnum_t);
+            d.u.objnum = va_arg(arg, cObjnum);
             str = data_to_literal(&d);
             buf = string_add_chars(buf, string_chars(str), string_length(str));
             string_discard(str);
@@ -263,7 +249,7 @@ string_t *vformat(char *fmt, va_list arg) {
           break;
 
 	  case 'I':
-	    s = ident_name(va_arg(arg, long));
+	    s = ident_name(va_arg(arg, Long));
 	    if (is_valid_ident(s))
 		buf = string_add_chars(buf, s, strlen(s));
 	    else
@@ -278,9 +264,9 @@ string_t *vformat(char *fmt, va_list arg) {
     return buf;
 }
 
-string_t *format(char *fmt, ...) {
+cStr * format(char *fmt, ...) {
     va_list arg;
-    string_t *str;
+    cStr *str;
 
     va_start(arg, fmt);
     str = vformat(fmt, arg);
@@ -320,7 +306,7 @@ char * timestamp (char * str) {
 
 void fformat(FILE *fp, char *fmt, ...) {
     va_list arg;
-    string_t *str;
+    cStr *str;
 
     va_start(arg, fmt);
 
@@ -331,13 +317,15 @@ void fformat(FILE *fp, char *fmt, ...) {
     va_end(arg);
 }
 
-string_t *fgetstring(FILE *fp) {
-    string_t *line;
-    int len;
-    char buf[1000];
+#if 1
+cStr *fgetstring(FILE *fp) {
+    cStr *line;
+    Int len;
+    char buf[BIGBUF];
 
     line = string_new(0);
-    while (fgets(buf, 1000, fp)) {
+
+    while (fgets(buf, BIGBUF, fp)) {
 	len = strlen(buf);
 	if (buf[len - 1] == '\n') {
 	    line = string_add_chars(line, buf, len-1);
@@ -353,9 +341,35 @@ string_t *fgetstring(FILE *fp) {
 	return NULL;
     }
 }
+#else
+cStr *fgetstring(FILE *fp) {
+    cStr    * line;
+    Int           len;
+    static char * start;
+    static char   buf[BUF*2];
 
-char *english_type(int type)
-{
+    if (
+    if (fgets(buf, BIGBUF, fp)) {
+
+    while (fgets(buf, BIGBUF, fp)) {
+	len = strlen(buf);
+	if (buf[len - 1] == '\n') {
+	    line = string_add_chars(line, buf, len-1);
+	    return line;
+	} else
+	    line = string_add_chars(line, buf, len);
+    }
+
+    if (line->len) {
+	return line;
+    } else {
+	string_discard(line);
+	return NULL;
+    }
+}
+#endif
+
+char * english_type(Int type) {
     switch (type) {
       case INTEGER:	return "an integer";
       case FLOAT:	return "a float";
@@ -363,7 +377,7 @@ char *english_type(int type)
       case OBJNUM:	return "a objnum";
       case LIST:	return "a list";
       case SYMBOL:	return "a symbol";
-      case ERROR:	return "an error";
+      case T_ERROR:	return "an error";
       case FROB:	return "a frob";
       case DICT:	return "a dictionary";
       case BUFFER:	return "a buffer";
@@ -371,8 +385,7 @@ char *english_type(int type)
     }
 }
 
-char *english_integer(int n, Number_buf nbuf)
-{
+char *english_integer(Int n, Number_buf nbuf) {
     static char *first_eleven[] = {
 	"no", "one", "two", "three", "four", "five", "six", "seven",
 	"eight", "nine", "ten" };
@@ -383,11 +396,10 @@ char *english_integer(int n, Number_buf nbuf)
 	return long_to_ascii(n, nbuf);
 }
 
-long parse_ident(char **sptr)
-{
-    string_t *str;
+Long parse_ident(char **sptr) {
+    cStr *str;
     char *s = *sptr;
-    long id;
+    Long id;
 
     if (*s == '"') {
 	str = string_parse(&s);
@@ -403,8 +415,7 @@ long parse_ident(char **sptr)
     return id;
 }
 
-FILE *open_scratch_file(char *name, char *type)
-{
+FILE *open_scratch_file(char *name, char *type) {
     FILE *fp;
 
     if (fds_used == MAX_SCRATCH)
@@ -419,22 +430,19 @@ FILE *open_scratch_file(char *name, char *type)
     return fp;
 }
 
-void close_scratch_file(FILE *fp)
-{
+void close_scratch_file(FILE *fp) {
     fclose(fp);
     claim_fd(--fds_used);
 }
 
-void init_scratch_file(void)
-{
-    int i;
+void init_scratch_file(void) {
+    Int i;
 
     for (i = 0; i < MAX_SCRATCH; i++)
 	claim_fd(i);
 }
 
-INTERNAL void claim_fd(int i)
-{
+INTERNAL void claim_fd(Int i) {
     reserve_fds[i] = open("/dev/null", O_WRONLY);
     if (reserve_fds[i] == -1)
 	panic("Couldn't reset reserved fd.");
@@ -442,9 +450,9 @@ INTERNAL void claim_fd(int i)
 
 #define add_char(__s, __c) { *__s = __c; __s++; }
 
-int parse_strcpy(char * b1, char * b2, int slen) {
-    int l = slen, len = slen;
-    char * s = b2, * b = b1;
+Int parse_strcpy(char * b1, char * b2, Int slen) {
+    register Int l = slen, len = slen;
+    register char * s = b2, * b = b1;
 
     while (l > 0) {
         if (*s == '\\') {
@@ -479,11 +487,11 @@ int parse_strcpy(char * b1, char * b2, int slen) {
 
 #undef add_char
 
-int getarg(char * n,
+Int getarg(char * n,
            char **buf,
            char * opt,
            char **argv,
-           int  * argc,
+           Int  * argc,
            void (*usage)(char *))
 {
     char * p = opt; 
@@ -508,7 +516,7 @@ int getarg(char * n,
     return 1;
 }
 
-int is_valid_id(char * str, int len) {
+Int is_valid_id(char * str, Int len) {
     while (len--) {
         if (!isalnum(*str) && *str != '_')
             return 0;

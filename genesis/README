@@ -2,16 +2,22 @@
 ------------------------------------------------------------------------
 INSTALL/COMPILATION
 
-To compile simply run 'configure' followed by 'make'.
+To compile simply type 'make'.
 
-Installation is vague, as most people prefer to shift the binaries
-around, generally you should just copy 'coldcc' and 'genesis' to your
-world directory (wherever it may be).
+Installation is undefined as people generally move the binaries to
+other locations.  Generally you should copy 'coldcc' and 'genesis' to
+your world directory (wherever it may be).
 
 ------------------------------------------------------------------------
 RELEASE INFORMATION
 
 Read doc/CHANGES for information on release changes.
+
+Known Bugs:
+
+  * Database problems on a DEC alpha, may not exist anymore with the
+    Int and Long definitions (Read the CHANGES file).  Email
+    brandon@cold.org if you are running on a DEC Alpha.
 
 ------------------------------------------------------------------------
 FURTHER INFORMATION
@@ -35,6 +41,10 @@ subscribe coldcore
 
 All lists are at cold.org (i.e. coldstuff@cold.org).
 
+Lists are archived at:
+
+    http://www.cold.org/~mail/
+
 Documentation:
 
     for Genesis:     http://www.cold.org/Genesis/
@@ -45,7 +55,7 @@ NOTES
 
 Verified to compile on:
 
-    * FreeBSD 2.1-R
+    * FreeBSD 2.1-R and 2.1.5
     * DEC OSF/1 2.0 (Note: it will have problems on a DEC alpha processor)
     * DEC Ultrix 4.4
     * Sun Solaris 2.5
@@ -53,60 +63,3 @@ Verified to compile on:
 You will get the best results in FreeBSD, as it is the development platform
 so possible problems are immediately found.
 
-POST 1.0 TODO:
-    * overridable methods: change searching to take the first method
-      found.  Do the check for !overridable methods at the time the method
-      is set as !overridable, do not allow methods to be set as overridable
-      if they are overriden on descendants.  Do not allow methods to be
-      added if an ancestor defines it as !overridable.
-    * file ops should use the builtin file descriptor functions
-    * sanity checks are still not done, do them.
-    * get execute to use file i/o, so calling execute would be paramount
-      to using fopen() on a file (shag code from apache CGI)
-    * get bind_native directive in textdumps to handle specifying alternate
-      objects as well.
-    * integrate some of the gdbm features (like gdbm_reorganize())
-    * review all of the dbm routines for other possible logic errors
-    * descendants()
-    * Implement a more efficient malloc for our specific uses, perhaps
-      build on top of phkmalloc.
-
-Possiblilities:
-
-    * servers bound to dead objects (what happens?)
-    * forking (requires a bit of rewriting in the actual interpreter)
-    * send_to() builtin, this would be equivalent to the simple loop:
-
-          for obj in (.contents())
-              obj.tell("you are all silly");
-
-      Except for that it would be much more efficient.  Equivallently
-      it would look like:
-
-          send_to(.contents(), 'tell, ["you are all silly"]);
-
-      This could be a native method.  Drawbacks: it is very abstract.
-
-    * 'retry' jump (ala continue, etc, for catch statements)
-    * "\n" in strings should be character '10', not '\' and 'n'.
-    * PERL-extensions to regexps (i.e. \s etc)
-    * optionally declare a set type for variables, ala:
-
-          'type variable
-
-      when it is declared, such as:
-
-          arg 'string cmd, 'integer num, [more];
-          var 'integer i, some, other, that;
-
-      When the type is set, it is always that type (allowing optimizations).
-
-    * Declare the default value of a variable when starting, such as:
-
-          var i = 1;
-
-      Perhaps even allow expressions:
-
-          var i = .default_value();
-
-    * with this allow multiple 'var' declarations.

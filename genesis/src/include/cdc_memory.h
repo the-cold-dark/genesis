@@ -1,16 +1,9 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/memory.h
-// ---
-// Function prototypes for memory management.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#ifndef MEMORY_H
-#define MEMORY_H
+#ifndef cdc_memory_h
+#define cdc_memory_h
 
 typedef struct pile Pile;
 
@@ -24,7 +17,7 @@ void * tmalloc(size_t size);
 void   tfree(void *ptr, size_t size);
 void * trealloc(void *ptr, size_t oldsize, size_t newsize);
 char * tstrdup(char *s);
-char * tstrndup(char *s, int len);
+char * tstrndup(char *s, Int len);
 void   tfree_chars(char *s);
 Pile * new_pile(void);
 void * pmalloc(Pile *pile, size_t size);

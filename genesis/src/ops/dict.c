@@ -1,24 +1,14 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: ops/dict.c
-// ---
-// dictionary manipulation functions
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#include "config.h"
 #include "defs.h"
-#include "cdc_types.h"
 #include "operators.h"
 #include "execute.h"
-#include "memory.h"
 
 void func_dict_keys(void) {
-    data_t * args;
-    list_t * keys;
+    cData * args;
+    cList * keys;
 
     if (!func_init_1(&args, DICT))
 	return;
@@ -30,7 +20,7 @@ void func_dict_keys(void) {
 }
 
 void func_dict_add(void) {
-    data_t * args;
+    cData * args;
 
     if (!func_init_3(&args, DICT, 0, 0))
 	return;
@@ -41,7 +31,7 @@ void func_dict_add(void) {
 }
 
 void func_dict_del(void) {
-    data_t * args;
+    cData * args;
 
     if (!func_init_2(&args, DICT, 0))
 	return;
@@ -56,8 +46,8 @@ void func_dict_del(void) {
 }
 
 void func_dict_contains(void) {
-    data_t * args;
-    int      val;
+    cData * args;
+    Int      val;
 
     if (!func_init_2(&args, DICT, 0))
 	return;

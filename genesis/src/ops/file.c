@@ -1,14 +1,9 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: functions.c
-// ---
 // Function operators
 //
-// This file contains functions inherent to the system, which are actually
+// This file contains functions inherent to the OS, which are actually
 // operators, but nobody needs to know.
 //
 // Many of these functions require information from the current frame,
@@ -19,12 +14,9 @@
 // will not be changing often.
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include <string.h>
-#include <errno.h>
-#include <unistd.h>
 #include <limits.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -33,11 +25,9 @@
 #include <fcntl.h>
 #include "execute.h"
 #include "cache.h"
-#include "log.h"       /* op_log() */
 #include "util.h"      /* some file functions */
 #include "file.h"
 #include "token.h"     /* is_valid_ident() */
-#include "memory.h"
 
 #define GET_FILE_CONTROLLER(__f) { \
         __f = find_file_controller(cur_frame->object); \
@@ -51,9 +41,9 @@
 // -----------------------------------------------------------------
 */
 void func_fopen(void) {
-    data_t  * args;
-    int       nargs;
-    list_t  * stat; 
+    cData  * args;
+    Int       nargs;
+    cList  * stat; 
     filec_t * file;
 
     if (!func_init_1_or_2(&args, &nargs, STRING, STRING))
@@ -87,8 +77,8 @@ void func_fopen(void) {
 */
 void func_file(void) {
     filec_t * file;
-    list_t  * info;
-    data_t  * list;
+    cList  * info;
+    cData  * list;
 
     if (!func_init_0())
         return;
@@ -99,13 +89,13 @@ void func_file(void) {
     list = list_empty_spaces(info, 5);
 
     list[0].type = INTEGER;
-    list[0].u.val = (long) (file->f.readable ? 1 : 0);
+    list[0].u.val = (Long) (file->f.readable ? 1 : 0);
     list[1].type = INTEGER;
-    list[1].u.val = (long) (file->f.writable ? 1 : 0);
+    list[1].u.val = (Long) (file->f.writable ? 1 : 0);
     list[2].type = INTEGER;
-    list[2].u.val = (long) (file->f.closed ? 1 : 0);
+    list[2].u.val = (Long) (file->f.closed ? 1 : 0);
     list[3].type = INTEGER;
-    list[3].u.val = (long) (file->f.binary ? 1 : 0);
+    list[3].u.val = (Long) (file->f.binary ? 1 : 0);
     list[4].type = STRING;
     list[4].u.str = string_dup(file->path);
 
@@ -117,11 +107,11 @@ void func_file(void) {
 // -----------------------------------------------------------------
 */
 void func_files(void) {
-    data_t   * args;
-    string_t * path,
+    cData   * args;
+    cStr * path,
              * name;
-    list_t   * out;
-    data_t     d;
+    cList   * out;
+    cData     d;
     struct dirent * dent;
     DIR      * dp;
     struct stat sbuf;
@@ -176,7 +166,7 @@ void func_files(void) {
 */
 void func_fclose(void) {
     filec_t * file;
-    int       err;
+    Int       err;
 
     if (!func_init_0())
         return;
@@ -192,7 +182,7 @@ void func_fclose(void) {
     file_discard(file, cur_frame->object);
 
     if (err) {
-        cthrow(file_id, strerror(errno));
+        cthrow(file_id, strerror(GETERR()));
         return;
     }
 
@@ -207,14 +197,14 @@ void func_fclose(void) {
 //
 */
 void func_fchmod(void) {
-    filec_t  * file;
-    data_t   * args;
-    string_t * path;
-    int        failed,
-               nargs;
-    long       mode;
-    char     * p,
-             * ep;
+    filec_t * file;
+    cData  * args;
+    cStr    * path;
+    Int       failed,
+              nargs;
+    Long      mode;
+    char    * p,
+            * ep;
 
     if (!func_init_1_or_2(&args, &nargs, STRING, STRING))
         return;
@@ -222,13 +212,13 @@ void func_fchmod(void) {
     /* frob the string to a mode_t, somewhat taken from FreeBSD's chmod.c */
     p = args[0].u.str->s;
 
-    errno = 0;
+    SETERR(0);
     mode = strtol(p, &ep, 8);
 
     if (*p < '0' || *p > '7' || mode > INT_MAX || mode < 0)
-        errno = ERANGE;
-    if (errno) {
-        cthrow(file_id, "invalid file mode \"%s\": %s", p, strerror(errno));
+        SETERR(ERR_RANGE);
+    if (GETERR()) {
+        cthrow(file_id, "invalid file mode \"%s\": %s", p, strerror(GETERR()));
         return;
     }
 
@@ -256,7 +246,7 @@ void func_fchmod(void) {
     string_discard(path);
 
     if (failed) {
-        cthrow(file_id, strerror(errno));
+        cthrow(file_id, strerror(GETERR()));
         return;
     }
 
@@ -268,9 +258,9 @@ void func_fchmod(void) {
 // -----------------------------------------------------------------
 */
 void func_frmdir(void) {
-    data_t      * args;
-    string_t    * path;
-    int           err;
+    cData      * args;
+    cStr    * path;
+    Int           err;
     struct stat   sbuf;
 
     if (!func_init_1(&args, STRING))
@@ -283,7 +273,7 @@ void func_frmdir(void) {
     err = rmdir(path->s);
     string_discard(path);
     if (err != F_SUCCESS) {
-        cthrow(file_id, strerror(errno));
+        cthrow(file_id, strerror(GETERR()));
         return;
     }
 
@@ -295,9 +285,9 @@ void func_frmdir(void) {
 // -----------------------------------------------------------------
 */
 void func_fmkdir(void) {
-    data_t      * args;
-    string_t    * path;
-    int           err;
+    cData      * args;
+    cStr    * path;
+    Int           err;
     struct stat   sbuf;
 
     if (!func_init_1(&args, STRING))
@@ -317,7 +307,7 @@ void func_fmkdir(void) {
     err = mkdir(path->s, 0700);
     string_discard(path);
     if (err != F_SUCCESS) {
-        cthrow(file_id, strerror(errno));
+        cthrow(file_id, strerror(GETERR()));
         return;
     }
 
@@ -329,10 +319,10 @@ void func_fmkdir(void) {
 // -----------------------------------------------------------------
 */
 void func_fremove(void) {
-    data_t      * args;
+    cData      * args;
     filec_t     * file;
-    string_t    * path;
-    int           nargs,
+    cStr    * path;
+    Int           nargs,
                   err;
     struct stat   sbuf;
 
@@ -351,7 +341,7 @@ void func_fremove(void) {
     err = unlink(path->s);
     string_discard(path);
     if (err != F_SUCCESS) {
-        cthrow(file_id, strerror(errno));
+        cthrow(file_id, strerror(GETERR()));
         return;
     }
 
@@ -365,9 +355,9 @@ void func_fremove(void) {
 // -----------------------------------------------------------------
 */
 void func_fseek(void) {
-    data_t  * args;
+    cData  * args;
     filec_t * file;
-    int       whence = SEEK_CUR;
+    Int       whence = SEEK_CUR;
 
     if (!func_init_2(&args, INTEGER, SYMBOL))
         return;
@@ -389,7 +379,7 @@ void func_fseek(void) {
         whence = SEEK_END;
 
     if (fseek(file->fp, args[0].u.val, whence) != F_SUCCESS) {
-        cthrow(file_id, strerror(errno));
+        cthrow(file_id, strerror(GETERR()));
         return;
     }
 
@@ -401,11 +391,11 @@ void func_fseek(void) {
 // -----------------------------------------------------------------
 */
 void func_frename(void) {
-    string_t    * from,
+    cStr    * from,
                 * to;
-    data_t      * args;
+    cData      * args;
     struct stat   sbuf;
-    int           err,
+    Int           err,
                   nargs;
     filec_t     * file = NULL;
 
@@ -439,7 +429,7 @@ void func_frename(void) {
             file->path = string_dup(to);
         }
     } else {
-        cthrow(file_id, strerror(errno));
+        cthrow(file_id, strerror(GETERR()));
         return;
     }
 
@@ -459,7 +449,7 @@ void func_fflush(void) {
     GET_FILE_CONTROLLER(file)
 
     if (fflush(file->fp) == EOF) {
-        cthrow(file_id, strerror(errno));
+        cthrow(file_id, strerror(GETERR()));
         return;
     }
 
@@ -487,8 +477,8 @@ void func_feof(void) {
 // -----------------------------------------------------------------
 */
 void func_fread(void) {
-    data_t  * args;
-    int       nargs;
+    cData  * args;
+    Int       nargs;
     filec_t  * file;
 
     if (!func_init_0_or_1(&args, &nargs, INTEGER))
@@ -502,8 +492,8 @@ void func_fread(void) {
     }
 
     if (file->f.binary) {
-        buffer_t * buf = NULL;
-        int      block = DEF_BLOCKSIZE;
+        cBuf * buf = NULL;
+        Int      block = DEF_BLOCKSIZE;
 
         if (nargs) {
             block = args[0].u.val;
@@ -518,7 +508,7 @@ void func_fread(void) {
         push_buffer(buf);
         buffer_discard(buf);
     } else {
-        string_t * str = read_file(file);
+        cStr * str = read_file(file);
 
         if (!str)
             return;
@@ -535,8 +525,8 @@ void func_fread(void) {
 // -----------------------------------------------------------------
 */
 void func_fwrite(void) {
-    data_t   * args;
-    int        count;
+    cData   * args;
+    Int        count;
     filec_t  * file;
 
     if (!func_init_1(&args, 0))
@@ -584,9 +574,9 @@ void func_fwrite(void) {
 */
 void func_fstat(void) {
     struct stat    sbuf;
-    list_t       * stat;
-    data_t       * args;
-    int            nargs;
+    cList       * stat;
+    cData       * args;
+    Int            nargs;
     filec_t      * file;
 
     if (!func_init_0_or_1(&args, &nargs, STRING))
@@ -596,7 +586,7 @@ void func_fstat(void) {
         GET_FILE_CONTROLLER(file)
         stat_file(file, &sbuf);
     } else {
-        string_t * path = build_path(args[0].u.str->s, &sbuf, ALLOW_DIR);
+        cStr * path = build_path(args[0].u.str->s, &sbuf, ALLOW_DIR);
 
         if (!path)
             return;
@@ -619,9 +609,10 @@ void func_fstat(void) {
 */
 
 void func_execute(void) {
-    data_t *args, *d;
-    list_t *script_args;
-    int num_args, argc, len, i, fd, status, dlen;
+    cData *args, *d;
+    cList *script_args;
+    Int num_args, argc, len, i, fd, dlen;
+    int status;
     pid_t pid;
     char *fname, **argv;
 
@@ -683,13 +674,13 @@ void func_execute(void) {
         /* Pipe stdin and stdout to /dev/null, keep stderr. */
         fd = open("/dev/null", O_RDWR);
         if (fd == -1) {
-            write_err("EXEC: Failed to open /dev/null: %s.", strerror(errno));
+            write_err("EXEC: Failed to open /dev/null: %s.",strerror(GETERR()));
             _exit(-1);
         }
         dup2(fd, STDIN_FILENO);
         dup2(fd, STDOUT_FILENO);
         execv(fname, argv);
-        write_err("EXEC: Failed to exec \"%s\": %s.", fname, strerror(errno));
+        write_err("EXEC: Failed to exec \"%s\": %s.", fname,strerror(GETERR()));
         _exit(-1);
     } else if (pid > 0) {
         if (num_args == 3 && args[2].u.val) {
@@ -699,7 +690,7 @@ void func_execute(void) {
             waitpid(pid, &status, 0);
         }
     } else {
-        write_err("EXEC: Failed to fork: %s.", strerror(errno));
+        write_err("EXEC: Failed to fork: %s.", strerror(GETERR()));
         status = -1;
     }
 

@@ -1,26 +1,17 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: ops/list.c
-// ---
-// List Manipulation functions
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#include "config.h"
 #include "defs.h"
+
 #include "operators.h"
 #include "execute.h"
-#include "cdc_types.h"
-#include "memory.h"
 #include "util.h" /* fformat() */
 
 COLDC_FUNC(listgraft) {
-    data_t * args, * d1, * d2;
-    list_t * new, * l1, * l2;
-    int pos, x;
+    cData * args, * d1, * d2;
+    cList * new, * l1, * l2;
+    Int pos, x;
 
     if (!func_init_3(&args, LIST, INTEGER, LIST))
         return;
@@ -57,8 +48,8 @@ COLDC_FUNC(listgraft) {
 }
 
 COLDC_FUNC(listlen) {
-    data_t *args;
-    int len;
+    cData *args;
+    Int len;
 
     /* Accept a list to take the length of. */
     if (!func_init_1(&args, LIST))
@@ -71,8 +62,8 @@ COLDC_FUNC(listlen) {
 }
 
 COLDC_FUNC(sublist) {
-    int num_args, start, span, list_len;
-    data_t *args;
+    Int num_args, start, span, list_len;
+    cData *args;
 
     /* Accept a list, an integer, and an optional integer. */
     if (!func_init_2_or_3(&args, &num_args, LIST, INTEGER, INTEGER))
@@ -99,8 +90,8 @@ COLDC_FUNC(sublist) {
 }
 
 COLDC_FUNC(insert) {
-    int pos, list_len;
-    data_t *args;
+    Int pos, list_len;
+    cData *args;
 
     /* Accept a list, an integer offset, and a data value of any type. */
     if (!func_init_3(&args, LIST, INTEGER, 0))
@@ -123,8 +114,8 @@ COLDC_FUNC(insert) {
 }
 
 COLDC_FUNC(replace) {
-    int pos, list_len;
-    data_t *args;
+    Int pos, list_len;
+    cData *args;
 
     /* Accept a list, an integer offset, and a data value of any type. */
     if (!func_init_3(&args, LIST, INTEGER, 0))
@@ -147,8 +138,8 @@ COLDC_FUNC(replace) {
 }
 
 COLDC_FUNC(delete) {
-    int pos, list_len;
-    data_t *args;
+    Int pos, list_len;
+    cData *args;
 
     /* Accept a list and an integer offset. */
     if (!func_init_2(&args, LIST, INTEGER))
@@ -171,7 +162,7 @@ COLDC_FUNC(delete) {
 }
 
 COLDC_FUNC(setadd) {
-    data_t *args;
+    cData *args;
 
     /* Accept a list and a data value of any type. */
     if (!func_init_2(&args, LIST, 0))
@@ -184,7 +175,7 @@ COLDC_FUNC(setadd) {
 }
 
 COLDC_FUNC(setremove) {
-    data_t *args;
+    cData *args;
 
     /* Accept a list and a data value of any type. */
     if (!func_init_2(&args, LIST, 0))
@@ -197,7 +188,7 @@ COLDC_FUNC(setremove) {
 }
 
 COLDC_FUNC(union) {
-    data_t *args;
+    cData *args;
 
     /* Accept two lists. */
     if (!func_init_2(&args, LIST, LIST))
@@ -209,3 +200,29 @@ COLDC_FUNC(union) {
     pop(1);
 }
 
+COLDC_FUNC(join) {
+    cData * args;
+    Int      argc, discard_sep=NO;
+    cStr    * str, * sep;
+
+    if (!func_init_1_or_2(&args, &argc, LIST, STRING))
+        return;
+
+    if (!LIST1->len) {
+        str = string_new(0);
+    } else {
+        if (argc == 1) {
+            sep = string_from_chars(" ", 1);
+            discard_sep=YES;
+        } else {
+            sep = STR2;
+        }
+        str = list_join(LIST1, sep);
+        if (discard_sep)
+            string_discard(sep);
+    }
+
+    pop(2);
+    push_string(str);
+    string_discard(str);
+}

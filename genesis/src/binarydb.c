@@ -1,17 +1,11 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: binarydb.c
-// ---
 // Object storage routines.
 //
 // The block allocation algorithm in this code is due to Marcus J. Ranum.
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include <sys/param.h>
@@ -21,15 +15,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "binarydb.h"
-#include "lookup.h"
-#include "object.h"
-#include "cache.h"
-#include "log.h"
+#include "cdc_db.h"
 #include "util.h"
-#include "dbpack.h"
-#include "memory.h"
-#include "ident.h"
 #include "moddef.h"
 
 #define NEEDED(n, b)		(((n) % (b)) ? (n) / (b) + 1 : (n) / (b))
@@ -40,25 +27,26 @@
 #define	LOGICAL_BLOCK(off)	((off) / BLOCK_SIZE)
 #define	BLOCK_OFFSET(block)	((block) * BLOCK_SIZE)
 
-static void db_mark(off_t start, int size);
-static void db_unmark(off_t start, int size);
-static void grow_bitmap(int new_blocks);
-static int db_alloc(int size);
+static void db_mark(off_t start, Int size);
+static void db_unmark(off_t start, Int size);
+static void grow_bitmap(Int new_blocks);
+static Int db_alloc(Int size);
 static void db_is_clean(void);
 static void db_is_dirty(void);
 
-static int last_free = 0;	/* Last known or suspected free block */
+static Int last_free = 0;	/* Last known or suspected free block */
 
 static FILE *database_file = NULL;
 
 static char *bitmap = NULL;
-static int bitmap_blocks = 0;
+static Int bitmap_blocks = 0;
+static Int allocated_blocks = 0;
 
 char c_clean_file[255];
 
-static int db_clean;
+static Int db_clean;
 
-extern long cur_search, db_top;
+extern Long cur_search, db_top;
 
 /* this isn't the most graceful way, but *shrug* */
 #define FAIL(__s)        { fprintf(errfile, __s, c_dir_binary); exit(1); }
@@ -81,6 +69,7 @@ extern long cur_search, db_top;
             FAIL("Cannot stat database file \"%s/objects\".\n"); \
         bitmap_blocks = ROUND_UP(LOGICAL_BLOCK(statbuf.st_size) + \
                         DB_BITBLOCK, 8); \
+        allocated_blocks=0; \
         bitmap = EMALLOC(char, (bitmap_blocks / 8)+1); \
         memset(bitmap, 0, (bitmap_blocks / 8)+1); \
     }
@@ -115,12 +104,14 @@ void init_binary_db(void) {
                   fdb_objects[LINE],
                   fdb_index[LINE];
     off_t         offset;
-    int           size,
+    Int           size,
                   outdated = 1;
-    long          objnum;
+    Long          objnum;
 
-    sprintf(c_clean_file, "%s/clean", c_dir_binary);
-    DBFILE(fdb_clean,   "clean");
+    /* make it '.clean' because too many people were innocently creating
+       their own clean file, which then led them to use a corrupt db */
+    sprintf(c_clean_file, "%s/.clean", c_dir_binary);
+    DBFILE(fdb_clean,   ".clean");
     DBFILE(fdb_objects, "objects");
     DBFILE(fdb_index,   "index");
 
@@ -156,11 +147,11 @@ void init_binary_db(void) {
 
     if (outdated) {
         fprintf(errfile, "Binary database \"%s\" is incompatable.\n\
-It was compiled on %s with coldcc %d.%d-%d and module code %li\n\
-This system is %s with coldcc %d.%d-%d and module code %li\n\n",
+It was compiled on %s with coldcc %d.%d-%d and module key %li\n\
+This system is %s with coldcc %d.%d-%d and module key %li\n\n",
         c_dir_binary, buf, atoi(v_major), atoi(v_minor), atoi(v_patch),
         atol(magicmod), SYSTEM_TYPE, VERSION_MAJOR, VERSION_MINOR,
-        VERSION_PATCH, (long) MAGIC_MODNUMBER);
+        VERSION_PATCH, (Long) MAGIC_MODNUMBER);
         FAIL("Unable to load database \"%s\".\n");
     }
 
@@ -168,6 +159,8 @@ This system is %s with coldcc %d.%d-%d and module code %li\n\n",
     lookup_open(fdb_index, 0);
     init_bitmaps();
     sync_index();
+    fprintf (errfile, "Binary database fragmentation: %.2f%%\n",
+             (float) db_fragmentation());
 
     db_clean = 1;
 }
@@ -177,10 +170,10 @@ void init_new_db(void) {
     char          fdb_objects[LINE],
                   fdb_index[LINE];
     off_t         offset;
-    int           size;
-    long          objnum;
+    Int           size;
+    Long          objnum;
 
-    sprintf(c_clean_file, "%s/clean", c_dir_binary);
+    sprintf(c_clean_file, "%s/.clean", c_dir_binary);
     DBFILE(fdb_objects, "objects");
     DBFILE(fdb_index,   "index");
 
@@ -192,7 +185,7 @@ void init_new_db(void) {
     db_is_clean();
 }
 
-int init_db(int force_textdump) {
+Int init_db(Int force_textdump) {
     struct stat   statbuf;
     FILE        * fp;
     char          buf[LINE],
@@ -200,12 +193,12 @@ int init_db(int force_textdump) {
                   fdb_objects[LINE],
                   fdb_index[LINE];
     off_t         offset;
-    int           cnew = 1,
+    Int           cnew = 1,
                   size;
-    long          objnum;
+    Long          objnum;
 
-    sprintf(c_clean_file, "%s/clean", c_dir_binary);
-    DBFILE(fdb_clean,   "clean");
+    sprintf(c_clean_file, "%s/.clean", c_dir_binary);
+    DBFILE(fdb_clean,   ".clean");
     DBFILE(fdb_objects, "objects");
     DBFILE(fdb_index,   "index");
 
@@ -277,7 +270,7 @@ int init_db(int force_textdump) {
 }
 
 /* Grow the bitmap to given size. */
-static void grow_bitmap(int new_blocks)
+static void grow_bitmap(Int new_blocks)
 {
     new_blocks = ROUND_UP(new_blocks, 8);
     bitmap = EREALLOC(bitmap, char, (new_blocks / 8) + 1);
@@ -286,11 +279,13 @@ static void grow_bitmap(int new_blocks)
     bitmap_blocks = new_blocks;
 }
 
-static void db_mark(off_t start, int size)
+static void db_mark(off_t start, Int size)
 {
-    int i, blocks;
+    Int i, blocks;
 
     blocks = NEEDED(size, BLOCK_SIZE);
+    allocated_blocks+=blocks;
+
 
     while (start + blocks > bitmap_blocks)
 	grow_bitmap(bitmap_blocks + DB_BITBLOCK);
@@ -299,11 +294,12 @@ static void db_mark(off_t start, int size)
 	bitmap[i >> 3] |= (1 << (i & 7));
 }
 
-static void db_unmark(off_t start, int size)
+static void db_unmark(off_t start, Int size)
 {
-    int i, blocks;
+    Int i, blocks;
 
     blocks = NEEDED(size, BLOCK_SIZE);
+    allocated_blocks-=blocks;
 
     /* Remember a free block was here. */
     last_free = start;
@@ -312,11 +308,21 @@ static void db_unmark(off_t start, int size)
 	bitmap[i >> 3] &= ~(1 << (i & 7));
 }
 
-static int db_alloc(int size)
+static Int db_alloc(Int size)
 {
-    int blocks_needed, b, count, starting_block, over_the_top;
+    Int blocks_needed, b, count, starting_block, over_the_top;
 
+#ifdef LOWBLOAT_DB
+    /*
+    // this will reduce how much your database bloats, however it will
+    // be slower as it searches the whole database for free blocks.
+    // For now this is an option to reduce the amount of bloat occuring,
+    // until an alternate allocator is created.
+    */
+    b = 0;
+#else
     b = last_free;
+#endif
     blocks_needed = NEEDED(size, BLOCK_SIZE);
     over_the_top = 0;
 
@@ -353,10 +359,10 @@ static int db_alloc(int size)
     }
 }
 
-int db_get(object_t *object, long objnum)
+Int db_get(Obj *object, Long objnum)
 {
     off_t offset;
-    int size;
+    Int size;
 
     /* Get the object location for the objnum. */
     if (!lookup_retrieve_objnum(objnum, &offset, &size))
@@ -370,10 +376,10 @@ int db_get(object_t *object, long objnum)
     return 1;
 }
 
-int db_put(object_t *obj, long objnum)
+Int db_put(Obj *obj, Long objnum)
 {
     off_t old_offset, new_offset;
-    int old_size, new_size = size_object(obj);
+    Int old_size, new_size = size_object(obj);
 
     db_is_dirty();
 
@@ -402,18 +408,18 @@ int db_put(object_t *obj, long objnum)
     return 1;
 }
 
-int db_check(long objnum)
+Int db_check(Long objnum)
 {
     off_t offset;
-    int size;
+    Int size;
 
     return lookup_retrieve_objnum(objnum, &offset, &size);
 }
 
-int db_del(long objnum)
+Int db_del(Long objnum)
 {
     off_t offset;
-    int size;
+    Int size;
 
     /* Get offset and size of key. */
     if (!lookup_retrieve_objnum(objnum, &offset, &size))
@@ -468,7 +474,7 @@ static void db_is_clean(void)
 
     fprintf(fp, "%d\n%d\n%d\n%li\n%li\n",
                 VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH,
-                (long) MAGIC_MODNUMBER, cur_search);
+                (Long) MAGIC_MODNUMBER, cur_search);
     fputs(SYSTEM_TYPE, fp);
     close_scratch_file(fp);
     db_clean = 1;
@@ -486,10 +492,10 @@ static void db_is_dirty(void) {
 /* checks for #1/$root and #0/$sys, adds them if they
    do not exist.  Call AFTER init_*_db has been called */
 
-INTERNAL void _check_obj(long objnum, list_t * parents, char * name) {
-    object_t * obj = cache_retrieve(objnum),
+INTERNAL void _check_obj(Long objnum, cList * parents, char * name) {
+    Obj * obj = cache_retrieve(objnum),
              * obj2;
-    long       other;
+    Long       other;
     Ident      id = ident_get(name);
     
     if (!obj)
@@ -510,8 +516,8 @@ INTERNAL void _check_obj(long objnum, list_t * parents, char * name) {
 }
 
 void init_core_objects(void) {
-    data_t   * d;
-    list_t   * parents;
+    cData   * d;
+    cList   * parents;
 
     parents = list_new(0);
     _check_obj(ROOT_OBJNUM, parents, "root");
@@ -523,4 +529,8 @@ void init_core_objects(void) {
     d->u.objnum = ROOT_OBJNUM;
     _check_obj(SYSTEM_OBJNUM, parents, "sys");
     list_discard(parents);
+}
+
+Float db_fragmentation(void) {
+    return (Float) 100.0*(1.0-(float)allocated_blocks/(float)bitmap_blocks);
 }

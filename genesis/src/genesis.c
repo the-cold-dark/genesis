@@ -1,62 +1,47 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: genesis.c
-// ---
-//
+// Main file for 'genesis' executable
 */
 
 #define _main_
 
-#include "config.h"
 #include "defs.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <unistd.h>
 #include <ctype.h>
 #include <time.h>
-#include <errno.h>
-#include "codegen.h"
-#include "opcodes.h"
-#include "cdc_types.h"
-#include "object.h"
-#include "data.h"
-#include "ident.h"
-#include "cdc_string.h"
-#include "match.h"
-#include "cache.h"
-#include "sig.h"
-#include "binarydb.h"
+#include "cdc_pcode.h"
+#include "cdc_db.h"
+#include "strutil.h"
 #include "util.h"
-#include "io.h"
 #include "file.h"
-#include "log.h"
-#include "execute.h"
-#include "token.h"
-#include "native.h"
-#include "memory.h"
+#include "net.h"
+#include "sig.h"
 
-INTERNAL void initialize(int argc, char **argv);
+INTERNAL void initialize(Int argc, char **argv);
 INTERNAL void main_loop(void);
+
 void usage (char * name);
 
 /*
 // --------------------------------------------------------------------
 //
-// Rather obvious, no?
+// The big kahuna
 //
 */
 
 int main(int argc, char **argv) {
     /* make us look purdy */
 
-    initialize(argc, argv);
+    initialize((Int) argc, argv);
     main_loop();
+
+#ifdef PROFILE_EXECUTE
+   dump_execute_profile();
+#endif
 
     /* Sync the cache, flush output buffers, and exit normally. */
     cache_sync();
@@ -88,16 +73,16 @@ int main(int argc, char **argv) {
         strcpy(var, name); \
     }
 
-INTERNAL void initialize(int argc, char **argv) {
-    list_t   * args;
-    string_t * str;
-    data_t     arg;
+INTERNAL void initialize(Int argc, char **argv) {
+    cList   * args;
+    cStr     * str;
+    cData     arg;
     char     * opt,
              * name,
              * basedir = NULL,
              * buf;
     FILE     * fp;
-    int        dofork = 1;
+    Bool       dofork = YES;
     pid_t      pid;
 
     name = *argv;
@@ -171,7 +156,7 @@ INTERNAL void initialize(int argc, char **argv) {
                         break;
                     }
                     case 'f':
-                        dofork = 0;
+                        dofork = NO;
                         break;
                     case 'v':
                         printf("Genesis %d.%d-%d\n",
@@ -210,6 +195,7 @@ INTERNAL void initialize(int argc, char **argv) {
     init_scratch_file();
     init_token();
     init_modules(argc, argv);
+    init_net();
 
     /* where is the base db directory ? */
     if (basedir == NULL)
@@ -230,7 +216,7 @@ INTERNAL void initialize(int argc, char **argv) {
              (logfile = fopen(c_logfile, "ab")) == NULL)
     {
         fprintf(stderr, "Unable to open log %s: %s\nDefaulting to stdout..\n",
-                c_logfile, strerror(errno));
+                c_logfile, strerror(GETERR()));
         logfile = stdout;
     }
 
@@ -240,7 +226,7 @@ INTERNAL void initialize(int argc, char **argv) {
              (errfile = fopen(c_errfile, "ab")) == NULL)
     {
         fprintf(stderr, "Unable to open log %s: %s\nDefaulting to stderr..\n",
-                c_errfile, strerror(errno));
+                c_errfile, strerror(GETERR()));
         errfile = stderr;
     }
 
@@ -253,7 +239,7 @@ INTERNAL void initialize(int argc, char **argv) {
 #endif
         if (pid != 0) { /* parent */
             if (pid == -1)
-                fprintf(stderr,"genesis: unable to fork: %s\n",strerror(errno));
+                fprintf(stderr,"genesis: unable to fork: %s\n",strerror(GETERR()));
             exit(0);
         }
     }
@@ -262,6 +248,8 @@ INTERNAL void initialize(int argc, char **argv) {
     if ((fp = fopen(c_pidfile, "wb")) != NULL) {
         fprintf(fp, "%ld\n", (long) getpid());
         fclose(fp);
+    } else {
+        fprintf(errfile, "genesis pid: %ld\n", (long) getpid());
     }
 
     /* Initialize database and network modules. */
@@ -271,9 +259,9 @@ INTERNAL void initialize(int argc, char **argv) {
 
     /* give useful information, good for debugging */
     { /* reduce the scope */
-        data_t   * d;
-        string_t * str;
-        int        first = 1;
+        cData   * d;
+        cStr     * str;
+        Bool       first = YES;
 
         fputs("Calling $sys.startup(", errfile);
         for (d=list_first(args); d; d=list_next(args, d)) {
@@ -282,14 +270,14 @@ INTERNAL void initialize(int argc, char **argv) {
                 fputc(',', errfile);
                 fputc(' ', errfile);
             } else {
-                first = 0;
+                first = NO;
             }
             fputs(string_chars(str), errfile);
             string_discard(str);
         }
         fputs(")...\n", errfile);
     }
-     
+
     /* call $sys.startup() */
     arg.type = LIST;
     arg.u.list = args;
@@ -306,9 +294,22 @@ INTERNAL void initialize(int argc, char **argv) {
 */
 
 INTERNAL void main_loop(void) {
-    register int     seconds;
-    struct timeval   tp;
+    register Int     seconds;
     register time_t  next, last;
+
+#ifdef __Win32__
+    time_t           tm;
+
+#define SECS tm
+#define GETTIME() time(&tm)
+
+#else
+    /* Unix--most unix systems wrap time() around gettimeofday() */
+    struct timeval   tp;
+
+#define SECS tp.tv_sec
+#define GETTIME() gettimeofday(&tp, NULL)
+#endif
 
     setjmp(main_jmp);
 
@@ -322,13 +323,14 @@ INTERNAL void main_loop(void) {
 
         if (heartbeat_freq != -1) {
             next = (last - (last % heartbeat_freq)) + heartbeat_freq;
-            gettimeofday(&tp, NULL);
-            seconds = (tp.tv_sec >= next) ? 0 : next - tp.tv_sec;
+            GETTIME();
+            seconds = (SECS >= next) ? 0 : next - SECS;
             seconds = (preempted ? 0 : seconds);
 
 #if 0
+     /* why did I #if 0 this ? */
             seconds = (preempted ? 0 :
-                       ((tp.tv_sec >= next) ? 0 : next - tp.tv_sec));
+                       ((SECS >= next) ? 0 : next - SECS));
 #endif
         }
 
@@ -337,9 +339,9 @@ INTERNAL void main_loop(void) {
         handle_new_and_pending_connections();
 
         if (heartbeat_freq != -1) {
-            gettimeofday(&tp, NULL);
-            if (tp.tv_sec >= next) {
-                last = tp.tv_sec;
+            GETTIME();
+            if (SECS >= next) {
+                last = SECS;
                 task(SYSTEM_OBJNUM, heartbeat_id, 0);
 #ifdef CLEAN_CACHE
                 cache_cleanup();
@@ -362,15 +364,15 @@ Usage: %s [base dir] [options]\n\n\
     Note: specifying \"stdin\" or \"stderr\" for either of the logs will\n\
     direct them appropriately.\n\n\
 Options:\n\n\
-        -v              version.\n\
-        -b binary       binary database directory name, default: \"%s\"\n\
-        -r root         root file directory name, default: \"%s\"\n\
-        -x bindir       db executables directory, default: \"%s\"\n\
-        -d log          alternate database logfile, default: \"%s\"\n\
-        -e log          alternate error (driver) file, default: \"%s\"\n\
-        -p pidfile      alternate pid file, default: \"%s\"\n\
-        -f              do not fork on startup\n\
-        -s WIDTHxDEPTH  Cache size, default 10x30\n\
+        -v             version.\n\
+        -b binary      binary database directory name, default: \"%s\"\n\
+        -r root        root file directory name, default: \"%s\"\n\
+        -x bindir      db executables directory, default: \"%s\"\n\
+        -d log         alternate database logfile, default: \"%s\"\n\
+        -e log         alternate error (driver) file, default: \"%s\"\n\
+        -p pidfile     alternate pid file, default: \"%s\"\n\
+        -f             do not fork on startup\n\
+        -s WIDTHxDEPTH Cache size, default 10x30\n\
 \n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, name, c_dir_binary,
      c_dir_root, c_dir_bin, c_logfile, c_errfile, c_pidfile);
 }

@@ -1,40 +1,30 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: ident.c
-// ---
-// The global identifier table.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include <string.h>
-#include "cdc_types.h"
-#include "memory.h"
 #include "util.h"
-#include "log.h"
 
 #define FWRITE(v, fp) fwrite(&v, sizeof(v), 1, fp)
 #define FREAD(v, fp) fread(&v, sizeof(v), 1, fp)
 
 /* We use MALLOC_DELTA to keep the table sizes at least 32 bytes below a power
- * of two, assuming an int is four bytes. */
+ * of two, assuming an Int is four bytes. */
+/* HACKNOTE: BAD */
 #define MALLOC_DELTA 8
 #define INIT_TAB_SIZE (512 - MALLOC_DELTA)
 
 typedef struct xident_entry {
     char *s;
-    int refs;
-    long next;
+    Int refs;
+    Long next;
 } xIdent_entry;
 
 static xIdent_entry *tab;
-static long *hashtab;
-static long tab_size, blanks;
+static Long *hashtab;
+static Long tab_size, blanks;
 
 Ident perm_id, type_id, div_id, integer_id, float_id, string_id, objnum_id,
       list_id, symbol_id, error_id, frob_id, methodnf_id, methoderr_id,
@@ -50,12 +40,12 @@ Ident public_id, protected_id, private_id, root_id, driver_id, fpe_id,
 
 void init_ident(void)
 {
-    long i;
+    Long i;
 
     tab_size = INIT_TAB_SIZE;
 
     tab = EMALLOC(xIdent_entry, tab_size);
-    hashtab = EMALLOC(long, tab_size);
+    hashtab = EMALLOC(Long, tab_size);
 
     for (i = 0; i < tab_size; i++) {
 	tab[i].s = NULL;
@@ -130,7 +120,7 @@ void init_ident(void)
 }
 
 
-void ident_dump(int id, char *msg) {
+void ident_dump(Int id, char *msg) {
   write_err("##ident_dump: %s name:%s number:%d refs:%d",
 	    msg, tab[id].s, id, tab[id].refs);
 }
@@ -138,8 +128,8 @@ void ident_dump(int id, char *msg) {
 
 Ident ident_get(char *s)
 {
-    unsigned long hval = hash(s);
-    long ind, new_size, i;
+    uLong hval = hash(s);
+    Long ind, new_size, i;
 
     /* Look for an existing identifier. */
     ind = hashtab[hval % tab_size];
@@ -161,7 +151,7 @@ Ident ident_get(char *s)
 	/* Allocate new space for table. */
 	new_size = tab_size * 2 + MALLOC_DELTA;
 	tab = EREALLOC(tab, xIdent_entry, new_size);
-	hashtab = EREALLOC(hashtab, long, new_size);
+	hashtab = EREALLOC(hashtab, Long, new_size);
 
 	/* Make new string of blanks. */
 	for (i = tab_size; i < new_size - 1; i++)
@@ -200,7 +190,7 @@ Ident ident_get(char *s)
 
 void ident_discard(Ident id)
 {
-    long ind, *p;
+    Long ind, *p;
 
     tab[id].refs--;
 

@@ -1,27 +1,36 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/net.h
-// ---
-// Declarations for network routines.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#ifndef _net_h_
-#define _net_h_
+#ifndef cdc_net_h
+#define cdc_net_h
 
-#include "io.h"
+#ifdef __Win32__
 
-int get_server_socket(int port);
-int io_event_wait(long sec, connection_t *connections, server_t *servers,
+#define SOCK_CLOSE(_sc_)                  closesocket(_sc_)
+#define SOCK_READ(_sc_, _buf_, _len_)     recv(_sc_, _buf_, _len_, 0)
+#define SOCK_WRITE(_sc_, _buf_, _len_)    send(_sc_, _buf_, _len_, 0)
+
+#else
+
+typedef Int SOCKET;
+
+#define SOCK_CLOSE(_sc_)                  close(_sc_)
+#define SOCK_READ(_sc_, _buf_, _len_)     read(_sc_, _buf_, _len_)
+#define SOCK_WRITE(_sc_, _buf_, _len_)    write(_sc_, _buf_, _len_)
+
+#endif
+
+SOCKET get_server_socket(Int port);
+Int io_event_wait(Int sec, Conn *connections, server_t *servers,
 		  pending_t *pendings);
-long non_blocking_connect(char *addr, int port, int *socket_return);
-string_t *hostname(char *addr);
-string_t *ip(char *addr);
+Long non_blocking_connect(char *addr, Int port, Int *socket_return);
+cStr * hostname(char *addr);
+cStr * ip(char *addr);
+void init_net(void);
+void uninit_net(void);
 
-extern long server_failure_reason;
+extern Long server_failure_reason;
 
 #endif
 

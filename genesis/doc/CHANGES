@@ -6,6 +6,63 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-8 [] Brandon Gillespie, Miroslav Silovic
+      * Added 'join()', hooked into $list.join() (native)
+      * Finished 'graft()' functions for string, list and buffer, will
+        not hook into natives.
+      * Found the source of binary databases bloating (Miro)
+      * A new #ifdef option has been added to toggle a fast db which will
+        bloat faster, or a tighter lower-bloat db which is slower.  (look
+        in include/defs.h).
+      * Located what is causing the stack to be corrupted by critical
+        expressions (Miro).
+      * $sys.signal() now only receives ONE argument, before it received
+        two.  The first argument is the signal name, as a symbol.
+      * New CDC natives: $string.trim(), $string.split() and
+        $dictionary.[add/del]_elem()
+      * new #define in defs.h PROFILE_EXECUTE, turn this on and the driver
+        will record how often each method is called, dumping to 'errfile'
+        when its tables are maxed.  May cruft this up over time.  Do NOT
+        use this as a regular compilation method.
+      * Lots of changes, file rearrangement and general symbol abstraction
+        additions (i.e. 'SOCKET' instead of 'int'), for easier porting to
+        Win32.
+      * Many more definitions and abstractions, rewrote defs.h, a lot more
+        cruft.  Changed sequence of all includes, updated all source files,
+        should only need to #include defs.h now, and possibly cdc_pcode.h,
+        cdc_db.h and a few others.  Did some file rearrangement too.
+      * Abstracted all data types used in the driver wherever possible,
+        replacing 'int' and all of the other common C types:
+
+            Bool     =>  true or false value
+            Byte     =>  tiny integer signed value
+            uByte    =>  tiny integer unsigned value
+            Char     =>  character signed value
+            uChar    =>  character unsigned value
+            Short    =>  small integer signed value
+            uShort   =>  small integer unsigned value 
+            Int      =>  common integer signed value
+            uInt     =>  common integer unsigned value
+            Long     =>  large integer signed value
+            uLong    =>  large integer unsigned value
+            Float    =>  common float signed value
+
+        In general, Int and Long are the same unless USE_BIG_NUMBERS
+        is defined, not suggested unless you are on a DEC Alpha (the
+        only processor yet which supports full 64bit words).  Float
+        by default is 32 bits, unless USE_BIG_FLOATS is defined.  This
+        option is not yet fully supported, so dont try it.
+      * Added cruft to configuration script, now checks for type sizes
+        (used in the above typedefs) and byte order testing, which may
+        be used later to keep the byte order in a binarydb the same
+        (allowing for better cross-platform distribution of a binarydb).
+        Should also run makedepend if it can find it.
+      * Pulled some of the common string utilities (matching, frobbing,
+        etc, such as strsed and their ilk) into strutil.c, need to still
+        hook all operators into them.
+      * Fixed a bug in decompiling constant floats in a method, they were
+        actually stored and evaluated correctly, but when @listed they
+        were not printed correctly.
 1.0-[56]  [26-Apr-96] Brandon Gillespie
       * I regressed from patch five back to patch four, due to some changes
         which ended up being incorrect.  The updated source became patch 6.

@@ -1,24 +1,14 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: match.c
-// ---
-// generic string frobbing and matching routines
+// generic string frobbing and matching utilities
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include <string.h>
 #include <ctype.h>
-#include "match.h"
-#include "memory.h"
-#include "cdc_types.h"
-#include "data.h"
-#include "cdc_string.h"
+#include "strutil.h"
 #include "util.h"
 #include "execute.h"
 
@@ -30,28 +20,28 @@
 typedef struct {
     char *start;
     char *end;
-    int strip;			/* Strip backslashes? */
+    Bool strip;			/* Strip backslashes? */
 } Field;
 
 static char *match_coupled_wildcard(char *ctemplate, char *s);
 static char *match_wildcard(char *ctemplate, char *s);
 static char *match_word_pattern(char *ctemplate, char *s);
-static void add_field(char *start, char *end, int strip);
+static void add_field(char *start, char *end, Bool strip);
 
 static Field * fields;
-static int field_pos, field_size;
+static Int field_pos, field_size;
     
 void init_match(void) {
     fields = EMALLOC(Field, FIELD_STARTING_SIZE);
     field_size = FIELD_STARTING_SIZE;
 }
 
-list_t * match_template(char *ctemplate, char *s) {
+cList * match_template(char *ctemplate, char *s) {
     char *p;
-    int i, coupled;
-    list_t *l;
-    data_t *d;
-    string_t *str;
+    Int i, coupled;
+    cList *l;
+    cData *d;
+    cStr *str;
 
     field_pos = 0;
 
@@ -100,7 +90,7 @@ list_t * match_template(char *ctemplate, char *s) {
 	    p = match_word_pattern(ctemplate, s);
 	    if (!p)
 		return NULL;
-	    add_field(s, p, 0);
+	    add_field(s, p, FALSE);
 	    s = p;
 	}
 
@@ -166,7 +156,7 @@ INTERNAL char *match_coupled_wildcard(char *ctemplate, char *s) {
 	/* Move on if next character is an equals sign. */
 	if (*q == '=') {
 	    for (q++; *q && *q == ' '; q++);
-	    add_field(s + 1, p, 1);
+	    add_field(s + 1, p, TRUE);
 	    return match_wildcard(ctemplate, q);
 	} else {
 	    return NULL;
@@ -182,7 +172,7 @@ INTERNAL char *match_coupled_wildcard(char *ctemplate, char *s) {
      * starting from the first nonspace character after it. */
     for (q = p - 1; *q == ' '; q--);
     for (p++; *p == ' '; p++);
-    add_field(s, q + 1, 0);
+    add_field(s, q + 1, FALSE);
     return match_wildcard(ctemplate, p);
 }
 
@@ -194,7 +184,7 @@ INTERNAL char * match_wildcard(char *ctemplate, char *s) {
     /* If no token follows the wildcard, then the match succeeds. */
     if (!*ctemplate) {
 	p = s + strlen(s);
-	add_field(s, p, 0);
+	add_field(s, p, FALSE);
 	return p;
     }
 
@@ -214,8 +204,8 @@ INTERNAL char * match_wildcard(char *ctemplate, char *s) {
 	/* Next token must match here. */
 	r = match_word_pattern(ctemplate, q);
 	if (r) {
-	    add_field(s + 1, p, 1);
-	    add_field(q, r, 0);
+	    add_field(s + 1, p, TRUE);
+	    add_field(q, r, FALSE);
 	    return r;
 	} else {
 	    return NULL;
@@ -229,8 +219,8 @@ INTERNAL char * match_wildcard(char *ctemplate, char *s) {
     /* There is an unquoted wildcard match.  Start by looking here. */
     p = match_word_pattern(ctemplate, s);
     if (p) {
-	add_field(s, s, 0);
-	add_field(s, p, 0);
+	add_field(s, s, FALSE);
+	add_field(s, p, FALSE);
 	return p;
     }
 
@@ -245,8 +235,8 @@ INTERNAL char * match_wildcard(char *ctemplate, char *s) {
 	    r = match_word_pattern(ctemplate, q);
 	    if (r) {
 		/* It matches; add wildcard field and word field. */
-		add_field(s, p, 0);
-		add_field(q, r, 0);
+		add_field(s, p, FALSE);
+		add_field(q, r, FALSE);
 		return r;
 	    }
 	    /* No match; continue looking at q. */
@@ -263,7 +253,7 @@ INTERNAL char * match_wildcard(char *ctemplate, char *s) {
 /* Match a word pattern.  Do not add any fields. */
 INTERNAL char * match_word_pattern(char *ctemplate, char *s) {
     char *p = s;
-    int abbrev = 0;
+    Int abbrev = 0;
 
     while (*ctemplate && *ctemplate != ' ' && *ctemplate != '|') {
 
@@ -313,7 +303,7 @@ INTERNAL char * match_word_pattern(char *ctemplate, char *s) {
 
 /* Add a field.  strip should be true if this is a field for a wildcard not at
  * the end of the template. */
-INTERNAL void add_field(char *start, char *end, int strip) {
+INTERNAL void add_field(char *start, char *end, Bool strip) {
     if (field_pos >= field_size) {
 	field_size = field_size * 2 + MALLOC_DELTA;
 	fields = EREALLOC(fields, Field, field_size);
@@ -326,11 +316,11 @@ INTERNAL void add_field(char *start, char *end, int strip) {
 
 /* Returns a backwards list of fields if <s> matches the
    pattern <pattern>, or NULL if it doesn't. */
-list_t * match_pattern(char *pattern, char *s) {
+cList * match_pattern(char *pattern, char *s) {
     char *p, *q;
-    list_t *list;
-    string_t *str;
-    data_t d;
+    cList *list;
+    cStr *str;
+    cData d;
 
     /* Locate wildcard in pattern, if any.  If there isn't any, return an empty
      * list if pattern and s are equivalent, or fail if they aren't. */
@@ -382,12 +372,12 @@ list_t * match_pattern(char *pattern, char *s) {
     return NULL;
 }
 
-list_t * match_regexp(string_t * reg, char * s, int sensitive) {
-    list_t * fields = (list_t *) NULL,
+cList * match_regexp(cStr * reg, char * s, Bool sensitive) {
+    cList * fields = (cList *) NULL,
            * elemlist; 
     regexp * rx;
-    data_t   d;
-    int      i;
+    cData   d;
+    Int      i;
 
     if ((rx = string_regexp(reg)) == (regexp *) NULL) {
         cthrow(regexp_id, "%s", regerror(NULL));
@@ -428,11 +418,11 @@ list_t * match_regexp(string_t * reg, char * s, int sensitive) {
 #define REGSTR(rx, pos) (string_from_chars(rx->startp[pos], \
                                     rx->endp[pos] - rx->startp[pos]))
 
-list_t * regexp_matches(string_t * reg, char * s, int sensitive) {
-    list_t * fields;
+cList * regexp_matches(cStr * reg, char * s, Bool sensitive) {
+    cList * fields;
     regexp * rx;
-    data_t   d;
-    int      i,
+    cData   d;
+    Int      i,
              size;
 
     if ((rx = string_regexp(reg)) == (regexp *) NULL) {
@@ -465,70 +455,76 @@ list_t * regexp_matches(string_t * reg, char * s, int sensitive) {
     return fields;
 }
 
-int parse_strsed_args(char * args, int * global, int * sensitive) {
+Int parse_regfunc_args(char * args) {
+    Int flags = RF_NONE;
+
     while (*args != (char) NULL) {
         switch (*args) {
+            case 'b': /* keep blanks */
+                flags |= RF_BLANKS;
+                break;
             case 'g': /* global */
-                *global=1;
+                flags |= RF_GLOBAL;
                 break;
             case 's': /* single */
-                *global=0;
+                flags &= RF_GLOBAL;
                 break;
             case 'c': /* case sensitive */
-                *sensitive=1;
+                flags |= RF_SENSITIVE;
                 break;
             case 'i': /* case insensitive */
-                *sensitive=0;
+                flags &= RF_SENSITIVE;
                 break;
-            default:
-                return 0;
         }
         args++; 
     }
-    return 1;
+    return flags;
 }
 
-#define x_THROW(_cthrow_) {\
-        *err=1;\
-        cthrow _cthrow_;\
-        return NULL;\
-    }
+/*
+// -------------------------------------------------------------------
+//
+// strsed() may throw an error, if it does, it returns NULL instead of
+// a pointer to the modified string.
+*/
 
-string_t * strsed(string_t * reg,  /* the regexp string */
-                  string_t * ss,   /* the string to match against */
-                  string_t * rs,   /* the replacement string */
-                  int global,      /* globally match? */
-                  int sensitive,   /* case sensitive? */
-                  int mult,        /* size multiplier */
-                  int * err)       /* did we have a boo boo? */
+/* the THROW() macro uses RETURN_FALSE */
+#define OLD_RFALSE RETURN_FALSE
+#undef RETURN_FALSE
+#define RETURN_FALSE return NULL
+
+cStr * strsed(cStr * reg,      /* the regexp string */
+                  cStr * ss,   /* the string to match against */
+                  cStr * rs,   /* the replacement string */
+                  Int flags,
+                  Int mult)
 {
     register regexp * rx;
-    string_t * out;
+    cStr * out;
     char     * s = string_chars(ss),/* start */
              * p,                   /* pointer */
              * q,                   /* couldn't think of anything better */
              * r;                   /* replace */
-    register int i, x;
-    int      size=1,
+    register Int i, x;
+    Int      size=1,
              slen = string_length(ss),
              rlen = string_length(rs);
-
-    err = 0;
+    Bool     sensitive = flags & RF_SENSITIVE;
 
     /* Compile the regexp, note: it is free'd by string_discard() */
     if ((rx = string_regexp(reg)) == (regexp *) NULL)
-        x_THROW((regexp_id, "%s", regerror(NULL)))
+        THROW((regexp_id, "%s", regerror(NULL)))
 
     /* initial regexp execution */
     if (!regexec(rx, s, sensitive))
-        return NULL;
+        return string_dup(ss);
 
     for (; size < NSUBEXP && rx->startp[size] != (char) NULL; size++);
 
     if (size == 1) { /* a constant, this is the easy one */
-        if (global) {
+        if (flags & RF_GLOBAL) {
             /* die after 100 subs, magic numbers yay */
-            int depth = 100;
+            Int depth = 100;
             p = s;
             out = string_new(slen + (rlen * mult));
 
@@ -536,7 +532,7 @@ string_t * strsed(string_t * reg,  /* the regexp string */
             do {
                 if (!--depth) {
                     string_discard(out);
-                    x_THROW((maxdepth_id, "Max substitution depth exceeded"))
+                    THROW((maxdepth_id, "Max substitution depth exceeded"))
                 }
                 if ((i = rx->startp[0] - p))
                     out = string_add_chars(out, p, i);
@@ -561,8 +557,8 @@ string_t * strsed(string_t * reg,  /* the regexp string */
                 out = string_add_chars(out, rx->endp[0], i);
         }
     } else { /* rrg, now we have fun */
-        if (global) {  /* they would, the bastards */
-            int depth = 100;
+        if (flags & RF_GLOBAL) {  /* they would, the bastards */
+            Int depth = 100;
             char * rxs = s;
     
             out = string_new(slen + ((rlen * size) * mult));
@@ -576,7 +572,7 @@ string_t * strsed(string_t * reg,  /* the regexp string */
             do {
                 if (!--depth) {
                     string_discard(out);
-                    x_THROW((maxdepth_id, "Max substitution depth exceeded"))
+                    THROW((maxdepth_id, "Max substitution depth exceeded"))
                 }
 
                 if ((i = rx->startp[0] - rxs))
@@ -587,11 +583,11 @@ string_t * strsed(string_t * reg,  /* the regexp string */
 
                     q++;
 
-                    x = *q - (int) '0';
+                    x = *q - (Int) '0';
 
                     if (!x || x > 9) {
                         string_discard(out);
-                        x_THROW((perm_id, "Subs can only be 1-9"))
+                        THROW((perm_id, "Subs can only be 1-9"))
                     }
 
                     if (rx->startp[x] != NULL && (i=rx->endp[x]-rx->startp[x]))
@@ -623,11 +619,11 @@ string_t * strsed(string_t * reg,  /* the regexp string */
 
                 q++;
 
-                x = *q - (int) '0';
+                x = *q - (Int) '0';
 
                 if (!x || x > 9) {
                     string_discard(out);
-                    x_THROW((perm_id, "Subs can only be 1-9"))
+                    THROW((perm_id, "Subs can only be 1-9"))
                 }
 
                 if (rx->startp[x] != NULL && (i=rx->endp[x]-rx->startp[x]))
@@ -648,7 +644,10 @@ string_t * strsed(string_t * reg,  /* the regexp string */
     return out;
 }
 
-#undef x_THROW
+/* fix RETURN_FALSE */
+#undef RETURN_FALSE
+#define RETURN_FALSE OLD_RFALSE
+#undef OLD_RFALSE
 
 /*
 // -------------------------------------------------------------
@@ -697,7 +696,7 @@ string_t * strsed(string_t * reg,  /* the regexp string */
             value = string_from_chars(tmp, strlen(tmp));\
             break;\
         case FLOAT:\
-            sprintf(buf, "%.*f", prec, (double) args[cur].u.fval); \
+            sprintf(buf, "%.*f", (int) prec, (double) args[cur].u.fval); \
             value = string_from_chars(buf, strlen(buf));\
             break;\
         default:\
@@ -710,16 +709,16 @@ string_t * strsed(string_t * reg,  /* the regexp string */
     return NULL; \
 }
 
-string_t * strfmt(string_t * str, data_t * args, int argc) {
-    string_t * out,
+cStr * strfmt(cStr * str, cData * args, Int argc) {
+    cStr     * out,
              * value;
     register char * s;
     char     * fmt,
              * tmp,
                buf[LINE],
                fill[LINE];
-    register int pad, prec, trunc;
-    int        cur = -1;
+    register Int pad, prec, trunc;
+    Int        cur = -1;
 
     fmt = string_chars(str);
 
@@ -782,7 +781,7 @@ string_t * strfmt(string_t * str, data_t * args, int argc) {
 
         /* get the pad char */
         if (*s == '{') {
-            int    x = 0;
+            Int    x = 0;
 
             s++;
             for (; *s && *s != '}'; s++) {
@@ -836,7 +835,7 @@ string_t * strfmt(string_t * str, data_t * args, int argc) {
                     if (trunc && string_length(value) > pad)
                         value = string_truncate(value, pad);
                     else if (string_length(value) < pad) {
-                        string_t * new = string_new(pad + string_length(value));
+                        cStr * new = string_new(pad + string_length(value));
                         new = string_add_padding(new, fill, strlen(fill), pad-string_length(value));
                         new = string_add(new, value);
                         string_discard(value);
@@ -854,8 +853,8 @@ string_t * strfmt(string_t * str, data_t * args, int argc) {
                     if (trunc && string_length(value) > pad)
                         value = string_truncate(value, pad);
                     else if (string_length(value) < pad) {
-                        int size = (pad - string_length(value)) / 2;
-                        string_t * new = string_new(pad + string_length(value));
+                        Int size = (pad - string_length(value)) / 2;
+                        cStr * new = string_new(pad + string_length(value));
                         new = string_add_padding(new, fill, strlen(fill),size);
                         new = string_add(new, value);
                         new = string_add_padding(new, fill, strlen(fill),size);
@@ -899,3 +898,116 @@ string_t * strfmt(string_t * str, data_t * args, int argc) {
     return out;
 }
 
+/*
+// -------------------------------------------------------------
+*/
+
+#define ADD_WORD(_expression_) \
+    word = string_from_chars _expression_ ; \
+    d.u.str = word; \
+    list = list_add(list, &d); \
+    string_discard(word)
+
+cList * strexplode(cStr * str, char * sep, Int sep_len, Bool blanks) {
+    char     * s = string_chars(str),
+             * p = s,
+             * q;
+    Int        len = string_length(str);
+    cList   * list = list_new(0);
+    cStr * word;
+    cData     d;
+
+    d.type = STRING;
+    for (q = strcstr(p, sep); q; q = strcstr(p, sep)) {
+        if (blanks || q > p) {
+            ADD_WORD((p, q - p));
+        }
+        p = q + sep_len;
+    }
+
+    /* Add the last word. */
+    if (*p || blanks) {
+        ADD_WORD((p, len - (p - s)));
+    }
+
+    return list;
+}
+
+#undef ADD_WORD
+
+#undef x_THROW
+
+/*
+// -------------------------------------------------------------
+// we can make a much better implementation with a better regexp compiler
+*/
+
+#define x_THROW(_cthrow_) {\
+        cthrow _cthrow_;\
+        return NULL;\
+    }
+
+cList * strsplit(cStr * str, cStr * reg, Int flags) {
+    register regexp * rx;
+    register char * s, * p;
+    register Int x, len, depth;
+    cList   * list;
+    cData     d;
+
+    /* Compile the regexp, note: it is free'd by string_discard() */
+    if ((rx = string_regexp(reg)) == (regexp *) NULL)
+        x_THROW((regexp_id, "%s", regerror(NULL)))
+
+    /* look at the regexp and see if its a simple one,
+       which we can currently handle */
+    for (len=reg->len, x=0, s=string_chars(reg); x < len; x++, s++) {
+        if (*s == '\\') {
+            s++; x++; len--; continue;
+        }
+        /* rrg */
+        if (*s == '(')
+            x_THROW((regexp_id,
+                "split only supports simple regular expressions right now."))
+    }
+
+    /* set initial vars */
+    d.type = STRING;
+    s = p = string_chars(str);
+
+    /* initial regexp execution */
+    if (!regexec(rx, s, flags & RF_SENSITIVE)) {
+        d.u.str = str;
+        list = list_add(list_new(1), &d);
+        return list;
+    }
+
+    /* more initial settings */
+    list = list_new(0);
+    len = string_length(str);
+    depth = 10000; /* ugh, magic numbers */
+
+    do {
+        if (!--depth) {
+            list_discard(list);
+            x_THROW((maxdepth_id, "Max split depth exceeded"))
+        }
+
+        x = rx->startp[0] - p;
+
+        if (x || flags & RF_BLANKS) {
+            d.u.str = string_from_chars(p, x);
+            list = list_add(list, &d);
+            string_discard(d.u.str);
+        }
+
+        p = rx->endp[0];
+    } while (p && regexec(rx, p, flags & RF_SENSITIVE));
+
+    if ((x = (s + len) - p)) {
+        d.u.str = string_from_chars(p, x);
+        list = list_add(list, &d);
+        string_discard(d.u.str);
+    }
+
+    return list;
+}

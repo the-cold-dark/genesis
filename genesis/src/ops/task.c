@@ -1,25 +1,18 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include "lookup.h"
 #include "execute.h"
-#include "data.h"
-#include "ident.h"
-#include "object.h"
 #include "grammar.h"
 #include "opcodes.h"
 
 /* ----------------------------------------------------------------- */
 /* cancel a suspended task                                           */
 COLDC_FUNC(cancel) {
-    data_t *args;
+    cData *args;
  
     if (!func_init_1(&args, INTEGER))
         return;
@@ -53,9 +46,9 @@ void func_suspend(void) {
 
 /* ----------------------------------------------------------------- */
 void func_resume(void) {
-    data_t *args;
-    int nargs;
-    long tid;
+    cData *args;
+    Int nargs;
+    Long tid;
 
     if (!func_init_1_or_2(&args, &nargs, INTEGER, 0))
         return;
@@ -91,12 +84,12 @@ void func_pause(void) {
 
 /* ----------------------------------------------------------------- */
 void func_atomic(void) {
-    data_t * args;
+    cData * args;
 
     if (!func_init_1(&args, INTEGER))
         return;
 
-    atomic = (int) (args[0].u.val ? 1 : 0);
+    atomic = (Bool) (args[0].u.val ? YES : NO);
 
     pop(1);
     push_int(1);
@@ -121,7 +114,7 @@ void func_refresh(void) {
 
 /* ----------------------------------------------------------------- */
 void func_tasks(void) {
-    list_t * list;
+    cList * list;
 
     if (!func_init_0())
         return;
@@ -141,7 +134,7 @@ void func_tick(void) {
 
 /* ----------------------------------------------------------------- */
 void func_stack(void) {
-    list_t * list;
+    cList * list;
 
     if (!func_init_0())
         return;

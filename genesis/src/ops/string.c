@@ -1,29 +1,19 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: ops/string.c
-// ---
-// string functions.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include <string.h>
 #include <ctype.h>
 #include "operators.h"
 #include "execute.h"
-#include "cdc_types.h"
-#include "match.h"
+#include "strutil.h"
 #include "util.h"
-#include "memory.h"
 
-void func_strlen(void) {
-    data_t *args;
-    int len;
+COLDC_FUNC(strlen) {
+    cData *args;
+    Int len;
 
     /* Accept a string to take the length of. */
     if (!func_init_1(&args, STRING))
@@ -35,9 +25,9 @@ void func_strlen(void) {
     push_int(len);
 }
 
-void func_substr(void) {
-    int num_args, start, len, string_len;
-    data_t *args;
+COLDC_FUNC(substr) {
+    Int num_args, start, len, string_len;
+    cData *args;
 
     /* Accept a string for the initial string, an integer specifying the start
      * of the substring, and an optional integer specifying the length of the
@@ -65,20 +55,21 @@ void func_substr(void) {
     pop(num_args - 1);
 }
 
-void func_explode(void) {
-    int num_args, sep_len, len, want_blanks;
-    data_t *args, d;
-    list_t *exploded;
-    char *sep, *s, *p, *q;
-    string_t *word;
+COLDC_FUNC(explode) {
+    Int      argc, sep_len;
+    Bool     want_blanks;
+    cData * args;
+    cList * exploded;
+    char   * sep;
 
     /* Accept a string to explode and an optional string for the word
      * separator. */
-    if (!func_init_1_to_3(&args, &num_args, STRING, STRING, 0))
+    if (!func_init_1_to_3(&args, &argc, STRING, STRING, 0))
 	return;
 
-    want_blanks = (num_args == 3) ? data_true(&args[2]) : 0;
-    if (num_args >= 2) {
+    want_blanks = (Bool) ((argc == 3) ? data_true(&args[2]) : NO);
+
+    if (argc >= 2) {
 	sep = string_chars(args[1].u.str);
 	sep_len = string_length(args[1].u.str);
     } else {
@@ -91,43 +82,19 @@ void func_explode(void) {
       return;
     }
 
-    s = string_chars(args[0].u.str);
-    len = string_length(args[0].u.str);
-
-    exploded = list_new(0);
-    p = s;
-    for (q = strcstr(p, sep); q; q = strcstr(p, sep)) {
-	if (want_blanks || q > p) {
-	    /* Add the word. */
-	    word = string_from_chars(p, q - p);
-	    d.type = STRING;
-	    d.u.str = word;
-	    exploded = list_add(exploded, &d);
-	    string_discard(word);
-	}
-	p = q + sep_len;
-    }
-
-    if (*p || want_blanks) {
-	/* Add the last word. */
-	word = string_from_chars(p, len - (p - s));
-	d.type = STRING;
-	d.u.str = word;
-	exploded = list_add(exploded, &d);
-	string_discard(word);
-    }
+    exploded = strexplode(args[0].u.str, sep, sep_len, want_blanks);
 
     /* Pop the arguments and push the list onto the stack. */
-    pop(num_args);
+    pop(argc);
     push_list(exploded);
     list_discard(exploded);
 }
 
-void func_strsub(void) {
-    int len, search_len, replace_len;
-    data_t *args;
+COLDC_FUNC(strsub) {
+    Int len, search_len, replace_len;
+    cData *args;
     char *search, *replace, *s, *p, *q;
-    string_t *subbed;
+    cStr *subbed;
 
     /* Accept a base string, a search string, and a replacement string. */
     if (!func_init_3(&args, STRING, STRING, STRING))
@@ -162,11 +129,11 @@ void func_strsub(void) {
 
 /* Pad a string on the left (positive length) or on the right (negative
  * length).  The optional third argument gives the fill character. */
-void func_pad(void) {
-    int num_args, len, padding, filler_len;
-    data_t *args;
+COLDC_FUNC(pad) {
+    Int num_args, len, padding, filler_len;
+    cData *args;
     char *filler;
-    string_t *padded;
+    cStr *padded;
 
     if (!func_init_2_or_3(&args, &num_args, STRING, INTEGER, STRING))
 	return;
@@ -206,11 +173,11 @@ void func_pad(void) {
     pop(num_args - 1);
 }
 
-void func_match_begin(void) {
-    data_t *args;
-    int sep_len, search_len;
+COLDC_FUNC(match_begin) {
+    cData *args;
+    Int sep_len, search_len;
     char *sep, *search, *s, *p;
-    int num_args;
+    Int num_args;
 
     /* Accept a base string, a search string, and an optional separator. */
     if (!func_init_2_or_3(&args, &num_args, STRING, STRING, STRING))
@@ -243,9 +210,9 @@ void func_match_begin(void) {
 }
 
 /* Match against a command template. */
-void func_match_template(void) {
-    data_t *args;
-    list_t *fields;
+COLDC_FUNC(match_template) {
+    cData *args;
+    cList *fields;
     char *ctemplate, *str;
 
     /* Accept a string for the template and a string to match against. */
@@ -267,9 +234,9 @@ void func_match_template(void) {
 }
 
 /* Match against a command template. */
-void func_match_pattern(void) {
-    data_t *args;
-    list_t *fields;
+COLDC_FUNC(match_pattern) {
+    cData *args;
+    cList *fields;
     char *pattern, *str;
 
     /* Accept a string for the pattern and a string to match against. */
@@ -294,10 +261,10 @@ void func_match_pattern(void) {
     list_discard(fields);
 }
 
-void func_match_regexp(void) {
-    data_t * args;
-    list_t * fields;
-    int      argc,
+COLDC_FUNC(match_regexp) {
+    cData * args;
+    cList * fields;
+    Int      argc,
              sensitive;
 
     if (!func_init_2_or_3(&args, &argc, STRING, STRING, 0))
@@ -317,10 +284,10 @@ void func_match_regexp(void) {
     }
 }
 
-void func_regexp(void) {
-    data_t * args;
-    list_t * fields;
-    int      argc,
+COLDC_FUNC(regexp) {
+    cData * args;
+    cList * fields;
+    Int      argc,
              sensitive;
 
     if (!func_init_2_or_3(&args, &argc, STRING, STRING, 0))
@@ -339,14 +306,12 @@ void func_regexp(void) {
     }
 }
 
-void func_strsed(void) {
-    data_t   * args;
-    string_t * out;
-    int        argc,
-               sensitive=0,
-               global=0,
+COLDC_FUNC(strsed) {
+    cData   * args;
+    cStr * out;
+    Int        argc,
+               flags = RF_NONE,
                mult=2,
-               err=0,
                arg_start = arg_starts[--arg_pos];
 
     args = &stack[arg_start];
@@ -362,12 +327,7 @@ void func_strsed(void) {
                     THROW((perm_id, "You can only specify a size multiplier of 1-10, sorry!"))
         case 4: if (args[3].type != STRING)
                     THROW_TYPE_ERROR(STRING, "fourth", 3)
-                if (!parse_strsed_args(string_chars(_STR(ARG4)),
-                                       &global,
-                                       &sensitive))
-                    THROW((type_id,
-                           "Invalid flags \"%D\", must be one of \"gcis\"",
-                           _STR(ARG4)))
+                flags = parse_regfunc_args(string_chars(_STR(ARG4)));
         case 3: if (args[0].type != STRING)
                     THROW_TYPE_ERROR(STRING, "first", 0)
                 else if (args[1].type != STRING)
@@ -380,26 +340,23 @@ void func_strsed(void) {
                 return;
     }
                  /* regexp *//* string *//* replace */
-    out = strsed(_STR(ARG1), _STR(ARG2), _STR(ARG3), global, sensitive, mult, &err);
+    out = strsed(_STR(ARG1), _STR(ARG2), _STR(ARG3), flags, mult);
 
-    if (!out) {
-        if (err)
-            return;
-        pop(argc);
-        push_int(0);
-    } else {
-        pop(argc);
-        push_string(out);
-        string_discard(out);
-    }
+    /* strsed() threw an error if out == NULL */
+    if (!out)
+        return;
+
+    pop(argc);
+    push_string(out);
+    string_discard(out);
 }
 
 /* Encrypt a string. */
-void func_crypt(void) {
-    int num_args;
-    data_t *args;
+COLDC_FUNC(crypt) {
+    Int num_args;
+    cData *args;
     char *s, *encrypted;
-    string_t *str;
+    cStr *str;
 
     /* Accept a string to encrypt and an optional salt. */
     if (!func_init_1_or_2(&args, &num_args, STRING, STRING))
@@ -423,8 +380,8 @@ void func_crypt(void) {
     string_discard(str);
 }
 
-void func_uppercase(void) {
-    data_t * args;
+COLDC_FUNC(uppercase) {
+    cData * args;
 
     /* Accept a string to uppercase. */
     if (!func_init_1(&args, STRING))
@@ -433,8 +390,8 @@ void func_uppercase(void) {
     args[0].u.str = string_uppercase(args[0].u.str);
 }
 
-void func_lowercase(void) {
-    data_t   * args;
+COLDC_FUNC(lowercase) {
+    cData   * args;
 
     /* Accept a string to uppercase. */
     if (!func_init_1(&args, STRING))
@@ -443,9 +400,9 @@ void func_lowercase(void) {
     args[0].u.str = string_lowercase(args[0].u.str);
 }
 
-void func_strcmp(void) {
-    data_t *args;
-    int val;
+COLDC_FUNC(strcmp) {
+    cData *args;
+    Int val;
 
     /* Accept two strings to compare. */
     if (!func_init_2(&args, STRING, STRING))
@@ -457,10 +414,10 @@ void func_strcmp(void) {
     push_int(val);
 }
 
-void func_strgraft(void) {
-    data_t * args;
-    string_t * new, * s1, * s2;
-    int pos;
+COLDC_FUNC(strgraft) {
+    cData * args;
+    cStr * new, * s1, * s2;
+    Int pos;
 
     if (!func_init_3(&args, STRING, INTEGER, STRING))
         return;
@@ -493,10 +450,10 @@ void func_strgraft(void) {
 }
 
 COLDC_FUNC(strfmt) {
-    int        arg_start,
+    Int        arg_start,
                argc;
-    data_t   * args;
-    string_t * fmt,
+    cData   * args;
+    cStr * fmt,
              * out;
 
     /* init ourselves for a variable number of arguments of any type */
@@ -516,7 +473,7 @@ COLDC_FUNC(strfmt) {
     fmt = stack[arg_start].u.str;
     args = &stack[arg_start + 1];
 
-    if ((out = strfmt(fmt, args, argc - 1)) == (string_t *) NULL)
+    if ((out = strfmt(fmt, args, argc - 1)) == (cStr *) NULL)
         return;
 
     pop(argc);
@@ -524,3 +481,21 @@ COLDC_FUNC(strfmt) {
     string_discard(out);
 }
 
+COLDC_FUNC(split) {
+    cData * args;
+    Int      argc, flags = RF_NONE;
+    cList * list;
+
+    if (!func_init_2_or_3(&args, &argc, STRING, STRING, STRING))
+        return;
+
+    if (argc == 3)
+        flags = parse_regfunc_args(string_chars(STR3));
+
+    if (!(list = strsplit(STR1, STR2, flags)))
+        return;
+
+    pop(3);
+    push_list(list);
+    list_discard(list);
+}

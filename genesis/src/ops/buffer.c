@@ -1,29 +1,49 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: ops/buffer.c
-// ---
-// Buffer manipulation functions
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#include "config.h"
 #include "defs.h"
-#include "cdc_types.h"
-#include "operators.h"
-#include "execute.h"
+#include "cdc_pcode.h"
 
 COLDC_FUNC(bufgraft) {
-    if (!func_init_0())
+    cData * args;  
+    register cBuf * new, * b1, * b2;
+    Int pos;
+
+    if (!func_init_3(&args, BUFFER, INTEGER, BUFFER))
         return;
-    push_int(0);
+
+    pos = INT2 - 1;
+    b1  = BUF1;
+    b2  = BUF3;
+
+    if (pos > buffer_len(b1) || pos < 0)
+        THROW((range_id, "Position %D is outside of the range of the string.",
+               &args[1]))
+
+    anticipate_assignment();
+
+    if (pos == 0) {
+        args[0].u.buffer = buffer_append(b2, b1);
+        pop(2);
+    } else if (pos == buffer_len(b1)) {
+        args[0].u.buffer = buffer_append(b1, b2);
+        pop(2);
+    } else {
+        new = buffer_new(b1->len + b2->len);
+        MEMCPY(new->s, b1->s, pos);
+        MEMCPY(new->s + pos, b2->s, b2->len);
+        MEMCPY(new->s + pos + b2->len, b1->s + pos, b1->len - pos + 1);
+        new->len = b1->len + b2->len;
+        pop(3);
+        push_buffer(new);
+        buffer_discard(new);
+    }
 }
 
 COLDC_FUNC(buflen) {
-    data_t * args;
-    int len;
+    cData * args;
+    Int len;
 
     if (!func_init_1(&args, BUFFER))
         return;
@@ -35,8 +55,8 @@ COLDC_FUNC(buflen) {
 }
 
 COLDC_FUNC(buf_replace) {
-    data_t * args;
-    int pos;
+    cData * args;
+    Int pos;
 
     if (!func_init_3(&args, BUFFER, INTEGER, INTEGER))
         return;
@@ -54,8 +74,8 @@ COLDC_FUNC(buf_replace) {
 }
 
 COLDC_FUNC(subbuf) {
-    data_t *args;
-    int start, len, nargs, blen;
+    cData *args;
+    Int start, len, nargs, blen;
 
     if (!func_init_2_or_3(&args, &nargs, BUFFER, INTEGER, INTEGER))
 	return;
@@ -79,13 +99,13 @@ COLDC_FUNC(subbuf) {
 }
 
 COLDC_FUNC(buf_to_str) {
-    data_t *args;
-    string_t * str;
+    cData *args;
+    cStr * str;
 
     if (!func_init_1(&args, BUFFER))
 	return;
 
-    str = buffer_to_string(args[0].u.buffer);
+    str = cBufo_string(args[0].u.buffer);
 
     pop(1);
     push_string(str);
@@ -93,16 +113,16 @@ COLDC_FUNC(buf_to_str) {
 }
 
 COLDC_FUNC(buf_to_strings) {
-    data_t *args;
-    int num_args;
-    list_t *list;
-    buffer_t *sep;
+    cData *args;
+    Int num_args;
+    cList *list;
+    cBuf *sep;
 
     if (!func_init_1_or_2(&args, &num_args, BUFFER, BUFFER))
 	return;
 
     sep = (num_args == 2) ? args[1].u.buffer : NULL;
-    list = buffer_to_strings(args[0].u.buffer, sep);
+    list = cBufo_strings(args[0].u.buffer, sep);
 
     pop(num_args);
     push_list(list);
@@ -110,8 +130,8 @@ COLDC_FUNC(buf_to_strings) {
 }
 
 COLDC_FUNC(str_to_buf) {
-    data_t *args;
-    buffer_t *buf;
+    cData *args;
+    cBuf *buf;
 
     if (!func_init_1(&args, STRING))
 	return;
@@ -123,10 +143,10 @@ COLDC_FUNC(str_to_buf) {
 
 
 COLDC_FUNC(strings_to_buf) {
-    data_t *args, *d;
-    int num_args, i;
-    buffer_t *buf, *sep;
-    list_t *list;
+    cData *args, *d;
+    Int num_args, i;
+    cBuf *buf, *sep;
+    cList *list;
 
     if (!func_init_1_or_2(&args, &num_args, LIST, BUFFER))
 	return;

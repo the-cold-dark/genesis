@@ -6,7 +6,7 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $Id: malloc.c,v 1.5 1998/06/24 06:31:05 braddr Exp $
+ * $Id: malloc.c,v 1.6 1998/06/24 06:45:09 braddr Exp $
  *
  */
 
@@ -43,6 +43,9 @@
 #   define malloc_maxsize		((malloc_pagesize)>>1)
 #endif /* __i386__ && __FreeBSD__ */
 
+#include "defs.h"
+#include "log.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -59,9 +62,6 @@
 #include <pthread.h>
 #include "pthread_private.h"
 #endif
-
-#include "defs.h"
-#include "log.h"
 
 /*
  * This structure describes a page worth of chunks.

@@ -1,13 +1,5 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: web.c
-// ---
-//
-// Some portions of this code are derived from code created by Kurt Olsen.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
 /*
@@ -32,13 +24,8 @@
 
 #define NATIVE_MODULE "$http"
 
-#include "config.h"
-#include "defs.h"
-#include "util.h"
-#include "operators.h"
-#include "cdc_string.h"
 #include "web.h"
-#include "execute.h"
+#include "util.h"
 
 /* valid ascii: 48-57 (0-9) 65-90 (A-Z) 97-122 (a-z) */
 
@@ -63,10 +50,10 @@ char * dec_2_hex[] = {
    "%79", "%7a", "%7b", "%7c", "%7d", "%7e", (char) NULL
 };
 
-#define tohex(c) (dec_2_hex[(int) c])
+#define tohex(c) (dec_2_hex[(Int) c])
 
 
-void init_web(int argc, char ** argv) {
+void init_web(Int argc, char ** argv) {
 }
 
 void uninit_web(void) {
@@ -88,13 +75,14 @@ INTERNAL char tochar(char h, char l) {
      return p;
 }
 
-string_t * decode(string_t * str) {
-    char * s = str->s,
-         * n = str->s,
+cStr * decode(cStr * str) {
+    char * s = string_chars(str),
+         * n = s,
            h,
            l;
+    register Int len = string_length(str);
 
-    for (; *s != (char) NULL; s++, n++) {
+    for (; len > 0; len--, s++, n++) {
         switch (*s) {
             case '+':
                 *n = ' ';
@@ -102,6 +90,7 @@ string_t * decode(string_t * str) {
             case '%':
                 h = *++s;
                 l = *++s;
+                len -= 2;
                 *n = tochar(h, l);
                 break;
             default:
@@ -109,24 +98,24 @@ string_t * decode(string_t * str) {
         }
     }
 
-    *n = NULL;
-    str->len = strlen(str->s);
+    *n = (char) NULL;
+
+    str->len = (n - str->s);
 
     return str;
 }
 
-
-string_t * encode(char * s) {
-    string_t * str = string_new(strlen(s) * 2); /* this gives us a buffer
+cStr * encode(char * s) {
+    cStr * str = string_new(strlen(s) * 2); /* this gives us a buffer
                                                    to expand into */
 
     for (;*s != NULL; s++) {
-        if ((int) *s == 32)
+        if ((Int) *s == 32)
             str = string_addc(str, '+');
-        else if ((int) *s > 32 && (int) *s < 127) {
-            if (((int) *s >= 48 && (int) *s <= 57) ||
-                ((int) *s >= 65 && (int) *s <= 90) ||
-                ((int) *s >= 97 && (int) *s <= 122))
+        else if ((Int) *s > 32 && (Int) *s < 127) {
+            if (((Int) *s >= 48 && (Int) *s <= 57) ||
+                ((Int) *s >= 65 && (Int) *s <= 90) ||
+                ((Int) *s >= 97 && (Int) *s <= 122))
                 str = string_addc(str, *s);
             else
                 str = string_add_chars(str, tohex(*s), 3);
@@ -137,9 +126,8 @@ string_t * encode(char * s) {
 }
 
 NATIVE_METHOD(decode) {
-    string_t * str;
+    cStr * str;
 
-    /* Accept a string to take the length of. */
     INIT_1_ARG(STRING);
 
     str = string_dup(STR1);
@@ -148,11 +136,20 @@ NATIVE_METHOD(decode) {
     anticipate_assignment();
 
     /* decode should prep it, but its easier for us to do it */
+#if 0
+    str = string_prep(str, str->start, str->len);
+
+    str = decode(str);
+
+    RETURN_STRING(str);
+#else
     RETURN_STRING(decode(string_prep(str, str->start, str->len)));
+
+#endif
 }
 
 NATIVE_METHOD(encode) {
-    string_t * str;
+    cStr * str;
 
     INIT_1_ARG(STRING);
 

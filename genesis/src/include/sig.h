@@ -1,16 +1,9 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/sig.h
-// ---
-// Declarations for Coldmud signal-handling routines.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#ifndef SIGNAL_H
-#define SIGNAL_H
+#ifndef cdc_signal_h
+#define cdc_signal_h
 
 void init_sig(void);
 

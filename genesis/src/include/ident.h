@@ -1,20 +1,11 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/ident.h
-// ---
-// Declarations for the global identifier table.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#ifndef IDENT_H
-#define IDENT_H
+#ifndef cdc_ident_h
+#define cdc_ident_h
 
 #define NOT_AN_IDENT -1
-
-#include "cdc_types.h"
 
 /* error id's */
 extern Ident perm_id, type_id, div_id, integer_id, float_id, string_id, objnum_id;

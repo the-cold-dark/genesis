@@ -1,25 +1,15 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: modules/cdc_time.c
-// ---
-// Miscellaneous operations.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
 #define NATIVE_MODULE
 
-#include "config.h"
-#include "defs.h"
+#include "cdc.h"
 
+#include "cdc_db.h"
 #include <time.h>
 #include <sys/time.h>    /* for mtime(), getrusage() */
 #include <sys/resource.h>      /* getrusage()  25-Jan-95 BJG */
-#include "cdc_types.h"
-#include "operators.h"
-#include "execute.h"
 #include "util.h"
 #include "net.h"
 
@@ -63,9 +53,9 @@ NATIVE_METHOD(status) {
 #ifdef HAVE_GETRUSAGE
     struct rusage r;
 #endif
-    list_t *status;
-    data_t *d;
-    int x;
+    cList *status;
+    cData *d;
+    Int x;
 
     INIT_NO_ARGS();
 
@@ -84,34 +74,34 @@ NATIVE_METHOD(status) {
 #else
 
     getrusage(RUSAGE_SELF, &r);
-    d[0].u.val = (int) r.ru_utime.tv_sec; /* user time used (seconds) */
-    d[1].u.val = (int) r.ru_utime.tv_usec;/* user time used (microseconds) */
-    d[2].u.val = (int) r.ru_stime.tv_sec; /* system time used (seconds) */
-    d[3].u.val = (int) r.ru_stime.tv_usec;/* system time used (microseconds) */
-    d[4].u.val = (int) r.ru_maxrss;
-    d[7].u.val = (int) r.ru_idrss;       /* integral unshared data size */
-    d[8].u.val = (int) r.ru_minflt;      /* page reclaims */
-    d[9].u.val = (int) r.ru_majflt;      /* page faults */
-    d[10].u.val = (int) r.ru_nswap;       /* swaps */
-    d[11].u.val = (int) r.ru_inblock;     /* block input operations */
-    d[12].u.val = (int) r.ru_oublock;     /* block output operations */
-    d[13].u.val = (int) r.ru_msgsnd;      /* messages sent */
-    d[14].u.val = (int) r.ru_msgrcv;      /* messages received */
-    d[15].u.val = (int) r.ru_nsignals;    /* signals received */
-    d[16].u.val = (int) r.ru_nvcsw;       /* voluntary context switches */
-    d[17].u.val = (int) r.ru_nivcsw;      /* involuntary context switches */
+    d[0].u.val = (cNum) r.ru_utime.tv_sec; /* user time used (seconds) */
+    d[1].u.val = (cNum) r.ru_utime.tv_usec;/* user time used (microseconds) */
+    d[2].u.val = (cNum) r.ru_stime.tv_sec; /* system time used (seconds) */
+    d[3].u.val = (cNum) r.ru_stime.tv_usec;/* system time used (microseconds) */
+    d[4].u.val = (cNum) r.ru_maxrss;
+    d[7].u.val = (cNum) r.ru_idrss;       /* integral unshared data size */
+    d[8].u.val = (cNum) r.ru_minflt;      /* page reclaims */
+    d[9].u.val = (cNum) r.ru_majflt;      /* page faults */
+    d[10].u.val = (cNum) r.ru_nswap;       /* swaps */
+    d[11].u.val = (cNum) r.ru_inblock;     /* block input operations */
+    d[12].u.val = (cNum) r.ru_oublock;     /* block output operations */
+    d[13].u.val = (cNum) r.ru_msgsnd;      /* messages sent */
+    d[14].u.val = (cNum) r.ru_msgrcv;      /* messages received */
+    d[15].u.val = (cNum) r.ru_nsignals;    /* signals received */
+    d[16].u.val = (cNum) r.ru_nvcsw;       /* voluntary context switches */
+    d[17].u.val = (cNum) r.ru_nivcsw;      /* involuntary context switches */
 
 #endif
 
-    d[18].u.val = (int) atomic;
+    d[18].u.val = (cNum) atomic;
 #undef __LLENGTH__
 
     CLEAN_RETURN_LIST(status);
 }
 
 NATIVE_METHOD(version) {
-    list_t *version;
-    data_t *d;
+    cList *version;
+    cData *d;
 
     INIT_NO_ARGS();
 
@@ -130,7 +120,7 @@ NATIVE_METHOD(version) {
 // -----------------------------------------------------------------
 */
 NATIVE_METHOD(hostname) {
-    string_t * name;
+    cStr * name;
 
     INIT_1_ARG(STRING);
 
@@ -143,7 +133,7 @@ NATIVE_METHOD(hostname) {
 // -----------------------------------------------------------------
 */
 NATIVE_METHOD(ip) {
-    string_t * sip;
+    cStr * sip;
 
     INIT_1_ARG(STRING);
 

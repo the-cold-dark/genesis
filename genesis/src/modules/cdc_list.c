@@ -1,25 +1,13 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: modules/cdc_list.c
-// ---
-// List Manipulation module.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
 #define NATIVE_MODULE "$list"
 
-#include "config.h"
-#include "defs.h"
-#include "operators.h"
-#include "execute.h"
-#include "cdc_types.h"
-#include "memory.h"
+#include "cdc.h"
 
 NATIVE_METHOD(listlen) {
-    int len;
+    Int len;
 
     INIT_1_ARG(LIST);
 
@@ -29,10 +17,10 @@ NATIVE_METHOD(listlen) {
 }
 
 NATIVE_METHOD(sublist) {
-    int      start,
+    Int      start,
              span,
              len;
-    list_t * list;
+    cList * list;
 
     INIT_2_OR_3_ARGS(LIST, INTEGER, INTEGER)
 
@@ -60,10 +48,10 @@ NATIVE_METHOD(sublist) {
 }
 
 NATIVE_METHOD(insert) {
-    int      pos,
+    Int      pos,
              len;
-    list_t * list;
-    data_t   data;
+    cList * list;
+    cData   data;
     DEF_args;
 
     INIT_ARGC(ARG_COUNT, 3, "three");
@@ -92,10 +80,10 @@ NATIVE_METHOD(insert) {
 }
 
 NATIVE_METHOD(replace) {
-    int      pos,
+    Int      pos,
              len;
-    list_t * list;
-    data_t   data;
+    cList * list;
+    cData   data;
     DEF_args;
 
     INIT_ARGC(ARG_COUNT, 3, "three");
@@ -123,9 +111,9 @@ NATIVE_METHOD(replace) {
 }
 
 NATIVE_METHOD(delete) {
-    int      pos,
+    Int      pos,
              len;
-    list_t * list;
+    cList * list;
 
     INIT_2_ARGS(LIST, INTEGER)
 
@@ -147,8 +135,8 @@ NATIVE_METHOD(delete) {
 }
 
 NATIVE_METHOD(setadd) {
-    list_t * list;
-    data_t   data;
+    cList * list;
+    cData   data;
     DEF_args;
 
     INIT_ARGC(ARG_COUNT, 2, "two")
@@ -167,8 +155,8 @@ NATIVE_METHOD(setadd) {
 }
 
 NATIVE_METHOD(setremove) {
-    list_t * list;
-    data_t   data;
+    cList * list;
+    cData   data;
     DEF_args;
     
     INIT_ARGC(ARG_COUNT, 2, "two") 
@@ -187,7 +175,7 @@ NATIVE_METHOD(setremove) {
 }
 
 NATIVE_METHOD(union) {
-    list_t * list, * list2;
+    cList * list, * list2;
 
     INIT_2_ARGS(LIST, LIST)
 
@@ -202,5 +190,28 @@ NATIVE_METHOD(union) {
     list_discard(list2);
 
     RETURN_LIST(list);
+}
+
+NATIVE_METHOD(join) {
+    Int      discard_sep=NO;
+    cStr    * str, * sep;
+
+    INIT_1_OR_2_ARGS(LIST, STRING)
+
+    if (!LIST1->len) {
+        str = string_new(0);
+    } else {
+        if (argc == 1) {
+            sep = string_from_chars(" ", 1);
+            discard_sep=YES;
+        } else {    
+            sep = STR2;
+        }
+        str = list_join(LIST1, sep);
+        if (discard_sep)
+            string_discard(sep);
+    }
+    
+    CLEAN_RETURN_STRING(str);
 }
 

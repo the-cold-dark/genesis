@@ -1,12 +1,5 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/code_prv.h
-// ---
-// Representation of code generation structures.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
 #ifndef CODE_PRV_H
@@ -15,13 +8,11 @@
 typedef union instr Instr;
 typedef struct handler_positions Handler_positions;
 
-#include "codegen.h"
-
 /* An instruction is the code generator's temporary representation of what will
  * become an opcode after the code has been completely compiled and there are
  * no errors. */
 union instr {
-    long val;
+    Long val;
     char *str;
     Id_list *errors;
 };
@@ -42,8 +33,8 @@ struct arguments {
 };
 
 struct stmt {
-    int type;
-    int lineno;
+    Int type;
+    Int lineno;
     union {
 	char *comment;
 	Expr *expr;
@@ -93,10 +84,10 @@ struct stmt {
 };
 
 struct expr {
-    int type;
-    int lineno;
+    Int type;
+    Int lineno;
     union {
-	long num, objnum;
+	Long num, objnum;
         float fnum;
 	char *name, *symbol, *error, *str;
 	Expr *expr;
@@ -140,18 +131,18 @@ struct expr {
 	} index;
 
 	struct {
-	    int opcode;
+	    Int opcode;
 	    Expr *expr;
 	} unary;
 
 	struct {
-	    int opcode;
+	    Int opcode;
 	    Expr *left;
 	    Expr *right;
 	} binary;
 
         struct {
-	    int opcode;
+	    Int opcode;
             char *var;
             Expr *value;
         } doeq;
@@ -176,13 +167,13 @@ struct expr {
 };
 
 struct case_entry {
-    int lineno;
+    Int lineno;
     Expr_list *values;
     Stmt_list *stmts;
 };
 
 struct id_list {
-    int lineno;
+    Int lineno;
     char *ident;
     Id_list *next;
 };

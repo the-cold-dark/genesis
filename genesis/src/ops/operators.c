@@ -1,23 +1,15 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: operators.c
-// ---
-// Operators.
+// Generic operators
 */
 
-#include <string.h>
-#include "config.h"
 #include "defs.h"
+
+#include <string.h>
 #include "operators.h"
 #include "execute.h"
-#include "memory.h"
-#include "cdc_types.h"
 #include "lookup.h"
-#include "log.h"
 #include "util.h"
 
 /*
@@ -42,7 +34,7 @@ void op_pop(void) {
 }
 
 void op_set_local(void) {
-    data_t *var;
+    cData *var;
 
     /* Copy data in top of stack to variable. */
     var = &stack[cur_frame->var_start + cur_frame->opcodes[cur_frame->pc++]];
@@ -51,8 +43,8 @@ void op_set_local(void) {
 }
 
 void op_set_obj_var(void) {
-    long ind, id, result;
-    data_t *val;
+    Long ind, id, result;
+    cData *val;
 
     ind = cur_frame->opcodes[cur_frame->pc++];
     id = object_get_ident(cur_frame->method->object, ind);
@@ -77,8 +69,8 @@ void op_else(void) {
 }
 
 void op_for_range(void) {
-    int var;
-    data_t *range;
+    Int var;
+    cData *range;
 
     var = cur_frame->var_start + cur_frame->opcodes[cur_frame->pc + 1];
     range = &stack[stack_pos - 2];
@@ -105,10 +97,10 @@ void op_for_range(void) {
 }
 
 void op_for_list(void) {
-    data_t *counter;
-    data_t *domain;
-    int var, len;
-    list_t *pair;
+    cData *counter;
+    cData *domain;
+    Int var, len;
+    cList *pair;
 
     counter = &stack[stack_pos - 1];
     domain = &stack[stack_pos - 2];
@@ -176,8 +168,8 @@ void op_case_value(void) {
 }
 
 void op_case_range(void) {
-    data_t *switch_expr, *range;
-    int is_match;
+    cData *switch_expr, *range;
+    Int is_match;
 
     switch_expr = &stack[stack_pos - 3];
     range = &stack[stack_pos - 2];
@@ -227,8 +219,8 @@ void op_last_case_value(void) {
 }
 
 void op_last_case_range(void) {
-    data_t *switch_expr, *range;
-    int is_match;
+    cData *switch_expr, *range;
+    Int is_match;
 
     switch_expr = &stack[stack_pos - 3];
     range = &stack[stack_pos - 2];
@@ -279,7 +271,7 @@ void op_end(void) {
 }
 
 void op_break(void) {
-    int n, op;
+    Int n, op;
 
     /* Get loop instruction from argument. */
     n = cur_frame->opcodes[cur_frame->pc];
@@ -303,7 +295,7 @@ void op_continue(void) {
 }
 
 void op_return(void) {
-    long objnum;
+    Long objnum;
 
     objnum = cur_frame->object->objnum;
     frame_return();
@@ -312,7 +304,7 @@ void op_return(void) {
 }
 
 void op_return_expr(void) {
-    data_t *val;
+    cData *val;
 
     /* Return, and push frame onto caller stack.  Transfers reference count to
      * caller stack.  Assumes (correctly) that there is space on the caller
@@ -334,6 +326,7 @@ void op_catch(void) {
     spec = EMALLOC(Error_action_specifier, 1);
     spec->type = CATCH;
     spec->stack_pos = stack_pos;
+    spec->arg_pos = arg_pos;
     spec->u.ccatch.handler = cur_frame->opcodes[cur_frame->pc++];
     spec->u.ccatch.error_list = cur_frame->opcodes[cur_frame->pc++];
     spec->next = cur_frame->specifiers;
@@ -370,22 +363,22 @@ void op_float(void) {
 }
 
 void op_string(void) {
-    string_t *str;
-    int ind = cur_frame->opcodes[cur_frame->pc++];
+    cStr *str;
+    Int ind = cur_frame->opcodes[cur_frame->pc++];
 
     str = object_get_string(cur_frame->method->object, ind);
     push_string(str);
 }
 
 void op_objnum(void) {
-    int id;
+    Int id;
 
     id = cur_frame->opcodes[cur_frame->pc++];
     push_objnum(id);
 }
 
 void op_symbol(void) {
-    int ind, id;
+    Int ind, id;
 
     ind = cur_frame->opcodes[cur_frame->pc++];
     id = object_get_ident(cur_frame->method->object, ind);
@@ -393,7 +386,7 @@ void op_symbol(void) {
 }
 
 void op_error(void) {
-    int ind, id;
+    Int ind, id;
 
     ind = cur_frame->opcodes[cur_frame->pc++];
     id = object_get_ident(cur_frame->method->object, ind);
@@ -401,8 +394,8 @@ void op_error(void) {
 }
 
 void op_objname(void) {
-    int ind, id;
-    long objnum;
+    Int ind, id;
+    Long objnum;
 
     ind = cur_frame->opcodes[cur_frame->pc++];
     id = object_get_ident(cur_frame->method->object, ind);
@@ -413,7 +406,7 @@ void op_objname(void) {
 }
 
 void op_get_local(void) {
-    int var;
+    Int var;
 
     /* Push value of local variable on stack. */
     var = cur_frame->var_start + cur_frame->opcodes[cur_frame->pc++];
@@ -423,8 +416,8 @@ void op_get_local(void) {
 }
 
 void op_get_obj_var(void) {
-    long ind, id, result;
-    data_t val;
+    Long ind, id, result;
+    cData val;
 
     /* Look for variable, and push it onto the stack if we find it. */
     ind = cur_frame->opcodes[cur_frame->pc++];
@@ -444,7 +437,7 @@ void op_start_args(void) {
     /* Resize argument stack if necessary. */
     if (arg_pos == arg_size) {
 	arg_size = arg_size * 2 + ARG_STACK_MALLOC_DELTA;
-	arg_starts = EREALLOC(arg_starts, int, arg_size);
+	arg_starts = EREALLOC(arg_starts, Int, arg_size);
     }
 
     /* Push stack position onto argument start stack. */
@@ -456,8 +449,8 @@ void op_start_args(void) {
    assigning it always would be wasteful */
 #define setobj(__o) ( d.type = OBJNUM, d.u.objnum = __o )
 
-INTERNAL void handle_method_call(int result, objnum_t objnum, Ident message) {
-    data_t d;
+INTERNAL void handle_method_call(Int result, cObjnum objnum, Ident message) {
+    cData d;
 
     switch (result) {
         case CALL_OK:
@@ -498,7 +491,7 @@ INTERNAL void handle_method_call(int result, objnum_t objnum, Ident message) {
 }
 
 void op_pass(void) {
-    int arg_start;
+    Int arg_start;
 
     arg_start = arg_starts[--arg_pos];
 
@@ -509,10 +502,10 @@ void op_pass(void) {
 }
 
 void op_message(void) {
-    int arg_start, ind;
-    data_t *target;
-    long message, objnum;
-    frob_t *frob;
+    Int arg_start, ind;
+    cData *target;
+    Long message, objnum;
+    cFrob *frob;
 
     ind = cur_frame->opcodes[cur_frame->pc++];
     message = object_get_ident(cur_frame->method->object, ind);
@@ -555,9 +548,9 @@ void op_message(void) {
 }
 
 void op_expr_message(void) {
-    int arg_start;
-    data_t *target, *message_data;
-    long objnum, message;
+    Int arg_start;
+    cData *target, *message_data;
+    Long objnum, message;
 
     arg_start = arg_starts[--arg_pos];
     target = &stack[arg_start - 2];
@@ -612,9 +605,9 @@ void op_expr_message(void) {
 }
 
 void op_list(void) {
-    int start, len;
-    list_t *list;
-    data_t *d;
+    Int start, len;
+    cList *list;
+    cData *d;
 
     start = arg_starts[--arg_pos];
     len = stack_pos - start;
@@ -631,10 +624,10 @@ void op_list(void) {
 }
 
 void op_dict(void) {
-    int start, len;
-    list_t *list;
-    data_t *d;
-    dict_t *dict;
+    Int start, len;
+    cList *list;
+    cData *d;
+    cDict *dict;
 
     start = arg_starts[--arg_pos];
     len = stack_pos - start;
@@ -657,8 +650,8 @@ void op_dict(void) {
 }
 
 void op_buffer(void) {
-    int start, len, i;
-    buffer_t *buf;
+    Int start, len, i;
+    cBuf *buf;
 
     start = arg_starts[--arg_pos];
     len = stack_pos - start;
@@ -671,14 +664,14 @@ void op_buffer(void) {
     }
     buf = buffer_new(len);
     for (i = 0; i < len; i++)
-	buf->s[i] = ((unsigned long) stack[start + i].u.val) % (1 << 8);
+	buf->s[i] = ((uLong) stack[start + i].u.val) % (1 << 8);
     stack_pos = start;
     push_buffer(buf);
     buffer_discard(buf);
 }
 
 void op_frob(void) {
-    data_t *cclass, *rep;
+    cData *cclass, *rep;
 
     cclass = &stack[stack_pos - 2];
     rep = &stack[stack_pos - 1];
@@ -687,9 +680,9 @@ void op_frob(void) {
     } else if (rep->type != LIST && rep->type != DICT) {
 	cthrow(type_id, "Rep (%D) is not a list or dictionary.", rep);
     } else {
-      objnum_t objnum = cclass->u.objnum;
+      cObjnum objnum = cclass->u.objnum;
       cclass->type = FROB;
-      cclass->u.frob = TMALLOC(frob_t, 1);
+      cclass->u.frob = TMALLOC(cFrob, 1);
       cclass->u.frob->cclass = objnum;
       data_dup(&cclass->u.frob->rep, rep);
       pop(1);
@@ -715,9 +708,9 @@ void op_frob(void) {
     }
 
 void op_index(void) {
-    data_t *d, *ind, element;
-    int i;
-    string_t *str;
+    cData *d, *ind, element;
+    Int i;
+    cStr *str;
 
     d = &stack[stack_pos - 2];
     ind = &stack[stack_pos - 1];
@@ -783,9 +776,9 @@ void op_or(void) {
 }
 
 void op_splice(void) {
-    int i;
-    list_t *list;
-    data_t *d;
+    Int i;
+    cList *list;
+    cData *d;
 
     if (stack[stack_pos - 1].type != LIST) {
 	cthrow(type_id, "%D is not a list.", &stack[stack_pos - 1]);
@@ -810,6 +803,7 @@ void op_critical(void) {
     spec = EMALLOC(Error_action_specifier, 1);
     spec->type = CRITICAL;
     spec->stack_pos = stack_pos;
+    spec->arg_pos = arg_pos;
     spec->u.critical.end = cur_frame->opcodes[cur_frame->pc++];
     spec->next = cur_frame->specifiers;
     cur_frame->specifiers = spec;
@@ -850,8 +844,8 @@ void op_propagate_end(void) {
 
 /* Effects: Pops the top value on the stack and pushes its logical inverse. */
 void op_not(void) {
-    data_t *d = &stack[stack_pos - 1];
-    int val = !data_true(d);
+    cData *d = &stack[stack_pos - 1];
+    Int val = !data_true(d);
 
     /* Replace d with the inverse of its truth value. */
     data_discard(d);
@@ -862,7 +856,7 @@ void op_not(void) {
 /* Effects: If the top value on the stack is an integer, pops it and pushes its
  *	    its arithmetic inverse. */
 void op_negate(void) {
-    data_t *d = &stack[stack_pos - 1];
+    cData *d = &stack[stack_pos - 1];
 
     /* Replace d with -d. */
     if (d->type == INTEGER) {
@@ -878,8 +872,8 @@ void op_negate(void) {
  *	    pushes their product. */
 
 void op_multiply(void) {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
 
     switch (d1->type) {
         case FLOAT:
@@ -923,8 +917,8 @@ void op_multiply(void) {
 }
 
 void op_doeq_multiply(void) {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
 
     switch (d1->type) {
         case FLOAT:
@@ -972,8 +966,8 @@ void op_doeq_multiply(void) {
  *	    not zero, pops them, divides the first by the second, and pushes
  *	    the quotient. */
 void op_divide(void) {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
 
     switch (d1->type) {
         case FLOAT:
@@ -1025,8 +1019,8 @@ void op_divide(void) {
 }
 
 void op_doeq_divide(void) {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
 
     switch (d1->type) {
         case FLOAT:
@@ -1081,8 +1075,8 @@ void op_doeq_divide(void) {
  *	    not zero, pops them, divides the first by the second, and pushes
  *	    the remainder. */
 void op_modulo(void) {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
 
     /* Make sure we're multiplying two integers. */
     if (d1->type != INTEGER || d2->type != INTEGER) {
@@ -1100,8 +1094,8 @@ void op_modulo(void) {
  *	    pushes their sum.  If the top two values are strings, pops them,
  *	    concatenates the second onto the first, and pushes the result. */
 void op_add(void) {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
 
     switch (d1->type) {
       case INTEGER:
@@ -1145,7 +1139,7 @@ void op_add(void) {
         break;
 
       case STRING: {
-        string_t * str;
+        cStr * str;
 
         switch (d2->type) {
             case STRING:
@@ -1179,7 +1173,7 @@ void op_add(void) {
         	d1->u.list = list_append(d1->u.list, d2->u.list);
                 break;
             case STRING: {
-                string_t * str = data_to_literal(d1);
+                cStr * str = data_to_literal(d1);
                 data_discard(d1);
                 d1->type = STRING;
                 d1->u.str = str;
@@ -1201,7 +1195,7 @@ void op_add(void) {
       default:
 
         if (d2->type == STRING) {
-            string_t * str;
+            cStr * str;
 
             if (d1->type == SYMBOL) {
                 str = data_tostr(d1);
@@ -1228,8 +1222,8 @@ void op_add(void) {
 }
 
 void op_doeq_add(void) {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
 
     switch (d1->type) {
       case INTEGER:
@@ -1275,7 +1269,7 @@ void op_doeq_add(void) {
         return;
 
       case STRING: {
-        string_t * str;
+        cStr * str;
 
         switch (d2->type) {
             case STRING:
@@ -1309,7 +1303,7 @@ void op_doeq_add(void) {
 
         switch (d2->type) {
             case LIST: {
-                list_t * list = d2->u.list;
+                cList * list = d2->u.list;
 	        anticipate_assignment();
                 d2->u.list = d1->u.list;
         	d1->u.list = list_append(list, d2->u.list);
@@ -1317,7 +1311,7 @@ void op_doeq_add(void) {
                 return;
             }
             case STRING: {
-                string_t * str = data_to_literal(d1);
+                cStr * str = data_to_literal(d1);
                 data_discard(d1);
                 d1->type = STRING;
                 d1->u.str = str;
@@ -1331,7 +1325,7 @@ void op_doeq_add(void) {
       case BUFFER:
 
         if (d2->type == BUFFER) {
-            buffer_t * buf = d2->u.buffer;
+            cBuf * buf = d2->u.buffer;
 
 	    anticipate_assignment();
             d2->u.buffer = d1->u.buffer;
@@ -1343,7 +1337,7 @@ void op_doeq_add(void) {
       default:
 
         if (d2->type == STRING) {
-            string_t * str;
+            cStr * str;
 
             if (d1->type == SYMBOL) {
                 str = data_tostr(d1);
@@ -1369,8 +1363,8 @@ void op_doeq_add(void) {
 
 /* Effects: Adds two lists.  (This is used for [@foo, ...];) */
 void op_splice_add(void) {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
 
     /* No need to check if d2 is a list, due to code generation. */
     if (d1->type != LIST) {
@@ -1387,8 +1381,8 @@ void op_splice_add(void) {
  *	    pushes their difference. */
 
 void op_subtract(void) {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
 
     switch (d1->type) {
         case FLOAT:
@@ -1432,8 +1426,8 @@ void op_subtract(void) {
 }
 
 void op_doeq_subtract(void) {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
 
     switch (d1->type) {
         case FLOAT:
@@ -1479,7 +1473,7 @@ void op_doeq_subtract(void) {
 /* Effects: If the top value on the stack is an integer or float,
  *          it is incremented by one. */
 void op_increment(void) {
-    data_t * v, * sd = &stack[stack_pos - 1];
+    cData * v, * sd = &stack[stack_pos - 1];
 
     if (sd->type != FLOAT && sd->type != INTEGER) {
         cthrow(type_id, "%D is not an integer or float.", sd);
@@ -1497,8 +1491,8 @@ void op_increment(void) {
                 v->u.val = sd->u.val + 1;
             break;
         case SET_OBJ_VAR: {
-            long ind, id, result;
-            data_t d;
+            Long ind, id, result;
+            cData d;
 
             cur_frame->pc++;
             ind = cur_frame->opcodes[cur_frame->pc++];
@@ -1521,7 +1515,7 @@ void op_increment(void) {
 }
 
 void op_p_increment(void) {
-    data_t *d1 = &stack[stack_pos - 1];
+    cData *d1 = &stack[stack_pos - 1];
 
     switch (d1->type) {
         case FLOAT:
@@ -1539,7 +1533,7 @@ void op_p_increment(void) {
 /* Effects: If the top value on the stack is an integer or float,
  *          it is decrimented by one. */
 void op_decrement(void) {
-    data_t * v, * sd = &stack[stack_pos - 1];
+    cData * v, * sd = &stack[stack_pos - 1];
 
     if (sd->type != FLOAT && sd->type != INTEGER) {
         cthrow(type_id, "%D is not an integer or float.", sd);
@@ -1557,8 +1551,8 @@ void op_decrement(void) {
                 v->u.val = sd->u.val - 1;
             break;
         case SET_OBJ_VAR: {
-            long ind, id, result;
-            data_t d;
+            Long ind, id, result;
+            cData d;
 
             cur_frame->pc++;
             ind = cur_frame->opcodes[cur_frame->pc++];
@@ -1581,7 +1575,7 @@ void op_decrement(void) {
 }
 
 void op_p_decrement(void) {
-    data_t *d1 = &stack[stack_pos - 1];
+    cData *d1 = &stack[stack_pos - 1];
 
     switch (d1->type) {
         case FLOAT:
@@ -1600,9 +1594,9 @@ void op_p_decrement(void) {
  *	    equal, 0 if not. */
 void op_equal(void)
 {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
-    int val = (data_cmp(d1, d2) == 0);
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
+    Int val = (data_cmp(d1, d2) == 0);
 
     pop(2);
     push_int(val);
@@ -1612,9 +1606,9 @@ void op_equal(void)
  *	    unequal, 0 if they are equal. */   
 void op_not_equal(void)
 {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
-    int val = (data_cmp(d1, d2) != 0);
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
+    Int val = (data_cmp(d1, d2) != 0);
 
     pop(2);
     push_int(val);
@@ -1627,9 +1621,9 @@ void op_not_equal(void)
  *	    pushes 1 if the first is greater than the second, 0 if not. */
 void op_greater(void)
 {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
-    int val, t = d1->type;
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
+    Int val, t = d1->type;
 
     if (d1->type == FLOAT && d2->type == INTEGER) {
         d2->type = FLOAT;
@@ -1656,9 +1650,9 @@ void op_greater(void)
  *	    not. */
 void op_greater_or_equal(void)
 {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
-    int val, t = d1->type;
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
+    Int val, t = d1->type;
 
     if (d1->type == FLOAT && d2->type == INTEGER) {
         d2->type = FLOAT;
@@ -1684,9 +1678,9 @@ void op_greater_or_equal(void)
  *	    pushes 1 if the first is less than the second, 0 if not. */
 void op_less(void)
 {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
-    int val, t = d1->type;
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
+    Int val, t = d1->type;
 
     if (d1->type == FLOAT && d2->type == INTEGER) {
         d2->type = FLOAT;
@@ -1713,9 +1707,9 @@ void op_less(void)
  *	    not. */
 void op_less_or_equal(void)
 {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
-    int val, t = d1->type;
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
+    Int val, t = d1->type;
 
     if (d1->type == FLOAT && d2->type == INTEGER) {
         d2->type = FLOAT;
@@ -1749,9 +1743,9 @@ void op_less_or_equal(void)
 
 void op_in(void)
 {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
-    int pos = -1;
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
+    Int pos = -1;
 
     switch (d2->type) {
         case LIST:
@@ -1769,14 +1763,14 @@ void op_in(void)
         }
         case BUFFER: {
             uchar * s;
-            buffer_t * buf = d2->u.buffer;
+            cBuf * buf = d2->u.buffer;
 
             if (d1->type == INTEGER) {
                 s = (uchar *) memchr(buf->s, (uchar) d1->u.val, buf->len);
                 if (s)
                     pos = s - buf->s;
             } else if (d2->type == BUFFER) {
-                int    len = d1->u.buffer->len - 1;
+                Int    len = d1->u.buffer->len - 1;
                 uchar  * p = d1->u.buffer->s;
 
                 s = (uchar *) memchr(buf->s, *p, buf->len);
@@ -1812,8 +1806,8 @@ void op_in(void)
 //	    the result.
 */
 void op_bwand(void) {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
 
     /* Make sure we're multiplying two integers. */
     if (d1->type != INTEGER) {
@@ -1836,8 +1830,8 @@ void op_bwand(void) {
 //          the result.
 */
 void op_bwor(void) {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
 
     /* Make sure we're multiplying two integers. */
     if (d1->type != INTEGER) {
@@ -1859,8 +1853,8 @@ void op_bwor(void) {
 //          right-operand times, and pushes the result.
 */
 void op_bwshr(void) {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
 
     /* Make sure we're multiplying two integers. */
     if (d1->type != INTEGER) {
@@ -1882,8 +1876,8 @@ void op_bwshr(void) {
 //          right-operand times, and pushes  the result.
 */
 void op_bwshl(void) {
-    data_t *d1 = &stack[stack_pos - 2];
-    data_t *d2 = &stack[stack_pos - 1];
+    cData *d1 = &stack[stack_pos - 2];
+    cData *d2 = &stack[stack_pos - 1];
 
     /* Make sure we're multiplying two integers. */
     if (d1->type != INTEGER) {

@@ -1,30 +1,13 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: ops/buffer.c
-// ---
-// Buffer manipulation functions
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
 #define NATIVE_MODULE "$buffer"
 
-#include "config.h"
-#include "defs.h"
-#include "cdc_types.h"
-#include "operators.h"
-#include "execute.h"
-
-NATIVE_METHOD(bufgraft) {
-    INIT_NO_ARGS();
-
-    CLEAN_RETURN_INTEGER(0);
-}
+#include "cdc.h"
 
 NATIVE_METHOD(buflen) {
-    int val;
+    Int val;
 
     INIT_1_ARG(BUFFER);
 
@@ -34,8 +17,8 @@ NATIVE_METHOD(buflen) {
 }
 
 NATIVE_METHOD(buf_replace) {
-    buffer_t * buf;
-    int pos, ch;
+    cBuf * buf;
+    Int pos, ch;
 
     INIT_3_ARGS(BUFFER, INTEGER, INTEGER);
 
@@ -56,10 +39,10 @@ NATIVE_METHOD(buf_replace) {
 }
 
 NATIVE_METHOD(subbuf) {
-    int      start,
+    Int      start,
              len,
              blen;
-    buffer_t * buf;
+    cBuf * buf;
 
     INIT_2_OR_3_ARGS(BUFFER, INTEGER, INTEGER);
 
@@ -85,29 +68,29 @@ NATIVE_METHOD(subbuf) {
 }
 
 NATIVE_METHOD(buf_to_str) {
-    buffer_t * buf;
+    cBuf * buf;
 
     INIT_1_ARG(BUFFER);
 
     buf = buffer_dup(BUF1);
 
-    CLEAN_RETURN_STRING(buffer_to_string(buf));
+    CLEAN_RETURN_STRING(cBufo_string(buf));
 }
 
 NATIVE_METHOD(buf_to_strings) {
-    list_t * list;
-    buffer_t * sep;
+    cList * list;
+    cBuf * sep;
 
     INIT_1_OR_2_ARGS(BUFFER, BUFFER);
 
     sep = (argc == 2) ? BUF2 : NULL;
-    list = buffer_to_strings(BUF1, sep);
+    list = cBufo_strings(BUF1, sep);
 
     CLEAN_RETURN_LIST(list);
 }
 
 NATIVE_METHOD(str_to_buf) {
-    buffer_t * buf;
+    cBuf * buf;
 
     INIT_1_ARG(STRING);
 
@@ -119,11 +102,11 @@ NATIVE_METHOD(str_to_buf) {
 
 
 NATIVE_METHOD(strings_to_buf) {
-    data_t * d;
-    int      i;
-    buffer_t * sep,
+    cData * d;
+    Int      i;
+    cBuf * sep,
            * buf;
-    list_t * list;
+    cList * list;
 
     INIT_1_OR_2_ARGS(LIST, BUFFER);
 

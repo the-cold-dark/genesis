@@ -1,53 +1,44 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/cdc_string.h
-// ---
-// Declarations for string handling.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#ifndef _string_h_
-#define _string_h_
+#ifndef cdc_string_h
+#define cdc_string_h
 
-#include <stdio.h>
-#include "cdc_types.h"
 #include "regexp.h"
 
-string_t * string_new(int len);
-string_t * string_empty(int size);
-string_t * string_from_chars(char * s, int len);
-string_t * string_of_char(int c, int len);
-string_t * string_dup(string_t * str);
+cStr * string_new(Int len);
+cStr * string_empty(Int size);
+cStr * string_from_chars(char * s, Int len);
+cStr * string_of_char(Int c, Int len);
+cStr * string_dup(cStr * str);
 #if 0
-int        string_length(string_t * str);
-char     * string_chars(string_t * str);
+Int        string_length(cStr * str);
+char     * string_chars(cStr * str);
 #endif
-void       string_pack(string_t * str, FILE * fp);
-string_t * string_unpack(FILE * fp);
-int        string_packed_size(string_t * str);
-int        string_cmp(string_t * str1, string_t * str2);
-string_t * string_add(string_t * str1, string_t * str2);
-string_t * string_add_chars(string_t * str, char * s, int len);
-string_t * string_addc(string_t * str, int c);
-string_t * string_add_padding(string_t * str,
+void       string_pack(cStr * str, FILE * fp);
+cStr * string_unpack(FILE * fp);
+Int        string_packed_size(cStr * str);
+Int        string_cmp(cStr * str1, cStr * str2);
+cStr * string_add(cStr * str1, cStr * str2);
+cStr * string_add_chars(cStr * str, char * s, Int len);
+cStr * string_addc(cStr * str, Int c);
+cStr * string_add_padding(cStr * str,
                               char     * filler,
-                              int        len,
-                              int        padding);
-string_t * string_truncate(string_t * str, int len);
-string_t * string_substring(string_t * str, int start, int len);
-string_t * string_uppercase(string_t * str);
-string_t * string_lowercase(string_t * str);
-regexp   * string_regexp(string_t * str);
-void       string_discard(string_t * str);
-string_t * string_parse(char * *sptr);
-string_t * string_add_unparsed(string_t * str, char * s, int len);
+                              Int        len,
+                              Int        padding);
+cStr * string_truncate(cStr * str, Int len);
+cStr * string_substring(cStr * str, Int start, Int len);
+cStr * string_uppercase(cStr * str);
+cStr * string_lowercase(cStr * str);
+regexp   * string_regexp(cStr * str);
+void       string_discard(cStr * str);
+cStr * string_parse(char * *sptr);
+cStr * string_add_unparsed(cStr * str, char * s, Int len);
 char     * regerror(char * msg);
-string_t * string_prep(string_t *str, int start, int len); 
+cStr * string_prep(cStr *str, Int start, Int len); 
 
-#define string_length(__s) ((int) __s->len)
+#define string_length(__s) ((Int) __s->len)
 #define string_chars(__s) ((char *) __s->s + __s->start)
 
 #endif

@@ -1,11 +1,6 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: file.c
-// ---
 // File routines.
 //
 // Some of these routines are used in io.c, primarily when updating i/o
@@ -14,22 +9,14 @@
 
 #define _file_
 
-#include "config.h"
 #include "defs.h"
 
 #include <ctype.h>
 #include <string.h>
-#include <errno.h>
-#include <unistd.h>
 #include "file.h"
-#include "execute.h"
-#include "memory.h"
-#include "grammar.h"
-#include "cdc_types.h"
-#include "data.h"
-#include "util.h"
+#include "cdc_pcode.h"
 #include "cache.h"
-#include "log.h"
+#include "util.h"
 
 /*
 // --------------------------------------------------------------------
@@ -68,13 +55,13 @@ void close_files(void) {
 // problems.
 //
 */
-void file_discard(filec_t * file, object_t * obj) {
+void file_discard(filec_t * file, Obj * obj) {
     filec_t  ** fp, * f;
 
     /* clear the object's file variable */
     if (obj == NULL) {
         if (file->objnum != INV_OBJNUM) {
-            object_t * obj = cache_retrieve(file->objnum);
+            Obj * obj = cache_retrieve(file->objnum);
 
             if (obj != NULL) {
                 obj->file = NULL;
@@ -125,7 +112,7 @@ void file_add(filec_t * file) {
     files = file;
 }
 
-filec_t * find_file_controller(object_t * obj) {
+filec_t * find_file_controller(Obj * obj) {
 
     /* obj->file is only for faster lookups,
        and will go away when written to disk. */
@@ -145,25 +132,25 @@ filec_t * find_file_controller(object_t * obj) {
     return obj->file;
 }
 
-int close_file(filec_t * file) {
+Int close_file(filec_t * file) {
     file->f.closed = 1;
     if (fclose(file->fp) == EOF)
-        return errno;
+        return GETERR();
     return 0;
 }
 
-int flush_file(filec_t * file) {
+Int flush_file(filec_t * file) {
     if (file->f.writable) {
         if (fflush(file->fp) == EOF)
-            return errno;
+            return GETERR();
         return F_SUCCESS;
     }
 
     return F_FAILURE;
 }
 
-buffer_t * read_binary_file(filec_t * file, int block) {
-    buffer_t * buf = buffer_new(block);
+cBuf * read_binary_file(filec_t * file, Int block) {
+    cBuf * buf = buffer_new(block);
 
     if (feof(file->fp)) {
         cthrow(eof_id, "End of file.");
@@ -175,8 +162,8 @@ buffer_t * read_binary_file(filec_t * file, int block) {
     return buf;
 }
 
-string_t * read_file(filec_t * file) {
-    string_t * str;
+cStr * read_file(filec_t * file) {
+    cStr * str;
 
     if (feof(file->fp)) {
         cthrow(eof_id, "End of file.");
@@ -190,7 +177,7 @@ string_t * read_file(filec_t * file) {
     return str;
 }
 
-int abort_file(filec_t * file) {
+Int abort_file(filec_t * file) {
     if (file != NULL) {
         close_file(file);
         file_discard(file, NULL);
@@ -200,7 +187,7 @@ int abort_file(filec_t * file) {
     return F_FAILURE;
 }
 
-int stat_file(filec_t * file, struct stat * sbuf) {
+Int stat_file(filec_t * file, struct stat * sbuf) {
     if (file != NULL) {
         stat(file->path->s, sbuf);
         return F_SUCCESS;
@@ -216,9 +203,9 @@ int stat_file(filec_t * file, struct stat * sbuf) {
 // --------------------------------------------------------------------
 */
 
-string_t * build_path(char * fname, struct stat * sbuf, int nodir) {
-    int         len = strlen(fname);
-    string_t  * str = NULL;
+cStr * build_path(char * fname, struct stat * sbuf, Int nodir) {
+    Int         len = strlen(fname);
+    cStr  * str = NULL;
 
     if (len == 0) {
         cthrow(file_id, "No file specified.");
@@ -262,28 +249,28 @@ string_t * build_path(char * fname, struct stat * sbuf, int nodir) {
     return str;
 }
 
-list_t * statbuf_to_list(struct stat * sbuf) {
-    list_t       * list;
-    data_t       * d;
-    register int   x;
+cList * statbuf_to_list(struct stat * sbuf) {
+    cList       * list;
+    cData       * d;
+    register Int   x;
 
     list = list_new(5);
     d = list_empty_spaces(list, 5);
     for (x=0; x < 5; x++)
         d[x].type = INTEGER;
 
-    d[0].u.val = (int) sbuf->st_mode;
-    d[1].u.val = (int) sbuf->st_size;
-    d[2].u.val = (int) sbuf->st_atime;
-    d[3].u.val = (int) sbuf->st_mtime;
-    d[4].u.val = (int) sbuf->st_ctime;
+    d[0].u.val = (Int) sbuf->st_mode;
+    d[1].u.val = (Int) sbuf->st_size;
+    d[2].u.val = (Int) sbuf->st_atime;
+    d[3].u.val = (Int) sbuf->st_mtime;
+    d[4].u.val = (Int) sbuf->st_ctime;
 
     return list;
 }
 
-list_t * open_file(string_t * name, string_t * smode, object_t * obj) {
+cList * open_file(cStr * name, cStr * smode, Obj * obj) {
     char        mode[4];
-    int         rw = 0;
+    Int         rw = 0;
     char      * s = NULL;
     filec_t   * fnew = file_new();
     struct stat sbuf;
@@ -352,9 +339,9 @@ list_t * open_file(string_t * name, string_t * smode, object_t * obj) {
     fnew->fp = fopen(fnew->path->s, mode);
 
     if (fnew->fp == NULL) {
-        if (errno == ENOMEM)
-            panic("open_file(): %s", strerror(errno));
-        cthrow(file_id, "%s (%s)", strerror(errno), name->s);
+        if (GETERR() == ERR_NOMEM)
+            panic("open_file(): %s", strerror(GETERR()));
+        cthrow(file_id, "%s (%s)", strerror(GETERR()), name->s);
         file_discard(fnew, NULL);
         return NULL;
     }
@@ -371,8 +358,8 @@ list_t * open_file(string_t * name, string_t * smode, object_t * obj) {
 // --------------------------------------------------------------------
 // called by fread()
 */
-buffer_t * read_from_file(object_t * obj) {
-    buffer_t * buf;
+cBuf * read_from_file(Obj * obj) {
+    cBuf * buf;
     filec_t * file = find_file_controller(obj);
 
     if (file == NULL)
@@ -394,7 +381,7 @@ buffer_t * read_from_file(object_t * obj) {
 // --------------------------------------------------------------------
 // called by fwrite()
 */
-int write_to_file(object_t * obj, buffer_t * buf) {
+Int write_to_file(Obj * obj, cBuf * buf) {
     filec_t * file = find_file_controller(obj);
 
     if (file == NULL || !file->f.writable)
@@ -412,7 +399,7 @@ int write_to_file(object_t * obj, buffer_t * buf) {
 // --------------------------------------------------------------------
 // called by feof()
 */
-int file_end(object_t * obj) {
+Int file_end(Obj * obj) {
     filec_t * file = find_file_controller(obj);
 
     if (file == NULL)

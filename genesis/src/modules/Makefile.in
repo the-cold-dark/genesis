@@ -87,7 +87,7 @@ cdc_dict.o: ../include/cdc_types.h ../include/regexp.h ../include/ident.h
 cdc_dict.o: ../include/list.h ../include/cdc_string.h ../include/buffer.h
 cdc_dict.o: ../include/dict.h ../include/object.h ../include/io.h
 cdc_dict.o: ../include/file.h 
-cdc_dict.o: ../include/memory.h 
+cdc_dict.o: ../include/cdc_memory.h 
 cdc_list.o: ../include/config.h ../include/defs.h 
 cdc_list.o: ../include/parse.h ../include/operators.h
 cdc_list.o: ../include/execute.h ../include/data.h
@@ -95,7 +95,7 @@ cdc_list.o: ../include/cdc_types.h ../include/regexp.h ../include/ident.h
 cdc_list.o: ../include/list.h ../include/cdc_string.h ../include/buffer.h
 cdc_list.o: ../include/dict.h ../include/object.h ../include/io.h
 cdc_list.o: ../include/file.h 
-cdc_list.o: ../include/memory.h 
+cdc_list.o: ../include/cdc_memory.h 
 cdc_string.o: ../include/config.h ../include/defs.h 
 cdc_string.o: ../include/parse.h 
 cdc_string.o: ../include/operators.h ../include/execute.h
@@ -103,8 +103,8 @@ cdc_string.o: ../include/data.h ../include/cdc_types.h
 cdc_string.o: ../include/regexp.h ../include/ident.h ../include/list.h
 cdc_string.o: ../include/cdc_string.h ../include/buffer.h ../include/dict.h
 cdc_string.o: ../include/object.h ../include/io.h ../include/file.h
-cdc_string.o: ../include/match.h ../include/util.h
-cdc_string.o: ../include/memory.h
+cdc_string.o: ../include/strutil.h ../include/util.h
+cdc_string.o: ../include/cdc_memory.h
 veil.o: ../include/defs.h 
 veil.o: ../include/parse.h
 veil.o: veil.h ../include/native.h ../include/ident.h ../include/cdc_types.h

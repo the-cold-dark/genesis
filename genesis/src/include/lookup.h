@@ -1,35 +1,29 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/lookup.h
-// ---
-// Location database routines.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#ifndef LOOKUP_H
-#define LOOKUP_H
+#ifndef cdc_lookup_h
+#define cdc_lookup_h
 
-#ifndef _did_sys_types_
-#define _did_sys_types_
+/* incase it doesnt do its own checking */
+#ifndef did_sys_types
+#define did_sys_types
 #include <sys/types.h>
 #endif
 
-void lookup_open(char *name, int cnew);
+void lookup_open(char *name, Int cnew);
 void lookup_close(void);
 void lookup_sync(void);
-int lookup_retrieve_objnum(long objnum, off_t *offset, int *size);
-int lookup_store_objnum(long objnum, off_t offset, int size);
-int lookup_remove_objnum(long objnum);
-long lookup_first_objnum(void);
-long lookup_next_objnum(void);
-int lookup_retrieve_name(long name, long *objnum);
-int lookup_store_name(long name, long objnum);
-int lookup_remove_name(long name);
-long lookup_first_name(void);
-long lookup_next_name(void);
+Int lookup_retrieve_objnum(Long objnum, off_t *offset, Int *size);
+Int lookup_store_objnum(Long objnum, off_t offset, Int size);
+Int lookup_remove_objnum(Long objnum);
+Long lookup_first_objnum(void);
+Long lookup_next_objnum(void);
+Int lookup_retrieve_name(Long name, Long *objnum);
+Int lookup_store_name(Long name, Long objnum);
+Int lookup_remove_name(Long name);
+Long lookup_first_name(void);
+Long lookup_next_name(void);
 
 #endif
 

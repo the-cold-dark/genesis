@@ -1,66 +1,59 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/io.h
-// ---
-// Declarations for input/output management.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#ifndef _io_h_
-#define _io_h_
+#ifndef cdc_io_h
+#define cdc_io_h
 
-typedef struct connection_s connection_t;
+typedef struct Conn Conn;
 typedef struct server_s     server_t;
 typedef struct pending_s    pending_t;
 
-#include "cdc_types.h"
+#include "net.h"
 
-struct connection_s {
-    int fd;                   /* File descriptor for input and output. */
-    buffer_t * write_buf;     /* Buffer for network output. */
-    objnum_t    objnum;       /* Object connection is associated with. */
+struct Conn {
+    SOCKET fd;                /* File descriptor for input and output. */
+    cBuf * write_buf;     /* Buffer for network output. */
+    cObjnum    objnum;       /* Object connection is associated with. */
     struct {
         char readable;        /* Connection has new data pending. */
         char writable;        /* Connection can be written to. */
         char dead;            /* Connection is defunct. */
     } flags;
-    connection_t * next;
+    Conn * next;
 };
 
 struct server_s {
-    int server_socket;
+    SOCKET server_socket;
     unsigned short port;
-    objnum_t objnum;
-    int dead;
-    int client_socket;
+    cObjnum objnum;
+    Int dead;
+    SOCKET client_socket;
     char client_addr[20];
     unsigned short client_port;
     server_t *next;
 };
 
 struct pending_s {
-    int fd;
-    long task_id;
-    objnum_t objnum;
-    long error;
-    int finished;
+    SOCKET fd;
+    Long task_id;
+    cObjnum objnum;
+    Long error;
+    Int finished;
     pending_t *next;
 };
 
 void flush_defunct(void);
 void handle_new_and_pending_connections(void);
-void handle_io_event_wait(int seconds);
+void handle_io_event_wait(Int seconds);
 void handle_connection_input(void);
 void handle_connection_output(void);
-connection_t * find_connection(object_t * obj);
-connection_t * tell(object_t * obj, buffer_t *buf);
-int  boot(object_t * obj);
-int  add_server(int port, long objnum);
-int  remove_server(int port);
-long make_connection(char *addr, int port, objnum_t receiver);
+Conn * find_connection(Obj * obj);
+Conn * tell(Obj * obj, cBuf *buf);
+Int  boot(Obj * obj);
+Int  add_server(Int port, Long objnum);
+Int  remove_server(Int port);
+Long make_connection(char *addr, Int port, cObjnum receiver);
 void flush_output(void);
 
 #endif

@@ -1,19 +1,11 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/object.h
-// ---
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#ifndef _native_h_
-#define _native_h_
+#ifndef cdc_native_h
+#define cdc_native_h
 
 #include <stdio.h>
-#include "cdc_types.h"
-#include "io.h"
 #include "file.h"
 #include "execute.h"
 
@@ -23,21 +15,17 @@
 typedef struct native_s {
     char     * bindobj;
     char     * name;
-    int       (*func)(int stack_start, int arg_start);
-#if 0
-    int        args;
-    int        rest;
-#endif
+    Int       (*func)(Int stack_start, Int arg_start);
 } native_t;
 
 typedef struct module_s {
-    void (*init)(int argc, char ** argv);
+    void (*init)(Int argc, char ** argv);
     void (*uninit)();
 } module_t;
 
-int init_modules(int argc, char ** argv);
-int uninit_modules(void);
-int add_native_methods(void);
+Int init_modules(Int argc, char ** argv);
+Int uninit_modules(void);
+Int add_native_methods(void);
 
 #include "macros.h"
 

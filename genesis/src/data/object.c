@@ -1,33 +1,16 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: object.c
-// ---
-// Object manipulation routines.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
 #define _object_
 
-#include "config.h"
 #include "defs.h"
 
 #include <string.h>
-#include "object.h"
-#include "cdc_types.h"
-#include "data.h"
-#include "memory.h"
-#include "opcodes.h"
-#include "cache.h"
-#include "io.h"
-#include "ident.h"
-#include "cdc_string.h"
-#include "decode.h"
+#include "cdc_pcode.h"
+#include "cdc_db.h"
 #include "util.h"
 #include "log.h"
-#include "lookup.h"
 
 /*
 // -----------------------------------------------------------------
@@ -37,9 +20,9 @@
 //
 */
 
-object_t * object_new(long objnum, list_t * parents) {
-    object_t * cnew;
-    int        i;
+Obj * object_new(Long objnum, cList * parents) {
+    Obj * cnew;
+    Int        i;
 
     if (objnum == -1)
 	objnum = db_top++;
@@ -52,7 +35,7 @@ object_t * object_new(long objnum, list_t * parents) {
 
     /* Initialize variables table and hash table. */
     cnew->vars.tab = EMALLOC(Var, VAR_STARTING_SIZE);
-    cnew->vars.hashtab = EMALLOC(int, VAR_STARTING_SIZE);
+    cnew->vars.hashtab = EMALLOC(Int, VAR_STARTING_SIZE);
     cnew->vars.blanks = 0;
     cnew->vars.size = VAR_STARTING_SIZE;
     for (i = 0; i < VAR_STARTING_SIZE; i++) {
@@ -64,7 +47,7 @@ object_t * object_new(long objnum, list_t * parents) {
 
     /* Initialize methods table and hash table. */
     cnew->methods.tab = EMALLOC(struct mptr, METHOD_STARTING_SIZE);
-    cnew->methods.hashtab = EMALLOC(int, METHOD_STARTING_SIZE);
+    cnew->methods.hashtab = EMALLOC(Int, METHOD_STARTING_SIZE);
     cnew->methods.blanks = 0;
     cnew->methods.size = METHOD_STARTING_SIZE;
     for (i = 0; i < METHOD_STARTING_SIZE; i++) {
@@ -107,8 +90,8 @@ object_t * object_new(long objnum, list_t * parents) {
 // swapping too difficult.
 //
 */
-void object_free(object_t *object) {
-    int i;
+void object_free(Obj *object) {
+    Int i;
 
     /* Free parents and children list. */
     list_discard(object->parents);
@@ -157,10 +140,10 @@ void object_free(object_t *object) {
 //
 */
 
-void object_destroy(object_t *object) {
-    list_t *children;
-    data_t *d, cthis;
-    object_t *kid;
+void object_destroy(Obj *object) {
+    cList *children;
+    cData *d, cthis;
+    Obj *kid;
 
     /* Invalidate the method cache. */
     cur_stamp++;
@@ -204,12 +187,12 @@ void object_destroy(object_t *object) {
 /*
 // -----------------------------------------------------------------
 */
-INTERNAL void object_update_parents(object_t * object,
-				    list_t *(*list_op)(list_t *, data_t *))
+INTERNAL void object_update_parents(Obj * object,
+				    cList *(*list_op)(cList *, cData *))
 {
-    object_t * p;
-    list_t     * parents;
-    data_t     * d,
+    Obj * p;
+    cList     * parents;
+    cData     * d,
                cthis;
 
     /* Make a data structure for the children list. */
@@ -235,11 +218,11 @@ INTERNAL void object_update_parents(object_t * object,
 // it is handle this inneficient way because the other
 // method used was loosing objects, the reason is unknown.
 */
-list_t * object_descendants(long objnum) {
-    int        i = 1;
-    list_t   * list;
-    object_t * obj;
-    data_t   * d;
+cList * object_descendants(Long objnum) {
+    Int        i = 1;
+    cList   * list;
+    Obj * obj;
+    cData   * d;
 
     cur_search++;
     obj = cache_retrieve(objnum);
@@ -267,8 +250,8 @@ list_t * object_descendants(long objnum) {
 /*
 // -----------------------------------------------------------------
 */
-list_t * object_ancestors(long objnum) {
-    list_t * ancestors;
+cList * object_ancestors(Long objnum) {
+    cList * ancestors;
 
     /* Get the ancestor list, backwards. */
     ancestors = list_new(0);
@@ -279,10 +262,10 @@ list_t * object_ancestors(long objnum) {
 }
 
 /* Modifies ancestors.  Returns a backwards list. */
-INTERNAL list_t *object_ancestors_aux(long objnum, list_t *ancestors) {
-    object_t *object;
-    list_t *parents;
-    data_t *d, cthis;
+INTERNAL cList *object_ancestors_aux(Long objnum, cList *ancestors) {
+    Obj *object;
+    cList *parents;
+    cData *d, cthis;
 
     object = cache_retrieve(objnum);
     if (object->search == cur_search) {
@@ -304,7 +287,7 @@ INTERNAL list_t *object_ancestors_aux(long objnum, list_t *ancestors) {
     return list_add(ancestors, &cthis);
 }
 
-int object_has_ancestor(long objnum, long ancestor)
+Int object_has_ancestor(Long objnum, Long ancestor)
 {
     if (objnum == ancestor)
 	return 1;
@@ -312,11 +295,11 @@ int object_has_ancestor(long objnum, long ancestor)
     return object_has_ancestor_aux(objnum, ancestor);
 }
 
-static int object_has_ancestor_aux(long objnum, long ancestor)
+static Int object_has_ancestor_aux(Long objnum, Long ancestor)
 {
-    object_t *object;
-    list_t *parents;
-    data_t *d;
+    Obj *object;
+    cList *parents;
+    cData *d;
 
     object = cache_retrieve(objnum);
 
@@ -349,10 +332,10 @@ static int object_has_ancestor_aux(long objnum, long ancestor)
     return 0;
 }
 
-int object_change_parents(object_t *object, list_t *parents)
+Int object_change_parents(Obj *object, cList *parents)
 {
-    objnum_t parent;
-    data_t *d;
+    cObjnum parent;
+    cData *d;
 
     /* Make sure that all parents are valid objects, and that they don't create
      * any cycles.  If something is wrong, return the index of the parent that
@@ -384,9 +367,9 @@ int object_change_parents(object_t *object, list_t *parents)
     return -1;
 }
 
-int object_add_string(object_t *object, string_t *str)
+Int object_add_string(Obj *object, cStr *str)
 {
-    int i, blank = -1;
+    Int i, blank = -1;
 
     /* Get the object dirty now, so we can return with a clean conscience. */
     object->dirty = 1;
@@ -423,7 +406,7 @@ int object_add_string(object_t *object, string_t *str)
     return i;
 }
 
-void object_discard_string(object_t *object, int ind)
+void object_discard_string(Obj *object, Int ind)
 {
     object->strings[ind].refs--;
     if (!object->strings[ind].refs) {
@@ -434,15 +417,15 @@ void object_discard_string(object_t *object, int ind)
     object->dirty = 1;
 }
 
-string_t *object_get_string(object_t *object, int ind)
+cStr *object_get_string(Obj *object, Int ind)
 {
     return object->strings[ind].str;
 }
 
-int object_add_ident(object_t *object, char *ident)
+Int object_add_ident(Obj *object, char *ident)
 {
-    int i, blank = -1;
-    long id;
+    Int i, blank = -1;
+    Long id;
 
     /* Mark the object dirty, since we will modify it in all cases. */
     object->dirty = 1;
@@ -486,7 +469,7 @@ int object_add_ident(object_t *object, char *ident)
     return i;
 }
 
-void object_discard_ident(object_t *object, int ind)
+void object_discard_ident(Obj *object, Int ind)
 {
     object->idents[ind].refs--;
     if (!object->idents[ind].refs) {
@@ -500,20 +483,20 @@ void object_discard_ident(object_t *object, int ind)
     object->dirty = 1;
 }
 
-long object_get_ident(object_t *object, int ind) {
+Long object_get_ident(Obj *object, Int ind) {
     return object->idents[ind].id;
 }
 
-long object_add_var(object_t *object, long name) {
+Long object_add_var(Obj *object, Long name) {
     if (object_find_var(object, object->objnum, name))
 	return varexists_id;
     object_create_var(object, object->objnum, name);
     return NOT_AN_IDENT;
 }
 
-long object_del_var(object_t *object, long name)
+Long object_del_var(Obj *object, Long name)
 {
-    int *indp;
+    Int *indp;
     Var *var;
 
     /* This is the index-thread equivalent of double pointers in a standard
@@ -542,7 +525,7 @@ long object_del_var(object_t *object, long name)
     return varnf_id;
 }
 
-long object_assign_var(object_t *object, object_t *cclass, long name, data_t *val) {
+Long object_assign_var(Obj *object, Obj *cclass, Long name, cData *val) {
     Var *var;
 
     /* Make sure variable exists in cclass (method object). */
@@ -562,9 +545,9 @@ long object_assign_var(object_t *object, object_t *cclass, long name, data_t *va
     return NOT_AN_IDENT;
 }
 
-long object_delete_var(object_t *object, object_t *cclass, long name) {
+Long object_delete_var(Obj *object, Obj *cclass, Long name) {
     Var *var;
-    int *indp;
+    Int *indp;
 
     /* find the parameter definition in cclass (method object). */
     if (!object_find_var(cclass, cclass->objnum, name))
@@ -596,7 +579,7 @@ long object_delete_var(object_t *object, object_t *cclass, long name) {
     return varnf_id;
 }
 
-long object_retrieve_var(object_t *object, object_t *cclass, long name, data_t *ret)
+Long object_retrieve_var(Obj *object, Obj *cclass, Long name, cData *ret)
 {
     Var *var;
 
@@ -617,7 +600,7 @@ long object_retrieve_var(object_t *object, object_t *cclass, long name, data_t *
 
 /* Only the text dump reader calls this function; it assigns or creates a
  * variable as needed, and always succeeds. */
-void object_put_var(object_t *object, long cclass, long name, data_t *val)
+void object_put_var(Obj *object, Long cclass, Long name, cData *val)
 {
     Var *var;
 
@@ -629,20 +612,20 @@ void object_put_var(object_t *object, long cclass, long name, data_t *val)
 }
 
 /* Add a variable to an object. */
-static Var *object_create_var(object_t *object, long cclass, long name)
+static Var *object_create_var(Obj *object, Long cclass, Long name)
 {
     Var *cnew;
-    int ind;
+    Int ind;
 
     /* If the variable table is full, expand it and its corresponding hash
      * table. */
     if (object->vars.blanks == -1) {
-	int new_size, i;
+	Int new_size, i;
 
 	/* Compute new size and resize tables. */
 	new_size = object->vars.size * 2 + MALLOC_DELTA + 1;
 	object->vars.tab = EREALLOC(object->vars.tab, Var, new_size);
-	object->vars.hashtab = EREALLOC(object->vars.hashtab, int, new_size);
+	object->vars.hashtab = EREALLOC(object->vars.hashtab, Int, new_size);
 
 	/* Refill hash table. */
 	for (i = 0; i < new_size; i++)
@@ -685,9 +668,9 @@ static Var *object_create_var(object_t *object, long cclass, long name)
 }
 
 /* Look for a variable on an object. */
-static Var *object_find_var(object_t *object, long cclass, long name)
+static Var *object_find_var(Obj *object, Long cclass, Long name)
 {
-    int ind;
+    Int ind;
     Var *var;
 
     /* Traverse hash table thread, stopping if we get a match on the name. */
@@ -712,12 +695,12 @@ static Var *object_find_var(object_t *object, long cclass, long name)
    fail when a parent's method sent a message to the child as
    a result of a message to teh child hanbdled by the parent
    (whew.) added 5/7/1995 Jeffrey P. kesselman */
-method_t *object_find_method(long objnum, long name) {
+Method *object_find_method(Long objnum, Long name) {
     Search_params params;
-    object_t *object;
-    method_t *method, *local_method;
-    list_t *parents;
-    data_t *d;
+    Obj *object;
+    Method *method, *local_method;
+    cList *parents;
+    cData *d;
 
     /* Look for cached value. */
     method = method_cache_check(objnum, name, -1);
@@ -769,14 +752,14 @@ method_t *object_find_method(long objnum, long name) {
 
 /* Reference-counting kludge: on return, the method's object field has an extra
  * reference count, in order to keep it in cache.  objnum must be valid. */
-method_t *object_find_next_method(long objnum, long name, long after)
+Method *object_find_next_method(Long objnum, Long name, Long after)
 {
     Search_params params;
-    object_t *object;
-    method_t *method;
-    list_t *parents;
-    data_t *d;
-    long parent;
+    Obj *object;
+    Method *method;
+    cList *parents;
+    cData *d;
+    Long parent;
 
     /* Check cache. */
     method = method_cache_check(objnum, name, after);
@@ -817,12 +800,12 @@ method_t *object_find_next_method(long objnum, long name, long after)
  * searching parents right-to-left.  We will take the last method we find,
  * possibly stopping at a method if we were looking for the next method after
  * a given method. */
-static void search_object(long objnum, Search_params *params)
+static void search_object(Long objnum, Search_params *params)
 {
-    object_t *object;
-    method_t *method;
-    list_t *parents;
-    data_t *d;
+    Obj *object;
+    Method *method;
+    cList *parents;
+    cData *d;
 
     object = cache_retrieve(objnum);
 
@@ -875,9 +858,9 @@ static void search_object(long objnum, Search_params *params)
 }
 
 /* Look for a method on an object. */
-static method_t *object_find_method_local(object_t *object, long name)
+static Method *object_find_method_local(Obj *object, Long name)
 {
-    int ind, method;
+    Int ind, method;
 
     /* Traverse hash table thread, stopping if we get a match on the name. */
     ind = hash(ident_name(name)) % object->methods.size;
@@ -890,10 +873,10 @@ static method_t *object_find_method_local(object_t *object, long name)
     return NULL;
 }
 
-static method_t *method_cache_check(long objnum, long name, long after)
+static Method *method_cache_check(Long objnum, Long name, Long after)
 {
-    object_t *object;
-    int i;
+    Obj *object;
+    Int i;
 
     i = (10 + objnum + (name << 4) + after) % METHOD_CACHE_SIZE;
     if (method_cache[i].stamp == cur_stamp && method_cache[i].objnum == objnum &&
@@ -906,9 +889,9 @@ static method_t *method_cache_check(long objnum, long name, long after)
     }
 }
 
-static void method_cache_set(long objnum, long name, long after, long loc)
+static void method_cache_set(Long objnum, Long name, Long after, Long loc)
 {
-    int i;
+    Int i;
 
     i = (10 + objnum + (name << 4) + after) % METHOD_CACHE_SIZE;
     if (method_cache[i].stamp != 0) {
@@ -925,8 +908,8 @@ static void method_cache_set(long objnum, long name, long after, long loc)
 /* this makes me rather wary, hope it works ... */
 /* we will know native methods have changed names because the name will
    be different from the one in the initialization table */
-int object_rename_method(object_t * object, long oname, long nname) {
-    method_t * method;
+Int object_rename_method(Obj * object, Long oname, Long nname) {
+    Method * method;
 
     method = object_find_method_local(object, oname);
     if (!method)
@@ -940,8 +923,8 @@ int object_rename_method(object_t * object, long oname, long nname) {
     return 1;
 }
 
-void object_add_method(object_t *object, long name, method_t *method) {
-    int ind, hval;
+void object_add_method(Obj *object, Long name, Method *method) {
+    Int ind, hval;
 
     /* Invalidate the method cache. */
     cur_stamp++;
@@ -954,13 +937,13 @@ void object_add_method(object_t *object, long name, method_t *method) {
     /* If the method table is full, expand it and its corresponding hash
      * table. */
     if (object->methods.blanks == -1) {
-	int new_size, i, ind;
+	Int new_size, i, ind;
 
 	/* Compute new size and resize tables. */
 	new_size = object->methods.size * 2 + MALLOC_DELTA + 1;
 	object->methods.tab = EREALLOC(object->methods.tab, struct mptr,
 				       new_size);
-	object->methods.hashtab = EREALLOC(object->methods.hashtab, int,
+	object->methods.hashtab = EREALLOC(object->methods.hashtab, Int,
 					   new_size);
 
 	/* Refill hash table. */
@@ -999,8 +982,8 @@ void object_add_method(object_t *object, long name, method_t *method) {
     object->dirty = 1;
 }
 
-int object_del_method(object_t *object, long name) {
-    int *indp, ind;
+Int object_del_method(Obj *object, Long name) {
+    Int *indp, ind;
 
     /* Invalidate the method cache. */
     cur_stamp++;
@@ -1040,23 +1023,23 @@ int object_del_method(object_t *object, long name) {
     return 0;
 }
 
-list_t *object_list_method(object_t *object, long name, int indent, int parens)
+cList *object_list_method(Obj *object, Long name, Int indent, Int parens)
 {
-    method_t *method;
+    Method *method;
 
     method = object_find_method_local(object, name);
     return (method) ? decompile(method, object, indent, parens) : NULL;
 }
 
-int object_get_method_flags(object_t * object, long name) {
-    method_t * method;
+Int object_get_method_flags(Obj * object, Long name) {
+    Method * method;
 
     method = object_find_method_local(object, name);
     return (method) ? method->m_flags : -1;
 }
 
-int object_set_method_flags(object_t * object, long name, int flags) {
-    method_t * method;
+Int object_set_method_flags(Obj * object, Long name, Int flags) {
+    Method * method;
 
     method = object_find_method_local(object, name);
     if (method == NULL)
@@ -1066,15 +1049,15 @@ int object_set_method_flags(object_t * object, long name, int flags) {
     return flags;
 }
 
-int object_get_method_access(object_t * object, long name) {
-    method_t * method;
+Int object_get_method_access(Obj * object, Long name) {
+    Method * method;
 
     method = object_find_method_local(object, name);
     return (method) ? method->m_access : -1;
 }
 
-int object_set_method_access(object_t * object, long name, int access) {
-    method_t * method;
+Int object_set_method_access(Obj * object, Long name, Int access) {
+    Method * method;
 
     method = object_find_method_local(object, name);
     if (method == NULL)
@@ -1084,8 +1067,8 @@ int object_set_method_access(object_t * object, long name, int access) {
     return access;
 }
 
-method_t * method_new(void) {
-    method_t * method = EMALLOC(method_t, 1);
+Method * method_new(void) {
+    Method * method = EMALLOC(Method, 1);
 
     method->m_flags  = MF_NONE;
     method->m_access = MS_PUBLIC;
@@ -1096,9 +1079,9 @@ method_t * method_new(void) {
 }
 
 /* Destroys a method.  Does not delete references from the method's code. */
-void method_free(method_t *method)
+void method_free(Method *method)
 {
-    int i, j;
+    Int i, j;
     Error_list *elist;
 
     if (method->name != -1)
@@ -1123,9 +1106,9 @@ void method_free(method_t *method)
 }
 
 /* Delete references to object variables and strings in a method's code. */
-void method_delete_code_refs(method_t *method)
+void method_delete_code_refs(Method *method)
 {
-    int i, j, arg_type, opcode;
+    Int i, j, arg_type, opcode;
     Op_info *info;
 
     for (i = 0; i < method->num_args; i++)
@@ -1164,12 +1147,12 @@ void method_delete_code_refs(method_t *method)
 
 }
 
-method_t * method_dup(method_t * method) {
+Method * method_dup(Method * method) {
     method->refs++;
     return method;
 }
 
-void method_discard(method_t *method) {
+void method_discard(Method *method) {
     method->refs--;
     if (!method->refs) {
 	method_delete_code_refs(method);
@@ -1177,8 +1160,8 @@ void method_discard(method_t *method) {
     }
 }
 
-int object_del_objname(object_t * object) {
-    int result = 0;
+Int object_del_objname(Obj * object) {
+    Int result = 0;
 
     /* if it has one, remove it */
     if (object->objname != -1) {
@@ -1191,8 +1174,8 @@ int object_del_objname(object_t * object) {
     return result;
 }
 
-int object_set_objname(object_t * obj, Ident name) {
-    long num;
+Int object_set_objname(Obj * obj, Ident name) {
+    Long num;
 
     /* does it already exist? */
     if (lookup_retrieve_name(name, &num))

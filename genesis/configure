@@ -432,15 +432,37 @@ if test $ac_cv_prog_gcc = yes; then
       rm -f conftest*
     fi
     echo "$ac_t""$ac_cv_prog_gcc_g" 1>&6
-    if test $ac_cv_prog_gcc_g = yes; then
-      CFLAGS="-Wall -g -O"
-    else
-      CFLAGS="-Wall -O"
-    fi
   fi
 else
   GCC=
   test "${CFLAGS+set}" = set || CFLAGS="-g"
+fi
+
+# Extract the first word of "makedepend", so it can be a program name with args.
+set dummy makedepend; ac_word=$2
+echo $ac_n "  Checking for $ac_word""... $ac_c" 1>&6
+if eval "test \"`echo '$''{'ac_cv_prog_MAKEDEPEND'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  if test -n "$MAKEDEPEND"; then
+  ac_cv_prog_MAKEDEPEND="$MAKEDEPEND" # Let the user override the test.
+else
+  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${IFS}:"
+  for ac_dir in $PATH; do
+    test -z "$ac_dir" && ac_dir=.
+    if test -f $ac_dir/$ac_word; then
+      ac_cv_prog_MAKEDEPEND="makedepend"
+      break
+    fi
+  done
+  IFS="$ac_save_ifs"
+fi
+fi
+MAKEDEPEND="$ac_cv_prog_MAKEDEPEND"
+if test -n "$MAKEDEPEND"; then
+  echo "$ac_t""$MAKEDEPEND" 1>&6
+else
+  echo "$ac_t""no" 1>&6
 fi
 
 # Extract the first word of "perl", so it can be a program name with args.
@@ -528,212 +550,172 @@ fi
 
 test -n "$YACC" && break
 done
+
 test -n "$YACC" || YACC="yacc"
 
-# echo $ac_n "  Checking size of char""... $ac_c" 1>&6
-# if eval "test \"`echo '$''{'ac_cv_sizeof_char'+set}'`\" = set"; then
-#   echo $ac_n "(cached) $ac_c" 1>&6
-# else
-#   if test "$cross_compiling" = yes; then
-#     { echo "configure: error: can not run test program while cross compiling" 1>&2; exit 1; }
-# else
-# cat > conftest.$ac_ext <<EOF
-# #line 682 "configure"
-# #include "confdefs.h"
-# #include <stdio.h>
-# main()
-# {
-#   FILE *f=fopen("conftestval", "w");
-#   if (!f) exit(1);
-#   fprintf(f, "%d\n", sizeof(char));
-#   exit(0);
-# }
-# EOF
-# eval $ac_link
-# if test -s conftest && (./conftest; exit) 2>/dev/null; then
-#   ac_cv_sizeof_char=`cat conftestval`
-# else
-#   ac_cv_sizeof_char=0
-# fi
-# fi
-# rm -fr conftest*
-# fi
-# echo "$ac_t""$ac_cv_sizeof_char" 1>&6
-# cat >> confdefs.h <<EOF
-# #define SIZEOF_CHAR $ac_cv_sizeof_char
-# EOF
-# 
-# 
-# echo $ac_n "  Checking size of short""... $ac_c" 1>&6
-# if eval "test \"`echo '$''{'ac_cv_sizeof_short'+set}'`\" = set"; then
-#   echo $ac_n "(cached) $ac_c" 1>&6
-# else
-#   if test "$cross_compiling" = yes; then
-#     { echo "configure: error: can not run test program while cross compiling" 1>&2; exit 1; }
-# else
-# cat > conftest.$ac_ext <<EOF
-# #line 716 "configure"
-# #include "confdefs.h"
-# #include <stdio.h>
-# main()
-# {
-#   FILE *f=fopen("conftestval", "w");
-#   if (!f) exit(1);
-#   fprintf(f, "%d\n", sizeof(short));
-#   exit(0);
-# }
-# EOF
-# eval $ac_link
-# if test -s conftest && (./conftest; exit) 2>/dev/null; then
-#   ac_cv_sizeof_short=`cat conftestval`
-# else
-#   ac_cv_sizeof_short=0
-# fi
-# fi
-# rm -fr conftest*
-# fi
-# echo "$ac_t""$ac_cv_sizeof_short" 1>&6
-# cat >> confdefs.h <<EOF
-# #define SIZEOF_SHORT $ac_cv_sizeof_short
-# EOF
-# 
-# 
-# echo $ac_n "  Checking size of int""... $ac_c" 1>&6
-# if eval "test \"`echo '$''{'ac_cv_sizeof_int'+set}'`\" = set"; then
-#   echo $ac_n "(cached) $ac_c" 1>&6
-# else
-#   if test "$cross_compiling" = yes; then
-#     { echo "configure: error: can not run test program while cross compiling" 1>&2; exit 1; }
-# else
-# cat > conftest.$ac_ext <<EOF
-# #line 716 "configure"
-# #include "confdefs.h"
-# #include <stdio.h>
-# main()
-# {
-#   FILE *f=fopen("conftestval", "w");
-#   if (!f) exit(1);
-#   fprintf(f, "%d\n", sizeof(int));
-#   exit(0);
-# }
-# EOF
-# eval $ac_link
-# if test -s conftest && (./conftest; exit) 2>/dev/null; then
-#   ac_cv_sizeof_int=`cat conftestval`
-# else
-#   ac_cv_sizeof_int=0
-# fi
-# fi
-# rm -fr conftest*
-# fi
-# echo "$ac_t""$ac_cv_sizeof_int" 1>&6
-# cat >> confdefs.h <<EOF
-# #define SIZEOF_INT $ac_cv_sizeof_int
-# EOF
-# 
-# 
-# echo $ac_n "  Checking size of long""... $ac_c" 1>&6
-# if eval "test \"`echo '$''{'ac_cv_sizeof_long'+set}'`\" = set"; then
-#   echo $ac_n "(cached) $ac_c" 1>&6
-# else
-#   if test "$cross_compiling" = yes; then
-#     { echo "configure: error: can not run test program while cross compiling" 1>&2; exit 1; }
-# else
-# cat > conftest.$ac_ext <<EOF
-# #line 750 "configure"
-# #include "confdefs.h"
-# #include <stdio.h>
-# main()
-# {
-#   FILE *f=fopen("conftestval", "w");
-#   if (!f) exit(1);
-#   fprintf(f, "%d\n", sizeof(long));
-#   exit(0);
-# }
-# EOF
-# eval $ac_link
-# if test -s conftest && (./conftest; exit) 2>/dev/null; then
-#   ac_cv_sizeof_long=`cat conftestval`
-# else
-#   ac_cv_sizeof_long=0
-# fi
-# fi
-# rm -fr conftest*
-# fi
-# echo "$ac_t""$ac_cv_sizeof_long" 1>&6
-# cat >> confdefs.h <<EOF
-# #define SIZEOF_LONG $ac_cv_sizeof_long
-# EOF
-# 
-# 
-# echo $ac_n "  Checking size of float""... $ac_c" 1>&6
-# if eval "test \"`echo '$''{'ac_cv_sizeof_float'+set}'`\" = set"; then
-#   echo $ac_n "(cached) $ac_c" 1>&6
-# else
-#   if test "$cross_compiling" = yes; then
-#     { echo "configure: error: can not run test program while cross compiling" 1>&2; exit 1; }
-# else
-# cat > conftest.$ac_ext <<EOF
-# #line 784 "configure"
-# #include "confdefs.h"
-# #include <stdio.h>
-# main()
-# {
-#   FILE *f=fopen("conftestval", "w");
-#   if (!f) exit(1);
-#   fprintf(f, "%d\n", sizeof(float));
-#   exit(0);
-# }
-# EOF
-# eval $ac_link
-# if test -s conftest && (./conftest; exit) 2>/dev/null; then
-#   ac_cv_sizeof_float=`cat conftestval`
-# else
-#   ac_cv_sizeof_float=0
-# fi
-# fi
-# rm -fr conftest*
-# fi
-# echo "$ac_t""$ac_cv_sizeof_float" 1>&6
-# cat >> confdefs.h <<EOF
-# #define SIZEOF_FLOAT $ac_cv_sizeof_float
-# EOF
-# 
-# 
-# echo $ac_n "  Checking size of double""... $ac_c" 1>&6
-# if eval "test \"`echo '$''{'ac_cv_sizeof_double'+set}'`\" = set"; then
-#   echo $ac_n "(cached) $ac_c" 1>&6
-# else
-#   if test "$cross_compiling" = yes; then
-#     { echo "configure: error: can not run test program while cross compiling" 1>&2; exit 1; }
-# else
-# cat > conftest.$ac_ext <<EOF
-# #line 818 "configure"
-# #include "confdefs.h"
-# #include <stdio.h>
-# main()
-# {
-#   FILE *f=fopen("conftestval", "w");
-#   if (!f) exit(1);
-#   fprintf(f, "%d\n", sizeof(double));
-#   exit(0);
-# }
-# EOF
-# eval $ac_link
-# if test -s conftest && (./conftest; exit) 2>/dev/null; then
-#   ac_cv_sizeof_double=`cat conftestval`
-# else
-#   ac_cv_sizeof_double=0
-# fi
-# fi
-# rm -fr conftest*
-# fi
-# echo "$ac_t""$ac_cv_sizeof_double" 1>&6
-# cat >> confdefs.h <<EOF
-# #define SIZEOF_DOUBLE $ac_cv_sizeof_double
-# EOF
-# 
+##
+## Courtesy of Perl5, Copyright 1991-1994, Larry Wall
+##
+ac_link='${CC-cc} -o conftest $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&5 2>&5'
 
+echo $ac_n "  Checking byteorder... $ac_c" 1>&6
+if eval "test \"`echo '$''{'ac_cv_byteorder'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+
+cat > conftest.$ac_ext << END
+#include <stdio.h>
+main()
+{
+        int i;
+        FILE *f=fopen("conftestval", "w");
+
+        union {
+                unsigned long l;
+                char c[sizeof(long)];
+        } u;
+
+        if (!f) exit(1);
+
+        if (sizeof(long) > 4)
+                u.l = (0x08070605L << 32) | 0x04030201L;
+        else
+                u.l = 0x04030201L;
+        for (i = 0; i < sizeof(long); i++)
+                fputc(u.c[i] + '0', f);
+  /*              fprintf(f, "%c", u.c[i]+'0'); */
+        fputc('\n', f);
+        exit(0);
+}
+END
+eval $ac_link
+
+
+if test -s conftest && (./conftest; exit) 2>/dev/null; then
+    order=`cat conftestval`
+    x_prompt=n
+    case "$order" in
+        [1-4][1-4][1-4][1-4]|12345678|87654321)
+            ac_cv_byteorder=$order
+            ;;
+        ????|????????)
+            x_prompt=y
+            ;;
+        *)
+            x_prompt=y
+            order=``
+            ;;  
+    esac
+    if test $x_prompt = "y"; then
+        echo
+        echo $ac_n "  What is the order of bytes in a long? [$order] $ac_c"
+        read ans
+        if [ -x $ans ]; then
+            if [ -n $order ]; then
+                ac_cv_byteorder=$order
+            else
+                echo "  Assuming big-endian (4321)" 1>&6
+                ac_cv_byteorder=4321
+            fi
+        else
+            ac_cv_byteorder=$ans
+        fi
+        echo $ac_n "  => $ac_c"
+    fi
+
+else
+    echo $ac_n "** Error in compilation, assuming big-endian.. $ac_c" 1>&6
+    ac_cv_byteorder=4321
+fi
+fi
+
+echo "$ac_t$ac_cv_byteorder" 1>&6
+
+cat >> confdefs.h <<END
+#define BYTEORDER $ac_cv_byteorder
+END
+
+rm -fr conftest*
+
+echo $ac_n "  Checking for type sizes... $ac_c" 1>&6
+
+## just check for 'char', if its set everything else should be as well
+if eval "test \"`echo '$''{'ac_cv_sizeof_char'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+
+cat > conftest.$ac_ext <<END
+#include "confdefs.h"
+#include <stdio.h>
+main()
+{
+  FILE *f=fopen("conftestval", "w");
+  if (!f) exit(1);
+  fprintf(f, "char %d\nshort %d\nint %d\nlong %d\nll %d\nfloat %d\ndouble %d\nld %d\n",
+         sizeof(char),
+         sizeof(short int),
+         sizeof(int),
+         sizeof(long int),
+         sizeof(long long),
+         sizeof(float),
+         sizeof(double),
+         sizeof(long double));
+  exit(0);
+}
+END
+
+eval $ac_link
+
+if test -s conftest && (./conftest; exit) 2>/dev/null; then
+    sizes=`cat conftestval`
+else
+    sizes=<<END
+char 1
+short 2
+int 4
+long 4
+ll 8
+float 4
+double 8
+ld 12
+END
+fi
+
+ac_cv_sizeof_char=`cat conftestval | fgrep char | sed -e 's:char ::'`
+ac_cv_sizeof_short=`cat conftestval | fgrep short | sed -e 's:short ::'`
+ac_cv_sizeof_int=`cat conftestval | fgrep int | sed -e 's:int ::'`
+ac_cv_sizeof_long=`cat conftestval | fgrep long | sed -e 's:long ::'`
+ac_cv_sizeof_llong=`cat conftestval | fgrep ll | sed -e 's:ll ::'`
+ac_cv_sizeof_float=`cat conftestval | fgrep float | sed -e 's:float ::'`
+ac_cv_sizeof_double=`cat conftestval | fgrep double | sed -e 's:double ::'`
+ac_cv_sizeof_ldouble=`cat conftestval | fgrep ld | sed -e 's:ld ::'`
+
+rm -fr conftest*
+
+fi
+
+cat <<END 1>&6
+
+    char.. $ac_t$ac_cv_sizeof_char
+    short int.. $ac_t$ac_cv_sizeof_short
+    int.. $ac_t$ac_cv_sizeof_int
+    long int.. $ac_t$ac_cv_sizeof_long
+    long long.. $ac_t$ac_cv_sizeof_llong
+    float.. $ac_t$ac_cv_sizeof_float
+    double.. $ac_t$ac_cv_sizeof_double
+    long double.. $ac_t$ac_cv_sizeof_ldouble
+END
+
+cat >> confdefs.h <<END
+#define SIZEOF_CHAR $ac_cv_sizeof_char
+#define SIZEOF_SHORT $ac_cv_sizeof_short
+#define SIZEOF_INT $ac_cv_sizeof_int
+#define SIZEOF_LONG $ac_cv_sizeof_long
+#define SIZEOF_LLONG $ac_cv_sizeof_llong
+#define SIZEOF_FLOAT $ac_cv_sizeof_float
+#define SIZEOF_DOUBLE $ac_cv_sizeof_double
+#define SIZEOF_LDOUBLE $ac_cv_sizeof_ldouble
+END
 
 # Checks for header files.
 echo $ac_n "  Checking how to run the C preprocessor""... $ac_c" 1>&6
@@ -2141,10 +2123,59 @@ EOF
 
 fi
 
-modules=" cdc veil web"
+cat <<END
+
+#
+# Specify compiler optimization flags (if you are unsure which to use,
+# simply select the default).
+#
+END
+
+
+if eval "test \"`echo '$''{'ac_cv_prog_gcc'+set}'`\" = set"; then
+    opt_default='-O3'
+    cat <<END
+# You are running gcc, suggested:
+#
+#  -O3                       -- full optimization, good for basic compilation
+END
+    if test $ac_cv_prog_gcc_g = yes; then
+        cat <<END
+#  -pedantic -Wall -O -ggdb  -- use this for driver development
+END
+    else
+        cat <<END
+#  -pedantic -Wall -ggdb     -- use this for driver development
+END
+    fi
+else
+    opt_default='-O'
+fi
+
+echo
+echo $ac_n "Optimization flags: [$opt_default] $ac_c"
+read input
+
+if test X"$input" = X""; then
+    input=$opt_default
+fi
+
+## the echo rips out extra spaces
+CFLAGS=`echo $CFLAGS $input`
+
+## to add modules in the config file:
+##
+##  1) add to 'modules' variable
+##  2) add an 'ac_cv_mod_xxx' variable
+##  3) add to BOTH locations where modules are printed
+##
+modules=" cdc veil web sql"
+
 ac_cv_mod_veil=${ac_cv_mod_veil='yes'}
 ac_cv_mod_cdc=${ac_cv_mod_cdc='yes'}
 ac_cv_mod_web=${ac_cv_mod_web='yes'}
+ac_cv_mod_sql=${ac_cv_mod_sql='no'}
+
 moddir="src/modules"
 modfile="src/modules/moddef.h"
 inc="module.inc"
@@ -2168,6 +2199,7 @@ if test -z "$PERL"; then
 #           ColdC Module (cdc):  $ac_cv_mod_cdc
 #           Veil Module (veil):  $ac_cv_mod_veil
 #           Web Module (web):    $ac_cv_mod_web
+#           SQL Module (sql):    $ac_cv_mod_sql
 
 !!
 !! configure was unable to find 'perl' in your PATH.  The programs which
@@ -2198,6 +2230,7 @@ else
 #           ColdC Module (cdc):  $ac_cv_mod_cdc
 #           Veil Module (veil):  $ac_cv_mod_veil
 #           Web Module (web):    $ac_cv_mod_web
+#           SQL Module (sql):    $ac_cv_mod_sql
 
 END
         echo $ac_n "Reconfigure Modules? [$query] $ac_c" 1>&6
@@ -2232,28 +2265,27 @@ END
         fi
     done
 
-    if test "$mod_config" != "$modules" -o ! -f $modfile; then
-        echo "- Generating module files for $mod_config"
+#    if test "$mod_config" != "$modules" -o ! -f $modfile; then
+        echo "- Generating module files for" $mod_config
         owd=`pwd`
         cd $moddir
         objs=`./modbuild $mod_config`;
-        MOD_O=`echo $objs`
         cd $owd
-    else
-        objs=""
-        for i in $modules; do
-          if test -r "src/modules/$i.mod"; then
-            objs="$objs `grep '^objs ' src/modules/$i.mod|sed -e 's/^objs //'`"
-          fi
-        done
-
-        MOD_O=""
-        for i in $objs; do
-          MOD_O="$MOD_O modules/$i"
-        done
-    fi
+        MOD_O=`echo $objs`
+#    else
+#        objs=""
+#        for i in $modules; do
+#          if test -r "src/modules/$i.mod"; then
+#            objs="$objs `grep '^objs ' src/modules/$i.mod|sed -e 's/^objs //'`"
+#          fi
+#        done
+#
+#        MOD_O=""
+#        for i in $objs; do
+#          MOD_O="$MOD_O modules/$i"
+#        done
+#    fi
 fi
-
 
 ######################################################################
 trap '' 1 2 15
@@ -2540,18 +2572,25 @@ cat >> $CONFIG_STATUS <<\EOF
   mv conftest.h $ac_file
 fi; done
 
-cat <<END
+EOF
 
-# Note: If you are having problems with file dependancies, try 'make depend'.
-#
-# If you find this configure script needs to check for something which it
-# is not, email brandon@cold.org with the details.
+if test x"$MAKEDEPEND" != x""; then
+    echo 'echo "- Building dependancies"' >> $CONFIG_STATUS
+    echo 'cd src; make depend' >> $CONFIG_STATUS
+fi
 
-END
-
+cat >> $CONFIG_STATUS <<\EOF
 exit 0
 EOF
 
 chmod +x $CONFIG_STATUS
 rm -fr confdefs* $ac_clean_files
 test "$no_create" = yes || ${CONFIG_SHELL-/bin/sh} $CONFIG_STATUS
+
+cat <<END
+
+# If you find this configure script needs to check for something which it
+# is not, email brandon@cold.org with the details.
+
+END
+

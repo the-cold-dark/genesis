@@ -1,22 +1,13 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: string.c
-// ---
-// string.c: String-handling routines.
 // This code is not ANSI-conformant, because it allocates memory at the end
 // of String structure and references it with a one-element array.
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include <string.h>
-#include "cdc_string.h"
-#include "memory.h"
 #include "dbpack.h"
 #include "util.h"
 
@@ -28,15 +19,15 @@
  * this into account.  We start with a string MALLOC_DELTA bytes less than
  * a power of two.  When we enlarge a string, we double it and add MALLOC_DELTA
  * so that we're still MALLOC_DELTA less than a power of two.  When we
- * allocate, we add in sizeof(string_t), leaving us 32 bytes short of a power of
+ * allocate, we add in sizeof(cStr), leaving us 32 bytes short of a power of
  * two, as desired. */
 
-#define MALLOC_DELTA	(sizeof(string_t) + 32)
+#define MALLOC_DELTA	(sizeof(cStr) + 32)
 #define STARTING_SIZE	(128 - MALLOC_DELTA)
 
-string_t *string_new(int size_needed) {
-    string_t *cnew;
-    int size;
+cStr *string_new(Int size_needed) {
+    cStr *cnew;
+    Int size;
 
 #if DISABLED
     size = STARTING_SIZE;
@@ -45,7 +36,7 @@ string_t *string_new(int size_needed) {
 #else
     size = size_needed + 1;
 #endif
-    cnew = (string_t *) emalloc(sizeof(string_t) + sizeof(char) * size);
+    cnew = (cStr *) emalloc(sizeof(cStr) + sizeof(char) * size);
     cnew->start = 0;
     cnew->len = 0;
     cnew->size = size;
@@ -55,8 +46,8 @@ string_t *string_new(int size_needed) {
     return cnew;
 }
 
-string_t *string_from_chars(char *s, int len) {
-    string_t *cnew = string_new(len);
+cStr *string_from_chars(char *s, Int len) {
+    cStr *cnew = string_new(len);
 
     MEMCPY(cnew->s, s, len);
     cnew->s[len] = 0;
@@ -64,8 +55,8 @@ string_t *string_from_chars(char *s, int len) {
     return cnew;
 }
 
-string_t *string_of_char(int c, int len) {
-    string_t *cnew = string_new(len);
+cStr *string_of_char(Int c, Int len) {
+    cStr *cnew = string_new(len);
 
     memset(cnew->s, c, len);
     cnew->s[len] = 0;
@@ -73,12 +64,12 @@ string_t *string_of_char(int c, int len) {
     return cnew;
 }
 
-string_t *string_dup(string_t *str) {
+cStr *string_dup(cStr *str) {
     str->refs++;
     return str;
 }
 
-void string_pack(string_t *str, FILE *fp) {
+void string_pack(cStr *str, FILE *fp) {
     if (str) {
 	write_long(str->len, fp);
 	fwrite(str->s + str->start, sizeof(char), str->len, fp);
@@ -87,10 +78,10 @@ void string_pack(string_t *str, FILE *fp) {
     }
 }
 
-string_t *string_unpack(FILE *fp) {
-    string_t *str;
-    int len;
-    int result;
+cStr *string_unpack(FILE *fp) {
+    cStr *str;
+    Int len;
+    Int result;
 
     len = read_long(fp);
     if (len == -1) {
@@ -104,24 +95,24 @@ string_t *string_unpack(FILE *fp) {
     return str;
 }
 
-int string_packed_size(string_t *str) {
+Int string_packed_size(cStr *str) {
     if (str)
 	return size_long(str->len) + str->len * sizeof(char);
     else
 	return size_long(-1);
 }
 
-int string_cmp(string_t *str1, string_t *str2) {
+Int string_cmp(cStr *str1, cStr *str2) {
     return strcmp(str1->s + str1->start, str2->s + str2->start);
 }
 
-string_t *string_fread(string_t *str, int len, FILE *fp) {
+cStr *string_fread(cStr *str, Int len, FILE *fp) {
     str = string_prep(str, str->start, str->len + len);
     fread(str->s + str->start + str->len - len, sizeof(char), len, fp);
     return str;
 }
 
-string_t *string_add(string_t *str1, string_t *str2) {
+cStr *string_add(cStr *str1, cStr *str2) {
     str1 = string_prep(str1, str1->start, str1->len + str2->len);
     MEMCPY(str1->s + str1->start + str1->len - str2->len,
 	   str2->s + str2->start, str2->len);
@@ -130,7 +121,7 @@ string_t *string_add(string_t *str1, string_t *str2) {
 }
 
 /* calling this with len == 0 can be a problem */
-string_t *string_add_chars(string_t *str, char *s, int len) {
+cStr *string_add_chars(cStr *str, char *s, Int len) {
     str = string_prep(str, str->start, str->len + len);
     MEMCPY(str->s + str->start + str->len - len, s, len);
     /*str->s[str->len + str->start + len] = 0;*/
@@ -138,14 +129,14 @@ string_t *string_add_chars(string_t *str, char *s, int len) {
     return str;
 }
 
-string_t *string_addc(string_t *str, int c) {
+cStr *string_addc(cStr *str, Int c) {
     str = string_prep(str, str->start, str->len + 1);
     str->s[str->start + str->len - 1] = c;
     str->s[str->start + str->len] = 0;
     return str;
 }
 
-string_t *string_add_padding(string_t *str, char *filler, int len, int padding) {
+cStr *string_add_padding(cStr *str, char *filler, Int len, Int padding) {
     str = string_prep(str, str->start, str->len + padding);
 
     if (len == 1) {
@@ -162,19 +153,19 @@ string_t *string_add_padding(string_t *str, char *filler, int len, int padding) 
     return str;
 }
 
-string_t *string_truncate(string_t *str, int len) {
+cStr *string_truncate(cStr *str, Int len) {
     str = string_prep(str, str->start, len);
     str->s[str->start + len] = 0;
     return str;
 }
 
-string_t *string_substring(string_t *str, int start, int len) {
+cStr *string_substring(cStr *str, Int start, Int len) {
     str = string_prep(str, str->start + start, len);
     str->s[str->start + str->len] = 0;
     return str;
 }
 
-string_t * string_uppercase(string_t *str) {
+cStr * string_uppercase(cStr *str) {
     char *s, *start, *end;
  
     str = string_prep(str, str->start, str->len);
@@ -185,7 +176,7 @@ string_t * string_uppercase(string_t *str) {
     return str;
 }
 
-string_t * string_lowercase(string_t *str) {
+cStr * string_lowercase(cStr *str) {
     char *s, *start, *end;
 
     str = string_prep(str, str->start, str->len);
@@ -198,13 +189,13 @@ string_t * string_lowercase(string_t *str) {
 
 /* Compile str's regexp, if it's not already compiled.  If there is an error,
  * it will be placed in regexp_error, and the returned regexp will be NULL. */
-regexp *string_regexp(string_t *str) {
+regexp *string_regexp(cStr *str) {
     if (!str->reg)
 	str->reg = regcomp(str->s + str->start);
     return str->reg;
 }
 
-void string_discard(string_t *str) {
+void string_discard(cStr *str) {
     if (!--str->refs) {
 	if (str->reg)
 	    efree(str->reg);
@@ -212,8 +203,8 @@ void string_discard(string_t *str) {
     }
 }
 
-string_t *string_parse(char **sptr) {
-    string_t *str;
+cStr *string_parse(char **sptr) {
+    cStr *str;
     char *s = *sptr, *p;
 
     str = string_new(0);
@@ -232,8 +223,8 @@ string_t *string_parse(char **sptr) {
     return str;
 }
 
-string_t *string_add_unparsed(string_t *str, char *s, int len) {
-    int i;
+cStr *string_add_unparsed(cStr *str, char *s, Int len) {
+    Int i;
 
     str = string_addc(str, '"');
 
@@ -282,9 +273,9 @@ char *regerror(char *msg) {
 // In general, modifying start and len is the responsibility of this routine;
 // modifying the contents is the responsibility of the calling routine.
 */
-string_t * string_prep(string_t *str, int start, int len) {
-    string_t *cnew;
-    int need_to_move, need_to_resize, size;
+cStr * string_prep(cStr *str, Int start, Int len) {
+    cStr *cnew;
+    Int need_to_move, need_to_resize, size;
 
     /* Figure out if we need to resize the string or move its contents.  Moving
      * contents takes precedence. */
@@ -310,7 +301,7 @@ string_t * string_prep(string_t *str, int start, int len) {
 #else
         size = len + 1;
 #endif
-        str = (string_t *)erealloc(str, sizeof(string_t)+(size * sizeof(char)));
+        str = (cStr *)erealloc(str, sizeof(cStr)+(size * sizeof(char)));
         str->size = size;
         return str;
     } else {

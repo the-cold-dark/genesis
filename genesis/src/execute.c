@@ -1,52 +1,40 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: execute.c
-// ---
 // Routines for executing ColdC tasks.
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include <stdarg.h>
 #include <ctype.h>
-#include "execute.h"
-#include "memory.h"
-#include "cdc_types.h"
-#include "io.h"
+#include "cdc_pcode.h"
 #include "cache.h"
 #include "util.h"
-#include "opcodes.h"
-#include "log.h"
-#include "decode.h"
 #include "moddef.h"
 
 #define STACK_STARTING_SIZE                (256 - STACK_MALLOC_DELTA)
 #define ARG_STACK_STARTING_SIZE                (32 - ARG_STACK_MALLOC_DELTA)
 
-extern int running;
+extern Bool running;
 
 INTERNAL void execute(void);
 INTERNAL void out_of_ticks_error(void);
-INTERNAL void start_error(Ident error, string_t *explanation, data_t *arg,
-                        list_t * location);
-INTERNAL list_t * traceback_add(list_t * traceback, Ident error);
-INTERNAL void fill_in_method_info(data_t *d);
+INTERNAL void start_error(Ident error, cStr *explanation, cData *arg,
+                        cList * location);
+INTERNAL cList * traceback_add(cList * traceback, Ident error);
+INTERNAL void fill_in_method_info(cData *d);
 
 INTERNAL Frame *frame_store = NULL;
-INTERNAL int frame_depth;
-string_t *numargs_str;
+INTERNAL Int frame_depth;
+cStr *numargs_str;
 
 Frame *cur_frame, *suspend_frame;
-data_t * stack;
-int stack_pos, stack_size;
-int *arg_starts, arg_pos, arg_size;
-long task_id;
-long tick;
+cData * stack;
+Int stack_pos, stack_size;
+Int *arg_starts, arg_pos, arg_size;
+Long task_id;
+Long tick;
 
 #define DEBUG_VM 0
 #define DEBUG_EXECUTE 0
@@ -99,6 +87,33 @@ void store_stack(void) {
 
     holder->next = stack_store;
     stack_store = holder;
+}
+
+/*
+// ---------------------------------------------------------------
+*/
+VMState * vm_fork_current(void) {
+    VMState * vm;
+
+    if (vmstore) {
+        vm = vmstore;
+        vmstore = vmstore->next;
+    } else {
+        vm = EMALLOC(VMState, 1);
+    }
+
+    vm->preempted = 1;
+    vm->cur_frame = cur_frame;
+    vm->stack = stack;
+    vm->stack_pos = stack_pos;
+    vm->stack_size = stack_size;
+    vm->arg_starts = arg_starts;
+    vm->arg_pos = arg_pos;
+    vm->arg_size = arg_size;
+    vm->task_id = task_id;
+    vm->next = NULL;
+
+    return vm;
 }
 
 /*
@@ -162,7 +177,7 @@ void task_delete(VMState *list, VMState *elem) {
 /*
 // ---------------------------------------------------------------
 */
-VMState *task_lookup(long tid) {
+VMState *task_lookup(Long tid) {
     VMState * vm;
 
     for (vm = suspended;  vm;  vm = vm->next)
@@ -181,7 +196,7 @@ VMState *task_lookup(long tid) {
 // we assume tid is a non-preempted task
 //
 */
-void task_resume(long tid, data_t *ret) {
+void task_resume(Long tid, cData *ret) {
     VMState * vm = task_lookup(tid),
             * old_vm;
 
@@ -218,7 +233,7 @@ void task_suspend(void) {
 /*
 // ---------------------------------------------------------------
 */
-void task_cancel(long tid) {
+void task_cancel(Long tid) {
     VMState * vm = task_lookup(tid),
             * old_vm;
 
@@ -281,9 +296,9 @@ void run_paused_tasks(void) {
 //
 */
 
-list_t * task_list(void) {
-    list_t  * r;
-    data_t    elem;
+cList * task_list(void) {
+    cList  * r;
+    cData    elem;
     VMState * vm;
   
     r = list_new(0);
@@ -306,9 +321,9 @@ list_t * task_list(void) {
 /*
 // ---------------------------------------------------------------
 */
-list_t * task_stack(void) {
-    list_t * r;
-    data_t   d,
+cList * task_stack(void) {
+    cList * r;
+    cData   d,
            * list;
     Frame  * f;
   
@@ -328,7 +343,7 @@ list_t * task_stack(void) {
         list[3].type = INTEGER;
         list[3].u.val = line_number(f->method, f->pc - 1);
         list[4].type = INTEGER;
-        list[4].u.val = (long) f->pc;
+        list[4].u.val = (Long) f->pc;
 
         r = list_add(r, &d);
         list_discard(d.u.list);
@@ -360,10 +375,10 @@ void init_execute(void) {
 #endif
 
     } else {
-        stack = EMALLOC(data_t, STACK_STARTING_SIZE);
+        stack = EMALLOC(cData, STACK_STARTING_SIZE);
         stack_size = STACK_STARTING_SIZE;
     
-        arg_starts = EMALLOC(int, ARG_STACK_STARTING_SIZE);
+        arg_starts = EMALLOC(Int, ARG_STACK_STARTING_SIZE);
         arg_size = ARG_STACK_STARTING_SIZE;
 
 #if DEBUG_VM
@@ -378,10 +393,16 @@ void init_execute(void) {
 /*
 // ---------------------------------------------------------------
 //
-// Execute a task by sending a message to an object.
+// Execute a task, if we are currently executing, preempt the current
+// task, we get priority.
 //
+// No we dont, lets just rewrite the interpreter, this sucks.
 */
-void task(objnum_t objnum, long name, int num_args, ...) {
+void task(cObjnum objnum, Long name, Int num_args, ...) {
+#if DISABLED
+    Bool    curtask = NO;
+    Int     tid = 0;
+#endif
     va_list arg;
 
     /* Don't execute if a shutdown() has occured. */
@@ -390,17 +411,24 @@ void task(objnum_t objnum, long name, int num_args, ...) {
         return;
     }
 
+#if DISABLED
+    if (cur_frame) {
+        tid = task_id;
+        task_suspend();
+        curtask = YES;
+    }
+#endif
+
     /* Set global variables. */
     frame_depth = 0;
 
     va_start(arg, num_args);
     check_stack(num_args);
     while (num_args--)
-        data_dup(&stack[stack_pos++], va_arg(arg, data_t *));
+        data_dup(&stack[stack_pos++], va_arg(arg, cData *));
     va_end(arg);
 
-    /* Call the method.  If this is succesful,
-       start the task by calling execute(). */
+    /* start the task */
     ident_dup(name);
     if (call_method(objnum, name, 0, 0) == CALL_OK) {
         execute();
@@ -411,6 +439,18 @@ void task(objnum_t objnum, long name, int num_args, ...) {
         pop(stack_pos);
     }
     ident_discard(name);
+
+#if DISABLED
+    /* if we preempted a current task, start it back up, execute should
+       already be running, so when we exit 'task()' it will kick in */
+    if (curtask) {
+        VMState * vm = task_lookup(tid);
+
+        restore_vm(vm);
+        REMOVE_TASK(suspended, vm);
+        ADD_TASK(vmstore, vm);
+    }
+#endif
 }
 
 /*
@@ -419,7 +459,7 @@ void task(objnum_t objnum, long name, int num_args, ...) {
 // Execute a task by evaluating a method on an object.
 //
 */
-void task_method(object_t *obj, method_t *method) {
+void task_method(Obj *obj, Method *method) {
     frame_start(obj, method, NOT_AN_IDENT, NOT_AN_IDENT, NOT_AN_IDENT, 0, 0);
 
     execute();
@@ -431,20 +471,20 @@ void task_method(object_t *obj, method_t *method) {
 /*
 // ---------------------------------------------------------------
 */
-int frame_start(object_t * obj,
-                method_t * method,
-                objnum_t    sender,
-                objnum_t    caller,
-                objnum_t    user,
-                int      stack_start,
-                int      arg_start)
+Int frame_start(Obj * obj,
+                Method * method,
+                cObjnum    sender,
+                cObjnum    caller,
+                cObjnum    user,
+                Int      stack_start,
+                Int      arg_start)
 {
     Frame      * frame;
-    int          i,
+    Int          i,
                  num_args,
                  num_rest_args;
-    list_t     * rest;
-    data_t       * d, o;
+    cList     * rest;
+    cData       * d, o;
     Number_buf   nbuf1,
                  nbuf2;
 
@@ -526,7 +566,7 @@ int frame_start(object_t * obj,
 // ---------------------------------------------------------------
 */
 void frame_return(void) {
-    int i;
+    Int i;
     Frame *caller_frame = cur_frame->caller_frame;
 
     /* Free old data on stack. */
@@ -557,11 +597,94 @@ void frame_return(void) {
     frame_depth--;
 }
 
+#ifdef PROFILE_EXECUTE
+
+Int meth_p_last = 0;
+
+struct meth_prof_s {
+    cObjnum objnum;
+    char     name[64];
+    uLong    count;
+} meth_prof [PROFILE_MAX];
+
+Long prof_ops[LAST_TOKEN];
+
+void update_execute_opcode(Int opcode) {
+    register Int x;
+    static short init = 1;
+        
+    if (init) {
+        for (x=0; x < LAST_TOKEN; x++)
+            prof_ops[x] = 0;
+        init = 0;
+    }       
+
+    prof_ops[opcode]++;
+}
+
+void update_execute_method(Method * method) {
+    register Int x;
+    register char * name, * c;
+    register cObjnum obj;
+
+    if (method->name == NOT_AN_IDENT)
+        return;
+
+    name = ident_name(method->name);
+    obj  = method->object->objnum;
+
+    for (x=0; x <= meth_p_last; x++) {
+        if (meth_prof[x].objnum == obj && !strcmp(meth_prof[x].name, name)) {
+            meth_prof[x].count++;
+            return;
+        }
+    }
+
+    if (meth_p_last == (PROFILE_MAX - 1)) {
+        dump_execute_profile();
+        meth_p_last = 0;
+    }
+
+    meth_p_last++;
+    meth_prof[meth_p_last].objnum = obj;
+    c = meth_prof[meth_p_last].name;
+
+    strcpy(meth_prof[meth_p_last].name, name);
+
+    meth_prof[meth_p_last].count = 1;
+
+}
+
+void dump_execute_profile(void) {
+    register Int x;
+    cStr * str;
+    cData d;
+
+    fputs("Opcodes:\n", errfile);
+    for (x=0; x < LAST_TOKEN; x++) {
+        if (prof_ops[x])
+            fprintf(errfile, "  %-10ld %-5d %s\n",
+                    prof_ops[x], x, op_table[x].name);
+    }
+
+    d.type = OBJNUM;
+    fputs("Methods:\n", errfile);
+    for (x=0; x < meth_p_last; x++) {
+        d.u.objnum = meth_prof[x].objnum;
+        str = data_to_literal(&d);
+        fprintf(errfile, "  %-10ld %s.%s\n",
+                meth_prof[x].count, string_chars(str), meth_prof[x].name);
+        string_discard(str);
+    }
+}
+
+#endif
+
 /*
 // ---------------------------------------------------------------
 */
 INTERNAL void execute(void) {
-    int opcode;
+    Int opcode;
 
     while (cur_frame) {
         tick++;
@@ -569,8 +692,25 @@ INTERNAL void execute(void) {
             out_of_ticks_error();
         } else {
             opcode = cur_frame->opcodes[cur_frame->pc];
+
+#if DEBUG_EXECUTE
+            fprintf(errfile, "<==> %d %s ",
+                    line_number(cur_frame->method, cur_frame->pc),
+                    op_table[cur_frame->opcodes[cur_frame->pc]].name);
+            write_err("%O.%I",
+                cur_frame->method->object->objnum,
+                ((cur_frame->method->name != NOT_AN_IDENT) ?
+                    cur_frame->method->name :
+                    opcode_id));
+            fflush(errfile);
+#endif
+
             cur_frame->last_opcode = opcode;
             cur_frame->pc++;
+
+#ifdef PROFILE_EXECUTE
+            update_execute_opcode(opcode);
+#endif
             (*op_table[opcode].func)();
         }
     }
@@ -585,9 +725,9 @@ INTERNAL void execute(void) {
 //
 */
 void anticipate_assignment(void) {
-    int opcode, ind;
-    long id;
-    data_t *dp, d;
+    Int opcode, ind;
+    Long id;
+    cData *dp, d;
 
     opcode = cur_frame->opcodes[cur_frame->pc];
     switch (opcode) {
@@ -624,13 +764,13 @@ void anticipate_assignment(void) {
 
 #if DISABLED
 INTERNAL void
-call_native_method(method_t * method,
-                   int        stack_start,
-                   int        arg_start,
-                   objnum_t   objnum)
+call_native_method(Method * method,
+                   Int        stack_start,
+                   Int        arg_start,
+                   cObjnum   objnum)
 {
-    data_t rval;
-    register int i;
+    cData rval;
+    register Int i;
 
     if ((*natives[method->native].func)(arg_start, &rval)) {
         /* push ALL of the old stack off, including the target and name */
@@ -655,8 +795,8 @@ call_native_method(method_t * method,
 // one (in the cases that matter)
 */
 
-void pop_native_stack(int start) {
-    register int i;
+void pop_native_stack(Int start) {
+    register Int i;
 
     for (i = start; i < stack_pos; i++)
         data_discard(&stack[i]);
@@ -666,9 +806,9 @@ void pop_native_stack(int start) {
 /*
 // ---------------------------------------------------------------
 */
-int pass_method(int stack_start, int arg_start) {
-    method_t *method;
-    int result;
+Int pass_method(Int stack_start, Int arg_start) {
+    Method *method;
+    Int result;
 
     if (cur_frame->method->name == -1)
         return CALL_METHNF;
@@ -713,18 +853,18 @@ int pass_method(int stack_start, int arg_start) {
 /*
 // ---------------------------------------------------------------
 */
-int call_method(objnum_t objnum,    /* the object */
+Int call_method(cObjnum objnum,    /* the object */
                 Ident name,         /* the method name */
-                int stack_start,    /* start of the stack .. */
-                int arg_start)      /* start of the args */
+                Int stack_start,    /* start of the stack .. */
+                Int arg_start)      /* start of the args */
 #if 0
                 short isdata)       /* was this a call from data? */
 #endif
 {
-    object_t * obj;
-    method_t * method;
-    int        result;
-    objnum_t   sender,
+    Obj * obj;
+    Method * method;
+    Int        result;
+    cObjnum   sender,
                caller, user;
 
     /* Get the target object from the cache. */
@@ -738,6 +878,10 @@ int call_method(objnum_t objnum,    /* the object */
         cache_discard(obj);
         return CALL_METHNF;
     }
+
+#ifdef PROFILE_EXECUTE
+    update_execute_method(method);
+#endif
 
     /*
     // check perms
@@ -788,7 +932,7 @@ int call_method(objnum_t objnum,    /* the object */
 /*
 // ---------------------------------------------------------------
 */
-void pop(int n) {
+void pop(Int n) {
 
 #ifdef DEBUG
     write_err("pop(%d)", n);
@@ -801,10 +945,10 @@ void pop(int n) {
 /*
 // ---------------------------------------------------------------
 */
-void check_stack(int n) {
+void check_stack(Int n) {
     while (stack_pos + n > stack_size) {
         stack_size = stack_size * 2 + STACK_MALLOC_DELTA;
-        stack = EREALLOC(stack, data_t, stack_size);
+        stack = EREALLOC(stack, cData, stack_size);
     }
 }
 
@@ -824,32 +968,32 @@ void CAT(_x_, _name_) (_c_type_ var) { \
 #define PUSH_NATIVE(_name_, _cold_type_, _c_type_, _member_) \
     PUSH_DATA(native_push_, _name_, _cold_type_, _c_type_, _member_, var)
 
-PUSH_FUNC(int,    INTEGER, long,       val,    var)
-PUSH_FUNC(float,  FLOAT,   float,      fval,   var)
-PUSH_FUNC(string, STRING,  string_t *, str,    string_dup(var))
-PUSH_FUNC(objnum, OBJNUM,  objnum_t,   objnum, var)
-PUSH_FUNC(list,   LIST,    list_t *,   list,   list_dup(var))
-PUSH_FUNC(dict,   DICT,    dict_t *,   dict,   dict_dup(var))
+PUSH_FUNC(int,    INTEGER, cNum,       val,    var)
+PUSH_FUNC(float,  FLOAT,   cFloat,      fval,   var)
+PUSH_FUNC(string, STRING,  cStr *, str,    string_dup(var))
+PUSH_FUNC(objnum, OBJNUM,  cObjnum,   objnum, var)
+PUSH_FUNC(list,   LIST,    cList *,   list,   list_dup(var))
+PUSH_FUNC(dict,   DICT,    cDict *,   dict,   dict_dup(var))
 PUSH_FUNC(symbol, SYMBOL,  Ident,      symbol, ident_dup(var))
-PUSH_FUNC(error,  ERROR,   Ident,      error,  ident_dup(var))
-PUSH_FUNC(buffer, BUFFER,  buffer_t *, buffer, buffer_dup(var))
+PUSH_FUNC(error,  T_ERROR,   Ident,      error,  ident_dup(var))
+PUSH_FUNC(buffer, BUFFER,  cBuf *, buffer, buffer_dup(var))
 
-PUSH_NATIVE(int,    INTEGER, long,       val)
-PUSH_NATIVE(float,  FLOAT,   float,      fval)
-PUSH_NATIVE(string, STRING,  string_t *, str)
-PUSH_NATIVE(objnum, OBJNUM,  objnum_t,   objnum)
-PUSH_NATIVE(list,   LIST,    list_t *,   list)
-PUSH_NATIVE(dict,   DICT,    dict_t *,   dict)
+PUSH_NATIVE(int,    INTEGER, cNum,       val)
+PUSH_NATIVE(float,  FLOAT,   cFloat,      fval)
+PUSH_NATIVE(string, STRING,  cStr *, str)
+PUSH_NATIVE(objnum, OBJNUM,  cObjnum,   objnum)
+PUSH_NATIVE(list,   LIST,    cList *,   list)
+PUSH_NATIVE(dict,   DICT,    cDict *,   dict)
 PUSH_NATIVE(symbol, SYMBOL,  Ident,      symbol)
-PUSH_NATIVE(error,  ERROR,   Ident,      error)
-PUSH_NATIVE(buffer, BUFFER,  buffer_t *, buffer)
+PUSH_NATIVE(error,  T_ERROR,   Ident,      error)
+PUSH_NATIVE(buffer, BUFFER,  cBuf *, buffer)
 
 /*
 // ---------------------------------------------------------------
 */
-int func_init_0(void) {
-    int arg_start = arg_starts[--arg_pos];
-    int num_args = stack_pos - arg_start;
+Int func_init_0(void) {
+    Int arg_start = arg_starts[--arg_pos];
+    Int num_args = stack_pos - arg_start;
 
     if (num_args)
         func_num_error(num_args, "none");
@@ -860,9 +1004,9 @@ int func_init_0(void) {
     return 0;
 }
 
-int func_init_1(data_t **args, int type1) {
-    int arg_start = arg_starts[--arg_pos];
-    int num_args = stack_pos - arg_start;
+Int func_init_1(cData **args, Int type1) {
+    Int arg_start = arg_starts[--arg_pos];
+    Int num_args = stack_pos - arg_start;
 
     *args = &stack[arg_start];
     if (num_args != 1)
@@ -876,10 +1020,10 @@ int func_init_1(data_t **args, int type1) {
     return 0;
 }
 
-int func_init_2(data_t **args, int type1, int type2)
+Int func_init_2(cData **args, Int type1, Int type2)
 {
-    int arg_start = arg_starts[--arg_pos];
-    int num_args = stack_pos - arg_start;
+    Int arg_start = arg_starts[--arg_pos];
+    Int num_args = stack_pos - arg_start;
 
     *args = &stack[arg_start];
     if (num_args != 2)
@@ -895,10 +1039,10 @@ int func_init_2(data_t **args, int type1, int type2)
     return 0;
 }
 
-int func_init_3(data_t **args, int type1, int type2, int type3)
+Int func_init_3(cData **args, Int type1, Int type2, Int type3)
 {
-    int arg_start = arg_starts[--arg_pos];
-    int num_args = stack_pos - arg_start;
+    Int arg_start = arg_starts[--arg_pos];
+    Int num_args = stack_pos - arg_start;
 
     *args = &stack[arg_start];
     if (num_args != 3)
@@ -916,9 +1060,9 @@ int func_init_3(data_t **args, int type1, int type2, int type3)
     return 0;
 }
 
-int func_init_0_or_1(data_t **args, int *num_args, int type1)
+Int func_init_0_or_1(cData **args, Int *num_args, Int type1)
 {
-    int arg_start = arg_starts[--arg_pos];
+    Int arg_start = arg_starts[--arg_pos];
 
     *args = &stack[arg_start];
     *num_args = stack_pos - arg_start;
@@ -933,9 +1077,9 @@ int func_init_0_or_1(data_t **args, int *num_args, int type1)
     return 0;
 }
 
-int func_init_1_or_2(data_t **args, int *num_args, int type1, int type2)
+Int func_init_1_or_2(cData **args, Int *num_args, Int type1, Int type2)
 {
-    int arg_start = arg_starts[--arg_pos];
+    Int arg_start = arg_starts[--arg_pos];
 
     *args = &stack[arg_start];
     *num_args = stack_pos - arg_start;
@@ -952,10 +1096,10 @@ int func_init_1_or_2(data_t **args, int *num_args, int type1, int type2)
     return 0;
 }
 
-int func_init_2_or_3(data_t **args, int *num_args, int type1, int type2,
-                     int type3)
+Int func_init_2_or_3(cData **args, Int *num_args, Int type1, Int type2,
+                     Int type3)
 {
-    int arg_start = arg_starts[--arg_pos];
+    Int arg_start = arg_starts[--arg_pos];
 
     *args = &stack[arg_start];
     *num_args = stack_pos - arg_start;
@@ -974,10 +1118,10 @@ int func_init_2_or_3(data_t **args, int *num_args, int type1, int type2,
     return 0;
 }
 
-int func_init_1_to_3(data_t **args, int *num_args, int type1, int type2,
-                     int type3)
+Int func_init_1_to_3(cData **args, Int *num_args, Int type1, Int type2,
+                     Int type3)
 {
-    int arg_start = arg_starts[--arg_pos];
+    Int arg_start = arg_starts[--arg_pos];
 
     *args = &stack[arg_start];
     *num_args = stack_pos - arg_start;
@@ -996,7 +1140,7 @@ int func_init_1_to_3(data_t **args, int *num_args, int type1, int type2,
     return 0;
 }
 
-void func_num_error(int num_args, char *required)
+void func_num_error(Int num_args, char *required)
 {
     Number_buf nbuf;
 
@@ -1005,14 +1149,14 @@ void func_num_error(int num_args, char *required)
           (num_args == 1) ? "" : "s", required);
 }
 
-void func_type_error(char *which, data_t *wrong, char *required)
+void func_type_error(char *which, cData *wrong, char *required)
 {
     cthrow(type_id, "The %s argument (%D) is not %s.", which, wrong, required);
 }
 
 void cthrow(Ident error, char *fmt, ...)
 {
-    string_t *str;
+    cStr *str;
     va_list arg;
 
     va_start(arg, fmt);
@@ -1023,11 +1167,11 @@ void cthrow(Ident error, char *fmt, ...)
     string_discard(str);
 }
 
-void interp_error(Ident error, string_t *explanation)
+void interp_error(Ident error, cStr *explanation)
 {
-    list_t * location;
+    cList * location;
     Ident location_type;
-    data_t *d;
+    cData *d;
     char *opname;
 
     /* Get the opcode name and decide whether it's a function or not. */
@@ -1051,10 +1195,10 @@ void interp_error(Ident error, string_t *explanation)
     list_discard(location);
 }
 
-void user_error(Ident error, string_t *explanation, data_t *arg)
+void user_error(Ident error, cStr *explanation, cData *arg)
 {
-    list_t * location;
-    data_t *d;
+    cList * location;
+    cData *d;
 
     /* Construct a list giving the location. */
     location = list_new(5);
@@ -1076,9 +1220,9 @@ void user_error(Ident error, string_t *explanation, data_t *arg)
 
 INTERNAL void out_of_ticks_error(void)
 {
-    static string_t *explanation;
-    list_t * location;
-    data_t *d;
+    static cStr *explanation;
+    cList * location;
+    cData *d;
 
     /* Construct a list giving the location. */
     location = list_new(5);
@@ -1101,18 +1245,18 @@ INTERNAL void out_of_ticks_error(void)
     list_discard(location);
 }
 
-INTERNAL void start_error(Ident error, string_t *explanation, data_t *arg,
-                        list_t * location)
+INTERNAL void start_error(Ident error, cStr *explanation, cData *arg,
+                        cList * location)
 {
-    list_t * error_condition, *traceback;
-    data_t *d;
+    cList * error_condition, *traceback;
+    cData *d;
 
     /* Construct a three-element list for the error condition. */
     error_condition = list_new(3);
     d = list_empty_spaces(error_condition, 3);
 
     /* The first element is the error code. */
-    d->type = ERROR;
+    d->type = T_ERROR;
     d->u.error = ident_dup(error);
     d++;
 
@@ -1152,9 +1296,9 @@ INTERNAL void start_error(Ident error, string_t *explanation, data_t *arg,
  *            which is "owned" by a data stack frame that we will
  *            nuke in the course of unwinding the call stack.
  *            str is a string containing an explanation of the error. */
-void propagate_error(list_t * traceback, Ident error)
+void propagate_error(cList * traceback, Ident error)
 {
-    int i, ind, propagate = 0;
+    Int i, ind, propagate = 0;
     Error_action_specifier *spec;
     Error_list *errors;
     Handler_info *hinfo;
@@ -1187,6 +1331,9 @@ void propagate_error(list_t * traceback, Ident error)
 
             /* Jump to the end of the critical expression. */
             cur_frame->pc = spec->u.critical.end;
+
+            /* make sure arg_pos is correct */
+            arg_pos = spec->arg_pos;
 
             /* Push the error on the stack, and discard our copy of it. */
             push_error(error);
@@ -1237,6 +1384,9 @@ void propagate_error(list_t * traceback, Ident error)
              * need it any more. */
             pop(stack_pos - spec->stack_pos);
 
+            /* make sure arg_pos is correct */
+            arg_pos = spec->arg_pos;
+
             /* Jump to the handler expression, pop this specifier, and continue
              * processing. */
             cur_frame->pc = spec->u.ccatch.handler;
@@ -1251,17 +1401,17 @@ void propagate_error(list_t * traceback, Ident error)
     propagate_error(traceback, (propagate) ? error : methoderr_id);
 }
 
-INTERNAL list_t * traceback_add(list_t * traceback, Ident error)
+INTERNAL cList * traceback_add(cList * traceback, Ident error)
 {
-    list_t * frame;
-    data_t *d, frame_data;
+    cList * frame;
+    cData *d, frame_data;
 
     /* Construct a list giving information about this stack frame. */
     frame = list_new(5);
     d = list_empty_spaces(frame, 5);
 
     /* First element is the error code. */
-    d->type = ERROR;
+    d->type = T_ERROR;
     d->u.error = ident_dup(error);
     d++;
 
@@ -1300,7 +1450,7 @@ void pop_handler_info(void)
     efree(old);
 }
 
-INTERNAL void fill_in_method_info(data_t *d)
+INTERNAL void fill_in_method_info(cData *d)
 {
     Ident method_name;
 
@@ -1330,6 +1480,6 @@ INTERNAL void fill_in_method_info(data_t *d)
     d->u.val = line_number(cur_frame->method, cur_frame->pc);
 }
 
-void bind_opcode(int opcode, objnum_t objnum) {
+void bind_opcode(Int opcode, cObjnum objnum) {
     op_table[opcode].binding = objnum;
 }

@@ -1,12 +1,5 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: grammar.y
-// ---
-// ColdC grammar
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
 /*
@@ -20,24 +13,17 @@
 
 #define _grammar_y_
 
-#include "config.h"
 #include "defs.h"
 
 #include <stdarg.h>
-#include "grammar.h"
-#include "token.h"
-#include "codegen.h"
-#include "code_prv.h"
-#include "object.h"
-#include "memory.h"
+#include "cdc_pcode.h"
 #include "util.h"
-#include "data.h"
 
 int yyparse(void);
 static void yyerror(char *s);
 
 static Prog *prog;
-static list_t *errors;
+static cList *errors;
 
 extern Pile *compiler_pile;	/* We free this pile after compilation. */
 
@@ -51,8 +37,8 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 */
 
 %union {
-	long			 num;
-	float			 fnum;
+	Long			 num;
+	Float			 fnum;
 	char			*s;
 	struct arguments	*args;
 	struct stmt		*stmt;
@@ -80,9 +66,9 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %token  FIRST_TOKEN
 %token	<num>	INTEGER OBJNUM
 %token  <fnum>  FLOAT
-%token	<s>	COMMENT STRING SYMBOL OBJNAME IDENT ERROR
+%token	<s>	COMMENT STRING SYMBOL OBJNAME IDENT T_ERROR
 %token		DISALLOW_OVERRIDES ARG VAR
-%token		IF FOR IN UPTO WHILE SWITCH CASE DEFAULT
+%token		IF FOR OP_IN UPTO WHILE SWITCH CASE DEFAULT
 %token		BREAK CONTINUE RETURN
 %token		CATCH ANY HANDLER
 %token		FORK
@@ -94,7 +80,7 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %right	OP_COND_IF ':' OP_COND_OTHER_ELSE
 %right	OR
 %right	AND
-%left	IN
+%left	OP_IN
 %left	EQ NE '>' GE '<' LE
 %left	'+' '-'
 %left	'*' '/' '%'
@@ -126,8 +112,8 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %token F_TOOBJNUM F_TOSYM F_TOERR F_VALID F_STRFMT F_STRLEN
 %token F_SUBSTR F_EXPLODE F_STRSED F_STRSUB F_PAD F_MATCH_BEGIN
 %token F_MATCH_TEMPLATE F_STRGRAFT F_LISTGRAFT F_BUFGRAFT
-%token F_MATCH_PATTERN F_MATCH_REGEXP F_REGEXP F_CRYPT F_UPPERCASE
-%token F_LOWERCASE F_STRCMP F_LISTLEN F_SUBLIST F_INSERT F_REPLACE
+%token F_MATCH_PATTERN F_MATCH_REGEXP F_REGEXP F_SPLIT F_CRYPT F_UPPERCASE
+%token F_LOWERCASE F_STRCMP F_LISTLEN F_SUBLIST F_INSERT F_JOIN F_REPLACE
 %token F_DELETE F_SETADD F_SETREMOVE F_UNION
 %token F_DICT_KEYS F_DICT_ADD F_DICT_DEL F_DICT_ADD_ELEM
 %token F_DICT_DEL_ELEM F_DICT_CONTAINS F_BUFLEN F_BUF_REPLACE
@@ -199,8 +185,8 @@ errors	: ANY				{ $$ = NULL; }
 	| errlist			{ $$ = $1; }
 	;
 
-errlist	: ERROR				{ $$ = id_list($1, NULL); }
-	| errlist ',' ERROR		{ $$ = id_list($3, $1); }
+errlist	: T_ERROR				{ $$ = id_list($1, NULL); }
+	| errlist ',' T_ERROR		{ $$ = id_list($3, $1); }
 	;
 
 compound: '{' stmtlist '}'		{ $$ = $2; }
@@ -241,7 +227,7 @@ stmt	: COMMENT			{ $$ = comment_stmt($1); }
 if	: IF '(' expr ')' stmt		{ $$ = if_stmt($3, $5); }
 	;
 
-for	: FOR IDENT IN			{ $$ = $2; }
+for	: FOR IDENT OP_IN			{ $$ = $2; }
 	;
 
 caselist: '{' '}'			{ $$ = NULL; }
@@ -262,7 +248,7 @@ expr	: INTEGER			{ $$ = integer_expr($1); }
 	| OBJNUM			{ $$ = objnum_expr($1); }
 	| OBJNAME			{ $$ = objname_expr($1); }
 	| SYMBOL			{ $$ = symbol_expr($1); }
-	| ERROR				{ $$ = error_expr($1); }
+	| T_ERROR				{ $$ = error_expr($1); }
 	| IDENT				{ $$ = var_expr($1); }
 	| IDENT '(' args ')'		{ $$ = function_call_expr($1, $3); }
 	| PASS '(' args ')'		{ $$ = pass_expr($3); }
@@ -295,7 +281,7 @@ expr	: INTEGER			{ $$ = integer_expr($1); }
 	| expr GE expr			{ $$ = binary_expr(GE, $1, $3); }
 	| expr '<' expr			{ $$ = binary_expr('<', $1, $3); }
 	| expr LE expr			{ $$ = binary_expr(LE, $1, $3); }
-	| expr IN expr			{ $$ = binary_expr(IN, $1, $3); }
+	| expr OP_IN expr			{ $$ = binary_expr(OP_IN, $1, $3); }
 	| expr AND expr			{ $$ = and_expr($1, $3); }
 	| expr OR expr			{ $$ = or_expr($1, $3); }
 	| expr OP_COND_IF expr ':' expr	{ $$ = cond_expr($1, $3, $5); }
@@ -339,8 +325,8 @@ cvals	: rexpr				{ $$ = expr_list($1, NULL); }
 //
 */
 
-method_t * compile(object_t * object, list_t * code, list_t ** error_ret) {
-    method_t * method = NULL;
+Method * compile(Obj * object, cList * code, cList ** error_ret) {
+    Method * method = NULL;
 
     /* Initialize compiler globals. */
     errors = list_new(0);
@@ -363,11 +349,11 @@ method_t * compile(object_t * object, list_t * code, list_t ** error_ret) {
     return method;
 }
 
-void compiler_error(int lineno, char *fmt, ...)
+void compiler_error(Int lineno, char *fmt, ...)
 {
     va_list arg;
-    string_t *errstr, *line;
-    data_t d;
+    cStr * errstr, * line;
+    cData d;
 
     va_start(arg, fmt);
     errstr = vformat(fmt, arg);
@@ -387,7 +373,7 @@ void compiler_error(int lineno, char *fmt, ...)
     va_end(arg);
 }
 
-int no_errors(void) {
+Int no_errors(void) {
     return (errors->len == 0);
 }
 

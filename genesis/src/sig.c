@@ -1,25 +1,14 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: sig.c
-// ---
-// Coldmud signal handling.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include "sig.h"
-#include "log.h"          /* write_err() */
 #include "execute.h"      /* task() */
-#include "cdc_string.h"   /* string_from_chars() */
-#include "data.h"
+#include "sig.h"
 
 void catch_SIGCHLD(int sig);
 void catch_SIGFPE(int sig);
@@ -63,14 +52,14 @@ void catch_SIGCHLD(int sig) {
 
 char *sig_name(int sig) {
     switch(sig) {
-        case SIGILL:  return "SIGILL";
-        case SIGQUIT: return "SIGQUIT";
-        case SIGSEGV: return "SIGSEGV";
-        case SIGINT:  return "SIGINT";
-        case SIGHUP:  return "SIGHUP";
-        case SIGTERM: return "SIGTERM";
-        case SIGUSR1: return "SIGUSR1";
-        case SIGUSR2: return "SIGUSR2";
+        case SIGILL:  return "ILL";
+        case SIGQUIT: return "QUIT";
+        case SIGSEGV: return "SEGV";
+        case SIGINT:  return "INT";
+        case SIGHUP:  return "HUP";
+        case SIGTERM: return "TERM";
+        case SIGUSR1: return "USR1";
+        case SIGUSR2: return "USR2";
         default:      return "Unknown";
     }
     return NULL;
@@ -79,8 +68,9 @@ char *sig_name(int sig) {
 /* void catch_signal(int sig, int code, struct sigcontext *scp) { */
 void catch_signal(int sig) {
     char *sptr;
-    string_t *sigstr;
-    data_t arg1, arg2;
+    cStr *sigstr;
+    cData arg1;
+    Bool  do_shutdown = NO;
 
     signal(sig, catch_signal);
 
@@ -89,14 +79,10 @@ void catch_signal(int sig) {
 
     write_err("Caught signal %d: %S", sig, sigstr);
 
-    /* only pass onto the db if we are 'executing' */
-    if (!running)
-        return;
-
     /* figure out what to do */
     switch(sig) {
         case SIGHUP:
-            atomic = 0;
+            atomic = NO;
             handle_connection_output();
             flush_files();
         case SIGUSR2:
@@ -107,29 +93,36 @@ void catch_signal(int sig) {
             longjmp(main_jmp, 1);
             break;
         case SIGILL:
-        case SIGSEGV:
             /* lets panic and hopefully shutdown without frobbing the db */
             panic(sig_name(sig));
             break;
-        case SIGINT:
-        case SIGQUIT:
         case SIGTERM:
-        default: /* shutdown nicely */
             if (running) {
                 write_err("*** Attempting normal shutdown ***");
-                running = 0;
+                running = NO;
+
+                /* jump back to the main loop, ignore any current tasks;
+                   *drip*, *drip*, leaky */
                 longjmp(main_jmp, 1);
             } else {
                 panic(sig_name(sig));
             }
             break;
+        default:
+            do_shutdown = YES;
+            break;
     }
+
+    /* only pass onto the db if we are 'executing' */
+    if (!running)
+        return;
 
     /* send a message to the system object */
     arg1.type = SYMBOL;
-    arg1.u.symbol = ident_get(sig_name(sig));
-    arg2.type = STRING;
-    arg2.u.str = sigstr;
-    task(SYSTEM_OBJNUM, signal_id, 2, &arg1, &arg2);
+    arg1.u.symbol = ident_get(string_chars(sigstr));
+    task(SYSTEM_OBJNUM, signal_id, 1, &arg1);
+
+    if (do_shutdown)
+        running = NO;
 }
 

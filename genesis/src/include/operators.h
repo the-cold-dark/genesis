@@ -1,16 +1,9 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/operators.h
-// ---
-// Operator declarations.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#ifndef _operator_h_
-#define _operator_h_
+#ifndef cdc_operator_h
+#define cdc_operator_h
 
 void op_comment(void);
 void op_pop(void);

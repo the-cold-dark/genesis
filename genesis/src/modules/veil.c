@@ -1,24 +1,15 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
+// VEIL packets buffer manipulation module
 //
-// File: modules/veil.c
-// ---
-// Veil packets buffer manipulation module
+// look at http://www.cold.org/VEIL/ for more information.
+//
 */
 
 #define NATIVE_MODULE "$buffer"
 
-#include "config.h"
-#include "defs.h"
-#include "cdc_types.h"
-#include "operators.h"
-#include "execute.h"
-#include "memory.h"
 #include "veil.h"
-#include "native.h"
 
 module_t veil_module = {init_veil, uninit_veil};
 
@@ -54,7 +45,7 @@ typedef struct header_s {
 } header_t;
 #endif
 
-void init_veil(int argc, char ** argv) {
+void init_veil(Int argc, char ** argv) {
     pabort_id = ident_get("abort");
     pclose_id = ident_get("close");
     popen_id  = ident_get("open");
@@ -80,16 +71,16 @@ void uninit_veil(void) {
 // -------------------------------------------------------------------
 // internal function for buffer -> VEIL packet
 */
-list_t * buffer_to_veil_packets(buffer_t * buf) {
-    int             flags,
+cList * cBufo_veil_packets(cBuf * buf) {
+    Int             flags,
                     session,
                     length,
                     blen;
-    buffer_t        * databuf,
+    cBuf        * databuf,
                   * incomplete;
-    data_t          d,
+    cData          d,
                   * list;
-    list_t        * output,
+    cList        * output,
                   * packet;
     unsigned char * cbuf;
 
@@ -103,9 +94,9 @@ list_t * buffer_to_veil_packets(buffer_t * buf) {
         if (blen < HEADER_SIZE)
             break;
 
-        flags = (int) cbuf[0];
-        session = (int) cbuf[2] * 256 + (int) cbuf[3];
-        length = (int) cbuf[6] * 256 + (int) cbuf[7];
+        flags = (Int) cbuf[0];
+        session = (Int) cbuf[2] * 256 + (Int) cbuf[3];
+        length = (Int) cbuf[6] * 256 + (Int) cbuf[7];
 
         if (length > (blen - HEADER_SIZE))
             break;
@@ -171,8 +162,8 @@ list_t * buffer_to_veil_packets(buffer_t * buf) {
 // Convert from a buffer to the standard 'VEIL packet' format
 */
 NATIVE_METHOD(to_veil_pkts) {
-    buffer_t * buf;
-    list_t * packets;
+    cBuf * buf;
+    cList * packets;
 
     INIT_1_OR_2_ARGS(BUFFER, BUFFER);
 
@@ -183,7 +174,7 @@ NATIVE_METHOD(to_veil_pkts) {
         buf = buffer_append(buffer_dup(_BUF(ARG1)), _BUF(ARG2));
     }
 
-    packets = buffer_to_veil_packets(buf);
+    packets = cBufo_veil_packets(buf);
 
     buffer_discard(buf);
 
@@ -198,12 +189,12 @@ NATIVE_METHOD(to_veil_pkts) {
 // sent to the packet, just make sure you do it right
 */
 NATIVE_METHOD(from_veil_pkts) {
-    data_t        * d,
+    cData        * d,
                   * pa;
-    buffer_t        * out,
+    cBuf        * out,
                   * header;
-    list_t        * p, * packets;
-    int             len;
+    cList        * p, * packets;
+    Int             len;
 
     INIT_1_ARG(LIST);
 
@@ -254,7 +245,7 @@ NATIVE_METHOD(from_veil_pkts) {
         header->s[7] = (unsigned char) pa->u.buffer->len%256;
 
         len = out->len + header->len + pa->u.buffer->len - 2;
-        out = (buffer_t *) erealloc(out, sizeof(buffer_t) + len);
+        out = (cBuf *) erealloc(out, sizeof(cBuf) + len);
         MEMCPY(out->s + out->len, header->s, header->len);
         out->len += header->len;
         MEMCPY(out->s + out->len, pa->u.buffer->s, pa->u.buffer->len);

@@ -1,23 +1,11 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: net.c
-// ---
-// Network routines.
-//
-// This stuff is not POSIX, and thus must be ported separately to each
-// network interface.  This code is for a BSD interface.
-//
-// RFC references: inverse name resolution--1293, 903
-// 1035 - domain name system
+// RFC references: inverse name resolution--1293, 903 1035 - domain name system
 */
 
 #define _BSD 44 /* For RS6000s. */
 
-#include "config.h"
 #include "defs.h"
 
 #include <sys/types.h>
@@ -28,44 +16,48 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <errno.h>
 #include <fcntl.h>
-#include "memory.h"
 #include "net.h"
-#include "io.h"
-#include "log.h"
 #include "util.h"
-#include "ident.h"
-
-extern int socket(), bind(), listen(), getdtablesize(void), select(), accept();
-extern int connect(), getpeername(), getsockopt(), setsockopt();
 
 #if 0
-#if !defined(sys_linux) && !defined(sys_freebsd)
-extern void bzero(char *, int);
-#endif
+extern Int socket(), bind(), listen(), getdtablesize(void), select(), accept();
+extern Int connect(), getpeername(), getsockopt(), setsockopt();
 #endif
 
-static long translate_connect_error(int error);
+static Long translate_connect_error(Int error);
 
 static struct sockaddr_in sockin;	/* An internet address. */
 static int addr_size = sizeof(sockin);	/* Size of sockin. */
 
-long server_failure_reason;
+Long server_failure_reason;
 
-int get_server_socket(int port) {
-    int fd, one;
+void init_net(void) {
+#ifdef WIN32
+    WSADATA wsa;
+
+    WSAStartup(0x0101, &wsa);
+#endif
+}
+void uninit_net(void) {
+#ifdef WIN32
+    WSACleanup();
+#endif
+}
+
+SOCKET get_server_socket(Int port) {
+    Int fd, one;
 
     /* Create a socket. */
     fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd < 0) {
+    if (fd == SOCKET_ERROR) {
 	server_failure_reason = socket_id;
-	return -1;
+	return SOCKET_ERROR;
     }
 
     /* Set SO_REUSEADDR option to avoid restart problems. */
     one = 1;
-    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(int));
+    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(Int));
 
     /* Bind the socket to port. */
     memset(&sockin, 0, sizeof(sockin));
@@ -73,11 +65,9 @@ int get_server_socket(int port) {
     sockin.sin_port = htons((unsigned short) port);
     if (bind(fd, (struct sockaddr *) &sockin, sizeof(sockin)) < 0) {
 	server_failure_reason = bind_id;
-	return -1;
+	return SOCKET_ERROR;
     }
 
-    /* Start listening on port.  This shouldn't return an error under any
-     * circumstances. */
     listen(fd, 8);
 
     return fd;
@@ -86,15 +76,16 @@ int get_server_socket(int port) {
 /* Wait for I/O events.  sec is the number of seconds we can wait before
  * returning, or -1 if we can wait forever.  Returns nonzero if an I/O event
  * happened. */
-int io_event_wait(long sec, connection_t *connections, server_t *servers,
+Int io_event_wait(Int sec, Conn *connections, server_t *servers,
 		  pending_t *pendings)
 {
     struct timeval tv, *tvp;
-    connection_t *conn;
+    Conn *conn;
     server_t *serv;
     pending_t *pend;
     fd_set read_fds, write_fds;
-    int flags, nfds, count, result, error, dummy = sizeof(int);
+    Int flags, nfds, count, result, error;
+    int dummy = sizeof(int);
 
     /* Set time structure according to sec. */
     if (sec == -1) {
@@ -102,7 +93,7 @@ int io_event_wait(long sec, connection_t *connections, server_t *servers,
         /* this is a rather odd thing to happen for me */
         write_err("select: forever wait");
     } else {
-	tv.tv_sec = sec;
+	tv.tv_sec = (long) sec;
 	tv.tv_usec = 0;
 	tvp = &tv;
     }
@@ -146,13 +137,14 @@ int io_event_wait(long sec, connection_t *connections, server_t *servers,
     count = select(nfds, &read_fds, &write_fds, NULL, tvp);
 
     /* Lose horribly if select() fails on anything but an interrupted system
-     * call.  On EINTR, we'll return 0. */
-    if (count == -1 && errno != EINTR)
-	panic("select() failed");
+     * call.  On ERR_INTR, we'll return 0. */
+    if (count == SOCKET_ERROR) {
+        if (GETERR() != ERR_INTR)
+            panic("select() failed");
 
-    /* Stop and return zero if no I/O events occurred. */
-    if (count <= 0)
-	return 0;
+        /* Stop and return zero if no I/O events occurred. */
+        return 0;
+    }
 
     /* Check if any connections are readable or writable. */
     for (conn = connections; conn; conn = conn->next) {
@@ -166,8 +158,8 @@ int io_event_wait(long sec, connection_t *connections, server_t *servers,
     for (serv = servers; serv; serv = serv->next) {
 	if (FD_ISSET(serv->server_socket, &read_fds)) {
 	    serv->client_socket = accept(serv->server_socket,
-					 (struct sockaddr *) &sockin, &addr_size);
-	    if (serv->client_socket < 0)
+				 (struct sockaddr *) &sockin, &addr_size);
+	    if (serv->client_socket == SOCKET_ERROR)
 		continue;
 
 	    /* Get address and local port of client. */
@@ -189,12 +181,12 @@ int io_event_wait(long sec, connection_t *connections, server_t *servers,
 	if (FD_ISSET(pend->fd, &write_fds)) {
 	    result = getpeername(pend->fd, (struct sockaddr *) &sockin,
 				 &addr_size);
-	    if (result == 0) {
-		pend->error = NOT_AN_IDENT;
-	    } else {
+	    if (result == SOCKET_ERROR) {
 		getsockopt(pend->fd, SOL_SOCKET, SO_ERROR, (char *) &error,
 			   &dummy);
 		pend->error = translate_connect_error(error);
+	    } else {
+		pend->error = NOT_AN_IDENT;
 	    }
 	    pend->finished = 1;
 	}
@@ -204,9 +196,10 @@ int io_event_wait(long sec, connection_t *connections, server_t *servers,
     return 1;
 }
 
-long non_blocking_connect(char *addr, int port, int *socket_return)
+Long non_blocking_connect(char *addr, Int port, Int *socket_return)
 {
-    int fd, result, flags;
+    SOCKET fd;
+    Int    result, flags;
     struct in_addr inaddr;
     struct sockaddr_in saddr;
 
@@ -217,10 +210,14 @@ long non_blocking_connect(char *addr, int port, int *socket_return)
 
     /* Get a socket for the connection. */
     fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd == -1)
+    if (fd == SOCKET_ERROR)
 	return socket_id;
 
     /* Set the socket non-blocking. */
+#ifdef WIN32
+    result = 1;
+    ioctlsocket(fd, FIONBIO, &result);
+#else
     flags = fcntl(fd, F_GETFL);
 #ifdef FNDELAY
     flags |= FNDELAY;
@@ -230,6 +227,7 @@ long non_blocking_connect(char *addr, int port, int *socket_return)
 #endif
 #endif
     fcntl(fd, F_SETFL, flags);
+#endif
 
     /* Make the connection. */
     memset(&saddr, 0, sizeof(saddr));
@@ -238,26 +236,26 @@ long non_blocking_connect(char *addr, int port, int *socket_return)
     saddr.sin_addr = inaddr;
     do {
 	result = connect(fd, (struct sockaddr *) &saddr, sizeof(saddr));
-    } while (result == -1 && errno == EINTR);
+    } while (result == SOCKET_ERROR && GETERR() == ERR_INTR);
 
     *socket_return = fd;
-    if (result != -1 || errno == EINPROGRESS)
+    if (result != SOCKET_ERROR || GETERR() == ERR_INPROGRESS)
 	return NOT_AN_IDENT;
     else
-	return translate_connect_error(errno);
+	return translate_connect_error(GETERR());
 }
 
-static long translate_connect_error(int error)
+static Long translate_connect_error(Int error)
 {
     switch (error) {
 
-      case ECONNREFUSED:
+      case ERR_CONNREFUSED:
 	return refused_id;
 
-      case ENETUNREACH:
+      case ERR_NETUNREACH:
 	return net_id;
 
-      case ETIMEDOUT:
+      case ERR_TIMEDOUT:
 	return timeout_id;
 
       default:
@@ -265,7 +263,7 @@ static long translate_connect_error(int error)
     }
 }
 
-string_t *hostname(char *chaddr)
+cStr *hostname(char *chaddr)
 {
    unsigned addr;
    register struct hostent *hp;
@@ -281,13 +279,17 @@ string_t *hostname(char *chaddr)
      return string_from_chars(chaddr, strlen(chaddr));
 }
 
-string_t *ip(char *chaddr)
+cStr *ip(char *chaddr)
 {
    unsigned addr;
    register struct hostent *hp;
 
    addr = inet_addr(chaddr);
-   if (addr == -1) {
+#ifdef WIN32
+   if (addr == NADDR_NONE) {
+#else
+   if (addr == F_FAILURE) {
+#endif
      hp = gethostbyname(chaddr);
      if (hp)
        return string_from_chars(inet_ntoa(*(struct in_addr *)hp->h_addr), strlen(inet_ntoa(*(struct in_addr *)hp->h_addr)));

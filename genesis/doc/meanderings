@@ -28,8 +28,9 @@ public method .test(): nooverrides {
     arg threshold, list;
     var target, obj, add;
    
-    add = procedure {
+    add = closure {
         arg elem;
+        import threshold;
         var total;
   
         target.add(elem);
@@ -38,7 +39,7 @@ public method .test(): nooverrides {
     };
    
     for x in (list)
-       (> &add(second) <);
+       (> exec add(second) <);
 };
 
 -------

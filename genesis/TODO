@@ -1,0 +1,132 @@
+-----------------------
+Cleanup:
+
+* Add notes about operating environment (disk space and RAM) in the
+  genesis man pages on the web.
+
+* fix declaration for gettimeofday() to be quiet
+
+* overridable methods: change searching to take the first method
+  found.  Do the check for !overridable methods at the time the method
+  is set as !overridable, do not allow methods to be set as overridable
+  if they are overriden on descendants.  Do not allow methods to be
+  added if an ancestor defines it as !overridable.
+
+* sanity checks are still not done, do them?
+
+* descendants()
+
+* Implement a more efficient malloc for our specific uses, perhaps
+  build on top of phkmalloc.
+
+-----------------------
+Features:
+
+* have open_connection() accept a string for the port, where the string
+  is interpreted as a service, i.e.:
+
+      open_connection("x.y.com", "ntp");
+
+  When the port is specified in this way, it looks up the port for the
+  service, based of the machine's configuration.
+
+* asyncrynous backups
+
+* hack bind_native object renaming
+
+* hack up split() (like explode, but using regexps).
+
+* hack up join() (list to string)
+
+* $string.word(str, x) equivalent of $string.explode(str)[x]
+
+* flag for coldcc to decompile with object numbers wherever possible.
+
+  Do:
+
+  object #asdf: #asdf, #asdf;
+
+  eval {
+      set_objname(#asdf, 'normalname);
+  };
+
+  [normal decompile]
+
+* make -p with coldcc interactive, when replacing existing methods somehow
+  decide if the method should be replace (perhaps keep EDITED comments?  Ugh)
+  We can timestamp core objects for last 'changed' dates.
+
+* get execute to use file i/o, so calling execute would be paramount
+  to using fopen() on a file (shag code from apache CGI)
+
+* gut the database management code, pull from gdm.
+
+* PERL-extensions to regexps (i.e. \s etc)
+
+-----------------------
+Possiblilities:
+
+* forking (requires a bit of rewriting in the actual interpreter)
+* 'retry' jump (ala continue, etc, for catch statements)
+* "\n" in strings should be character '10', not '\' and 'n'.
+* optionally declare a set type for variables, ala:
+
+      'type variable
+
+  when it is declared, such as:
+
+      arg 'string cmd, 'integer num, [more];
+      var 'integer i, some, other, that;
+
+  When the type is set, it is forced to always be that type,
+  and assignments contrary will cause errors (this will allow for
+  better optimization).
+
+* Declare the default value of a variable when starting, such as:
+
+      var i = 1;
+
+  Perhaps even allow expressions:
+
+      var i = .default_value();
+
+  When variables are defined at declaration roll out like on objects,
+  such as:
+
+      var this, that, there;
+      var i = 1; 
+      var y = .default_value();
+
+* with this allow multiple 'var' declarations.
+* Change the pcode for a method call.  Currently we have:
+
+   [TO expr], START_ARGS, [ARG1 expr], .., CALL_METHOD, (method_name)
+   [TO expr], [NAME expr], START_ARGS, [ARG1 expr], .., CALL_EXPR_METHOD
+
+  Which results in a stack like:
+
+      .. | TO | NAME | ARG1 | ..
+
+  The problem with this is that we often want to diddle with TO and
+  NAME.  If we were to change the order to be:
+
+   START_ARGS, [ARG1 expr], .., [TO expr], CALL_METHOD, (method_name)
+   START_ARGS, [ARG1 expr], .., [TO expr], [NAME expr], CALL_EXPR_METHOD
+
+  It would be MUCH cleaner and more optimal during execution, as
+  CALL_<EXPR_>METHOD could pop the data it needed and then call the
+  method (native or regular).  The disadvantage of this is that order
+  of execution changes from/to:
+
+      (1).(2)(3, ..)
+      (2).(3)(1, ..)
+
+  In general this is not a problem, as the data used for the target (TO)
+  and the method name (NAME) is irrelevant to the data used for arguments,
+  but it could get confusing.
+* The method compiler doesnt handle vars correctly, you MUST have the
+  second (and only the second) line be var..;  This also means you cannot
+  do (as one line):
+
+      "arg one, two; var a, b, c;"
+

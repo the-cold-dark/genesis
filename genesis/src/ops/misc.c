@@ -1,11 +1,7 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include <time.h>
@@ -14,13 +10,12 @@
 
 #include "operators.h"
 #include "execute.h"
-#include "cdc_types.h"
 #include "util.h"
 #include "opcodes.h"
 
 #ifdef HAVE_GETTIMEOFDAY
 #if defined(sys_ultrix) || defined(sys_solaris)
-int gettimeofday (struct timeval *tp, struct timezone *tzp);
+Int gettimeofday (struct timeval *tp, struct timezone *tzp);
 #endif
 #endif
 
@@ -34,11 +29,11 @@ void func_time(void) {
 
 void func_localtime(void) {
     struct tm * tms;
-    data_t * d;
-    list_t * l;
+    cData * d;
+    cList * l;
     time_t t;
-    data_t *args;
-    int     nargs;
+    cData *args;
+    Int     nargs;
 
     if (!func_init_0_or_1(&args, &nargs, INTEGER))
 	return;
@@ -55,7 +50,7 @@ void func_localtime(void) {
     d = list_empty_spaces(l, 11);
 
     d[0].type=INTEGER;
-    d[0].u.val = (int) t;
+    d[0].u.val = (cNum) t;
     d[1].type=INTEGER;
     d[1].u.val = tms->tm_sec;
     d[2].type=INTEGER;
@@ -93,18 +88,18 @@ void func_mtime(void) {
     /* usec is microseconds */
     gettimeofday(&tp, NULL);
 
-    push_int((int) tp.tv_usec);
+    push_int((cNum) tp.tv_usec);
 #else
     push_int(-1);
 #endif
 }
 
 void func_ctime(void) {
-    data_t *args;
-    int num_args;
+    cData *args;
+    Int num_args;
     time_t tval;
     char *timestr;
-    string_t *str;
+    cStr *str;
 
     /* Take an optional integer argument. */
     if (!func_init_0_or_1(&args, &num_args, INTEGER))
@@ -120,8 +115,8 @@ void func_ctime(void) {
 }
 
 void func_bind_function(void) {
-    data_t * args;
-    int      opcode;
+    cData * args;
+    Int      opcode;
 
     /* accept a symbol and objnum */
     if (!func_init_2(&args, SYMBOL, OBJNUM))
@@ -141,8 +136,8 @@ void func_bind_function(void) {
 }
 
 void func_unbind_function(void) {
-    data_t *args;
-    int   opcode;
+    cData *args;
+    Int   opcode;
 
     /* accept a symbol */
     if (!func_init_1(&args, SYMBOL))

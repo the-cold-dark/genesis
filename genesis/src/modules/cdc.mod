@@ -1,5 +1,4 @@
 ##     object.method_name            function                 
-native $buffer.graft()               bufgraft
 native $buffer.length()              buflen
 native $buffer.replace()             buf_replace
 native $buffer.subrange()            subbuf
@@ -9,7 +8,9 @@ native $buffer.from_string()         str_to_buf
 native $buffer.from_strings()        strings_to_buf
 native $dictionary.keys()            dict_keys
 native $dictionary.add()             dict_add
+#native $dictionary.add_elem()        dict_add_elem
 native $dictionary.del()             dict_del
+#native $dictionary.del_elem()        dict_del_elem
 native $dictionary.contains()        dict_contains
 native $network.hostname()           hostname
 native $network.ip()                 ip
@@ -21,6 +22,7 @@ native $list.delete()                delete
 native $list.setadd()                setadd
 native $list.setremove()             setremove
 native $list.union()                 union
+native $list.join()                  join
 native $string.length()              strlen
 native $string.subrange()            substr
 native $string.explode()             explode
@@ -38,6 +40,8 @@ native $string.lowercase()           lowercase
 native $string.capitalize()          capitalize
 native $string.compare()             strcmp
 native $string.format()              strfmt
+native $string.trim()                trim
+native $string.split()               split
 native $sys.next_objnum()            next_objnum
 native $sys.status()                 status
 native $sys.version()                version

@@ -1,34 +1,21 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: modules/cdc_math.c
-// ---
-// Floating point functions (including trig)
-// Module written by Andy Selle (andy@positronic.res.cmu.edu)
-//
-// Now its just General extended math functions
+// Floating point functions (including trig) originally coded by
+// Andy Selle (andy@positronic.res.cmu.edu)
 //
 // converted to natives by Brandon Gillespie, a bit of optimization performed
 // on how args are handled.  Standardized floats to float hooks, ColdC ints
 // to double hooks in the math libs.  Added a few more hooks.
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include <time.h>
-#include <sys/time.h>    /* for mtime() */
-#include "cdc_types.h"
-#include "operators.h"
-#include "execute.h"
-#include "macros.h"
+#include <math.h>
+#include "cdc_pcode.h"
 #include "util.h"
 #include "sig.h"
-#include "ident.h"
-#include <math.h>
 
 #ifndef PI
 #define PI 3.141592654
@@ -43,31 +30,31 @@
 #define MATH_HOOK_FPE_2(_name_) \
     COLDC_FUNC(_name_) { \
         double r = 0; \
-        data_t * args; \
+        cData * args; \
         if (!func_init_2(&args, FLOAT, FLOAT))\
             return; \
         r = _name_ ((double) _FLOAT(ARG1), (double) _FLOAT(ARG2)); \
         HANDLE_FPE; \
-        pop(2); push_float((FLOAT_TYPE) r);\
+        pop(2); push_float((cFloat) r);\
     }
 
 #define MATH_HOOK_FPE( _name_ ) \
     COLDC_FUNC(_name_) { \
         double r = 0; \
-        data_t * args; \
+        cData * args; \
         if (!func_init_1(&args, FLOAT))\
             return; \
         r = _name_ ((double) _FLOAT(ARG1)); \
         HANDLE_FPE; \
-        pop(1); push_float((FLOAT_TYPE) r);\
+        pop(1); push_float((cFloat) r);\
     }
 
 #define MATH_HOOK(_name_) \
     COLDC_FUNC(_name_) { \
-        data_t * args; \
+        cData * args; \
         if (!func_init_1(&args, FLOAT))\
             return; \
-        pop(1); push_float((FLOAT_TYPE) _name_ ((double) _FLOAT(ARG1))); \
+        pop(1); push_float((cFloat) _name_ ((double) _FLOAT(ARG1))); \
     }
 
 MATH_HOOK(sin)
@@ -83,7 +70,7 @@ MATH_HOOK_FPE_2(pow)
 MATH_HOOK_FPE_2(atan2)
 
 COLDC_FUNC(random) {
-    data_t * args;
+    cData * args;
 
     /* Take one integer argument. */
     if (!func_init_1(&args, INTEGER))
@@ -94,9 +81,9 @@ COLDC_FUNC(random) {
 }
 
 /* which is 1 for max, -1 for min. */
-INTERNAL void find_extreme(int which) {
-    int arg_start, num_args, i, type;
-    data_t *args, *extreme, d;
+INTERNAL void find_extreme(Int which) {
+    Int arg_start, num_args, i, type;
+    cData *args, *extreme, d;
 
     arg_start = arg_starts[--arg_pos];
     args = &stack[arg_start];
@@ -140,7 +127,7 @@ COLDC_FUNC(min) {
 }
 
 COLDC_FUNC(abs) {
-    data_t * args;
+    cData * args;
 
     if (!func_init_1(&args, ANY_TYPE))
         return;
@@ -149,7 +136,7 @@ COLDC_FUNC(abs) {
         if (_INT(ARG1) < 0)
             _INT(ARG1) = -_INT(ARG1);
     } else if (args[0].type == FLOAT) {
-        _FLOAT(ARG1) = (FLOAT_TYPE) fabs((double) _FLOAT(ARG1));
+        _FLOAT(ARG1) = (cFloat) fabs((double) _FLOAT(ARG1));
     }
 }
 

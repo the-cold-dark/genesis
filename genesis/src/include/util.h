@@ -1,56 +1,56 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/util.h
-// ---
-// Declarations for utility functions.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef cdc_util_h
+#define cdc_util_h
 
-#define NUMBER_BUF_SIZE 32
+#define NUMBER_BUF_SIZE (SIZEOF_LONG * 8) + 1
 typedef char Number_buf[NUMBER_BUF_SIZE];
 
-#include <stdio.h>
 #include <stdarg.h>
-#include "cdc_types.h"
 
-#define LCASE(c) lowercase[(int) c]
-#define UCASE(c) uppercase[(int) c]
+#define LCASE(c) lowercase[(Int) c]
+#define UCASE(c) uppercase[(Int) c]
 
-void init_util(void);
-unsigned long hash(char *s);
-unsigned long hash_case(char *s, int n);
-long atoln(char *s, int n);
-char *long_to_ascii(long num, Number_buf nbuf);
-char *float_to_ascii(float num, Number_buf nbuf);
-int strccmp(char *s1, char *s2);
-int strnccmp(char *s1, char *s2, int n);
-char *strcchr(char *s, int c);
-char *strcstr(char *s, char *search);
-long random_number(long n);
-char *crypt_string(char *key, char *salt);
-string_t *vformat(char *fmt, va_list arg);
-string_t *format(char *fmt, ...);
-char * timestamp(char * str);
-void fformat(FILE *fp, char *fmt, ...);
-string_t *fgetstring(FILE *fp);
-char *english_type(int type);
-char *english_integer(int n, Number_buf nbuf);
-long parse_ident(char **sptr);
-FILE *open_scratch_file(char *name, char *type);
-void close_scratch_file(FILE *fp);
-void init_scratch_file(void);
-int parse_strcpy(char * s1, char * s2, int len);
-int getarg(char * n, char ** buf, char * opt, char **argv, int * argc, void (*usage)(char *));
-int is_valid_id(char * str, int len);
+/* many system implementations of isprint() are EXTREMELY slow */
+#define ISPRINT(_c_) ((Int) _c_ > 31 && (Int) _c_ < 127)
 
 extern char lowercase[128];
 extern char uppercase[128];
+
+uLong hash(char *s);
+uLong hash_case(char *s, Int n);
+
+void       init_util(void);
+Long       atoln(char *s, Int n);
+char     * long_to_ascii(Long num, Number_buf nbuf);
+char     * float_to_ascii(float num, Number_buf nbuf);
+Int        strccmp(char *s1, char *s2);
+Int        strnccmp(char *s1, char *s2, Int n);
+char     * strcchr(char *s, Int c);
+char     * strcstr(char *s, char *search);
+Long       random_number(Long n);
+char     * crypt_string(char *key, char *salt);
+cStr     * vformat(char * fmt, va_list arg);
+cStr     * format(char * fmt, ...);
+char     * timestamp(char * str);
+void       fformat(FILE *fp, char *fmt, ...);
+cStr     * fgetstring(FILE *fp);
+char     * english_type(Int type);
+char     * english_integer(Int n, Number_buf nbuf);
+Long       parse_ident(char **sptr);
+FILE     * open_scratch_file(char *name, char *type);
+void       close_scratch_file(FILE *fp);
+void       init_scratch_file(void);
+Int        parse_strcpy(char * s1, char * s2, Int len);
+Int        is_valid_id(char * str, Int len);
+Int        getarg(char * n,
+                  char ** buf,
+                  char * opt,
+                  char **argv,
+                  Int * argc,
+                  void (*usage)(char *));
 
 #endif
 

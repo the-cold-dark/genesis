@@ -1,12 +1,5 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: modules/moddef.h
-// ---
-//
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
 #ifndef _moddef_h_
@@ -29,28 +22,28 @@ module_t * cold_modules[] = {
 };
 #endif
 
-#define NATIVE_BUFFER_GRAFT 0
-#define NATIVE_BUFFER_LENGTH 1
-#define NATIVE_BUFFER_REPLACE 2
-#define NATIVE_BUFFER_SUBRANGE 3
-#define NATIVE_BUFFER_TO_STRING 4
-#define NATIVE_BUFFER_TO_STRINGS 5
-#define NATIVE_BUFFER_FROM_STRING 6
-#define NATIVE_BUFFER_FROM_STRINGS 7
-#define NATIVE_DICTIONARY_KEYS 8
-#define NATIVE_DICTIONARY_ADD 9
-#define NATIVE_DICTIONARY_DEL 10
-#define NATIVE_DICTIONARY_CONTAINS 11
-#define NATIVE_NETWORK_HOSTNAME 12
-#define NATIVE_NETWORK_IP 13
-#define NATIVE_LIST_LENGTH 14
-#define NATIVE_LIST_SUBRANGE 15
-#define NATIVE_LIST_INSERT 16
-#define NATIVE_LIST_REPLACE 17
-#define NATIVE_LIST_DELETE 18
-#define NATIVE_LIST_SETADD 19
-#define NATIVE_LIST_SETREMOVE 20
-#define NATIVE_LIST_UNION 21
+#define NATIVE_BUFFER_LENGTH 0
+#define NATIVE_BUFFER_REPLACE 1
+#define NATIVE_BUFFER_SUBRANGE 2
+#define NATIVE_BUFFER_TO_STRING 3
+#define NATIVE_BUFFER_TO_STRINGS 4
+#define NATIVE_BUFFER_FROM_STRING 5
+#define NATIVE_BUFFER_FROM_STRINGS 6
+#define NATIVE_DICTIONARY_KEYS 7
+#define NATIVE_DICTIONARY_ADD 8
+#define NATIVE_DICTIONARY_DEL 9
+#define NATIVE_DICTIONARY_CONTAINS 10
+#define NATIVE_NETWORK_HOSTNAME 11
+#define NATIVE_NETWORK_IP 12
+#define NATIVE_LIST_LENGTH 13
+#define NATIVE_LIST_SUBRANGE 14
+#define NATIVE_LIST_INSERT 15
+#define NATIVE_LIST_REPLACE 16
+#define NATIVE_LIST_DELETE 17
+#define NATIVE_LIST_SETADD 18
+#define NATIVE_LIST_SETREMOVE 19
+#define NATIVE_LIST_UNION 20
+#define NATIVE_LIST_JOIN 21
 #define NATIVE_STRING_LENGTH 22
 #define NATIVE_STRING_SUBRANGE 23
 #define NATIVE_STRING_EXPLODE 24
@@ -68,22 +61,23 @@ module_t * cold_modules[] = {
 #define NATIVE_STRING_CAPITALIZE 36
 #define NATIVE_STRING_COMPARE 37
 #define NATIVE_STRING_FORMAT 38
-#define NATIVE_SYS_NEXT_OBJNUM 39
-#define NATIVE_SYS_STATUS 40
-#define NATIVE_SYS_VERSION 41
-#define NATIVE_TIME_FORMAT 42
-#define NATIVE_BUFFER_TO_VEIL_PKTS 43
-#define NATIVE_BUFFER_FROM_VEIL_PKTS 44
-#define NATIVE_HTTP_DECODE 45
-#define NATIVE_HTTP_ENCODE 46
-#define NATIVE_LAST 47
+#define NATIVE_STRING_TRIM 39
+#define NATIVE_STRING_SPLIT 40
+#define NATIVE_SYS_NEXT_OBJNUM 41
+#define NATIVE_SYS_STATUS 42
+#define NATIVE_SYS_VERSION 43
+#define NATIVE_TIME_FORMAT 44
+#define NATIVE_BUFFER_TO_VEIL_PKTS 45
+#define NATIVE_BUFFER_FROM_VEIL_PKTS 46
+#define NATIVE_HTTP_DECODE 47
+#define NATIVE_HTTP_ENCODE 48
+#define NATIVE_LAST 49
 
-#define MAGIC_MODNUMBER 832783452
+#define MAGIC_MODNUMBER 836857006
 
 
 #ifdef _native_
 native_t natives[NATIVE_LAST] = {
-    {"buffer",       "graft",             native_bufgraft},
     {"buffer",       "length",            native_buflen},
     {"buffer",       "replace",           native_buf_replace},
     {"buffer",       "subrange",          native_subbuf},
@@ -105,6 +99,7 @@ native_t natives[NATIVE_LAST] = {
     {"list",         "setadd",            native_setadd},
     {"list",         "setremove",         native_setremove},
     {"list",         "union",             native_union},
+    {"list",         "join",              native_join},
     {"string",       "length",            native_strlen},
     {"string",       "subrange",          native_substr},
     {"string",       "explode",           native_explode},
@@ -122,6 +117,8 @@ native_t natives[NATIVE_LAST] = {
     {"string",       "capitalize",        native_capitalize},
     {"string",       "compare",           native_strcmp},
     {"string",       "format",            native_strfmt},
+    {"string",       "trim",              native_trim},
+    {"string",       "split",             native_split},
     {"sys",          "next_objnum",       native_next_objnum},
     {"sys",          "status",            native_status},
     {"sys",          "version",           native_version},

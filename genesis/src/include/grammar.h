@@ -1,29 +1,18 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/grammar.h
-// ---
-// Declarations for the parser.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#ifndef _grammar_h_
-#define _grammar_h_
+#ifndef cdc_grammar_h
+#define cdc_grammar_h
 
 #include <stdarg.h>
-#include "config.h"
-#include "cdc_types.h"
-#include "object.h"
-#include "list.h"
 
-method_t * compile(object_t *object, list_t * code, list_t ** error_ret);
-void       compiler_error(int lineno, char * fmt, ...);
-int        no_errors(void);
+Method * compile(Obj *object, cList * code, cList ** error_ret);
+void       compiler_error(Int lineno, char * fmt, ...);
+Int        no_errors(void);
 
-/*
+#if DISABLED
 #define YYERROR_VERBOSE 1
-*/
+#endif
 
 #endif

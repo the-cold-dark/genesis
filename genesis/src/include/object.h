@@ -1,37 +1,24 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/object.h
-// ---
-// Declarations for objects.
-//
-// The header ordering conventions break down here; we need to make sure data.h
-// has finished, not just that the typedefs have been done.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#ifndef _object_h_
-#define _object_h_
+#ifndef cdc_object_h
+#define cdc_object_h
 
-#include <stdio.h>
-#include "cdc_types.h"
-#include "io.h"
 #include "file.h"
 
-struct object {
-    list_t * parents;
-    list_t * children;
+struct Obj {
+    cList * parents;
+    cList * children;
 
     /* Variables are stored in a table, with index threads starting at the
      * hash table entries.  There is also an index thread for blanks.  This
      * way we can write the hash table to disk easily. */
     struct {
 	Var * tab;
-	int * hashtab;
-	int   blanks;
-	int   size;
+	Int * hashtab;
+	Int   blanks;
+	Int   size;
     } vars;
 
     /* Methods are also stored in a table.  Since methods are fairly big, we
@@ -39,41 +26,41 @@ struct object {
      * space. */
     struct {
 	struct mptr {
-	    method_t * m;
-	    int next;
+	    Method * m;
+	    Int next;
 	}   * tab;
-	int * hashtab;
-	int   blanks;
-	int   size;
+	Int * hashtab;
+	Int   blanks;
+	Int   size;
     } methods;
 
     /* Table for string references in methods. */
     String_entry *strings;
-    int num_strings;
-    int strings_size;
+    Int num_strings;
+    Int strings_size;
 
     /* Table for identifier references in methods. */
     Ident_entry	*idents;
-    int num_idents;
-    int idents_size;
+    Int num_idents;
+    Int idents_size;
 
     /* Information for the cache. */
-    objnum_t objnum;
-    int   refs;
+    cObjnum objnum;
+    Int   refs;
     char  dirty;                 /* Flag: Object has been modified. */
     char  dead;	                 /* Flag: Object has been destroyed. */
-    int   ucounter;              /* counter: Object references */
+    Int   ucounter;              /* counter: Object references */
 
-    long search;                 /* Last search to visit object. */
+    Long search;                 /* Last search to visit object. */
 
     Ident objname;               /* object name */
 
     /* Pointers to next and previous objects in cache chain. */
-    object_t * next;
-    object_t * prev;
+    Obj * next;
+    Obj * prev;
 
     /* i/o pointers for faster lookup, only valid in the cache */
-    connection_t * conn;
+    Conn * conn;
     filec_t      * file;
 };
 
@@ -88,44 +75,44 @@ struct object {
  * references are really just one reference, since we only duplicate or discard
  * when we're adding or removing a string from an object. */
 struct string_entry {
-    string_t *str;
-    int refs;
+    cStr *str;
+    Int refs;
 };
 
 /* Similar logic for identifier references. */
 struct ident_entry {
     Ident id;
-    int refs;
+    Int refs;
 };
 
 struct var {
     Ident name;
-    objnum_t cclass;
-    data_t val;
-    int next;
+    cObjnum cclass;
+    cData val;
+    Int next;
 };
 
-struct method {
+struct Method {
     Ident name;
-    object_t *object;
-    int num_args;
+    Obj *object;
+    Int num_args;
     Object_ident *argnames;
     Object_ident rest;
-    int num_vars;
+    Int num_vars;
     Object_ident *varnames;
-    int num_opcodes;
-    long *opcodes;
-    int num_error_lists;
+    Int num_opcodes;
+    Long *opcodes;
+    Int num_error_lists;
     Error_list *error_lists;
 
     /* if this is a native method, it is > 0 and is relative to the native
        method's spot in the lookup table */
-    int native;
+    Int native;
 
     /* consolidate the following into bit flags */
-    int m_access;       /* public, protected, private */
-    int m_flags;       /* overridable, synchronized, locked */
-    int refs;
+    Int m_access;       /* public, protected, private */
+    Int m_flags;       /* overridable, synchronized, locked */
+    Int refs;
 };
 
 /* access: only one at a time */
@@ -150,8 +137,8 @@ struct method {
 #define MF_UNDF4     128  /* undefined */
 
 struct error_list {
-    int num_errors;
-    int *error_ids;
+    Int num_errors;
+    Int *error_ids;
 };
 
 /* ..................................................................... */
@@ -159,9 +146,9 @@ struct error_list {
 
 #ifdef  _object_
 
-
 /* We use MALLOC_DELTA to keep table sizes to 32 bytes less than a power of
- * two, if pointers and longs are four bytes. */
+ * two, if pointers and Longs are four bytes. */
+/* HACKNOTE: ARRRG, BAD BAD BAD */
 #define MALLOC_DELTA            8
 #define ANCTEMP_STARTING_SIZE   (32 - MALLOC_DELTA)
 #define VAR_STARTING_SIZE       (16 - MALLOC_DELTA - 1)
@@ -173,132 +160,132 @@ struct error_list {
 /* ..................................................................... */
 /* types and structures */
 
-/* data_t for method searches. */
+/* cData for method searches. */
 typedef struct search_params Search_params;
 
 struct search_params {
-    unsigned long name;
-    long stop_at;
-    int done;
-    method_t * last_method_found;
+    uLong name;
+    Long stop_at;
+    Int done;
+    Method * last_method_found;
 };
 
 struct {
-    long stamp;
-    objnum_t objnum;
+    Long stamp;
+    cObjnum objnum;
     Ident name;
-    objnum_t after;
-    objnum_t loc;
+    cObjnum after;
+    cObjnum loc;
 } method_cache[METHOD_CACHE_SIZE];
 
 /* ..................................................................... */
 /* function prototypes */
-static void    object_update_parents(object_t *object,
-                                  list_t *(*list_op)(list_t *, data_t *));
-static list_t   *object_ancestors_aux(long objnum, list_t *ancestors);
-static int     object_has_ancestor_aux(long objnum, long ancestor);
-static Var    *object_create_var(object_t *object, long cclass, long name);
-static Var    *object_find_var(object_t *object, long cclass, long name);
-static method_t * object_find_method_local(object_t *object, long name);
-static method_t * method_cache_check(long objnum, long name, long after);
-static void    method_cache_set(long objnum, long name, long after, long loc);
-static void    search_object(long objnum, Search_params *params);
-static void    method_delete_code_refs(method_t * method);
+static void    object_update_parents(Obj *object,
+                                  cList *(*list_op)(cList *, cData *));
+static cList   *object_ancestors_aux(Long objnum, cList *ancestors);
+static Int     object_has_ancestor_aux(Long objnum, Long ancestor);
+static Var    *object_create_var(Obj *object, Long cclass, Long name);
+static Var    *object_find_var(Obj *object, Long cclass, Long name);
+static Method * object_find_method_local(Obj *object, Long name);
+static Method * method_cache_check(Long objnum, Long name, Long after);
+static void    method_cache_set(Long objnum, Long name, Long after, Long loc);
+static void    search_object(Long objnum, Search_params *params);
+static void    method_delete_code_refs(Method * method);
 
-object_t *object_new(long objnum, list_t *parents);
-void    object_free(object_t *object);
-void    object_destroy(object_t *object);
-void    object_construct_ancprec(object_t *object);
-int     object_change_parents(object_t *object, list_t *parents);
-list_t *object_ancestors(long objnum);
-list_t *object_descendants(long objnum);
-int     object_has_ancestor(long objnum, long ancestor);
-void    object_reconstruct_descendent_ancprec(long objnum);
-int     object_add_string(object_t *object, string_t *string);
-void    object_discard_string(object_t *object, int ind);
-string_t *object_get_string(object_t *object, int ind);
-int     object_add_ident(object_t *object, char *ident);
-void    object_discard_ident(object_t *object, int ind);
-long    object_get_ident(object_t *object, int ind);
-long    object_add_var(object_t *object, long name);
-long    object_del_var(object_t *object, long name);
-long    object_assign_var(object_t *object, object_t *cclass, long name, data_t *val);
-long    object_delete_var(object_t *object, object_t *cclass, long name);
-long    object_retrieve_var(object_t *object, object_t *cclass, long name,
-                            data_t *ret);
-void    object_put_var(object_t *object, long cclass, long name, data_t *val);
-method_t * object_find_method(long objnum, long name);
-method_t * object_find_next_method(long objnum, long name, long after);
-int     object_rename_method(object_t * object, long oname, long nname);
-void    object_add_method(object_t *object, long name, method_t *method);
-int     object_del_method(object_t *object, long name);
-list_t   *object_list_method(object_t *object, long name, int indent, int parens);
-method_t * method_new(void);
-void    method_free(method_t *method);
-method_t *method_dup(method_t *method);
-void    method_discard(method_t *method);
-int     object_set_objname(object_t * object, long name);
-int     object_del_objname(object_t * object);
+Obj *object_new(Long objnum, cList *parents);
+void    object_free(Obj *object);
+void    object_destroy(Obj *object);
+void    object_construct_ancprec(Obj *object);
+Int     object_change_parents(Obj *object, cList *parents);
+cList *object_ancestors(Long objnum);
+cList *object_descendants(Long objnum);
+Int     object_has_ancestor(Long objnum, Long ancestor);
+void    object_reconstruct_descendent_ancprec(Long objnum);
+Int     object_add_string(Obj *object, cStr *string);
+void    object_discard_string(Obj *object, Int ind);
+cStr *object_get_string(Obj *object, Int ind);
+Int     object_add_ident(Obj *object, char *ident);
+void    object_discard_ident(Obj *object, Int ind);
+Long    object_get_ident(Obj *object, Int ind);
+Long    object_add_var(Obj *object, Long name);
+Long    object_del_var(Obj *object, Long name);
+Long    object_assign_var(Obj *object, Obj *cclass, Long name, cData *val);
+Long    object_delete_var(Obj *object, Obj *cclass, Long name);
+Long    object_retrieve_var(Obj *object, Obj *cclass, Long name,
+                            cData *ret);
+void    object_put_var(Obj *object, Long cclass, Long name, cData *val);
+Method * object_find_method(Long objnum, Long name);
+Method * object_find_next_method(Long objnum, Long name, Long after);
+Int     object_rename_method(Obj * object, Long oname, Long nname);
+void    object_add_method(Obj *object, Long name, Method *method);
+Int     object_del_method(Obj *object, Long name);
+cList   *object_list_method(Obj *object, Long name, Int indent, Int parens);
+Method * method_new(void);
+void    method_free(Method *method);
+Method *method_dup(Method *method);
+void    method_discard(Method *method);
+Int     object_set_objname(Obj * object, Long name);
+Int     object_del_objname(Obj * object);
 
 /* ..................................................................... */
 /* global variables */
 
 /* Count for keeping track of of already-searched objects during searches. */
-long cur_search;
+Long cur_search;
 
 /* Keeps track of objnum for next object in database. */
-long db_top;
+Long db_top;
 
 /* Validity count for method cache (incrementing this count invalidates all
  * cache entries. */
-static int cur_stamp = 1;
+static Int cur_stamp = 1;
 
 #else /* _object_ */
 
-extern object_t *object_new(long objnum, list_t *parents);
-extern void    object_free(object_t *object);
-extern void    object_destroy(object_t *object);
-extern void    object_construct_ancprec(object_t *object);
-extern int     object_change_parents(object_t *object, list_t *parents);
-extern list_t   *object_ancestors(long objnum);
-extern list_t   *object_descendants(long objnum);
-extern int     object_has_ancestor(long objnum, long ancestor);
-extern void    object_reconstruct_descendent_ancprec(long objnum);
-extern int     object_add_string(object_t *object, string_t *string);
-extern void    object_discard_string(object_t *object, int ind);
-extern string_t *object_get_string(object_t *object, int ind);
-extern int     object_add_ident(object_t *object, char *ident);
-extern void    object_discard_ident(object_t *object, int ind);
-extern long    object_get_ident(object_t *object, int ind);
-extern long    object_add_var(object_t *object, long name);
-extern long    object_del_var(object_t *object, long name);
-extern long    object_assign_var(object_t *object, object_t *cclass, long name,
-                                 data_t *val);
-extern long    object_delete_var(object_t *object, object_t *cclass, long name);
-extern long    object_retrieve_var(object_t *object, object_t *cclass, long name,
-                                   data_t *ret);
-extern void    object_put_var(object_t *object, long cclass, long name,
-                              data_t *val);
-extern method_t *object_find_method(long objnum, long name);
-extern method_t *object_find_next_method(long objnum, long name, long after);
-extern int     object_rename_method(object_t * object, long oname, long nname);
-extern void    object_add_method(object_t *object, long name, method_t *method);
-extern int     object_del_method(object_t *object, long name);
-extern list_t   *object_list_method(object_t *object, long name, int indent,
-                                  int parens);
-extern void    method_free(method_t *method);
-extern method_t *method_dup(method_t *method);
-extern void    method_discard(method_t *method);
-extern int     object_set_objname(object_t * object, long name);
-extern int     object_del_objname(object_t * object);
-extern int     object_get_method_flags(object_t * object, long name);
-extern int     object_get_method_access(object_t * object, long name);
-extern int     object_set_method_flags(object_t * object, long name, int flags);
-extern int     object_set_method_access(object_t * object, long name, int access);
+extern Obj *object_new(Long objnum, cList *parents);
+extern void    object_free(Obj *object);
+extern void    object_destroy(Obj *object);
+extern void    object_construct_ancprec(Obj *object);
+extern Int     object_change_parents(Obj *object, cList *parents);
+extern cList   *object_ancestors(Long objnum);
+extern cList   *object_descendants(Long objnum);
+extern Int     object_has_ancestor(Long objnum, Long ancestor);
+extern void    object_reconstruct_descendent_ancprec(Long objnum);
+extern Int     object_add_string(Obj *object, cStr *string);
+extern void    object_discard_string(Obj *object, Int ind);
+extern cStr *object_get_string(Obj *object, Int ind);
+extern Int     object_add_ident(Obj *object, char *ident);
+extern void    object_discard_ident(Obj *object, Int ind);
+extern Long    object_get_ident(Obj *object, Int ind);
+extern Long    object_add_var(Obj *object, Long name);
+extern Long    object_del_var(Obj *object, Long name);
+extern Long    object_assign_var(Obj *object, Obj *cclass, Long name,
+                                 cData *val);
+extern Long    object_delete_var(Obj *object, Obj *cclass, Long name);
+extern Long    object_retrieve_var(Obj *object, Obj *cclass, Long name,
+                                   cData *ret);
+extern void    object_put_var(Obj *object, Long cclass, Long name,
+                              cData *val);
+extern Method *object_find_method(Long objnum, Long name);
+extern Method *object_find_next_method(Long objnum, Long name, Long after);
+extern Int     object_rename_method(Obj * object, Long oname, Long nname);
+extern void    object_add_method(Obj *object, Long name, Method *method);
+extern Int     object_del_method(Obj *object, Long name);
+extern cList   *object_list_method(Obj *object, Long name, Int indent,
+                                  Int parens);
+extern void    method_free(Method *method);
+extern Method *method_dup(Method *method);
+extern void    method_discard(Method *method);
+extern Int     object_set_objname(Obj * object, Long name);
+extern Int     object_del_objname(Obj * object);
+extern Int     object_get_method_flags(Obj * object, Long name);
+extern Int     object_get_method_access(Obj * object, Long name);
+extern Int     object_set_method_flags(Obj * object, Long name, Int flags);
+extern Int     object_set_method_access(Obj * object, Long name, Int access);
 
 /* variables */
-extern long db_top;
-extern long cur_search;
+extern Long db_top;
+extern Long cur_search;
 
 #endif /* _object_ */
 

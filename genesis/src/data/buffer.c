@@ -1,26 +1,19 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: buffer.c
-// ---
 // Routines for ColdC buffer manipulation.
 */
 
-#include <ctype.h>
-#include "config.h"
 #include "defs.h"
-#include "buffer.h"
-#include "memory.h"
+
+#include <ctype.h>
 #include "util.h"
 
-#define BUFALLOC(len)		(buffer_t *)emalloc(sizeof(buffer_t) + (len) - 1)
-#define BUFREALLOC(buf, len)	(buffer_t *)erealloc(buf, sizeof(buffer_t) + (len) - 1)
+#define BUFALLOC(len)		(cBuf *)emalloc(sizeof(cBuf) + (len) - 1)
+#define BUFREALLOC(buf, len)	(cBuf *)erealloc(buf, sizeof(cBuf) + (len) - 1)
 
-buffer_t *buffer_new(int len) {
-    buffer_t *buf;
+cBuf *buffer_new(Int len) {
+    cBuf *buf;
 
     buf = BUFALLOC(len);
     buf->len = len;
@@ -28,18 +21,18 @@ buffer_t *buffer_new(int len) {
     return buf;
 }
 
-buffer_t *buffer_dup(buffer_t *buf) {
+cBuf *buffer_dup(cBuf *buf) {
     buf->refs++;
     return buf;
 }
 
-void buffer_discard(buffer_t *buf) {
+void buffer_discard(cBuf *buf) {
     buf->refs--;
     if (!buf->refs)
 	efree(buf);
 }
 
-buffer_t *buffer_append(buffer_t *buf1, buffer_t *buf2) {
+cBuf *buffer_append(cBuf *buf1, cBuf *buf2) {
     if (!buf2->len)
 	return buf1;
     buf1 = buffer_prep(buf1);
@@ -49,11 +42,11 @@ buffer_t *buffer_append(buffer_t *buf1, buffer_t *buf2) {
     return buf1;
 }
 
-int buffer_retrieve(buffer_t *buf, int pos) {
+Int buffer_retrieve(cBuf *buf, Int pos) {
     return buf->s[pos];
 }
 
-buffer_t *buffer_replace(buffer_t *buf, int pos, unsigned int c) {
+cBuf *buffer_replace(cBuf *buf, Int pos, uInt c) {
     if (buf->s[pos] == c)
 	return buf;
     buf = buffer_prep(buf);
@@ -61,7 +54,7 @@ buffer_t *buffer_replace(buffer_t *buf, int pos, unsigned int c) {
     return buf;
 }
 
-buffer_t *buffer_add(buffer_t *buf, unsigned int c) {
+cBuf *buffer_add(cBuf *buf, uInt c) {
     buf = buffer_prep(buf);
     buf = BUFREALLOC(buf, buf->len + 1);
     buf->s[buf->len] = OCTET_VALUE(c);
@@ -69,7 +62,7 @@ buffer_t *buffer_add(buffer_t *buf, unsigned int c) {
     return buf;
 }
 
-buffer_t *buffer_resize(buffer_t *buf, int len) {
+cBuf *buffer_resize(cBuf *buf, Int len) {
     if (len == buf->len)
 	return buf;
     buf = buffer_prep(buf);
@@ -78,21 +71,8 @@ buffer_t *buffer_resize(buffer_t *buf, int len) {
     return buf;
 }
 
-buffer_t *buffer_tail(buffer_t *buf, int pos) {
-    buffer_t *outbuf;
-
-    if (pos == 1)
-	return buf;
-
-    outbuf = buffer_prep(buf);
-    outbuf->len = buf->len - (pos-1);
-    MEMCPY(outbuf->s, buf->s+(pos-1), outbuf->len);
-    outbuf = BUFREALLOC(outbuf,outbuf->len);
-    return(outbuf);
-}
-
-string_t * buffer_to_string(buffer_t * buf) {
-    string_t * str, * out;
+cStr * cBufo_string(cBuf * buf) {
+    cStr * str, * out;
     unsigned char * string_start, *p, *q;
     char * s;
     size_t len;
@@ -109,7 +89,7 @@ string_t * buffer_to_string(buffer_t * buf) {
         str = string_new(p - string_start);
         s = str->s;
         for (q = string_start; q < p; q++) {
-            if (isprint(*q))
+            if (ISPRINT(*q))
                 *s++ = *q;
         }
         *s = 0;
@@ -133,15 +113,16 @@ string_t * buffer_to_string(buffer_t * buf) {
 }
 
 /* If sep (separator buffer) is NULL, separate by newlines. */
-list_t *buffer_to_strings(buffer_t *buf, buffer_t *sep)
+cList *cBufo_strings(cBuf *buf, cBuf *sep)
 {
-    data_t d;
-    string_t *str;
-    list_t *result;
-    unsigned char sepchar, *string_start, *p, *q;
-    char *s;
-    int seplen;
-    buffer_t *end;
+    cData d;
+    cStr *str;
+    cList *result;
+    unsigned char sepchar, *string_start;
+    register unsigned char *p, *q;
+    register char *s;
+    Int seplen;
+    cBuf *end;
 
     sepchar = (sep) ? *sep->s : '\n';
     seplen = (sep) ? sep->len : 1;
@@ -165,7 +146,7 @@ list_t *buffer_to_strings(buffer_t *buf, buffer_t *sep)
 	str = string_new(p - string_start);
 	s = str->s;
 	for (q = string_start; q < p; q++) {
-	    if (isprint(*q))
+	    if (ISPRINT(*q))
 		*s++ = *q;
 	}
 	*s = 0;
@@ -190,9 +171,9 @@ list_t *buffer_to_strings(buffer_t *buf, buffer_t *sep)
     return result;
 }
 
-buffer_t *buffer_from_string(string_t * string) {
-    buffer_t * buf;
-    int      new;
+cBuf *buffer_from_string(cStr * string) {
+    cBuf * buf;
+    Int      new;
 
     buf = buffer_new(string_length(string));
     new = parse_strcpy((char *) buf->s,
@@ -205,10 +186,10 @@ buffer_t *buffer_from_string(string_t * string) {
     return buf;
 }
 
-buffer_t *buffer_from_strings(list_t * string_list, buffer_t * sep) {
-    data_t * string_data;
-    buffer_t *buf;
-    int num_strings, i, len, pos;
+cBuf *buffer_from_strings(cList * string_list, cBuf * sep) {
+    cData * string_data;
+    cBuf *buf;
+    Int num_strings, i, len, pos;
     unsigned char *s;
 
     string_data = list_first(string_list);
@@ -239,8 +220,8 @@ buffer_t *buffer_from_strings(list_t * string_list, buffer_t * sep) {
     return buf;
 }
 
-buffer_t * buffer_subrange(buffer_t * buf, int start, int len) {
-    buffer_t * cnew = buffer_new(len);
+cBuf * buffer_subrange(cBuf * buf, Int start, Int len) {
+    cBuf * cnew = buffer_new(len);
 
     MEMCPY(cnew->s, buf->s + start, (len > buf->len ? buf->len : len));
     cnew->len = len;
@@ -249,8 +230,8 @@ buffer_t * buffer_subrange(buffer_t * buf, int start, int len) {
     return cnew;
 }
 
-buffer_t *buffer_prep(buffer_t *buf) {
-    buffer_t *cnew;
+cBuf *buffer_prep(cBuf *buf) {
+    cBuf *cnew;
 
     if (buf->refs == 1)
 	return buf;

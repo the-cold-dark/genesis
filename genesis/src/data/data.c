@@ -1,32 +1,20 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: data.c
-// ---
-// Routines for ColdC data manipulation.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include <ctype.h>
-#include "cdc_types.h"
-#include "data.h"
 #include "util.h"
 #include "cache.h"
-#include "memory.h"
 #include "token.h"
-#include "log.h"
 #include "lookup.h"
 
 /* Effects: Returns 0 if and only if d1 and d2 are equal according to ColdC
  *	    conventions.  If d1 and d2 are of the same type and are integers or
  *	    strings, returns greater than 0 if d1 is greater than d2 according
  *	    to ColdC conventions, and less than 0 if d1 is less than d2. */
-int data_cmp(data_t *d1, data_t *d2) {
+Int data_cmp(cData *d1, cData *d2) {
     if (d1->type == FLOAT && d2->type == INTEGER) {
         d2->type = FLOAT;
         d2->u.fval = (float) d2->u.val;
@@ -61,7 +49,7 @@ int data_cmp(data_t *d1, data_t *d2) {
       case SYMBOL:
 	return (d1->u.symbol != d2->u.symbol);
 
-      case ERROR:
+      case T_ERROR:
 	return (d1->u.error != d2->u.error);
 
       case FROB:
@@ -86,7 +74,7 @@ int data_cmp(data_t *d1, data_t *d2) {
 
 /* Effects: Returns 1 if data is true according to ColdC conventions, or 0 if
  *	    data is false. */
-int data_true(data_t *d)
+Int data_true(cData *d)
 {
     switch (d->type) {
 
@@ -108,7 +96,7 @@ int data_true(data_t *d)
       case SYMBOL:
 	return 1;
 
-      case ERROR:
+      case T_ERROR:
 	return 0;
 
       case FROB:
@@ -125,9 +113,9 @@ int data_true(data_t *d)
     }
 }
 
-unsigned long data_hash(data_t *d)
+uLong data_hash(cData *d)
 {
-    list_t *values;
+    cList *values;
 
     switch (d->type) {
 
@@ -135,7 +123,7 @@ unsigned long data_hash(data_t *d)
 	return d->u.val;
 
       case FLOAT:
-        return *((long*)(&d->u.fval));
+        return *((uLong*)(&d->u.fval));
 
       case STRING:
 	return hash_case(string_chars(d->u.str), string_length(d->u.str));
@@ -152,7 +140,7 @@ unsigned long data_hash(data_t *d)
       case SYMBOL:
 	return hash(ident_name(d->u.symbol));
 
-      case ERROR:
+      case T_ERROR:
 	return hash(ident_name(d->u.error));
 
       case FROB:
@@ -179,7 +167,7 @@ unsigned long data_hash(data_t *d)
 
 /* Modifies: dest.
  * Effects: Copies src into dest, updating reference counts as necessary. */
-void data_dup(data_t *dest, data_t *src)
+void data_dup(cData *dest, cData *src)
 {
     dest->type = src->type;
     switch (src->type) {
@@ -208,12 +196,12 @@ void data_dup(data_t *dest, data_t *src)
 	dest->u.symbol = ident_dup(src->u.symbol);
 	break;
 
-      case ERROR:
+      case T_ERROR:
 	dest->u.error = ident_dup(src->u.error);
 	break;
 
       case FROB:
-	dest->u.frob = TMALLOC(frob_t, 1);
+	dest->u.frob = TMALLOC(cFrob, 1);
 	dest->u.frob->cclass = src->u.frob->cclass;
 	data_dup(&dest->u.frob->rep, &src->u.frob->rep);
 	break;
@@ -231,7 +219,7 @@ void data_dup(data_t *dest, data_t *src)
 /* Modifies: The value referred to by data.
  * Effects: Updates the reference counts for the value referred to by data
  *	    when we are no longer using it. */
-void data_discard(data_t *data)
+void data_discard(cData *data)
 {
     switch (data->type) {
 
@@ -247,7 +235,7 @@ void data_discard(data_t *data)
 	ident_discard(data->u.symbol);
 	break;
 
-      case ERROR:
+      case T_ERROR:
 	ident_discard(data->u.error);
 	break;
 
@@ -265,7 +253,7 @@ void data_discard(data_t *data)
     }
 }
 
-string_t *data_tostr(data_t *data) {
+cStr *data_tostr(cData *data) {
     char *s;
     Number_buf nbuf;
 
@@ -284,7 +272,7 @@ string_t *data_tostr(data_t *data) {
 
       case OBJNUM: {
           char       prefix[] = {'$', (char) NULL};
-          object_t * obj = cache_retrieve(data->u.objnum);
+          Obj * obj = cache_retrieve(data->u.objnum);
 
           if (!obj || obj->objname == -1) {
               s = long_to_ascii(data->u.objnum, nbuf);
@@ -305,7 +293,7 @@ string_t *data_tostr(data_t *data) {
 	s = ident_name(data->u.symbol);
 	return string_from_chars(s, strlen(s));
 
-      case ERROR:
+      case T_ERROR:
 	s = ident_name(data->u.error);
 	return string_from_chars(s, strlen(s));
 
@@ -325,16 +313,16 @@ string_t *data_tostr(data_t *data) {
 }
 
 /* Effects: Returns a string containing a printed representation of data. */
-string_t *data_to_literal(data_t *data)
+cStr *data_to_literal(cData *data)
 {
-    string_t *str = string_new(0);
+    cStr *str = string_new(0);
 
     return data_add_literal_to_str(str, data);
 }
 
-string_t *data_add_list_literal_to_str(string_t *str, list_t *list)
+cStr *data_add_list_literal_to_str(cStr *str, cList *list)
 {
-    data_t *d, *next;
+    cData *d, *next;
 
     str = string_addc(str, '[');
     d = list_first(list);
@@ -354,11 +342,11 @@ string_t *data_add_list_literal_to_str(string_t *str, list_t *list)
 /* Modifies: str (mutator, claims reference count).
  * Effects: Returns a string with the printed representation of data added to
  *	    it. */
-string_t *data_add_literal_to_str(string_t *str, data_t *data)
+cStr *data_add_literal_to_str(cStr *str, cData *data)
 {
     char *s;
     Number_buf nbuf;
-    int i;
+    Int i;
 
     switch(data->type) {
 
@@ -376,7 +364,7 @@ string_t *data_add_literal_to_str(string_t *str, data_t *data)
 
       case OBJNUM: {
           char       pre = '$';
-          object_t * obj = cache_retrieve(data->u.objnum);
+          Obj * obj = cache_retrieve(data->u.objnum);
 
           if (!obj || obj->objname == -1) {
               s = long_to_ascii(data->u.objnum, nbuf);
@@ -402,7 +390,7 @@ string_t *data_add_literal_to_str(string_t *str, data_t *data)
 	else
 	    return string_add_unparsed(str, s, strlen(s));
 
-      case ERROR:
+      case T_ERROR:
 	str = string_addc(str, '~');
 	s = ident_name(data->u.error);
 	if (is_valid_ident(s))
@@ -411,7 +399,7 @@ string_t *data_add_literal_to_str(string_t *str, data_t *data)
 	    return string_add_unparsed(str, s, strlen(s));
 
       case FROB: {
-        data_t d;
+        cData d;
 
 	str = string_addc(str, '<');
         d.type = OBJNUM;
@@ -442,7 +430,7 @@ string_t *data_add_literal_to_str(string_t *str, data_t *data)
 
 /* Effects: Returns an id (without updating reference count) for the name of
  *	    the type given by type. */
-long data_type_id(int type)
+Long data_type_id(Int type)
 {
     switch (type) {
       case INTEGER:	return integer_id;
@@ -451,7 +439,7 @@ long data_type_id(int type)
       case OBJNUM:	return objnum_id;
       case LIST:	return list_id;
       case SYMBOL:	return symbol_id;
-      case ERROR:	return error_id;
+      case T_ERROR:	return error_id;
       case FROB:	return frob_id;
       case DICT:	return dictionary_id;
       case BUFFER:	return buffer_id;

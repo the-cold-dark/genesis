@@ -1,6 +1,7 @@
 # Genesis, the ColdC driver
 
 CFLAGS=@CFLAGS@ -Iinclude -Imodules
+MCFLAGS=`echo $(CFLAGS) | sed -e 's:-pedantic::'`
 LIBS=@LIBS@
 LDFLAGS=@LDFLAGS@ -Lmodules
 CC=@CC@
@@ -27,7 +28,7 @@ DATA_O     = data/data.o data/buffer.o data/dict.o data/ident.o\
 GRAMMAR_O  = grammar.o
 DB_O       = cache.o binarydb.o dbpack.o decode.o lookup.o
 IO_O       = io.o log.o net.o file.o
-MISC_O     = match.o memory.o sig.o util.o regexp.o defs.o
+MISC_O     = strutil.o memory.o sig.o util.o regexp.o defs.o
 OPS_O      = ops/operators.o ops/buffer.o ops/error.o ops/list.o\
              ops/object.o ops/dict.o ops/string.o ops/data.o ops/sys.o\
              ops/misc.o ops/task.o ops/file.o ops/network.o ops/math.o
@@ -48,9 +49,15 @@ DRIVER = genesis
 COMPILER = coldcc
 CONTROL = control
 
-EXES = $(DRIVER) $(COMPILER)
+EXES = $(COMPILER) $(DRIVER)
 
 all: $(GRAMMAR_O) include/parse.h Data Modules Ops $(EXES)
+
+win32:
+	make scrub
+	$(YACC) $(YFLAGS) grammar.y
+	mv -f y.tab.c grammar.c
+	mv -f y.tab.h include/parse.h
 
 Data:
 	@echo "data objects..."
@@ -65,28 +72,39 @@ Ops:
 	@cd $(OPSDIR); make
 
 $(DRIVER): $(DRIVER_O)
-	$(CC) $(LDFLAGS) $(DRIVER_O) $(LIBS) $(COLDLIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(DRIVER_O) $(LIBS) $(COLDLIBS) -o $@
 
 $(COMPILER): $(COMPILER_O)
-	$(CC) $(LDFLAGS) $(COMPILER_O) $(LIBS) $(COLDLIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(COMPILER_O) $(LIBS) $(COLDLIBS) -o $@
 
 $(CONTROL): $(CONTROL_O)
-	$(CC) $(LDFLAGS) $(CONTROL_O) $(LIBS) $(COLDLIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(CONTROL_O) $(LIBS) $(COLDLIBS) -o $@
 
 clean:
-	rm -f include/parse.h grammar.c $(EXES) *~ *.BAK *.bak y.output
+	rm -f include/parse.h grammar.c *~ *.BAK *.bak y.output
+	rm -f $(EXES)
+	cd $(SRCDIR); rm -f $(EXES)
 	@cd $(MODULES); make $@
 	@cd $(OPSDIR); make $@
 	@cd $(DATADIR); make $@
+
+## malloc doesnt want the -pedantic
+malloc.o:
+	$(CC) $(MCFLAGS) -c malloc.c
 
 scrub:
-	rm -f *.o include/parse.h grammar.c $(EXES) *~ *.BAK *.bak y.output
+	rm -f *.o include/parse.h grammar.c *~ *.BAK *.bak y.output
+	rm -f $(EXES)
+	cd $(SRCDIR); rm -f $(EXES)
+	rm -rf binary binary.bak
 	@cd $(MODULES); make $@
 	@cd $(OPSDIR); make $@
 	@cd $(DATADIR); make $@
 
+makefiles: makefile
+
 makefile:
-	@cd ..; configure
+	@cd ..; etc/config.status
 
 install: all
 	for i in $(EXES); do \
@@ -94,9 +112,15 @@ install: all
 		chmod 700 $(BINDIR)/\$i; \
 	done
 
-depend:
+depend: $(GRAMMAR_O) include/parse.h
+	@echo modules..
 	@cd $(MODULES); make $@
+	@echo ops..
+	@cd $(OPSDIR); make $@
+	@echo data..
+	@cd $(DATADIR); make $@
 	@makedepend -- $(CFLAGS) -- $(EVERYTHING_C)
+	@rm -f Makefile.bak
 
 lint:
 	$(LINT) -u $(EVERYTHING_C)
@@ -104,6 +128,7 @@ lint:
 # I duplicate scrub because of the recusion involved in calling modules
 patchable:
 	rm -f include/parse.h grammar.c $(EXES) *~ *.BAK *.bak y.output
+	rm -rf binary
 	rm -f *.o
 	@cd $(MODULES); make $@
 	@cd $(OPSDIR); make $@
@@ -128,7 +153,7 @@ genesis.o: include/cdc_types.h include/regexp.h include/ident.h
 genesis.o: include/list.h include/cdc_string.h include/buffer.h
 genesis.o: include/dict.h include/data.h include/io.h include/file.h
 genesis.o: include/memory.h include/opcodes.h
-genesis.o: include/match.h include/cache.h include/sig.h include/binarydb.h
+genesis.o: include/strutil.h include/cache.h include/sig.h include/binarydb.h
 genesis.o: include/util.h include/log.h
 genesis.o: include/execute.h include/token.h include/native.h
 control.o: include/config.h include/defs.h 
@@ -139,7 +164,7 @@ coldcc.o: include/cdc_string.h include/cdc_types.h include/regexp.h
 coldcc.o: include/ident.h include/list.h include/buffer.h include/dict.h
 coldcc.o: include/object.h include/io.h include/file.h include/data.h
 coldcc.o: include/codegen.h include/memory.h 
-coldcc.o: include/match.h include/opcodes.h include/util.h
+coldcc.o: include/strutil.h include/opcodes.h include/util.h
 coldcc.o: include/sig.h include/execute.h
 coldcc.o: include/token.h include/native.h include/binarydb.h
 coldcc.o: include/textdb.h include/cache.h
@@ -263,12 +288,12 @@ file.o: include/ident.h include/list.h include/cdc_string.h include/buffer.h
 file.o: include/dict.h include/object.h include/io.h include/data.h
 file.o: include/execute.h include/memory.h
 file.o: include/grammar.h include/util.h include/cache.h include/log.h
-match.o: include/config.h include/defs.h 
-match.o: include/parse.h 
-match.o: include/match.h include/data.h include/cdc_types.h include/regexp.h
-match.o: include/ident.h include/list.h include/cdc_string.h include/buffer.h
-match.o: include/dict.h include/object.h include/io.h include/file.h
-match.o: include/memory.h include/util.h
+strutil.o: include/config.h include/defs.h 
+strutil.o: include/parse.h 
+strutil.o: include/strutil.h include/data.h include/cdc_types.h include/regexp.h
+strutil.o: include/ident.h include/list.h include/cdc_string.h include/buffer.h
+strutil.o: include/dict.h include/object.h include/io.h include/file.h
+strutil.o: include/memory.h include/util.h
 memory.o: include/config.h include/defs.h 
 memory.o: include/parse.h include/memory.h
 memory.o: include/log.h
@@ -287,7 +312,7 @@ util.o: include/object.h include/io.h include/file.h include/data.h
 util.o: include/token.h include/memory.h include/log.h
 regexp.o: include/config.h include/defs.h 
 regexp.o: include/parse.h 
-regexp.o: include/regexp.h include/regmagic.h include/util.h
+regexp.o: include/regexp.h include/util.h
 regexp.o: include/cdc_types.h include/ident.h
 regexp.o: include/list.h include/cdc_string.h include/buffer.h include/dict.h
 regexp.o: include/object.h include/io.h include/file.h

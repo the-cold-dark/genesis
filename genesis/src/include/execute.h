@@ -1,16 +1,9 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/execute.h
-// ---
-// Declarations for executing ColdC tasks.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#ifndef _execute_h_
-#define _execute_h_
+#ifndef execute_h
+#define execute_h
 
 typedef struct frame Frame;
 typedef struct error_action_specifier Error_action_specifier;
@@ -21,10 +14,6 @@ typedef struct task_s task_t;
 
 #include <sys/types.h>
 #include <stdarg.h>
-#include "data.h"
-#include "object.h"
-#include "io.h"
-#include "opcodes.h"
 
 /* We use the MALLOC_DELTA defines to keep table sizes thirty-two bytes less
  * than a power of two, which is helpful on buddy systems. */
@@ -32,8 +21,8 @@ typedef struct task_s task_t;
 #define ARG_STACK_MALLOC_DELTA 8
 
 struct vmstack {
-    data_t  * stack;
-    int       stack_size,
+    cData  * stack;
+    Int       stack_size,
             * arg_starts,
               arg_size;
     VMStack * next;
@@ -41,62 +30,63 @@ struct vmstack {
 
 struct vmstate {
     Frame   * cur_frame;
-    data_t  * stack;
-    int       stack_pos,
+    cData  * stack;
+    Int       stack_pos,
               stack_size,
             * arg_starts,
               arg_pos,
               arg_size;
-    int       task_id;
-    int       preempted;
+    Int       task_id;
+    Int       preempted;
     VMState * next;
 };
 
 struct task_s {
-    objnum_t   objnum;
+    cObjnum   objnum;
     Ident      method;
-    int        stack_start;
-    int        arg_start;
+    Int        stack_start;
+    Int        arg_start;
     task_t   * next;
 };
 
 struct frame {
-    object_t *object;
-    objnum_t sender;
-    objnum_t caller;
-    objnum_t user;
-    method_t *method;
-    long *opcodes;
-    int pc;
-    int last_opcode;
-    int ticks;
-    int stack_start;
-    int var_start;
+    Obj *object;
+    cObjnum sender;
+    cObjnum caller;
+    cObjnum user;
+    Method *method;
+    Long *opcodes;
+    Int pc;
+    Int last_opcode;
+    Int ticks;
+    Int stack_start;
+    Int var_start;
     Error_action_specifier *specifiers;
     Handler_info *handler_info;
     Frame *caller_frame;
 };
 
 struct error_action_specifier {
-    int type;
-    int stack_pos;
+    Int type;
+    Int stack_pos;
+    Int arg_pos;
     union {
 	struct {
-	    int end;
+	    Int end;
 	} critical;
 	struct {
-	    int end;
+	    Int end;
 	} propagate;
 	struct {
-	    int error_list;
-	    int handler;
+	    Int error_list;
+	    Int handler;
 	} ccatch;
     } u;
     Error_action_specifier *next;
 };
 
 struct handler_info {
-    list_t *traceback;
+    cList *traceback;
     Ident error;
     Handler_info *next;
 };
@@ -114,90 +104,94 @@ struct handler_info {
 #define    CALL_NATIVE   9
 
 extern Frame *cur_frame;
-extern data_t *stack;
-extern int stack_pos, stack_size;
-extern int *arg_starts, arg_pos, arg_size;
-extern string_t *numargs_str;
-extern long task_id;
-extern long tick;
+extern cData *stack;
+extern Int stack_pos, stack_size;
+extern Int *arg_starts, arg_pos, arg_size;
+extern cStr *numargs_str;
+extern Long task_id;
+extern Long tick;
 extern VMState * preempted;
 extern VMState * suspended;
 
 void init_execute(void);
-void task(objnum_t objnum, long message, int num_args, ...);
-void task_method(object_t *obj, method_t *method);
-int  frame_start(object_t *obj,
-                 method_t *method,
-                 objnum_t sender,
-                 objnum_t caller,
-                 objnum_t user,
-		 int stack_start,
-                 int arg_start);
-void pop_native_stack(int start);
+void task(cObjnum objnum, Long message, Int num_args, ...);
+void task_method(Obj *obj, Method *method);
+Int  frame_start(Obj *obj,
+                 Method *method,
+                 cObjnum sender,
+                 cObjnum caller,
+                 cObjnum user,
+		 Int stack_start,
+                 Int arg_start);
+void pop_native_stack(Int start);
 void frame_return(void);
 void anticipate_assignment(void);
-int pass_method(int stack_start, int arg_start);
-int call_method(objnum_t objnum, Ident message, int stack_start, int arg_start);
-void pop(int n);
-void check_stack(int n);
+Int pass_method(Int stack_start, Int arg_start);
+Int call_method(cObjnum objnum, Ident message, Int stack_start, Int arg_start);
+void pop(Int n);
+void check_stack(Int n);
 
 #define F_PUSH(_name_, _c_type_) \
     void CAT(push_, _name_) (_c_type_ var)
 #define N_PUSH(_name_, _c_type_) \
     void CAT(native_push_, _name_) (_c_type_ var)
 
-F_PUSH(int,    long);
-F_PUSH(float,  float);
-F_PUSH(string, string_t *);
-F_PUSH(objnum, objnum_t);
-F_PUSH(list,   list_t *);
-F_PUSH(dict,   dict_t *);
+F_PUSH(int,    cNum);
+F_PUSH(float,  cFloat);
+F_PUSH(string, cStr *);
+F_PUSH(objnum, cObjnum);
+F_PUSH(list,   cList *);
+F_PUSH(dict,   cDict *);
 F_PUSH(symbol, Ident);
 F_PUSH(error,  Ident);
-F_PUSH(buffer, buffer_t *);
+F_PUSH(buffer, cBuf *);
 
-N_PUSH(int,    long);
-N_PUSH(float,  float);
-N_PUSH(string, string_t *);
-N_PUSH(objnum, objnum_t);
-N_PUSH(list,   list_t *);
-N_PUSH(dict,   dict_t *);
+N_PUSH(int,    cNum);
+N_PUSH(float,  cFloat);
+N_PUSH(string, cStr *);
+N_PUSH(objnum, cObjnum);
+N_PUSH(list,   cList *);
+N_PUSH(dict,   cDict *);
 N_PUSH(symbol, Ident);
 N_PUSH(error,  Ident);
-N_PUSH(buffer, buffer_t *);
+N_PUSH(buffer, cBuf *);
 
 #undef F_PUSH
 #undef N_PUSH
 
-int func_init_0(void);
-int func_init_1(data_t **args, int type1);
-int func_init_2(data_t **args, int type1, int type2);
-int func_init_3(data_t **args, int type1, int type2, int type3);
-int func_init_0_or_1(data_t **args, int *num_args, int type1);
-int func_init_1_or_2(data_t **args, int *num_args, int type1, int type2);
-int func_init_2_or_3(data_t **args, int *num_args, int type1, int type2,
-		     int type3);
-int func_init_1_to_3(data_t **args, int *num_args, int type1, int type2,
-		     int type3);
-void func_num_error(int num_args, char *required);
-void func_type_error(char *which, data_t *wrong, char *required);
+Int func_init_0(void);
+Int func_init_1(cData **args, Int type1);
+Int func_init_2(cData **args, Int type1, Int type2);
+Int func_init_3(cData **args, Int type1, Int type2, Int type3);
+Int func_init_0_or_1(cData **args, Int *num_args, Int type1);
+Int func_init_1_or_2(cData **args, Int *num_args, Int type1, Int type2);
+Int func_init_2_or_3(cData **args, Int *num_args, Int type1, Int type2,
+		     Int type3);
+Int func_init_1_to_3(cData **args, Int *num_args, Int type1, Int type2,
+		     Int type3);
+void func_num_error(Int num_args, char *required);
+void func_type_error(char *which, cData *wrong, char *required);
 /* void func_error(Ident id, char *fmt, ...); */
-void cthrow(long id, char *fmt, ...);
-void unignorable_error(Ident id, string_t *str);
-void interp_error(Ident error, string_t *str);
-void user_error(Ident error, string_t *str, data_t *arg);
-void propagate_error(list_t *traceback, Ident error);
+void cthrow(Long id, char *fmt, ...);
+void unignorable_error(Ident id, cStr *str);
+void interp_error(Ident error, cStr *str);
+void user_error(Ident error, cStr *str, cData *arg);
+void propagate_error(cList *traceback, Ident error);
 void pop_error_action_specifier(void);
 void pop_handler_info(void);
 void task_suspend(void);
-void task_resume(long tid, data_t *ret);
-void task_cancel(long tid);
+void task_resume(Long tid, cData *ret);
+void task_cancel(Long tid);
 void task_pause(void);
-VMState *task_lookup(long tid);
-list_t * task_list(void);
-list_t * task_stack(void);
+VMState *task_lookup(Long tid);
+cList * task_list(void);
+cList * task_stack(void);
 void run_paused_tasks(void);
-void bind_opcode(int opcode, objnum_t objnum);
+void bind_opcode(Int opcode, cObjnum objnum);
+
+#ifdef PROFILE_EXECUTE
+void dump_execute_profile(void);
+#endif
 
 #define INVALID_BINDING \
     (op_table[cur_frame->last_opcode].binding != INV_OBJNUM && \

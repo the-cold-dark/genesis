@@ -1,22 +1,13 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: list.c
-// ---
 // Routines for list manipulation.
 //
 // This code is not ANSI-conformant, because it allocates memory at the end
 // of List structure and references it with a one-element array.
 */
 
-#include "config.h"
 #include "defs.h"
-#include "list.h"
-#include "memory.h"
-/*#include <assert.h>*/
 
 /* Note that we number list elements [0..(len - 1)] internally, while the
  * user sees list elements as numbered [1..len]. */
@@ -46,9 +37,9 @@
  * In general, modifying start and len is the responsibility of this routine;
  * modifying the contents is the responsibility of the calling routine. */
 
-list_t * list_prep(list_t *list, int start, int len) {
-    list_t * cnew;
-    int      i,
+cList * list_prep(cList *list, Int start, Int len) {
+    cList * cnew;
+    Int      i,
              resize,
              size;
 
@@ -75,8 +66,8 @@ list_t * list_prep(list_t *list, int start, int len) {
             data_discard(&list->el[list->len - 1]);
         list->len = len;
         size = len;
-        list = (list_t *) erealloc(list,
-                                   sizeof(list_t) + (size * sizeof(data_t)));
+        list = (cList *) erealloc(list,
+                                   sizeof(cList) + (size * sizeof(cData)));
         list->size = size;
         return list;
     }
@@ -93,9 +84,9 @@ list_t * list_prep(list_t *list, int start, int len) {
 }
 
 
-list_t *list_new(int len) {
-    list_t * cnew;
-    cnew = (list_t *) emalloc(sizeof(list_t) + (len * sizeof(data_t)));
+cList *list_new(Int len) {
+    cList * cnew;
+    cnew = (cList *) emalloc(sizeof(cList) + (len * sizeof(cData)));
     cnew->len = 0;
     cnew->start = 0;
     cnew->size = len;
@@ -103,45 +94,45 @@ list_t *list_new(int len) {
     return cnew;
 }
 
-list_t *list_dup(list_t *list) {
+cList *list_dup(cList *list) {
     list->refs++;
     return list;
 }
 
-int list_length(list_t *list) {
+Int list_length(cList *list) {
     return list->len;
 }
 
-data_t *list_first(list_t *list) {
+cData *list_first(cList *list) {
     return (list->len) ? list->el + list->start : NULL;
 }
 
-data_t *list_next(list_t *list, data_t *d) {
+cData *list_next(cList *list, cData *d) {
     return (d < list->el + list->start + list->len - 1) ? d + 1 : NULL;
 }
 
-data_t *list_last(list_t *list) {
+cData *list_last(cList *list) {
     return (list->len) ? list->el + list->start + list->len - 1 : NULL;
 }
 
-data_t *list_prev(list_t *list, data_t *d) {
+cData *list_prev(cList *list, cData *d) {
     return (d > list->el + list->start) ? d - 1 : NULL;
 }
 
-data_t *list_elem(list_t *list, int i) {
+cData *list_elem(cList *list, Int i) {
     return list->el + list->start + i;
 }
 
 /* This is a horrible abstraction-breaking function.  Call it just after you
  * make a list with list_new(<spaces>).  Then fill in the data slots yourself.
  * Don't manipulate <list> until you're done. */
-data_t * list_empty_spaces(list_t *list, int spaces) {
+cData * list_empty_spaces(cList *list, Int spaces) {
     list->len += spaces;
     return list->el + list->start + list->len - spaces;
 }
 
-int list_search(list_t *list, data_t *data) {
-    data_t *d, *start, *end;
+Int list_search(cList *list, cData *data) {
+    cData *d, *start, *end;
 
     start = list->el + list->start;
     end = start + list->len;
@@ -153,8 +144,8 @@ int list_search(list_t *list, data_t *data) {
 }
 
 /* Effects: Returns 0 if the lists l1 and l2 are equivalent, or 1 if not. */
-int list_cmp(list_t *l1, list_t *l2) {
-    int i;
+Int list_cmp(cList *l1, cList *l2) {
+    Int i;
 
     /* They're obviously the same if they're the same list. */
     if (l1 == l2)
@@ -175,7 +166,7 @@ int list_cmp(list_t *l1, list_t *l2) {
 }
 
 /* Error-checking on pos is the job of the calling function. */
-list_t *list_insert(list_t *list, int pos, data_t *elem) {
+cList *list_insert(cList *list, Int pos, cData *elem) {
     list = list_prep(list, list->start, list->len + 1);
     pos += list->start;
     MEMMOVE(list->el + pos + 1, list->el + pos, list->len - 1 - pos);
@@ -183,14 +174,14 @@ list_t *list_insert(list_t *list, int pos, data_t *elem) {
     return list;
 }
 
-list_t *list_add(list_t *list, data_t *elem) {
+cList *list_add(cList *list, cData *elem) {
     list = list_prep(list, list->start, list->len + 1);
     data_dup(&list->el[list->start + list->len - 1], elem);
     return list;
 }
 
 /* Error-checking on pos is the job of the calling function. */
-list_t *list_replace(list_t *list, int pos, data_t *elem) {
+cList *list_replace(cList *list, Int pos, cData *elem) {
     /* list_prep needed here only for multiply referenced lists */
     if (list->refs > 1)
       list = list_prep(list, list->start, list->len);
@@ -201,7 +192,7 @@ list_t *list_replace(list_t *list, int pos, data_t *elem) {
 }
 
 /* Error-checking on pos is the job of the calling function. */
-list_t *list_delete(list_t *list, int pos) {
+cList *list_delete(cList *list, Int pos) {
     /* Special-case deletion of last element. */
     if (pos == list->len - 1)
         return list_prep(list, list->start, list->len - 1);
@@ -224,13 +215,13 @@ list_t *list_delete(list_t *list, int pos) {
 }
 
 /* This routine will crash if elem is not in list. */
-list_t *list_delete_element(list_t *list, data_t *elem) {
+cList *list_delete_element(cList *list, cData *elem) {
     return list_delete(list, list_search(list, elem));
 }
 
-list_t *list_append(list_t *list1, list_t *list2) {
-    int i;
-    data_t *p, *q;
+cList *list_append(cList *list1, cList *list2) {
+    Int i;
+    cData *p, *q;
 
     list1 = list_prep(list1, list1->start, list1->len + list2->len);
     p = list1->el + list1->start + list1->len - list2->len;
@@ -240,9 +231,9 @@ list_t *list_append(list_t *list1, list_t *list2) {
     return list1;
 }
 
-list_t *list_reverse(list_t *list) {
-    data_t *d, tmp;
-    int i;
+cList *list_reverse(cList *list) {
+    cData *d, tmp;
+    Int i;
 
     /* list_prep needed here only for multiply referenced lists */
     if (list->refs > 1)
@@ -257,21 +248,21 @@ list_t *list_reverse(list_t *list) {
     return list;
 }
 
-list_t *list_setadd(list_t *list, data_t *d) {
+cList *list_setadd(cList *list, cData *d) {
     if (list_search(list, d) != -1)
         return list;
     return list_add(list, d);
 }
 
-list_t *list_setremove(list_t *list, data_t *d) {
-    int pos = list_search(list, d);
+cList *list_setremove(cList *list, cData *d) {
+    Int pos = list_search(list, d);
     if (pos == -1)
         return list;
     return list_delete(list, pos);
 }
 
-list_t *list_union(list_t *list1, list_t *list2) {
-    data_t *start, *end, *d;
+cList *list_union(cList *list1, cList *list2) {
+    cData *start, *end, *d;
 
     /* Simplistic O(len1 * len2) implementation for now.  Later, use lengths to
      * decide whether to use a O(len1 + len2) hash table algorithm. */
@@ -284,18 +275,61 @@ list_t *list_union(list_t *list1, list_t *list2) {
     return list1;
 }
 
-list_t *list_sublist(list_t *list, int start, int len) {
+cList *list_sublist(cList *list, Int start, Int len) {
     return list_prep(list, list->start + start, len);
 }
 
 /* Warning: do not discard a list before initializing its data elements. */
-void list_discard(list_t *list) {
-    int i;
+void list_discard(cList *list) {
+    Int i;
 
     if (!--list->refs) {
         for (i = list->start; i < list->start + list->len; i++)
             data_discard(&list->el[i]);
         efree(list);
     }
+}
+
+/* 'list' must ALWAYS have at least one element, it does not check */
+#define ADD_TOSTR() \
+    switch (d->type) { \
+        case STRING: \
+            s = string_add(s, d->u.str); \
+            break; \
+        case SYMBOL: \
+            sp = ident_name(d->u.symbol); \
+            s = string_add_chars(s, sp, strlen(sp)); \
+            break; \
+        default: \
+            s = data_add_literal_to_str(s, d); \
+            break; \
+    }
+
+cStr * list_join(cList * list, cStr * sep) {
+    Int size;
+    cData * d;
+    cStr * s;
+    char * sp;
+    
+    /* figure up the size of the resulting string */
+    size = sep->len * (list->len - 1);
+    for (d=list_first(list); d; d = list_next(list, d)) {
+        /* just guess on its resulting size, magic numbers, whee */
+        if (d->type != STRING)
+            size += 5;
+        else
+            size += d->u.str->len;
+    }
+
+    s = string_new(size);
+
+    d = list_first(list);
+    ADD_TOSTR() 
+    for (d=list_next(list, d); d; d = list_next(list, d)) {
+        s = string_add(s, sep);
+        ADD_TOSTR()
+    }   
+    
+    return s;
 }
 

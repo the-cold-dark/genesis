@@ -1,95 +1,99 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/cdc_types.h
-// ---
-//
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#ifndef _cdc_types_h_
-#define _cdc_types_h_
+#ifndef cdc_types_h
+#define cdc_types_h
 
-typedef struct string       string_t;
-typedef struct list         list_t;
-typedef struct buffer       buffer_t;
-typedef struct frob         frob_t;
-typedef struct data         data_t;
-typedef struct dict         dict_t;
-typedef        long         Ident;
-typedef        long         objnum_t;
+/*
+// C typedef of any Cold advanced data type begins with a 'c'
+*/
+
+typedef Float             cFloat;
+typedef Long              cNum;
+typedef struct cStr       cStr;
+typedef struct cList      cList;
+typedef struct cBuf       cBuf;
+typedef struct cFrob      cFrob;
+typedef struct cData      cData;
+typedef struct cDict      cDict;
+typedef        Long       Ident;
+typedef        Long       cObjnum;
+typedef struct Obj        Obj;
+typedef struct Method     Method;
+
 typedef struct ident_entry  Ident_entry;
 typedef struct string_entry String_entry;
 typedef struct var          Var;
-typedef struct object       object_t;
-typedef struct method       method_t;
 typedef struct error_list   Error_list;
-typedef int                 Object_string;
-typedef int                 Object_ident;
+typedef Int                 Object_string;
+typedef Int                 Object_ident;
 
 #include "regexp.h"
 
-struct string {
-    int start;
-    int len;
-    int size;
-    int refs;
+struct cStr {
+    Int start;
+    Int len;
+    Int size;
+    Int refs;
     regexp * reg;
-    char s[1];
+    Char s[1];
 };
 
-struct buffer {
-    int len;
-    int refs;
-    unsigned char s[1];
+struct cBuf {
+    Int len;
+    Int refs;
+    uChar s[1];
 };
 
-struct data {
-    int type;
+struct cData {
+    Int type;
     union {
-        long       val;
-        float      fval;
-        objnum_t   objnum;
+        cNum       val;
+        cFloat     fval;
+        cObjnum    objnum;
         Ident      symbol;
         Ident      error;
-        string_t * str;
-        list_t   * list;
-        frob_t   * frob;
-        dict_t   * dict;
-        buffer_t * buffer;
+        cStr     * str;
+        cList    * list;
+        cFrob    * frob;
+        cDict    * dict;
+        cBuf     * buffer;
     } u;
 };
 
-struct list {
-    int start;
-    int len;
-    int size;
-    int refs;
-    data_t el[1];
+struct cList {
+    Int start;
+    Int len;
+    Int size;
+    Int refs;
+    cData el[1];
 };
 
-struct dict {
-    list_t * keys;
-    list_t * values;
-    int    * links;
-    int    * hashtab;
-    int      hashtab_size;
-    int      refs;
+struct cDict {
+    cList  * keys;
+    cList  * values;
+    Int    * links;
+    Int    * hashtab;
+    Int      hashtab_size;
+    Int      refs;
 };
 
-struct frob {
-    long cclass;
-    data_t rep;
+struct cFrob {
+    Long cclass;
+    cData rep;
 };
+
+/* io.h shouldn't necessarily be here, but it has to be here before other
+   data types, but after the above data definitions */
+#include "io.h"
 
 #include "ident.h"
+#include "object.h"
 #include "list.h"
 #include "cdc_string.h"
 #include "buffer.h"
 #include "dict.h"
-#include "object.h"
 #include "data.h"
 
 #endif

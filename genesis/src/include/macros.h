@@ -1,17 +1,11 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/object.h
-// ---
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#ifndef _macros_h_
-#define _macros_h_
+#ifndef cdc_macros_h
+#define cdc_macros_h
 
-#include "defs.h"    /* CAT() comes from defs.h */
+#include "defs.h"
 #include "native.h"
 #include "util.h"
 
@@ -21,11 +15,11 @@
 // -----------------------------------------------------------------------
 */
 #ifdef NATIVE_MODULE
-  #define RETURN_TRUE  return 1
-  #define RETURN_FALSE return 0
+# define RETURN_TRUE  return 1
+# define RETURN_FALSE return 0
 #else
-  #define RETURN_TRUE  return
-  #define RETURN_FALSE return
+# define RETURN_TRUE  return
+# define RETURN_FALSE return
 #endif
 
 /*
@@ -35,8 +29,8 @@
 */
 /* this doesn't vary from functions to native methods */
 #define ARG_COUNT    stack_pos - arg_start
-#define DEF_argc     int argc = ARG_COUNT
-#define DEF_args     data_t * args = &stack[arg_start]
+#define DEF_argc     Int argc = ARG_COUNT
+#define DEF_args     cData * args = &stack[arg_start]
 
 #define THROW_NUM_ERROR(_num_, _str_) { \
         func_num_error(_num_, _str_); \
@@ -161,7 +155,7 @@
 
 #define COLDC_FUNC(_name_) void CAT(func_, _name_) (void)
 #define NATIVE_METHOD(_name_) \
-        int CAT(native_, _name_) (int stack_start, int arg_start)
+        Int CAT(native_, _name_) (Int stack_start, Int arg_start)
 
 /*
 // -----------------------------------------------------------------------
@@ -253,6 +247,8 @@
 #define INT1           args[0].u.val
 #define INT2           args[1].u.val
 #define INT3           args[2].u.val
+#define INT4           args[3].u.val
+#define INT5           args[4].u.val
 #define FLOAT1         args[0].u.fval
 #define FLOAT2         args[1].u.fval
 #define FLOAT3         args[2].u.fval

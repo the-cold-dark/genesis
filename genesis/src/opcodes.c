@@ -1,20 +1,12 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: opcodes.c
-// ---
-// Information about opcodes.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#include <ctype.h>
-#include "config.h"
 #include "defs.h"
-#include "opcodes.h"
+#include <ctype.h>
+#include "cdc_pcode.h"
 #include "operators.h"
-#include "old_ops.h"
+/*#include "old_ops.h"*/
 #include "functions.h"
 #include "util.h"
 
@@ -24,7 +16,7 @@
 
 Op_info op_table[LAST_TOKEN];
 
-static int first_function;
+static Int first_function;
 
 static Op_info op_info[] = {
     { COMMENT,          "COMMENT",         op_comment, STRING },
@@ -49,23 +41,26 @@ static Op_info op_info[] = {
     { CONTINUE,         "CONTINUE",        op_continue, JUMP, INTEGER },
     { RETURN,           "RETURN",          op_return },
     { RETURN_EXPR,      "RETURN_EXPR",     op_return_expr },
-    { CATCH,            "CATCH",           op_catch, JUMP, ERROR },
+    { CATCH,            "CATCH",           op_catch, JUMP, T_ERROR },
     { CATCH_END,        "CATCH_END",       op_catch_end, JUMP },
     { HANDLER_END,      "HANDLER_END",     op_handler_end },
     { ZERO,             "ZERO",            op_zero },
     { ONE,              "ONE",             op_one },
     { INTEGER,          "INTEGER",         op_integer, INTEGER },
+
+    /* By the time it examines the arg, the FLOAT has already been
+       cast into an INTEGER, so we just need to let it know its an INT */
     { FLOAT,            "FLOAT",           op_float, INTEGER },
     { STRING,           "STRING",          op_string, STRING },
     { OBJNUM,           "OBJNUM",          op_objnum, INTEGER },
     { SYMBOL,           "SYMBOL",          op_symbol, IDENT },
-    { ERROR,            "ERROR",           op_error, IDENT },
+    { T_ERROR,            "ERROR",         op_error, IDENT },
     { OBJNAME,          "OBJNAME",         op_objname, IDENT },
     { GET_LOCAL,        "GET_LOCAL",       op_get_local, VAR },
     { GET_OBJ_VAR,      "GET_OBJ_VAR",     op_get_obj_var, IDENT },
     { START_ARGS,       "START_ARGS",      op_start_args },
     { PASS,             "PASS",            op_pass },
-    { CALL_METHOD,      "CALL_METHOD",         op_message, IDENT },
+    { CALL_METHOD,      "CALL_METHOD",     op_message, IDENT },
     { EXPR_CALL_METHOD, "EXPR_CALL_METHOD",    op_expr_message },
     { LIST,             "LIST",            op_list },
     { DICT,             "DICT",            op_dict },
@@ -96,7 +91,7 @@ static Op_info op_info[] = {
     { GE,               ">=",              op_greater_or_equal },
     { '<',              "<",               op_less },
     { LE,               "<=",              op_less_or_equal },
-    { IN,               "IN",              op_in },
+    { OP_IN,            "IN",              op_in },
     { P_INCREMENT,      "P_INCREMENT",     op_p_increment },
     { P_DECREMENT,      "P_DECREMENT",     op_p_decrement },
     { INCREMENT,        "INCREMENT",       op_increment },
@@ -254,7 +249,8 @@ static Op_info op_info[] = {
     { F_MATCH_TEMPLATE,   "match_template",  func_match_template },
     { F_MATCH_PATTERN,    "match_pattern",   func_match_pattern },
     { F_MATCH_REGEXP,     "match_regexp",    func_match_regexp },
-    { F_REGEXP,         "regexp",          func_regexp },
+    { F_REGEXP,           "regexp",          func_regexp },
+    { F_SPLIT,            "split",           func_split },
     { F_CRYPT,            "crypt",           func_crypt },
     { F_UPPERCASE,        "uppercase",       func_uppercase },
     { F_LOWERCASE,        "lowercase",       func_lowercase },
@@ -272,6 +268,7 @@ static Op_info op_info[] = {
     { F_SETREMOVE,        "setremove",       func_setremove },
     { F_UNION,            "union",           func_union },
     { F_LISTGRAFT,        "listgraft",       func_listgraft },
+    { F_JOIN,             "join",            func_join },
 
     /* Dictionary manipulation (dictop.c). */
     { F_DICT_KEYS,        "dict_keys",       func_dict_keys },
@@ -291,7 +288,7 @@ static Op_info op_info[] = {
 };
 
 void init_op_table(void) {
-    int i;
+    Int i;
 
     for (i = 0; i < NUM_OPERATORS; i++) {
         op_info[i].binding = INV_OBJNUM;
@@ -308,8 +305,8 @@ void init_op_table(void) {
     first_function = i;
 }
 
-int find_function(char *name) {
-    int i;
+Int find_function(char *name) {
+    Int i;
 
     for (i = first_function; i < NUM_OPERATORS; i++) {
         if (strcmp(op_info[i].name, name) == 0)

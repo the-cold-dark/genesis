@@ -1,22 +1,15 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#include "config.h"
 #include "defs.h"
 
-#include "lookup.h"
-#include "execute.h"
-#include "dbpack.h"
-#include "token.h"
-#include "cache.h"
+#include "cdc_pcode.h"
+#include "cdc_db.h"
 
 COLDC_FUNC(size) {
-    data_t * args;
-    int      nargs,
+    cData * args;
+    Int      nargs,
              size;
 
     if (!func_init_0_or_1(&args, &nargs, 0))
@@ -34,8 +27,8 @@ COLDC_FUNC(size) {
 }
 
 COLDC_FUNC(type) {
-    data_t *args;
-    int type;
+    cData *args;
+    Int type;
 
     /* Accept one argument of any type. */
     if (!func_init_1(&args, 0))
@@ -48,8 +41,8 @@ COLDC_FUNC(type) {
 }
 
 COLDC_FUNC(class) {
-    data_t *args;
-    long cclass;
+    cData *args;
+    Long cclass;
 
     /* Accept one argument of frob type. */
     if (!func_init_1(&args, FROB))
@@ -62,8 +55,8 @@ COLDC_FUNC(class) {
 }
 
 COLDC_FUNC(toint) {
-    data_t *args;
-    long val = 0;
+    cData *args;
+    Long val = 0;
 
     /* Accept a string or integer to convert into an integer. */
     if (!func_init_1(&args, 0))
@@ -73,7 +66,7 @@ COLDC_FUNC(toint) {
         case STRING:
             val = atol(string_chars(args[0].u.str)); break;
         case FLOAT:
-            val = (long) args[0].u.fval; break;
+            val = (Long) args[0].u.fval; break;
         case OBJNUM:
             val = args[0].u.objnum; break;
         case INTEGER:
@@ -90,7 +83,7 @@ COLDC_FUNC(toint) {
 }
 
 COLDC_FUNC(tofloat) {
-      data_t * args;
+      cData * args;
       float val = 0;
   
       /* Accept a string, integer or integer to convert into a float. */
@@ -117,8 +110,8 @@ COLDC_FUNC(tofloat) {
 }
 
 COLDC_FUNC(tostr) {
-    data_t *args;
-    string_t *str;
+    cData *args;
+    cStr *str;
 
     /* Accept one argument of any type. */
     if (!func_init_1(&args, 0))
@@ -133,8 +126,8 @@ COLDC_FUNC(tostr) {
 }
 
 COLDC_FUNC(toliteral) {
-    data_t *args;
-    string_t *str;
+    cData *args;
+    cStr *str;
 
     /* Accept one argument of any type. */
     if (!func_init_1(&args, 0))
@@ -148,7 +141,7 @@ COLDC_FUNC(toliteral) {
 }
 
 COLDC_FUNC(toobjnum) {
-    data_t *args;
+    cData *args;
 
     /* Accept an integer to convert into a objnum. */
     if (!func_init_1(&args, INTEGER))
@@ -162,8 +155,8 @@ COLDC_FUNC(toobjnum) {
 }
 
 COLDC_FUNC(tosym) {
-    data_t *args;
-    long sym;
+    cData *args;
+    Long sym;
 
     /* Accept one string argument. */
     if (!func_init_1(&args, STRING))
@@ -172,11 +165,8 @@ COLDC_FUNC(tosym) {
     /* this is wrong, we should check this everywhere, not just here,
        but at the moment everywhere assumes 'ident_get' returns a valid
        ident irregardless */
-    if (!is_valid_ident(string_chars(args[0].u.str))) {
-        cthrow(symbol_id,
-        "Symbols may only contain alphanumeric characters and the underscore.");
-        return;
-    }
+    if (!is_valid_ident(string_chars(args[0].u.str)))
+        THROW((symbol_id, "Symbol contains non-alphanumeric characters."))
 
     sym = ident_get(string_chars(args[0].u.str));
     pop(1);
@@ -184,12 +174,14 @@ COLDC_FUNC(tosym) {
 }
 
 COLDC_FUNC(toerr) {
-    data_t *args;
-    long error;
+    cData *args;
+    Long error;
 
     /* Accept one string argument. */
     if (!func_init_1(&args, STRING))
 	return;
+
+    THROW((type_id, "I'm feeling petulant today."))
 
     error = ident_get(string_chars(args[0].u.str));
     pop(1);
@@ -197,8 +189,8 @@ COLDC_FUNC(toerr) {
 }
 
 COLDC_FUNC(valid) {
-    data_t *args;
-    int is_valid;
+    cData *args;
+    Int is_valid;
 
     /* Accept one argument of any type (only objnums can be valid, though). */
     if (!func_init_1(&args, 0))

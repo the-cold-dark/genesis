@@ -1,15 +1,9 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: lookup.c
-// ---
 // Interface to dbm index of object locations.
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include <sys/types.h>
@@ -18,9 +12,7 @@
 #include <ndbm.h>
 #include <fcntl.h>
 #include <string.h>
-#include "lookup.h"
-#include "log.h"
-#include "ident.h"
+#include "cdc_db.h"
 #include "util.h"
 
 #ifdef S_IRUSR
@@ -31,26 +23,26 @@
 #define READ_WRITE_EXECUTE 0700
 #endif
 
-static datum objnum_key(long objnum, Number_buf nbuf);
-static datum name_key(long name);
-static datum offset_size_value(off_t offset, int size, Number_buf nbuf);
-static void parse_offset_size_value(datum value, off_t *offset, int *size);
-static datum objnum_value(long objnum, Number_buf nbuf);
-static void sync_name_cache(void);
-static int store_name(long name, long objnum);
-static int get_name(long name, long *objnum);
+INTERNAL datum objnum_key(Long objnum, Number_buf nbuf);
+INTERNAL datum name_key(Long name);
+INTERNAL datum offset_size_value(off_t offset, Int size, Number_buf nbuf);
+INTERNAL void parse_offset_size_value(datum value, off_t *offset, Int *size);
+INTERNAL datum objnum_value(Long objnum, Number_buf nbuf);
+INTERNAL void sync_name_cache(void);
+INTERNAL Int store_name(Long name, Long objnum);
+INTERNAL Int get_name(Long name, Long *objnum);
 
-static DBM *dbp;
+INTERNAL DBM *dbp;
 
 struct name_cache_entry {
-    long name;
-    long objnum;
+    Long name;
+    Long objnum;
     char dirty;
     char on_disk;
 } name_cache[NAME_CACHE_SIZE + 1];
 
-void lookup_open(char *name, int cnew) {
-    int i;
+void lookup_open(char *name, Int cnew) {
+    Int i;
 
     if (cnew)
 	dbp = dbm_open(name, O_TRUNC | O_RDWR | O_CREAT, READ_WRITE);
@@ -81,7 +73,7 @@ void lookup_sync(void) {
 	panic("Cannot reopen dbm database file.");
 }
 
-int lookup_retrieve_objnum(long objnum, off_t *offset, int *size)
+Int lookup_retrieve_objnum(Long objnum, off_t *offset, Int *size)
 {
     datum key, value;
     Number_buf nbuf;
@@ -96,7 +88,7 @@ int lookup_retrieve_objnum(long objnum, off_t *offset, int *size)
     return 1;
 }
 
-int lookup_store_objnum(long objnum, off_t offset, int size)
+Int lookup_store_objnum(Long objnum, off_t offset, Int size)
 {
     datum key, value;
     Number_buf nbuf1, nbuf2;
@@ -111,7 +103,7 @@ int lookup_store_objnum(long objnum, off_t offset, int size)
     return 1;
 }
 
-int lookup_remove_objnum(long objnum)
+Int lookup_remove_objnum(Long objnum)
 {
     datum key;
     Number_buf nbuf;
@@ -125,7 +117,7 @@ int lookup_remove_objnum(long objnum)
     return 1;
 }
 
-long lookup_first_objnum(void)
+Long lookup_first_objnum(void)
 {
     datum key;
 
@@ -137,7 +129,7 @@ long lookup_first_objnum(void)
     return lookup_next_objnum();
 }
 
-long lookup_next_objnum(void)
+Long lookup_next_objnum(void)
 {
     datum key;
 
@@ -149,9 +141,9 @@ long lookup_next_objnum(void)
     return lookup_next_objnum();
 }
 
-int lookup_retrieve_name(long name, long *objnum)
+Int lookup_retrieve_name(Long name, Long *objnum)
 {
-    int i = name % NAME_CACHE_SIZE;
+    Int i = name % NAME_CACHE_SIZE;
 
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
@@ -179,9 +171,9 @@ int lookup_retrieve_name(long name, long *objnum)
     return 1;
 }
 
-int lookup_store_name(long name, long objnum)
+Int lookup_store_name(Long name, Long objnum)
 {
-    int i = name % NAME_CACHE_SIZE;
+    Int i = name % NAME_CACHE_SIZE;
 
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
@@ -208,10 +200,10 @@ int lookup_store_name(long name, long objnum)
     return 1;
 }
 
-int lookup_remove_name(long name)
+Int lookup_remove_name(Long name)
 {
     datum key;
-    int i = name % NAME_CACHE_SIZE;
+    Int i = name % NAME_CACHE_SIZE;
 
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
@@ -230,7 +222,7 @@ int lookup_remove_name(long name)
     return 1;
 }
 
-long lookup_first_name(void)
+Long lookup_first_name(void)
 {
     datum key;
 
@@ -243,7 +235,7 @@ long lookup_first_name(void)
     return lookup_next_name();
 }
 
-long lookup_next_name(void)
+Long lookup_next_name(void)
 {
     datum key;
 
@@ -255,7 +247,7 @@ long lookup_next_name(void)
     return lookup_next_name();
 }
 
-static datum objnum_key(long objnum, Number_buf nbuf)
+INTERNAL datum objnum_key(Long objnum, Number_buf nbuf)
 {
     char *s;
     datum key;
@@ -274,7 +266,7 @@ static datum objnum_key(long objnum, Number_buf nbuf)
     return key;
 }
 
-static datum offset_size_value(off_t offset, int size, Number_buf nbuf)
+INTERNAL datum offset_size_value(off_t offset, Int size, Number_buf nbuf)
 {
     char *s;
     Number_buf tmp_buf;
@@ -292,7 +284,7 @@ static datum offset_size_value(off_t offset, int size, Number_buf nbuf)
     return value;
 }
 
-static void parse_offset_size_value(datum value, off_t *offset, int *size)
+INTERNAL void parse_offset_size_value(datum value, off_t *offset, Int *size)
 {
     char *p;
 
@@ -301,7 +293,7 @@ static void parse_offset_size_value(datum value, off_t *offset, int *size)
     *size = atol(p + 1);
 }
 
-static datum name_key(long name)
+INTERNAL datum name_key(Long name)
 {
     datum key;
 
@@ -311,7 +303,7 @@ static datum name_key(long name)
     return key;
 }
 
-static datum objnum_value(long objnum, Number_buf nbuf)
+INTERNAL datum objnum_value(Long objnum, Number_buf nbuf)
 {
     char *s;
     datum value;
@@ -322,9 +314,9 @@ static datum objnum_value(long objnum, Number_buf nbuf)
     return value;
 }
 
-static void sync_name_cache(void)
+INTERNAL void sync_name_cache(void)
 {
-    int i;
+    Int i;
 
     for (i = 0; i < NAME_CACHE_SIZE; i++) {
 	if (name_cache[i].name != NOT_AN_IDENT && name_cache[i].dirty) {
@@ -335,7 +327,7 @@ static void sync_name_cache(void)
     }
 }
 
-static int store_name(long name, long objnum)
+INTERNAL Int store_name(Long name, Long objnum)
 {
     datum key, value;
     Number_buf nbuf;
@@ -352,7 +344,7 @@ static int store_name(long name, long objnum)
     return 1;
 }
 
-static int get_name(long name, long *objnum)
+INTERNAL Int get_name(Long name, Long *objnum)
 {
     datum key, value;
 

@@ -1,11 +1,6 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: functions.c
-// ---
 // Function operators
 //
 // This file contains functions inherent to the system, which are actually
@@ -19,17 +14,13 @@
 // will not be changing often.
 */
 
-#include "config.h"
 #include "defs.h"
 
-#include "lookup.h"
-#include "execute.h"
-#include "object.h"
-#include "grammar.h"
-#include "cache.h"
+#include "cdc_pcode.h"
+#include "cdc_db.h"
 
 COLDC_FUNC(add_var) {
-    data_t * args;
+    cData * args;
     long     result;
 
     /* Accept a symbol argument a data value to assign to the variable. */
@@ -46,7 +37,7 @@ COLDC_FUNC(add_var) {
 }
 
 COLDC_FUNC(del_var) {
-    data_t * args;
+    cData * args;
     long     result;
 
     /* Accept one symbol argument. */
@@ -63,11 +54,11 @@ COLDC_FUNC(del_var) {
 }
 
 COLDC_FUNC(variables) {
-    list_t   * vars;
-    object_t * obj;
-    int        i;
+    cList   * vars;
+    Obj * obj;
+    Int        i;
     Var      * var;
-    data_t     d;
+    cData     d;
 
     /* Accept no arguments. */
     if (!func_init_0())
@@ -91,7 +82,7 @@ COLDC_FUNC(variables) {
 }
 
 COLDC_FUNC(set_var) {
-    data_t * args,
+    cData * args,
              d;
     long     result;
 
@@ -113,7 +104,7 @@ COLDC_FUNC(set_var) {
 }
 
 COLDC_FUNC(get_var) {
-    data_t * args,
+    cData * args,
              d;
     long     result;
 
@@ -133,7 +124,7 @@ COLDC_FUNC(get_var) {
 }
 
 COLDC_FUNC(clear_var) {
-    data_t * args;
+    cData * args;
     long     result = 0;
 
     /* Accept a symbol argument. */
@@ -157,12 +148,12 @@ COLDC_FUNC(clear_var) {
 }
 
 COLDC_FUNC(add_method) {
-    data_t   * args,
+    cData   * args,
              * d;
-    method_t * method;
-    list_t   * code,
+    Method * method;
+    cList   * code,
              * errors;
-    int        flags=-1, access=-1;
+    Int        flags=-1, access=-1;
 
     /* Accept a list of lines of code and a symbol for the name. */
     if (!func_init_2(&args, LIST, SYMBOL))
@@ -206,8 +197,8 @@ COLDC_FUNC(add_method) {
 }
 
 COLDC_FUNC(rename_method) {
-    data_t   * args;
-    method_t * method;
+    cData   * args;
+    Method * method;
 
     if (!func_init_2(&args, SYMBOL, SYMBOL))
         return;
@@ -234,9 +225,9 @@ COLDC_FUNC(rename_method) {
         list = list_add(list, &d); \
     }
 
-INTERNAL list_t * list_method_flags(int flags) {
-    list_t * list;
-    data_t d;
+INTERNAL cList * list_method_flags(Int flags) {
+    cList * list;
+    cData d;
 
     if (flags == F_FAILURE)
         flags = MF_NONE;
@@ -258,8 +249,8 @@ INTERNAL list_t * list_method_flags(int flags) {
 #undef LADD
 
 COLDC_FUNC(method_flags) {
-    data_t  * args;
-    list_t  * list;
+    cData  * args;
+    cList  * list;
 
     if (!func_init_1(&args, SYMBOL))
         return;
@@ -272,10 +263,10 @@ COLDC_FUNC(method_flags) {
 }
 
 COLDC_FUNC(set_method_flags) {
-    data_t  * args,
+    cData  * args,
             * d;
-    list_t  * list;
-    int       flags,
+    cList  * list;
+    Int       flags,
               new_flags = MF_NONE;
 
     if (!func_init_2(&args, SYMBOL, LIST))
@@ -308,12 +299,12 @@ COLDC_FUNC(set_method_flags) {
     object_set_method_flags(cur_frame->object, args[0].u.symbol, new_flags);
 
     pop(2);
-    push_int(new_flags);
+    push_int((cNum) new_flags);
 }
 
 COLDC_FUNC(method_access) {
-    int       access;
-    data_t  * args;
+    Int       access;
+    cData  * args;
 
     if (!func_init_1(&args, SYMBOL))
         return;
@@ -333,8 +324,8 @@ COLDC_FUNC(method_access) {
 }
 
 COLDC_FUNC(set_method_access) {
-    int       access = 0;
-    data_t  * args;
+    Int       access = 0;
+    cData  * args;
     Ident     sym;
 
     if (!func_init_2(&args, SYMBOL, SYMBOL))
@@ -364,13 +355,13 @@ COLDC_FUNC(set_method_access) {
 }
 
 COLDC_FUNC(method_info) {
-    data_t   * args,
+    cData   * args,
              * list;
-    list_t   * output;
-    method_t * method;
-    string_t * str;
+    cList   * output;
+    Method * method;
+    cStr * str;
     char     * s;
-    int        i;
+    Int        i;
 
     /* A symbol for the Method name. */
     if (!func_init_1(&args, SYMBOL))
@@ -431,10 +422,10 @@ COLDC_FUNC(method_info) {
 }
 
 COLDC_FUNC(methods) {
-    list_t   * methods;
-    data_t     d;
-    object_t * obj;
-    int        i;
+    cList   * methods;
+    cData     d;
+    Obj * obj;
+    Int        i;
 
     /* Accept no arguments. */
     if (!func_init_0())
@@ -458,8 +449,8 @@ COLDC_FUNC(methods) {
 }
 
 COLDC_FUNC(find_method) {
-    data_t   * args;
-    method_t * method;
+    cData   * args;
+    Method * method;
 
     /* Accept a symbol argument giving the method name. */
     if (!func_init_1(&args, SYMBOL))
@@ -477,8 +468,8 @@ COLDC_FUNC(find_method) {
 }
 
 COLDC_FUNC(find_next_method) {
-    data_t   * args;
-    method_t * method;
+    cData   * args;
+    Method * method;
 
     /* Accept a symbol argument giving the method name, and a objnum giving the
      * object to search past. */
@@ -497,11 +488,11 @@ COLDC_FUNC(find_next_method) {
 }
 
 COLDC_FUNC(decompile) {
-    int      num_args,
+    Int      num_args,
              indent,
              parens;
-    data_t * args;
-    list_t * code;
+    cData * args;
+    cList * code;
 
     /* Accept a symbol for the method name, an optional integer for the
      * indentation, and an optional integer to specify full
@@ -525,8 +516,8 @@ COLDC_FUNC(decompile) {
 }
 
 COLDC_FUNC(del_method) {
-    data_t * args;
-    int      status;
+    cData * args;
+    Int      status;
 
     /* Accept a symbol for the method name. */
     if (!func_init_1(&args, SYMBOL))
@@ -562,7 +553,7 @@ COLDC_FUNC(children) {
 }
 
 COLDC_FUNC(descendants) {
-    list_t * desc;
+    cList * desc;
 
     if (!func_init_0())
         return;
@@ -574,7 +565,7 @@ COLDC_FUNC(descendants) {
 }
 
 COLDC_FUNC(ancestors) {
-    list_t * ancestors;
+    cList * ancestors;
 
     /* Accept no arguments. */
     if (!func_init_0())
@@ -587,8 +578,8 @@ COLDC_FUNC(ancestors) {
 }
 
 COLDC_FUNC(has_ancestor) {
-    data_t * args;
-    int result;
+    cData * args;
+    Int result;
 
     /* Accept a objnum to check as an ancestor. */
     if (!func_init_1(&args, OBJNUM))
@@ -596,13 +587,13 @@ COLDC_FUNC(has_ancestor) {
 
     result = object_has_ancestor(cur_frame->object->objnum, args[0].u.objnum);
     pop(1);
-    push_int(result);
+    push_int((cNum) result);
 }
 
 COLDC_FUNC(create) {
-    data_t *args, *d;
-    list_t *parents;
-    object_t *obj;
+    cData *args, *d;
+    cList *parents;
+    Obj *obj;
 
     /* Accept a list of parents. */
     if (!func_init_1(&args, LIST))
@@ -631,10 +622,10 @@ COLDC_FUNC(create) {
 }
 
 COLDC_FUNC(chparents) {
-    data_t   * args,
+    cData   * args,
              * d,
                d2;
-    int        wrong;
+    Int        wrong;
 
     /* Accept a list of parents to change to. */
     if (!func_init_1(&args, LIST))
@@ -673,7 +664,7 @@ COLDC_FUNC(chparents) {
 }
 
 COLDC_FUNC(destroy) {
-    object_t * obj;
+    Obj * obj;
 
     if (!func_init_0())
         return;
@@ -694,14 +685,14 @@ COLDC_FUNC(destroy) {
 }
 
 COLDC_FUNC(data) {
-    data_t   * args,
+    cData   * args,
                key,
                value;
-    dict_t   * dict;
-    object_t * obj = cur_frame->object;
-    int        i,
+    cDict   * dict;
+    Obj * obj = cur_frame->object;
+    Int        i,
                nargs;
-    objnum_t   objnum;
+    cObjnum   objnum;
 
     if (!func_init_0_or_1(&args, &nargs, OBJNUM))
         return;
@@ -750,7 +741,7 @@ COLDC_FUNC(data) {
 */
 
 COLDC_FUNC(set_objname) {
-    data_t *args;
+    cData *args;
 
     if (!func_init_1(&args, SYMBOL))
         return;
@@ -802,7 +793,7 @@ COLDC_FUNC(objname) {
 */
 
 COLDC_FUNC(lookup) {
-    data_t *args;
+    cData *args;
     long objnum;
 
     if (!func_init_1(&args, SYMBOL))
@@ -834,12 +825,56 @@ COLDC_FUNC(compile) {
     push_int(1);
 }
 
+INTERNAL cList * add_op_arg(cList * out, Int type, Long op, Obj * obj) {
+    cData d;
+
+    switch (type) {
+        case INTEGER:
+            d.type = INTEGER;
+            d.u.val = op;
+            break;
+        case FLOAT:
+            d.type = FLOAT;
+            d.u.fval = *((float*)(&op));
+            break;
+        case T_ERROR:
+            d.type = T_ERROR;
+            d.u.error = object_get_ident(obj, op);
+            break;
+        case IDENT:
+        case VAR:
+            d.type = SYMBOL;
+            d.u.symbol = object_get_ident(obj, op);
+            break;
+        case STRING:
+            d.type = STRING;
+            d.u.str = object_get_string(obj, op);
+            break;
+        /* case JUMP: */ /* ignore JUMP */
+        default:
+            return out;
+#if DISABLED   /* none of these are used as args in op_table */
+        case LIST:
+        case FROB:
+        case DICT:
+        case BUFFER:
+#endif
+    }
+
+    out = list_add(out, &d);
+    data_discard(&d);
+
+    return out;
+}
+
 COLDC_FUNC(get_method) {
-    data_t       * args, d;
-    method_t     * method;
-    list_t       * list;
-    register int   x;
-    long         * ops;
+    cData       * args, d;
+    Method     * method;
+    cList       * list;
+    register Int   x;
+    Long         * ops;
+    Op_info      * info;
+    Long opcode;
 
     /* Accept a list of lines of code and a symbol for the name. */
     if (!func_init_1(&args, SYMBOL))
@@ -854,29 +889,24 @@ COLDC_FUNC(get_method) {
     list = list_new(method->num_opcodes);
     d.type = SYMBOL;
     ops = method->opcodes;
-    for (x=0; x < method->num_opcodes; x++) {
-        switch (ops[x]) {
-            case '+':
-            case '-':
-            case '*':
-            case '/':
-            case '%':
-            case '!':
-            case '>':
-            case '<':
-                d.type = SYMBOL;
-                d.u.symbol = ident_dup(op_table[ops[x]].symbol);
-                break;
-            default:
-                if (ops[x] > FIRST_TOKEN) {
-                    d.type = SYMBOL;
-                    d.u.symbol = ident_dup(op_table[ops[x]].symbol);
-                } else {
-                    d.type = INTEGER;
-                    d.u.val = ops[x];
-                }
-        }
+    x=0;
+    while (x < method->num_opcodes) {
+        opcode = ops[x];
+        info = &op_table[opcode];
+        d.type = SYMBOL;
+        d.u.symbol = ident_dup(info->symbol);
         list = list_add(list, &d);
+        x++;
+
+        if (info->arg1) {
+            list = add_op_arg(list, info->arg1, ops[x], method->object);
+            x++;
+        }
+
+        if (info->arg2) {
+            list = add_op_arg(list, info->arg1, ops[x], method->object);
+            x++;
+        }
     }
 
     pop(1);

@@ -1,64 +1,40 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: coldcc.c
-// ---
-//
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
 #define _coldcc_
 
-#include "config.h"
 #include "defs.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <signal.h>
 #include <ctype.h>
-#include "cdc_string.h"               /* strccmp() */
-#include "codegen.h"
-#include "cdc_types.h"
-#include "ident.h"
-#include "match.h"
-#include "opcodes.h"
+
+#include "cdc_pcode.h"
+#include "cdc_db.h"
+#include "textdb.h"
+
+#include "strutil.h"
 #include "util.h"
 #include "sig.h"
-#include "execute.h"
-#include "token.h"
-#include "native.h"
-#include "binarydb.h"
-#include "textdb.h"
-#include "cache.h"
-#include "object.h"
-#include "data.h"
-#include "io.h"
-#include "file.h"
-#include "native.h"
 #include "moddef.h"
-
-#if DISABLED
-#include <unistd.h>
-#include <time.h>
-#endif
 
 #define OPT_COMP 0
 #define OPT_DECOMP 1
 #define OPT_PARTIAL 2
 
-int    c_nowrite = 1;
-int    c_opt = OPT_COMP;
+Int    c_nowrite = 1;
+Int    c_opt = OPT_COMP;
 
 #define NEW_DB       1
 #define EXISTING_DB  0
 
 /* function prototypes */
-INTERNAL void   initialize(int argc, char **argv);
+INTERNAL void   initialize(Int argc, char **argv);
 INTERNAL void   usage(char * name);
 INTERNAL FILE * find_text_db(void);
-INTERNAL void   compile_db(int type);
+INTERNAL void   compile_db(Int type);
 
 INTERNAL void   shutdown(void) {
     cache_sync();
@@ -104,7 +80,7 @@ int main(int argc, char **argv) {
 /*
 // --------------------------------------------------------------------
 */
-INTERNAL void compile_db(int newdb) {
+INTERNAL void compile_db(Int newdb) {
     FILE       * fp;
 
     /* create a new db, this will blast old dbs */
@@ -188,7 +164,7 @@ INTERNAL FILE * find_text_db(void) {
 */
 
 void print_natives(void) {
-    int          mid, x;
+    Int          mid, x;
     char         buf[LINE];
 
     if (NATIVE_LAST % 2)
@@ -223,7 +199,7 @@ void print_natives(void) {
         strcpy(var, name); \
     }
 
-INTERNAL void initialize(int argc, char **argv) {
+INTERNAL void initialize(Int argc, char **argv) {
     char * name = NULL,
          * opt = NULL,
          * buf;
@@ -348,7 +324,8 @@ Options:\n\n\
         -p              Partial compile, compile object(s) and insert\n\
                         into database accordingly.  Can be used with -w\n\
                         for a ColdC code verification program.\n\
-        -s WIDTHxDEPTH  Cache size, default 10x30\n\n\
+        -s WIDTHxDEPTH  Cache size, default 10x30\n\
+        -n              List native method configuration\n\n\
 Anticipated Options:\n\n\
         -w              Compile for parse only, do not write output.\n\
                         This option can only be used with partial compile.\n\

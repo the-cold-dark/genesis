@@ -1,35 +1,25 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: dict.c
-// ---
-// Routines for manipulating dictionaries.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include "dict.h"
-#include "memory.h"
-#include "ident.h"
 
 #define MALLOC_DELTA			 5
 #define HASHTAB_STARTING_SIZE		(32 - MALLOC_DELTA)
 
-static void insert_key(dict_t *dict, int i);
-static int search(dict_t *dict, data_t *key);
-static void double_hashtab_size(dict_t *dict);
+INTERNAL void insert_key(cDict *dict, Int i);
+INTERNAL Int search(cDict *dict, cData *key);
+INTERNAL void double_hashtab_size(cDict *dict);
 
-dict_t *dict_new(list_t *keys, list_t *values)
+cDict *dict_new(cList *keys, cList *values)
 {
-    dict_t *cnew;
-    int i, j;
+    cDict *cnew;
+    Int i, j;
 
     /* Construct a new dictionary. */
-    cnew = EMALLOC(dict_t, 1);
+    cnew = EMALLOC(cDict, 1);
     cnew->keys = list_dup(keys);
     cnew->values = list_dup(values);
 
@@ -39,8 +29,8 @@ dict_t *dict_new(list_t *keys, list_t *values)
 	cnew->hashtab_size = cnew->hashtab_size * 2 + MALLOC_DELTA;
 
     /* Initialize chain entries and hash table. */
-    cnew->links = EMALLOC(int, cnew->hashtab_size);
-    cnew->hashtab = EMALLOC(int, cnew->hashtab_size);
+    cnew->links = EMALLOC(Int, cnew->hashtab_size);
+    cnew->hashtab = EMALLOC(Int, cnew->hashtab_size);
     for (i = 0; i < cnew->hashtab_size; i++) {
 	cnew->links[i] = -1;
 	cnew->hashtab[i] = -1;
@@ -53,7 +43,7 @@ dict_t *dict_new(list_t *keys, list_t *values)
 	    cnew->keys->el[j] = cnew->keys->el[i];
 	    cnew->values->el[j] = cnew->values->el[i];
 	}
-	if (search(cnew, &keys->el[i]) == -1) {
+	if (search(cnew, &keys->el[i]) == F_FAILURE) {
 	    insert_key(cnew, j++);
 	} else {
 	    data_discard(&cnew->keys->el[i]);
@@ -67,10 +57,10 @@ dict_t *dict_new(list_t *keys, list_t *values)
     return cnew;
 }
 
-dict_t *dict_new_empty(void)
+cDict *dict_new_empty(void)
 {
-    list_t *l1, *l2;
-    dict_t *dict;
+    cList *l1, *l2;
+    cDict *dict;
 
     l1 = list_new(0);
     l2 = list_new(0);
@@ -80,11 +70,11 @@ dict_t *dict_new_empty(void)
     return dict;
 }
 
-dict_t *dict_from_slices(list_t *slices)
+cDict *dict_from_slices(cList *slices)
 {
-    list_t *keys, *values;
-    dict_t *dict;
-    data_t *d;
+    cList *keys, *values;
+    cDict *dict;
+    cData *d;
 
     /* Make lists for keys and values. */
     keys = list_new(list_length(slices));
@@ -108,13 +98,13 @@ dict_t *dict_from_slices(list_t *slices)
     return dict;
 }
 
-dict_t *dict_dup(dict_t *dict)
+cDict *dict_dup(cDict *dict)
 {
     dict->refs++;
     return dict;
 }
 
-void dict_discard(dict_t *dict)
+void dict_discard(cDict *dict)
 {
     dict->refs--;
     if (!dict->refs) {
@@ -126,7 +116,7 @@ void dict_discard(dict_t *dict)
     }
 }
 
-int dict_cmp(dict_t *dict1, dict_t *dict2)
+Int dict_cmp(cDict *dict1, cDict *dict2)
 {
     if (list_cmp(dict1->keys, dict2->keys) == 0 &&
 	list_cmp(dict1->values, dict2->values) == 0)
@@ -135,15 +125,15 @@ int dict_cmp(dict_t *dict1, dict_t *dict2)
 	return 1;
 }
 
-dict_t *dict_add(dict_t *dict, data_t *key, data_t *value)
+cDict *dict_add(cDict *dict, cData *key, cData *value)
 {
-    int pos;
+    Int pos;
 
     dict = dict_prep(dict);
 
     /* Just replace the value for the key if it already exists. */
     pos = search(dict, key);
-    if (pos != -1) {
+    if (pos != F_FAILURE) {
 	dict->values = list_replace(dict->values, pos, value);
 	return dict;
     }
@@ -162,9 +152,9 @@ dict_t *dict_add(dict_t *dict, data_t *key, data_t *value)
 
 /* Error-checking is the caller's responsibility; this routine assumes that it
  * will find the key in the dictionary. */
-dict_t *dict_del(dict_t *dict, data_t *key)
+cDict *dict_del(cDict *dict, cData *key)
 {
-    int ind, *ip, i = -1, j;
+    Int ind, *ip, i = -1, j;
 
     dict = dict_prep(dict);
 
@@ -206,34 +196,34 @@ dict_t *dict_del(dict_t *dict, data_t *key)
     return dict;
 }
 
-long dict_find(dict_t *dict, data_t *key, data_t *ret)
+Long dict_find(cDict *dict, cData *key, cData *ret)
 {
-    int pos;
+    Int pos;
 
     pos = search(dict, key);
-    if (pos == -1)
+    if (pos == F_FAILURE)
 	return keynf_id;
 
     data_dup(ret, &dict->values->el[pos]);
     return NOT_AN_IDENT;
 }
 
-int dict_contains(dict_t *dict, data_t *key)
+Int dict_contains(cDict *dict, cData *key)
 {
-    int pos;
+    Int pos;
 
     pos = search(dict, key);
-    return (pos != -1);
+    return (pos != F_FAILURE);
 }
 
-list_t *dict_keys(dict_t *dict)
+cList *dict_keys(cDict *dict)
 {
     return list_dup(dict->keys);
 }
 
-list_t *dict_key_value_pair(dict_t *dict, int i)
+cList *dict_key_value_pair(cDict *dict, Int i)
 {
-    list_t *l;
+    cList *l;
 
     if (i >= dict->keys->len)
 	return NULL;
@@ -244,9 +234,9 @@ list_t *dict_key_value_pair(dict_t *dict, int i)
     return l;
 }
 
-string_t *dict_add_literal_to_str(string_t *str, dict_t *dict)
+cStr *dict_add_literal_to_str(cStr *str, cDict *dict)
 {
-    int i;
+    Int i;
 
     str = string_add_chars(str, "#[", 2);
     for (i = 0; i < dict->keys->len; i++) {
@@ -261,38 +251,37 @@ string_t *dict_add_literal_to_str(string_t *str, dict_t *dict)
     return string_addc(str, ']');
 }
 
-dict_t *dict_prep(dict_t *dict) {
-    dict_t *cnew;
+cDict *dict_prep(cDict *dict) {
+    cDict *cnew;
 
     if (dict->refs == 1)
 	return dict;
 
     /* Duplicate the old dictionary. */
-    cnew = EMALLOC(dict_t, 1);
+    cnew = EMALLOC(cDict, 1);
     cnew->keys = list_dup(dict->keys);
     cnew->values = list_dup(dict->values);
     cnew->hashtab_size = dict->hashtab_size;
-    cnew->links = EMALLOC(int, cnew->hashtab_size);
+    cnew->links = EMALLOC(Int, cnew->hashtab_size);
     MEMCPY(cnew->links, dict->links, cnew->hashtab_size);
-    cnew->hashtab = EMALLOC(int, cnew->hashtab_size);
+    cnew->hashtab = EMALLOC(Int, cnew->hashtab_size);
     MEMCPY(cnew->hashtab, dict->hashtab, cnew->hashtab_size);
     dict->refs--;
     cnew->refs = 1;
     return cnew;
 }
 
-static void insert_key(dict_t *dict, int i)
+INTERNAL void insert_key(cDict *dict, Int i)
 {
-    int ind;
+    Int ind;
 
     ind = data_hash(&dict->keys->el[i]) % dict->hashtab_size;
     dict->links[i] = dict->hashtab[ind];
     dict->hashtab[ind] = i;
 }
 
-static int search(dict_t *dict, data_t *key)
-{
-    int ind, i;
+INTERNAL Int search(cDict *dict, cData *key) {
+    Int ind, i;
 
     ind = data_hash(key) % dict->hashtab_size;
     for (i = dict->hashtab[ind]; i != -1; i = dict->links[i]) {
@@ -300,21 +289,21 @@ static int search(dict_t *dict, data_t *key)
 	    return i;
     }
 
-    return -1;
+    return F_FAILURE;
 }
 
-int dict_size(dict_t *dict)
+Int dict_size(cDict *dict)
 {
     return list_length(dict->keys);
 }
 
-static void double_hashtab_size(dict_t *dict)
+INTERNAL void double_hashtab_size(cDict *dict)
 {
-    int i;
+    Int i;
 
     dict->hashtab_size = dict->hashtab_size * 2 + MALLOC_DELTA;
-    dict->links = EREALLOC(dict->links, int, dict->hashtab_size);
-    dict->hashtab = EREALLOC(dict->hashtab, int, dict->hashtab_size);
+    dict->links = EREALLOC(dict->links, Int, dict->hashtab_size);
+    dict->hashtab = EREALLOC(dict->hashtab, Int, dict->hashtab_size);
     for (i = 0; i < dict->hashtab_size; i++) {
 	dict->links[i] = -1;
 	dict->hashtab[i] = -1;

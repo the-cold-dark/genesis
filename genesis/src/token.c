@@ -1,34 +1,27 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: token.c
-// ---
 // Convert text into tokens for yyparse().
 */
 
-#include <ctype.h>
-#include "config.h"
 #include "defs.h"
+
+#include <ctype.h>
 #include "token.h"
-#include "memory.h"
-#include "data.h"
 
 #define NUM_RESERVED_WORDS (sizeof(reserved_words) / sizeof(*reserved_words))
 #define SUBSCRIPT(c) ((c) & 0x7f)
 
-INTERNAL char *string_token(char *s, int len, int *token_len);
-INTERNAL char *identifier_token(char *s, int len, int *token_len);
+INTERNAL char *string_token(char *s, Int len, Int *token_len);
+INTERNAL char *identifier_token(char *s, Int len, Int *token_len);
 
-static list_t *code;
+static cList *code;
 static cur_line, cur_pos;
 
 /* Words with same first letters must be together. */
 static struct {
     char *word;
-    int token;
+    Int token;
 } reserved_words[] = {
     { "any",			ANY },
     { "arg",			ARG },
@@ -43,7 +36,7 @@ static struct {
     { "fork",			FORK },
     { "handler",		HANDLER },
     { "if",			IF },
-    { "in",			IN },
+    { "in",			OP_IN },
     { "pass",			PASS },
     { "return",			RETURN },
     { "switch",			SWITCH },
@@ -82,15 +75,15 @@ static struct {
 };
 
 static struct {
-    int start;
-    int num;
+    Int start;
+    Int num;
 } starting[128];
 
 extern Pile *compiler_pile;		/* For allocating strings. */
 
 void init_token(void)
 {
-    int i, c;
+    Int i, c;
 
     for (i = 0; i < 128; i++)
 	starting[i].start = -1;
@@ -105,13 +98,13 @@ void init_token(void)
     }
 }
 
-void lex_start(list_t * code_list) {
+void lex_start(cList * code_list) {
     code = code_list;
     cur_line = cur_pos = 0;
 }
 
 /* Returns if s can be parsed as an identifier. */
-int is_valid_ident(char *s)
+Int is_valid_ident(char *s)
 {
     while (*s) {
 	if (!isalnum(*s) && *s != '_')
@@ -121,12 +114,12 @@ int is_valid_ident(char *s)
     return 1;
 }
 
-int yylex(void)
+Int yylex(void)
 {
-    data_t *d = (data_t *)0;
-    string_t *line;
+    cData *d = (cData *)0;
+    cStr *line;
     char *s = NULL, *word;
-    int len = 0, i, j, start, type;
+    Int len = 0, i, j, start, type;
 
     /* Find the beginning of the next token. */
     while (cur_line < list_length(code)) {
@@ -147,7 +140,7 @@ int yylex(void)
 	/* Go on to the next line. */
 	cur_line++;
 	cur_pos = 0;
-	d = (data_t *)0;
+	d = (cData *)0;
     }
     if (!d) {
 	return 0;
@@ -214,7 +207,7 @@ int yylex(void)
 	    }
 
 	    if (len && *s=='e') {
-		int esign=0, evalue=0;
+		Int esign=0, evalue=0;
 
 	        s++, cur_pos++, len--;
 		if (len && *s=='-') {
@@ -249,7 +242,7 @@ int yylex(void)
 
     /* Check if it's an object literal, symbol, or error code. */
     if ((*s == '$' || *s == '\'' || *s == '~')) {
-	type = ((*s == '$') ? OBJNAME : ((*s == '\'') ? SYMBOL : ERROR));
+	type = ((*s == '$') ? OBJNAME : ((*s == '\'') ? SYMBOL : T_ERROR));
 	if (len > 1 && s[1] == '"') {
 	    yylval.s = string_token(s + 1, len - 1, &i);
 	    cur_pos += i + 1;
@@ -299,13 +292,13 @@ int yylex(void)
     return *s;
 }
 
-int cur_lineno(void)
+Int cur_lineno(void)
 {
     return cur_line + 1;
 }
 
-INTERNAL char *string_token(char * s, int len, int *token_len) {
-    int count = 0, i;
+INTERNAL char *string_token(char * s, Int len, Int *token_len) {
+    Int count = 0, i;
     char *p, *q;
 
     /* Count the length */
@@ -329,9 +322,9 @@ INTERNAL char *string_token(char * s, int len, int *token_len) {
 }
 
 /* Assumption: isalpha(*s) || *s == '_'. */
-INTERNAL char *identifier_token(char *s, int len, int *token_len)
+INTERNAL char *identifier_token(char *s, Int len, Int *token_len)
 {
-    int count = 1, i;
+    Int count = 1, i;
     char *p;
 
     /* Count characters in identifier. */

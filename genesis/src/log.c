@@ -1,27 +1,19 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: log.c
-// ---
 // Procedures to handle logging and fatal errors.
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include <sys/types.h>
 #include <stdarg.h>
-#include "log.h"
 #include "cache.h"
-#include "cdc_types.h"
 #include "util.h"
 
 void panic(char *s, ...) {
            va_list vargs;
-    static int     panic_state = 0;
+    static Bool    panic_state = NO;
 
     va_start(vargs,s);
     fprintf(errfile, "[%s] %s: ", timestamp(NULL),
@@ -31,7 +23,7 @@ void panic(char *s, ...) {
     fputc('\n',errfile);
 
     if (!panic_state) {
-	panic_state = 1;
+	panic_state = YES;
         fprintf(errfile, "[%s] doing binary dump...", timestamp(NULL));
 	cache_sync();
         fputs("Done\n", errfile);
@@ -53,7 +45,7 @@ void fail_to_start(char *s) {
 
 void write_log(char *fmt, ...) {
     va_list arg;
-    string_t *str;
+    cStr *str;
 
     va_start(arg, fmt);
 
@@ -70,7 +62,7 @@ void write_log(char *fmt, ...) {
 
 void write_err(char *fmt, ...) {
     va_list arg;
-    string_t *str;
+    cStr *str;
 
     va_start(arg, fmt);
     str = vformat(fmt, arg);

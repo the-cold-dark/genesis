@@ -2,7 +2,7 @@
 #define _cdc_h_
 
 #include "defs.h"
-#include "native.h"
+#include "cdc_pcode.h"
 
 void init_cdc(int argc, char ** argv);
 void uninit_cdc(void);
@@ -11,7 +11,6 @@ void uninit_cdc(void);
 extern module_t cdc_module;
 #endif
 
-NATIVE_METHOD(bufgraft);
 NATIVE_METHOD(buflen);
 NATIVE_METHOD(buf_replace);
 NATIVE_METHOD(subbuf);
@@ -22,6 +21,8 @@ NATIVE_METHOD(strings_to_buf);
 NATIVE_METHOD(dict_keys);
 NATIVE_METHOD(dict_add);
 NATIVE_METHOD(dict_del);
+NATIVE_METHOD(dict_add_elem);
+NATIVE_METHOD(dict_del_elem);
 NATIVE_METHOD(dict_contains);
 NATIVE_METHOD(listlen);
 NATIVE_METHOD(sublist);
@@ -31,6 +32,7 @@ NATIVE_METHOD(delete);
 NATIVE_METHOD(setadd);
 NATIVE_METHOD(setremove);
 NATIVE_METHOD(union);
+NATIVE_METHOD(join);
 NATIVE_METHOD(strftime);
 NATIVE_METHOD(next_objnum);
 NATIVE_METHOD(status);
@@ -51,6 +53,8 @@ NATIVE_METHOD(uppercase);
 NATIVE_METHOD(lowercase);
 NATIVE_METHOD(strcmp);
 NATIVE_METHOD(strfmt);
+NATIVE_METHOD(trim);
+NATIVE_METHOD(split);
 NATIVE_METHOD(regexp);
 NATIVE_METHOD(strsed);
 NATIVE_METHOD(capitalize);

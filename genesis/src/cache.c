@@ -1,11 +1,6 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: cache.c
-// ---
 // Object cache routines.
 //
 // This code is based on code written by Marcus J. Ranum.  That code, and
@@ -15,32 +10,23 @@
 
 #define _cache_
 
-#include "config.h"
 #include "defs.h"
 
-#include "cache.h"
-#include "object.h"
-#include "memory.h"
-#include "binarydb.h"
-#include "lookup.h"
-#include "log.h"
+#include "cdc_db.h"
 #include "util.h"
-#include "ident.h"
 #include "execute.h"
-
-#define DEBUG_CACHE 0
 
 /*
 // Store dummy objects for chain heads and tails.  This is a little storage-
 // intensive, but it simplifies and speeds up the list operations.
 */
 
-object_t * active;
-object_t * inactive;
+Obj * active;
+Obj * inactive;
 
 #if DEBUG_CACHE
-int        _acounter = 0;
-int        _icounter = 0;
+Int        _acounter = 0;
+Int        _icounter = 0;
 #endif
 
 /*
@@ -54,11 +40,11 @@ int        _icounter = 0;
 */
 
 void init_cache(void) {
-    object_t *obj;
-    int	i, j;
+    Obj *obj;
+    Int	i, j;
 
-    active = EMALLOC(object_t, cache_width);
-    inactive = EMALLOC(object_t, cache_width);
+    active = EMALLOC(Obj, cache_width);
+    inactive = EMALLOC(Obj, cache_width);
 
     for (i = 0; i < cache_width; i++) {
 	/* Active list starts out empty. */
@@ -67,7 +53,7 @@ void init_cache(void) {
 	/* Inactive list begins as a chain of empty objects. */
 	inactive[i].next = inactive[i].prev = &inactive[i];
 	for (j = 0; j < cache_depth; j++) {
-	    obj = EMALLOC(object_t, 1);
+	    obj = EMALLOC(Obj, 1);
 	    obj->objnum = INV_OBJNUM;
             obj->ucounter=0;
 	    obj->prev = &inactive[i];
@@ -89,9 +75,9 @@ void init_cache(void) {
 //
 */
 
-object_t * cache_get_holder(long objnum) {
-    int ind = objnum % cache_width;
-    object_t *obj;
+Obj * cache_get_holder(Long objnum) {
+    Int ind = objnum % cache_width;
+    Obj *obj;
 
     if (inactive[ind].next != &inactive[ind]) {
 	/* Use the object at the tail of the inactive list. */
@@ -111,7 +97,7 @@ object_t * cache_get_holder(long objnum) {
 	obj->next->prev = obj->prev;
     } else {
 	/* Allocate a new object. */
-	obj = EMALLOC(object_t, 1);
+	obj = EMALLOC(Obj, 1);
     }
 
     /* Link the object a the head of the active chain. */
@@ -148,9 +134,9 @@ object_t * cache_get_holder(long objnum) {
 //	    object exists with the given objnum.
 //
 */
-object_t *cache_retrieve(long objnum) {
-    int ind = objnum % cache_width;
-    object_t *obj;
+Obj *cache_retrieve(Long objnum) {
+    Int ind = objnum % cache_width;
+    Obj *obj;
 
     if (objnum < 0)
 	return NULL;
@@ -214,7 +200,7 @@ object_t *cache_retrieve(long objnum) {
 // ----------------------------------------------------------------------
 */
 
-object_t *cache_grab(object_t *obj) {
+Obj *cache_grab(Obj *obj) {
     obj->refs++;
     obj->ucounter+=OBJECT_PERSISTANCE;
     return obj;
@@ -231,8 +217,8 @@ object_t *cache_grab(object_t *obj) {
 //
 */
 
-void cache_discard(object_t *obj) {
-    int ind;
+void cache_discard(Obj *obj) {
+    Int ind;
 
     if (!obj)
       return;
@@ -281,9 +267,9 @@ void cache_discard(object_t *obj) {
 //
 */
 
-int cache_check(long objnum) {
-    int ind = objnum % cache_width;
-    object_t *obj;
+Int cache_check(Long objnum) {
+    Int ind = objnum % cache_width;
+    Obj *obj;
 
     if (objnum < 0)
 	return 0;
@@ -314,8 +300,8 @@ int cache_check(long objnum) {
 */
 
 void cache_sync(void) {
-    int i;
-    object_t *obj;
+    Int i;
+    Obj *obj;
 
     /* Traverse all the active and inactive chains. */
     for (i = 0; i < cache_width; i++) {
@@ -345,8 +331,8 @@ void cache_sync(void) {
 // ----------------------------------------------------------------------
 */
 
-object_t *cache_first(void) {
-    long objnum;
+Obj *cache_first(void) {
+    Long objnum;
 
     cache_sync();
     objnum = lookup_first_objnum();
@@ -359,8 +345,8 @@ object_t *cache_first(void) {
 // ----------------------------------------------------------------------
 */
 
-object_t *cache_next(void) {
-    long objnum;
+Obj *cache_next(void) {
+    Long objnum;
 
     objnum = lookup_next_objnum();
     if (objnum == INV_OBJNUM)
@@ -378,8 +364,8 @@ object_t *cache_next(void) {
 
 void cache_sanity_check(void) {
 #if DISABLED /* need to do some more work here */
-    int        i;
-    object_t * obj;
+    Int        i;
+    Obj * obj;
     VMState  * task;
 
     /* using labels was the best way I could come up with, I'm sorry... */
@@ -399,7 +385,7 @@ void cache_sanity_check(void) {
             }
 
             /* ack, panic */
-	    panic("Active object #%d at start of main loop.", (int) obj->objnum);
+	    panic("Active object #%d at start of main loop.", (Int) obj->objnum);
 
             /* label both for loops can jump to, skipping the panic */
             end:
@@ -420,8 +406,8 @@ void cache_sanity_check(void) {
 */
 
 void cache_cleanup(void) {
-    object_t * obj;
-    int        i;
+    Obj * obj;
+    Int        i;
 
     for (i = 0; i < cache_width; i++) {
         for (obj = inactive[i].next; obj != &inactive[i]; obj = obj->next) {

@@ -1,30 +1,24 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
+// Full copyright information is available in the file ../doc/CREDITS
 //
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: dbpack.c
-// ---
 // Write and retrieve objects to disk.
-//
-// note: ORDER_BYTES is buggy, don't enable it unless you are willing 
-//       and able to field problems which may arise.
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include <string.h>
-#include "dbpack.h"
-#include "cdc_types.h"
-#include "data.h"
-#include "memory.h"
+#include "cdc_db.h"
+
+/*
+// ORDER_BYTES is buggy, don't enable it unless you are willing 
+// and able to field problems which may arise.
+*/
+#define ORDER_BYTES DISABLED
 
 /* Write a four-byte number to fp in a consistent byte-order. */
-void write_long(long n, FILE *fp)
+void write_long(Long n, FILE *fp)
 {
-#ifdef ORDER_BYTES
+#if ORDER_BYTES
     /* Since first byte is special, special-case 0 as well. */
     if (!n) {
 	putc(96, fp);
@@ -42,16 +36,16 @@ void write_long(long n, FILE *fp)
 
     putc(96, fp);
 #else
-    fwrite(&n, sizeof(long), 1, fp);
+    fwrite(&n, sizeof(Long), 1, fp);
 #endif
 }
 
 /* Read a four-byte number in a consistent byte-order. */
-long read_long(FILE *fp)
+Long read_long(FILE *fp)
 {
-#ifdef ORDER_BYTES
-    int c;
-    long n, place;
+#if ORDER_BYTES
+    Int c;
+    Long n, place;
 
     /* Check for initial terminator, meaning 0. */
     c = getc(fp);
@@ -70,18 +64,18 @@ long read_long(FILE *fp)
 	place *= 64;
     }
 #else
-    long    l;
+    Long    l;
   
-    fread(&l, sizeof(long), 1, fp);
+    fread(&l, sizeof(Long), 1, fp);
 
     return l;
 #endif
 }
 
-int size_long(long n)
+Int size_long(Long n)
 {
-#ifdef ORDER_BYTES
-    int count = 2;
+#if ORDER_BYTES
+    Int count = 2;
 
     if (!n)
 	return 1;
@@ -97,10 +91,10 @@ int size_long(long n)
 }
 
 
-INTERNAL void write_ident(long id, FILE *fp)
+INTERNAL void write_ident(Long id, FILE *fp)
 {
-    char *s;
-    int len;
+    Char *s;
+    Int len;
 
     if (id == NOT_AN_IDENT) {
         write_long(NOT_AN_IDENT, fp);
@@ -109,14 +103,14 @@ INTERNAL void write_ident(long id, FILE *fp)
     s = ident_name(id);
     len = strlen(s);
     write_long(len, fp);
-    fwrite(s, sizeof(char), len, fp);
+    fwrite(s, sizeof(Char), len, fp);
 }
 
-INTERNAL long read_ident(FILE *fp)
+INTERNAL Long read_ident(FILE *fp)
 {
-    int len;
-    char *s;
-    long id;
+    Int len;
+    Char *s;
+    Long id;
 
     /* Read the length of the identifier. */
     len = read_long(fp);
@@ -127,8 +121,8 @@ INTERNAL long read_ident(FILE *fp)
 	return NOT_AN_IDENT;
 
     /* Otherwise, it's an identifier.  Read it into temporary storage. */
-    s = TMALLOC(char, len + 1);
-    fread(s, sizeof(char), len, fp);
+    s = TMALLOC(Char, len + 1);
+    fread(s, sizeof(Char), len, fp);
     s[len] = 0;
 
 
@@ -139,29 +133,29 @@ INTERNAL long read_ident(FILE *fp)
     return id;
 }
 
-INTERNAL long size_ident(long id)
+INTERNAL Long size_ident(Long id)
 {
-    int len = strlen(ident_name(id));
+    Int len = strlen(ident_name(id));
 
-    return size_long(len) + (len * sizeof(char));
+    return size_long(len) + (len * sizeof(Char));
 }
 
 /* forward references for recursion */
-INTERNAL void pack_data(data_t *data, FILE *fp);
-INTERNAL void unpack_data(data_t *data, FILE *fp);
+INTERNAL void pack_data(cData *data, FILE *fp);
+INTERNAL void unpack_data(cData *data, FILE *fp);
 
-INTERNAL void pack_list(list_t *list, FILE *fp) {
-    data_t *d;
+INTERNAL void pack_list(cList *list, FILE *fp) {
+    cData *d;
 
     write_long(list_length(list), fp);
     for (d = list_first(list); d; d = list_next(list, d))
 	pack_data(d, fp);
 }
 
-INTERNAL list_t *unpack_list(FILE *fp) {
-    int len, i;
-    list_t *list;
-    data_t *d;
+INTERNAL cList *unpack_list(FILE *fp) {
+    Int len, i;
+    cList *list;
+    cData *d;
 
     len = read_long(fp);
     list = list_new(len);
@@ -171,10 +165,10 @@ INTERNAL list_t *unpack_list(FILE *fp) {
     return list;
 }
 
-INTERNAL int size_list(list_t *list)
+INTERNAL Int size_list(cList *list)
 {
-    data_t *d;
-    int size = 0;
+    cData *d;
+    Int size = 0;
 
     size += size_long(list_length(list));
     for (d = list_first(list); d; d = list_next(list, d))
@@ -182,9 +176,9 @@ INTERNAL int size_list(list_t *list)
     return size;
 }
 
-INTERNAL void pack_dict(dict_t *dict, FILE *fp)
+INTERNAL void pack_dict(cDict *dict, FILE *fp)
 {
-    int i;
+    Int i;
 
     pack_list(dict->keys, fp);
     pack_list(dict->values, fp);
@@ -195,17 +189,17 @@ INTERNAL void pack_dict(dict_t *dict, FILE *fp)
     }
 }
 
-INTERNAL dict_t *unpack_dict(FILE *fp)
+INTERNAL cDict *unpack_dict(FILE *fp)
 {
-    dict_t *dict;
-    int i;
+    cDict *dict;
+    Int i;
 
-    dict = EMALLOC(dict_t, 1);
+    dict = EMALLOC(cDict, 1);
     dict->keys = unpack_list(fp);
     dict->values = unpack_list(fp);
     dict->hashtab_size = read_long(fp);
-    dict->links = EMALLOC(int, dict->hashtab_size);
-    dict->hashtab = EMALLOC(int, dict->hashtab_size);
+    dict->links = EMALLOC(Int, dict->hashtab_size);
+    dict->hashtab = EMALLOC(Int, dict->hashtab_size);
     for (i = 0; i < dict->hashtab_size; i++) {
 	dict->links[i] = read_long(fp);
 	dict->hashtab[i] = read_long(fp);
@@ -214,9 +208,9 @@ INTERNAL dict_t *unpack_dict(FILE *fp)
     return dict;
 }
 
-INTERNAL int size_dict(dict_t *dict)
+INTERNAL Int size_dict(cDict *dict)
 {
-    int size = 0, i;
+    Int size = 0, i;
 
     size += size_list(dict->keys);
     size += size_list(dict->values);
@@ -228,9 +222,9 @@ INTERNAL int size_dict(dict_t *dict)
     return size;
 }
 
-INTERNAL void pack_vars(object_t *obj, FILE *fp)
+INTERNAL void pack_vars(Obj *obj, FILE *fp)
 {
-    int i;
+    Int i;
 
     write_long(obj->vars.size, fp);
     write_long(obj->vars.blanks, fp);
@@ -248,14 +242,14 @@ INTERNAL void pack_vars(object_t *obj, FILE *fp)
     }
 }
 
-INTERNAL void unpack_vars(object_t *obj, FILE *fp)
+INTERNAL void unpack_vars(Obj *obj, FILE *fp)
 {
-    int i;
+    Int i;
 
     obj->vars.size = read_long(fp);
     obj->vars.blanks = read_long(fp);
 
-    obj->vars.hashtab = EMALLOC(int, obj->vars.size);
+    obj->vars.hashtab = EMALLOC(Int, obj->vars.size);
     obj->vars.tab = EMALLOC(Var, obj->vars.size);
 
     for (i = 0; i < obj->vars.size; i++) {
@@ -270,9 +264,9 @@ INTERNAL void unpack_vars(object_t *obj, FILE *fp)
 
 }
 
-INTERNAL int size_vars(object_t *obj)
+INTERNAL Int size_vars(Obj *obj)
 {
-    int size = 0, i;
+    Int size = 0, i;
 
     size += size_long(obj->vars.size);
     size += size_long(obj->vars.blanks);
@@ -292,9 +286,9 @@ INTERNAL int size_vars(object_t *obj)
     return size;
 }
 
-INTERNAL void pack_method(method_t *method, FILE *fp)
+INTERNAL void pack_method(Method *method, FILE *fp)
 {
-    int i, j;
+    Int i, j;
 
     write_ident(method->name, fp);
 
@@ -323,23 +317,23 @@ INTERNAL void pack_method(method_t *method, FILE *fp)
     write_long(method->native, fp);
 }
 
-INTERNAL method_t *unpack_method(FILE *fp)
+INTERNAL Method *unpack_method(FILE *fp)
 {
-    int name, i, j, n;
-    method_t *method;
+    Int name, i, j, n;
+    Method *method;
 
     /* Read in the name.  If this is -1, it was a marker for a blank entry. */
     name = read_ident(fp);
     if (name == NOT_AN_IDENT)
 	return NULL;
 
-    method = EMALLOC(method_t, 1);
+    method = EMALLOC(Method, 1);
 
     method->name = name;
 
     method->num_args = read_long(fp);
     if (method->num_args) {
-	method->argnames = TMALLOC(int, method->num_args);
+	method->argnames = TMALLOC(Int, method->num_args);
 	for (i = 0; i < method->num_args; i++)
 	    method->argnames[i] = read_long(fp);
     }
@@ -347,13 +341,13 @@ INTERNAL method_t *unpack_method(FILE *fp)
 
     method->num_vars = read_long(fp);
     if (method->num_vars) {
-	method->varnames = TMALLOC(int, method->num_vars);
+	method->varnames = TMALLOC(Int, method->num_vars);
 	for (i = 0; i < method->num_vars; i++)
 	    method->varnames[i] = read_long(fp);
     }
 
     method->num_opcodes = read_long(fp);
-    method->opcodes = TMALLOC(long, method->num_opcodes);
+    method->opcodes = TMALLOC(Long, method->num_opcodes);
     for (i = 0; i < method->num_opcodes; i++)
 	method->opcodes[i] = read_long(fp);
 
@@ -363,7 +357,7 @@ INTERNAL method_t *unpack_method(FILE *fp)
 	for (i = 0; i < method->num_error_lists; i++) {
 	    n = read_long(fp);
 	    method->error_lists[i].num_errors = n;
-	    method->error_lists[i].error_ids = TMALLOC(int, n);
+	    method->error_lists[i].error_ids = TMALLOC(Int, n);
 	    for (j = 0; j < n; j++)
 		method->error_lists[i].error_ids[j] = read_ident(fp);
 	}
@@ -377,9 +371,9 @@ INTERNAL method_t *unpack_method(FILE *fp)
     return method;
 }
 
-INTERNAL int size_method(method_t *method)
+INTERNAL Int size_method(Method *method)
 {
-    int size = 0, i, j;
+    Int size = 0, i, j;
 
     size += size_ident(method->name);
 
@@ -409,9 +403,9 @@ INTERNAL int size_method(method_t *method)
     return size;
 }
 
-INTERNAL void pack_methods(object_t *obj, FILE *fp)
+INTERNAL void pack_methods(Obj *obj, FILE *fp)
 {
-    int i;
+    Int i;
 
     write_long(obj->methods.size, fp);
     write_long(obj->methods.blanks, fp);
@@ -428,14 +422,14 @@ INTERNAL void pack_methods(object_t *obj, FILE *fp)
     }
 }
 
-INTERNAL void unpack_methods(object_t *obj, FILE *fp)
+INTERNAL void unpack_methods(Obj *obj, FILE *fp)
 {
-    int i;
+    Int i;
 
     obj->methods.size = read_long(fp);
     obj->methods.blanks = read_long(fp);
 
-    obj->methods.hashtab = EMALLOC(int, obj->methods.size);
+    obj->methods.hashtab = EMALLOC(Int, obj->methods.size);
     obj->methods.tab = EMALLOC(struct mptr, obj->methods.size);
 
     for (i = 0; i < obj->methods.size; i++) {
@@ -447,9 +441,9 @@ INTERNAL void unpack_methods(object_t *obj, FILE *fp)
     }
 }
 
-INTERNAL int size_methods(object_t *obj)
+INTERNAL Int size_methods(Obj *obj)
 {
-    int size = 0, i;
+    Int size = 0, i;
 
     size += size_long(obj->methods.size);
     size += size_long(obj->methods.blanks);
@@ -466,9 +460,9 @@ INTERNAL int size_methods(object_t *obj)
     return size;
 }
 
-INTERNAL void pack_strings(object_t *obj, FILE *fp)
+INTERNAL void pack_strings(Obj *obj, FILE *fp)
 {
-    int i;
+    Int i;
 
     write_long(obj->strings_size, fp);
     write_long(obj->num_strings, fp);
@@ -479,9 +473,9 @@ INTERNAL void pack_strings(object_t *obj, FILE *fp)
     }
 }
 
-INTERNAL void unpack_strings(object_t *obj, FILE *fp)
+INTERNAL void unpack_strings(Obj *obj, FILE *fp)
 {
-    int i;
+    Int i;
 
     obj->strings_size = read_long(fp);
     obj->num_strings = read_long(fp);
@@ -493,9 +487,9 @@ INTERNAL void unpack_strings(object_t *obj, FILE *fp)
     }
 }
 
-INTERNAL int size_strings(object_t *obj)
+INTERNAL Int size_strings(Obj *obj)
 {
-    int size = 0, i;
+    Int size = 0, i;
 
     size += size_long(obj->strings_size);
     size += size_long(obj->num_strings);
@@ -508,9 +502,9 @@ INTERNAL int size_strings(object_t *obj)
     return size;
 }
 
-INTERNAL void pack_idents(object_t *obj, FILE *fp)
+INTERNAL void pack_idents(Obj *obj, FILE *fp)
 {
-    int i;
+    Int i;
 
     write_long(obj->idents_size, fp);
     write_long(obj->num_idents, fp);
@@ -524,9 +518,9 @@ INTERNAL void pack_idents(object_t *obj, FILE *fp)
     }
 }
 
-INTERNAL void unpack_idents(object_t *obj, FILE *fp)
+INTERNAL void unpack_idents(Obj *obj, FILE *fp)
 {
-    int i;
+    Int i;
 
     obj->idents_size = read_long(fp);
     obj->num_idents = read_long(fp);
@@ -538,9 +532,9 @@ INTERNAL void unpack_idents(object_t *obj, FILE *fp)
     }
 }
 
-INTERNAL int size_idents(object_t *obj)
+INTERNAL Int size_idents(Obj *obj)
 {
-    int size = 0, i;
+    Int size = 0, i;
 
     size += size_long(obj->idents_size);
     size += size_long(obj->num_idents);
@@ -556,7 +550,7 @@ INTERNAL int size_idents(object_t *obj)
     return size;
 }
 
-INTERNAL void pack_data(data_t *data, FILE *fp)
+INTERNAL void pack_data(cData *data, FILE *fp)
 {
     write_long(data->type, fp);
     switch (data->type) {
@@ -566,7 +560,7 @@ INTERNAL void pack_data(data_t *data, FILE *fp)
 	break;
 
       case FLOAT:
-        write_long(*((long*)(&data->u.fval)), fp);
+        write_long(*((Long*)(&data->u.fval)), fp);
         break;
 
       case STRING:
@@ -585,7 +579,7 @@ INTERNAL void pack_data(data_t *data, FILE *fp)
 	write_ident(data->u.symbol, fp);
 	break;
 
-      case ERROR:
+      case T_ERROR:
 	write_ident(data->u.error, fp);
 	break;
 
@@ -599,7 +593,7 @@ INTERNAL void pack_data(data_t *data, FILE *fp)
 	break;
 
       case BUFFER: {
-	  int i;
+	  Int i;
 
 	  write_long(data->u.buffer->len, fp);
 	  for (i = 0; i < data->u.buffer->len; i++)
@@ -609,7 +603,7 @@ INTERNAL void pack_data(data_t *data, FILE *fp)
     }
 }
 
-INTERNAL void unpack_data(data_t *data, FILE *fp)
+INTERNAL void unpack_data(cData *data, FILE *fp)
 {
     data->type = read_long(fp);
     switch (data->type) {
@@ -619,8 +613,8 @@ INTERNAL void unpack_data(data_t *data, FILE *fp)
 	break;
 
       case FLOAT: {
-        long k = read_long(fp);
-        data->u.fval = *((float*)(&k));
+        Long k = read_long(fp);
+        data->u.fval = *((cFloat*)(&k));
         break;
       }
 
@@ -640,12 +634,12 @@ INTERNAL void unpack_data(data_t *data, FILE *fp)
 	data->u.symbol = read_ident(fp);
 	break;
 
-      case ERROR:
+      case T_ERROR:
 	data->u.error = read_ident(fp);
 	break;
 
       case FROB:
-        data->u.frob = TMALLOC(frob_t, 1);
+        data->u.frob = TMALLOC(cFrob, 1);
 	data->u.frob->cclass = read_long(fp);
 	unpack_data(&data->u.frob->rep, fp);
 	break;
@@ -655,7 +649,7 @@ INTERNAL void unpack_data(data_t *data, FILE *fp)
 	break;
 
       case BUFFER: {
-	  int len, i;
+	  Int len, i;
 
 	  len = read_long(fp);
 	  data->u.buffer = buffer_new(len);
@@ -666,8 +660,8 @@ INTERNAL void unpack_data(data_t *data, FILE *fp)
     }
 }
 
-int size_data(data_t *data) {
-    int size = 0;
+Int size_data(cData *data) {
+    Int size = 0;
 
     size += size_long(data->type);
     switch (data->type) {
@@ -677,7 +671,7 @@ int size_data(data_t *data) {
 	break;
 
       case FLOAT:
-        size += size_long(*((float*)(&data->u.fval)));
+        size += size_long(*((cFloat*)(&data->u.fval)));
         break;
 
       case STRING:
@@ -696,7 +690,7 @@ int size_data(data_t *data) {
 	size += size_ident(data->u.symbol);
 	break;
 
-      case ERROR:
+      case T_ERROR:
 	size += size_ident(data->u.error);
 	break;
 
@@ -710,7 +704,7 @@ int size_data(data_t *data) {
 	break;
 
       case BUFFER: {
-	  int i;
+	  Int i;
 
 	  size += size_long(data->u.buffer->len);
 	  for (i = 0; i < data->u.buffer->len; i++)
@@ -722,7 +716,7 @@ int size_data(data_t *data) {
     return size;
 }
 
-void pack_object(object_t *obj, FILE *fp)
+void pack_object(Obj *obj, FILE *fp)
 {
     pack_list(obj->parents, fp);
     pack_list(obj->children, fp);
@@ -734,7 +728,7 @@ void pack_object(object_t *obj, FILE *fp)
     write_long(obj->search, fp);
 }
 
-void unpack_object(object_t *obj, FILE *fp)
+void unpack_object(Obj *obj, FILE *fp)
 {
     obj->parents = unpack_list(fp);
     obj->children = unpack_list(fp);
@@ -746,9 +740,9 @@ void unpack_object(object_t *obj, FILE *fp)
     obj->search = read_long(fp);
 }
 
-int size_object(object_t *obj)
+Int size_object(Obj *obj)
 {
-    int size = 0;
+    Int size = 0;
 
     size = size_list(obj->parents);
     size += size_list(obj->children);

@@ -1,16 +1,9 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/log.h
-// ---
-// Declarations for logging and panic routines.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#ifndef LOG_H
-#define LOG_H
+#ifndef cdc_log_h
+#define cdc_log_h
 
 void panic(char *s, ...);
 void fail_to_start(char *s);

@@ -1,16 +1,9 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/functions.h
-// ---
-// Function declarations.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#ifndef _functions_h_
-#define _functions_h_
+#ifndef cdc_functions_h
+#define cdc_functions_h
 
 #include "macros.h"
 
@@ -61,11 +54,13 @@ COLDC_FUNC(listlen);
 COLDC_FUNC(listgraft);
 COLDC_FUNC(sublist);
 COLDC_FUNC(insert);
+COLDC_FUNC(join);
 COLDC_FUNC(replace);
 COLDC_FUNC(delete);
 COLDC_FUNC(setadd);
 COLDC_FUNC(setremove);
 COLDC_FUNC(union);
+COLDC_FUNC(join);
 COLDC_FUNC(random);
 COLDC_FUNC(max);
 COLDC_FUNC(min);
@@ -130,6 +125,7 @@ COLDC_FUNC(match_template);
 COLDC_FUNC(match_pattern);
 COLDC_FUNC(match_regexp);
 COLDC_FUNC(regexp);
+COLDC_FUNC(split);
 COLDC_FUNC(crypt);
 COLDC_FUNC(uppercase);
 COLDC_FUNC(lowercase);

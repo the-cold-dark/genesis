@@ -1,26 +1,16 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
-//
-// File: include/decode.h
-// ---
-// Declarations for decompiling methods.
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#ifndef _decode_h_
-#define _decode_h_
+#ifndef cdc_decode_h
+#define cdc_decode_h
 
-#include "data.h"
-#include "object.h"
+Int      line_number(Method * method, Int pc);
 
-int      line_number(method_t * method, int pc);
-
-list_t * decompile(method_t * method,
-                   object_t * object,
-                   int        increment,
-                   int        parens);
+cList * decompile(Method * method,
+                   Obj * object,
+                   Int        increment,
+                   Int        parens);
 
 #endif
 

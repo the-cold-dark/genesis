@@ -1,15 +1,10 @@
 /*
-// ColdMUD was created and is copyright 1993, 1994 by Greg Hudson
-//
-// Genesis is a derivitive work, and is copyright 1995 by Brandon Gillespie.
-// Full details and copyright information can be found in the file doc/CREDITS
+// Full copyright information is available in the file ../doc/CREDITS
 */
 
-#include "config.h"
 #include "defs.h"
 
 #include <string.h>
-#include <errno.h>
 #include "execute.h"
 #include "net.h"
 #include "util.h"
@@ -24,9 +19,9 @@
 */
 
 void func_reassign_connection(void) {
-    data_t       * args;
-    connection_t * c;
-    object_t     * obj;
+    cData       * args;
+    Conn * c;
+    Obj     * obj;
 
     /* Accept a objnum. */
     if (!func_init_1(&args, OBJNUM))
@@ -57,7 +52,7 @@ void func_reassign_connection(void) {
 // -----------------------------------------------------------------
 */
 void func_bind_port(void) {
-    data_t * args;
+    cData * args;
 
     /* Accept a port to bind to, and a objnum to handle connections. */
     if (!func_init_1(&args, INTEGER))
@@ -75,7 +70,7 @@ void func_bind_port(void) {
 // -----------------------------------------------------------------
 */
 void func_unbind_port(void) {
-    data_t * args;
+    cData * args;
 
     /* Accept a port number. */
     if (!func_init_1(&args, INTEGER))
@@ -91,10 +86,10 @@ void func_unbind_port(void) {
 // -----------------------------------------------------------------
 */
 void func_open_connection(void) {
-    data_t *args;
+    cData *args;
     char *address;
-    int port;
-    long r;
+    Int port;
+    Long r;
 
     if (!func_init_2(&args, STRING, INTEGER))
         return;
@@ -128,7 +123,7 @@ void func_close_connection(void) {
 // Echo a buffer to the connection
 */
 void func_cwrite(void) {
-    data_t *args;
+    cData *args;
 
     /* Accept a buffer to write. */
     if (!func_init_1(&args, BUFFER))
@@ -147,12 +142,12 @@ void func_cwrite(void) {
 */
 void func_cwritef(void) {
     size_t        block, r;
-    data_t      * args;
+    cData      * args;
     FILE        * fp;
-    buffer_t    * buf;
-    string_t    * str;
+    cBuf    * buf;
+    cStr    * str;
     struct stat   statbuf;
-    int           nargs;
+    Int           nargs;
 
     /* Accept the name of a file to echo */
     if (!func_init_1_or_2(&args, &nargs, STRING, INTEGER))
@@ -188,7 +183,7 @@ void func_cwritef(void) {
             buffer_discard(buf);
             close_scratch_file(fp);
             cthrow(file_id, "Trouble reading file \"%s\": %s",
-                   str->s, strerror(errno));
+                   str->s, strerror(GETERR()));
             return;
         }
         tell(cur_frame->object, buf);
@@ -199,7 +194,7 @@ void func_cwritef(void) {
     close_scratch_file(fp);
 
     pop(nargs);
-    push_int((long) statbuf.st_size);
+    push_int((cNum) statbuf.st_size);
 }
 
 /*
@@ -207,9 +202,9 @@ void func_cwritef(void) {
 // return random info on the connection
 */
 void func_connection(void) {
-    list_t       * info;
-    data_t       * list;
-    connection_t * c;
+    cList       * info;
+    cData       * list;
+    Conn * c;
 
     if (!func_init_0())
         return;
@@ -224,13 +219,13 @@ void func_connection(void) {
     list = list_empty_spaces(info, 4);
 
     list[0].type = INTEGER;
-    list[0].u.val = (long) (c->flags.readable ? 1 : 0);
+    list[0].u.val = (cNum) (c->flags.readable ? 1 : 0);
     list[1].type = INTEGER;
-    list[1].u.val = (long) (c->flags.writable ? 1 : 0);
+    list[1].u.val = (cNum) (c->flags.writable ? 1 : 0);
     list[2].type = INTEGER;
-    list[2].u.val = (long) (c->flags.dead ? 1 : 0);
+    list[2].u.val = (cNum) (c->flags.dead ? 1 : 0);
     list[3].type = INTEGER;
-    list[3].u.val = (long) (c->fd);
+    list[3].u.val = (cNum) (c->fd);
 
     push_list(info);
     list_discard(info);

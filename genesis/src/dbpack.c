@@ -154,6 +154,10 @@ Ident read_ident(cBuf *buf, Long *buf_pos)
 Int size_ident(Ident id)
 {
     Int len;
+
+    if (id == NOT_AN_IDENT)
+        return size_long(NOT_AN_IDENT);
+
     ident_name_size(id, &len);
 
     return size_long(len) + (len * sizeof(Char));
@@ -816,7 +820,7 @@ Int size_object(Obj *obj)
     size += size_methods(obj);
     size += size_strings(obj);
     size += size_idents(obj);
-    if (obj->objname != -1)
-        size += size_ident(obj->objname);
+    size += size_ident(obj->objname);
+
     return size;
 }

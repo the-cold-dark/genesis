@@ -9,9 +9,7 @@ around, generally you should just copy 'coldcc' and 'genesis' to your
 world directory (wherever it may be).
 
 ------------------------------------------------------------------------
-1.0 RELEASE INFORMATION
-
-This is an ALPHA release, be forewarned.
+1.0-1 RELEASE INFORMATION
 
 If you are using a 0.4-0 database, you can upgrade easilly.  Dump your
 database to text (coldcc -d), edit it and search for the following
@@ -42,17 +40,10 @@ function have been made:
 
              http://www.cold.org/ColdC/Functions/strfmt.html
 
-Known problems:
-
-    * Using (data).method() with a native method will cause a segmentation
-      violation (dont do this).  I.e. [1,2,3].reverse(), where 'reverse'
-      is a native method.
-
-If you want to blow away any regular method definitions with their
-native counterpart (such as $list.length(), etc) then you compile the
-textdb using the '-f' flag to coldcc (force native methods to override
-existing methods).  I would suggest examining each native method first,
-they are listed in 'src/modules/moddef.h'
+If you want coldcc to force override regular method definitions, when they
+conflict with away native method definitions, use the '-f' (force override)
+flag when you compile the binary database.  You can list the compiled native
+methods and their default objects with the '-n' flag in coldcc.
 
 ------------------------------------------------------------------------
 FURTHER INFORMATION
@@ -106,6 +97,11 @@ POST 1.0 TODO:
       to using fopen() on a file (shag code from apache CGI)
     * get bind_native directive in textdumps to handle specifying alternate
       objects as well.
+    * integrate some of the gdbm features (like gdbm_reorganize())
+    * review all of the dbm routines for other possible logic errors
+    * descendants()
+    * Implement a more efficient malloc for our specific uses, perhaps
+      build on top of phkmalloc.
 
 Possiblilities:
 

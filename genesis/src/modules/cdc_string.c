@@ -352,35 +352,32 @@ NATIVE_METHOD(crypt) {
 }
 
 NATIVE_METHOD(uppercase) {
+    string_t * str;
     INIT_1_ARG(STRING)
 
-    RETURN_STRING(string_uppercase(_STR(ARG1)));
+    str = string_dup_or_copy(args[0].u.str);
+    RETURN_STRING(string_uppercase(str))
+}
+
+NATIVE_METHOD(lowercase) {
+    string_t * str;
+    INIT_1_ARG(STRING)
+
+    str = string_dup_or_copy(args[0].u.str);
+    RETURN_STRING(string_lowercase(str))
 }
 
 NATIVE_METHOD(capitalize) {
     char     * s;
     string_t * str;
+
     INIT_1_ARG(STRING)
 
-    str = _STR(ARG1);
-
-    if (str->refs > 1) {
-        string_t * new = string_new(str->len);
-        MEMCPY(new->s, string_chars(str), string_length(str));
-        new->len = string_length(str);
-        str = new;
-    }
-
+    str = string_dup_or_copy(args[0].u.str);
     s = string_chars(str);
-    s[0] = UCASE(s[0]);
+    *s = UCASE(*s);
 
     RETURN_STRING(str)
-}
-
-NATIVE_METHOD(lowercase) {
-    INIT_1_ARG(STRING)
-
-    RETURN_STRING(string_lowercase(_STR(ARG1)));
 }
 
 NATIVE_METHOD(strcmp) {

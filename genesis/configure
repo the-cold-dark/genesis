@@ -2091,6 +2091,35 @@ fi
 cat <<END
 
 # 
+# We provide a malloc implementation by Poul-Henning Kamp.  Using this
+# malloc is suggested, as designs take it into consideration, and because
+# it is integrated into the functionality of genesis for better error
+# recovery.  We suggest using this malloc over your system's malloc,
+# however if you encounter problems you should drop back to your system's
+# malloc.  The best suggestion is to try both, analize the memory
+# imprint and run-time behaviour and decide which to stay with.
+#
+##
+## At the moment, mileage with phk_malloc() may vary, it is
+## only guaranteed to be useful and FAST in FreeBSD
+##
+
+END
+
+echo $ac_n "Use phk_malloc()? [yes] $ac_c"
+
+read input
+if [ x$input != x"n" -a \
+     x$input != x"no" -a \
+     x$input != x"N" -a \
+     x$input != x"NO" ]
+then
+    MALLOC_O=malloc.o
+fi
+
+cat <<END
+
+# 
 # File operations may be restricted.  Restrictions include paths
 # (all files must stay within the 'root' subdirectory), as well as
 # other security restrictions, such as disallowing sticky or setuid
@@ -2327,6 +2356,7 @@ s%@CXXFLAGS@%$CXXFLAGS%g
 s%@DEFS@%$DEFS%g
 s%@LDFLAGS@%$LDFLAGS%g
 s%@MOD_O@%$MOD_O%g
+s%@MALLOC_O@%$MALLOC_O%g
 s%@LIBS@%$LIBS%g
 s%@exec_prefix@%$exec_prefix%g
 s%@prefix@%$prefix%g

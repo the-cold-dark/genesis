@@ -40,14 +40,6 @@
 #define	LOGICAL_BLOCK(off)	((off) / BLOCK_SIZE)
 #define	BLOCK_OFFSET(block)	((block) * BLOCK_SIZE)
 
-#ifdef S_IRUSR
-#define READ_WRITE		(S_IRUSR | S_IWUSR)
-#define READ_WRITE_EXECUTE	(S_IRUSR | S_IWUSR | S_IXUSR)
-#else
-#define READ_WRITE 0600
-#define READ_WRITE_EXECUTE 0700
-#endif
-
 static void db_mark(off_t start, int size);
 static void db_unmark(off_t start, int size);
 static void grow_bitmap(int new_blocks);

@@ -10,8 +10,8 @@
 #ifndef _textdb_h_
 #define _textdb_h_
 
-#define FORCE_NATIVES  0x1
-#define IGNORE_NATIVES 0x2
+#define FORCE_NATIVES  1
+#define IGNORE_NATIVES 2
 
 int use_natives;
 

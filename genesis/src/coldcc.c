@@ -36,6 +36,7 @@
 #include "io.h"
 #include "file.h"
 #include "native.h"
+#include "moddef.h"
 
 #if DISABLED
 #include <unistd.h>
@@ -58,6 +59,18 @@ INTERNAL void   usage(char * name);
 INTERNAL FILE * find_text_db(void);
 INTERNAL void   compile_db(int type);
 
+INTERNAL void   shutdown(void) {
+    cache_sync();
+    db_close();
+    flush_output();
+    close_files();
+    fputc(10, stderr);
+    exit(0);
+}
+
+/*
+// --------------------------------------------------------------------
+*/
 /*
 // --------------------------------------------------------------------
 */
@@ -81,13 +94,9 @@ int main(int argc, char **argv) {
     }
 
     fputs("Closing binary database...", stderr);
-    cache_sync();
-    db_close();
-    flush_output();
-    close_files();
+    shutdown();
 
-    fputc(10, stderr);
-
+    /* make compilers happy; we never reach this */
     return 0;
 }
 
@@ -172,6 +181,38 @@ INTERNAL FILE * find_text_db(void) {
 
 /*
 // --------------------------------------------------------------------
+// print all of the natives nicely.
+//
+// be cute and columnize
+*/
+
+void print_natives(void) {
+    int          mid, x;
+    char         buf[LINE];
+
+    if (NATIVE_LAST % 2)
+        mid = (NATIVE_LAST + 1) / 2;
+    else
+        mid = NATIVE_LAST / 2;
+
+    fputs("Native Method Configuration:\n\n", stdout);
+
+    for (x=0; mid < NATIVE_LAST; x++, mid++) {
+        sprintf(buf, "$%s.%s()", natives[x].bindobj, natives[x].name);
+        printf("  %-37s $%s.%s()\n", buf, natives[mid].bindobj,
+               natives[mid].name);
+    }
+
+    if (NATIVE_LAST % 2) {
+        x++;
+        printf("  $%s.%s()\n", natives[x].bindobj, natives[x].name);
+    }
+
+    fputc(10, stdout);
+}
+
+/*
+// --------------------------------------------------------------------
 // Initializes tables, variables and other aspects for use
 */
 
@@ -219,10 +260,11 @@ INTERNAL void initialize(int argc, char **argv) {
                            VERSION_PATCH);
                     exit(0);
                 case 'f':
-                    use_natives |= FORCE_NATIVES;
+                    use_natives = FORCE_NATIVES;
                     break;
                 case 'n':
-                    use_natives |= IGNORE_NATIVES;
+                    print_natives();
+                    exit(0);
                     break;
                 case 'c':
                     c_opt = OPT_COMP;

@@ -34,7 +34,9 @@ OPS_O      = ops/operators.o ops/buffer.o ops/error.o ops/list.o\
 PCODE_O    = codegen.o execute.o opcodes.o token.o native.o
 MOD_O      = @MOD_O@
 OMOD_O     = `echo $(MOD_O) | sed -e 's/modules\///g'`
-COMMON_O   = $(DATA_O) $(DB_O) $(IO_O) $(MISC_O) $(PCODE_O) $(OPS_O) $(MOD_O)
+MALLOC_O   = @MALLOC_O@
+COMMON_O   = $(MALLOC_O) $(DATA_O) $(DB_O) $(IO_O) $(MISC_O) \
+             $(PCODE_O) $(OPS_O) $(MOD_O)
 DRIVER_O   = $(GRAMMAR_O) genesis.o $(COMMON_O)
 COMPILER_O = $(GRAMMAR_O) coldcc.o textdb.o $(COMMON_O)
 CONTROL_O  = control.o

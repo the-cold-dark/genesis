@@ -845,8 +845,52 @@ void func_compile(void) {
 }
 
 void func_get_method(void) {
-    if (!func_init_0())
+    data_t       * args, d;
+    method_t     * method;
+    list_t       * list;
+    register int   x;
+    long         * ops;
+
+    /* Accept a list of lines of code and a symbol for the name. */
+    if (!func_init_1(&args, SYMBOL))
         return;
-    push_int(1);
+
+    method = object_find_method(cur_frame->object->objnum, args[0].u.symbol);
+
+    /* keep these for later reference, if its already around */
+    if (!method)
+        THROW((methodnf_id, "Method %D not found.", &args[0]))
+
+    list = list_new(method->num_opcodes);
+    d.type = SYMBOL;
+    ops = method->opcodes;
+    for (x=0; x < method->num_opcodes; x++) {
+        switch (ops[x]) {
+            case '+':
+            case '-':
+            case '*':
+            case '/':
+            case '%':
+            case '!':
+            case '>':
+            case '<':
+                d.type = SYMBOL;
+                d.u.symbol = ident_dup(op_table[ops[x]].symbol);
+                break;
+            default:
+                if (ops[x] > FIRST_TOKEN) {
+                    d.type = SYMBOL;
+                    d.u.symbol = ident_dup(op_table[ops[x]].symbol);
+                } else {
+                    d.type = INTEGER;
+                    d.u.val = ops[x];
+                }
+        }
+        list = list_add(list, &d);
+    }
+
+    pop(1);
+    push_list(list);
+    list_discard(list);
 }
 

@@ -558,12 +558,14 @@ void op_expr_message(void) {
 
     arg_start = arg_starts[--arg_pos];
     target = &stack[arg_start - 2];
+
     message_data = &stack[arg_start - 1];
 
     if (message_data->type != SYMBOL) {
 	cthrow(type_id, "Message (%D) is not a symbol.", message_data);
 	return;
     }
+
     message = ident_dup(message_data->u.symbol);
 
     switch (target->type) {
@@ -593,7 +595,7 @@ void op_expr_message(void) {
             }
             arg_start--;
             data_discard(message_data);
-                message_data = &stack[arg_start -1];
+            data_dup(&stack[arg_start], target);
             break;
     }
 

@@ -14,6 +14,14 @@
 
 #include "object.h"
 
+#ifdef S_IRUSR
+#define READ_WRITE              (S_IRUSR | S_IWUSR)
+#define READ_WRITE_EXECUTE      (S_IRUSR | S_IWUSR | S_IXUSR)
+#else
+#define READ_WRITE 0600
+#define READ_WRITE_EXECUTE 0700
+#endif
+
 void   init_binary_db(void);
 void   init_new_db(void);
 int    init_db(int force_textdump);

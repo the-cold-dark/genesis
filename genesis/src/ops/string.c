@@ -430,17 +430,17 @@ void func_uppercase(void) {
     if (!func_init_1(&args, STRING))
 	return;
 
-    args[0].u.str = string_uppercase(args[0].u.str);
+    args[0].u.str = string_uppercase(string_dup_or_copy(args[0].u.str));
 }
 
 void func_lowercase(void) {
-    data_t *args;
+    data_t   * args;
 
     /* Accept a string to uppercase. */
     if (!func_init_1(&args, STRING))
 	return;
 
-    args[0].u.str = string_lowercase(args[0].u.str);
+    args[0].u.str = string_lowercase(string_dup_or_copy(args[0].u.str));
 }
 
 void func_strcmp(void) {

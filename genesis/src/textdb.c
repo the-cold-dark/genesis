@@ -287,11 +287,6 @@ void verify_native_methods(void) {
     register   int x;
     nh_t     * nh = (nh_t *) NULL;
 
-    if (use_natives & IGNORE_NATIVES) {
-        printf("WARNING: not binding native methods..\n");
-        return;
-    }
-
     /* check the methods we know about */
     for (x=0; x < NATIVE_LAST; x++) {
         native = &natives[x];
@@ -378,10 +373,11 @@ void verify_native_methods(void) {
             if (nh != (nh_t *) NULL)
                 nh->valid = 1;
         } else {
-            if (use_natives & FORCE_NATIVES) {
+            if (use_natives != FORCE_NATIVES) {
                 fformat(stdout, "WARNING: method definition %O.%s() overrides native method.\n", obj->objnum, ident_name(mname));
             } else {
                 object_del_method(obj, mname);
+                fformat(stdout, "WARNING: overriding %O.%s() with a native method.\n", obj->objnum, ident_name(mname));
                 goto compile_method; /* jump up and compile the method */
             }
         }

@@ -53,6 +53,12 @@ NATIVE_METHOD(next_objnum) {
     RETURN_OBJNUM(db_top)
 }
 
+#ifdef HAVE_GETRUSAGE
+#if defined(sys_solaris) || defined(sys_ultrix)
+extern int getrusage(int, struct rusage *);
+#endif
+#endif
+
 NATIVE_METHOD(status) {
 #ifdef HAVE_GETRUSAGE
     struct rusage r;

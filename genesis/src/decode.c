@@ -100,7 +100,7 @@ static struct {
     int opcode;
     int level;
 } precedences[] = {
-    { '=',		 1 },
+    { OP_ASSIGN,	 1 },
     { PLUS_EQ,		 1 },
     { MINUS_EQ,		 1 },
     { MULT_EQ,		 1 },
@@ -1253,10 +1253,12 @@ static list_t *unparse_stmt(list_t *output, Stmt *stmt, int indent, Stmt *last)
 	      output = unparse_stmt(output, stmt->u.ccatch.handler,
 				    indent + the_increment, NULL);
 	  }
-	  str = string_of_char(' ', indent);
-          if (complex)
+          if (complex) {
+              str = string_of_char(' ', indent);
               str = string_addc(str, '}');
-	  return add_and_discard_string(output, str);
+              output = add_and_discard_string(output, str);
+          }
+          return output;
       }
 
       default:
@@ -1540,7 +1542,7 @@ static string_t *unparse_expr(string_t *str, Expr *expr, int paren) {
 	str = unparse_expr_prec(str, expr->u.cond.cond, CONDITIONAL, 1);
 	str = string_add_chars(str, " ? ", 3);
 	str = unparse_expr(str, expr->u.cond.true, PAREN_ASSIGN);
-	str = string_add_chars(str, " | ", 3);
+	str = string_add_chars(str, " : ", 3);
 	return unparse_expr_prec(str, expr->u.cond.false, CONDITIONAL, 0);
 
       case CRITICAL:

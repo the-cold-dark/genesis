@@ -6,6 +6,25 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-2  [21-Apr-96] Brandon Gillespie
+      * the change to backup() assumed files were always the same, which
+        they are not (it depends upon the dbm implementation you are using),
+        changed backup() to use readdir() to read the directory.
+1.0-1  [20-Apr-96] Brandon Gillespie
+      * Bug fix: uppercase/lowercase and their native equivalents, and
+        native .capitalize() were not duplicating strings correctly
+        (sometimes causing a segv, if used in the wrong situation).
+        Created the string function 'string_dup_or_copy' for this
+        situation, where you must have your own copy of the string
+        (selfish bastard).
+      * Changed it to accept both '?:' and '?|' for conditional, looks
+        like we have gone the full circle on this one.  It decompiles
+        to '?:'.
+      * Fixed method expression calls again, I seem to have lost
+        the change from 0.2-1, so I did it again.
+      * Include our own malloc for those who wish a nice implementation.
+        Code is from Poul-Henning Kamp.
+      * upgraded backup() to be more efficient
 1.0-0  [17-Apr-96] Brandon Gillespie
       * Bug fix, "xxxx".native() caused a segmentation violation, the
         problem was mine, I wasn't cleaning up the stack correctly after

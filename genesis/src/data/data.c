@@ -265,8 +265,7 @@ void data_discard(data_t *data)
     }
 }
 
-string_t *data_tostr(data_t *data)
-{
+string_t *data_tostr(data_t *data) {
     char *s;
     Number_buf nbuf;
 

@@ -77,6 +77,7 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 
 /* The following tokens are terminals for the parser. */
 
+%token  FIRST_TOKEN
 %token	<num>	INTEGER OBJNUM
 %token  <fnum>  FLOAT
 %token	<s>	COMMENT STRING SYMBOL OBJNAME IDENT ERROR
@@ -87,10 +88,10 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %token		FORK
 %token		PASS CRITLEFT CRITRIGHT PROPLEFT PROPRIGHT
 
-%right	'='
+%right	OP_ASSIGN
 %right	MINUS_EQ DIV_EQ MULT_EQ PLUS_EQ
 %left	TO
-%right	'?' '|'
+%right	OP_COND_IF ':' OP_COND_OTHER_ELSE
 %right	OR
 %right	AND
 %left	IN
@@ -297,12 +298,13 @@ expr	: INTEGER			{ $$ = integer_expr($1); }
 	| expr IN expr			{ $$ = binary_expr(IN, $1, $3); }
 	| expr AND expr			{ $$ = and_expr($1, $3); }
 	| expr OR expr			{ $$ = or_expr($1, $3); }
-	| expr '?' expr '|' expr	{ $$ = cond_expr($1, $3, $5); }
+	| expr OP_COND_IF expr ':' expr	{ $$ = cond_expr($1, $3, $5); }
+	| expr OP_COND_IF expr OP_COND_OTHER_ELSE expr	{ $$ = cond_expr($1, $3, $5); }
 	| IDENT MULT_EQ expr		{ $$ = doeq_expr(MULT_EQ, $1, $3); }
 	| IDENT DIV_EQ expr		{ $$ = doeq_expr(DIV_EQ, $1, $3); }
 	| IDENT PLUS_EQ expr		{ $$ = doeq_expr(PLUS_EQ, $1, $3); }
 	| IDENT MINUS_EQ expr		{ $$ = doeq_expr(MINUS_EQ, $1, $3); }
-	| IDENT '=' expr		{ $$ = assign_expr($1, $3); }
+	| IDENT OP_ASSIGN expr		{ $$ = assign_expr($1, $3); }
 	| '(' expr ')'			{ $$ = $2; }
         | CRITLEFT expr CRITRIGHT       { $$ = critical_expr($2); }
 	| PROPLEFT expr PROPRIGHT	{ $$ = propagate_expr($2); }

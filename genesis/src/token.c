@@ -62,20 +62,23 @@ static struct {
     { "..",			UPTO },
     { "|)",			CRITRIGHT },
     { "||",			OR },
+    { "|",			OP_COND_OTHER_ELSE },
     { "#[",			START_DICT },
     { "`[",			START_BUFFER },
 
     { "&&",			AND },
     { "==",			EQ },
+    { "=",			OP_ASSIGN },
     { "!=",			NE },
     { ">=",			GE },
 
     { "++",			INCREMENT },
-    { "--",			DECREMENT },
     { "+=",			PLUS_EQ },
+    { "--",			DECREMENT },
     { "-=",			MINUS_EQ },
     { "/=",			DIV_EQ },
-    { "*=",			MULT_EQ }
+    { "*=",			MULT_EQ },
+    { "?",			OP_COND_IF },
 };
 
 static struct {
@@ -160,8 +163,9 @@ int yylex(void)
 	    /* Compare remaining letters of word against s. */
 	    word = reserved_words[i].word;
 	    for (j = 1; j < len && word[j]; j++) {
-		if (s[j] != word[j])
+		if (s[j] != word[j]) {
 		    break;
+                }
 	    }
 
 	    /* Comparison fails if we didn't match all the characters in word,

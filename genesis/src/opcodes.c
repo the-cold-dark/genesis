@@ -65,8 +65,8 @@ static Op_info op_info[] = {
     { GET_OBJ_VAR,      "GET_OBJ_VAR",     op_get_obj_var, IDENT },
     { START_ARGS,       "START_ARGS",      op_start_args },
     { PASS,             "PASS",            op_pass },
-    { CALL_METHOD,          "CALL_METHOD",         op_message, IDENT },
-    { EXPR_CALL_METHOD,     "EXPR_CALL_METHOD",    op_expr_message },
+    { CALL_METHOD,      "CALL_METHOD",         op_message, IDENT },
+    { EXPR_CALL_METHOD, "EXPR_CALL_METHOD",    op_expr_message },
     { LIST,             "LIST",            op_list },
     { DICT,             "DICT",            op_dict },
     { BUFFER,           "BUFFER",          op_buffer },
@@ -82,7 +82,7 @@ static Op_info op_info[] = {
     { PROPAGATE_END,    "PROPAGATE_END",   op_propagate_end },
 
     /* Arithmetic and relational operators (arithop.c). */
-    { '!',              "!",               op_not },
+    { '!',           "!",               op_not },
     { NEG,              "NEG",             op_negate },
     { '*',              "*",               op_multiply },
     { '/',              "/",               op_divide },

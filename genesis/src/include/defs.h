@@ -92,7 +92,6 @@ void init_defs(void);
 #define CACHE_WIDTH	10
 #define CACHE_DEPTH	30
 
-
 #define FORCED_CLEANUP_LIMIT 64
 #define FORCED_CLEANUP_BOUND 40
 

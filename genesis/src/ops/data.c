@@ -126,6 +126,7 @@ COLDC_FUNC(tostr) {
 
     /* Replace the argument with its text version. */
     str = data_tostr(&args[0]);
+
     pop(1);
     push_string(str);
     string_discard(str);
@@ -172,7 +173,7 @@ COLDC_FUNC(tosym) {
        but at the moment everywhere assumes 'ident_get' returns a valid
        ident irregardless */
     if (!is_valid_ident(string_chars(args[0].u.str))) {
-        cthrow(type_id,
+        cthrow(symbol_id,
         "Symbols may only contain alphanumeric characters and the underscore.");
         return;
     }

@@ -138,7 +138,7 @@ extern Long num_objects;
     }
 
 #ifndef __Win32__
-INTERNAL Bool good_perms(struct stat * sb) {
+static Bool good_perms(struct stat * sb) {
     if (!geteuid())
         return YES;
     if (sb->st_uid == geteuid() && (sb->st_mode & S_IRWXU))
@@ -467,7 +467,7 @@ static Int db_alloc(Int size)
     blocks_needed = NEEDED(size, BLOCK_SIZE);
     over_the_top = 0;
 
-    forever {
+    for (;;) {
 
 	if (b < bitmap_blocks && bitmap[b >> 3] == (char)255) {
 	    /* 8 full blocks. Let's run away from this! */
@@ -773,7 +773,7 @@ static void db_is_dirty(void) {
 /* checks for #1/$root and #0/$sys, adds them if they
    do not exist.  Call AFTER init_*_db has been called */
 
-INTERNAL void _check_obj(Long objnum, cList * parents, char * name) {
+static void _check_obj(Long objnum, cList * parents, char * name) {
     Obj * obj = cache_retrieve(objnum),
              * obj2;
     Long       other;

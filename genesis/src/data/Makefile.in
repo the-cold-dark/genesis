@@ -19,7 +19,7 @@ SRCDIR=$(prefix)/src
 VERSION=@VERSION@
 
 OBJS = data.o buffer.o dict.o ident.o list.o object.o string.o \
-       handled_frob.o quickhash.o
+       handled_frob.o quickhash.o string_tab.o
 
 SRCS = `echo $(CDC_OBJS) $(COLDCORE_O) | sed -e 's/\.o/.c/g'`
 

@@ -71,7 +71,7 @@ cBuf *buffer_resize(cBuf *buf, Int len) {
     return buf;
 }
 
-cStr * cBufo_string(cBuf * buf) {
+cStr * buf_to_string(cBuf * buf) {
     cStr * str, * out;
     unsigned char * string_start, *p, *q;
     char * s;
@@ -113,7 +113,7 @@ cStr * cBufo_string(cBuf * buf) {
 }
 
 /* If sep (separator buffer) is NULL, separate by newlines. */
-cList *cBufo_strings(cBuf *buf, cBuf *sep)
+cList *buf_to_strings(cBuf *buf, cBuf *sep)
 {
     cData d;
     cStr *str;

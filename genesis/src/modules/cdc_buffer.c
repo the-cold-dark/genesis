@@ -74,7 +74,7 @@ NATIVE_METHOD(buf_to_str) {
 
     buf = buffer_dup(BUF1);
 
-    CLEAN_RETURN_STRING(cBufo_string(buf));
+    CLEAN_RETURN_STRING(buf_to_string(buf));
 }
 
 NATIVE_METHOD(buf_to_strings) {
@@ -84,7 +84,7 @@ NATIVE_METHOD(buf_to_strings) {
     INIT_1_OR_2_ARGS(BUFFER, BUFFER);
 
     sep = (argc == 2) ? BUF2 : NULL;
-    list = cBufo_strings(BUF1, sep);
+    list = buf_to_strings(BUF1, sep);
 
     CLEAN_RETURN_LIST(list);
 }

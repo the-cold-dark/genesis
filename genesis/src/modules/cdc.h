@@ -24,6 +24,7 @@ NATIVE_METHOD(dict_del);
 NATIVE_METHOD(dict_add_elem);
 NATIVE_METHOD(dict_del_elem);
 NATIVE_METHOD(dict_contains);
+NATIVE_METHOD(dict_union);
 NATIVE_METHOD(listlen);
 NATIVE_METHOD(sublist);
 NATIVE_METHOD(insert);

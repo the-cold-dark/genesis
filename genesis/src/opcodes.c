@@ -6,7 +6,6 @@
 #include <ctype.h>
 #include "cdc_pcode.h"
 #include "operators.h"
-/*#include "old_ops.h"*/
 #include "functions.h"
 #include "util.h"
 
@@ -275,6 +274,7 @@ static Op_info op_info[] = {
     { F_DICT_ADD,         "dict_add",        func_dict_add },
     { F_DICT_DEL,         "dict_del",        func_dict_del },
     { F_DICT_CONTAINS,    "dict_contains",   func_dict_contains },
+    { F_DICT_UNION,       "dict_union",      func_dict_union },
 
     /* Buffer manipulation (bufferop.c). */
     { F_BUFLEN,           "buflen",          func_buflen },

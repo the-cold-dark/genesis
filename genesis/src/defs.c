@@ -30,10 +30,11 @@ void init_defs(void) {
     INIT_VAR(c_dir_root, "root", 4);
     INIT_VAR(c_logfile, "logs/db.log", 11);
     INIT_VAR(c_errfile, "logs/driver.log", 15);
-    INIT_VAR(c_pidfile, "logs/genesis.pid", 16);
+    INIT_VAR(c_runfile, "logs/genesis.run", 16);
 
     logfile = stdout;
     errfile = stderr;
+    readonly_db = NO;
 
 #ifdef HAVE_TM_ZONE
     time(&t);

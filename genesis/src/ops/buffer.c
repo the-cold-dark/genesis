@@ -105,7 +105,7 @@ COLDC_FUNC(buf_to_str) {
     if (!func_init_1(&args, BUFFER))
 	return;
 
-    str = cBufo_string(args[0].u.buffer);
+    str = buf_to_string(args[0].u.buffer);
 
     pop(1);
     push_string(str);
@@ -122,7 +122,7 @@ COLDC_FUNC(buf_to_strings) {
 	return;
 
     sep = (num_args == 2) ? args[1].u.buffer : NULL;
-    list = cBufo_strings(args[0].u.buffer, sep);
+    list = buf_to_strings(args[0].u.buffer, sep);
 
     pop(num_args);
     push_list(list);

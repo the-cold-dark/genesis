@@ -175,6 +175,11 @@
 #define SYSTEM_OBJNUM     0
 #define ROOT_OBJNUM       1
 
+#ifndef HAVE_STRERROR
+extern char *sys_errlist[];
+#define strerror(n) (sys_errlist[n])
+#endif
+
 /*
 // bool defs pulled from the Perl5 Source, Copyright 1991-1994, Larry Wall
 */
@@ -247,7 +252,11 @@ typedef bool              Bool;
 # error "Unable to specify size for Short type (16 bits)"
 #endif
 
+ /* when monkeys fly */
 #if SIZEOF_SHORT == 4
+  typedef short int          Int;
+  typedef unsigned short int uInt;
+#elif SIZEOF_INT == 4
   typedef int               Int;
   typedef unsigned int      uInt;
 #elif SIZEOF_LONG == 4
@@ -379,13 +388,14 @@ char * c_dir_bin;
 char * c_dir_root;
 char * c_logfile;
 char * c_errfile;
-char * c_pidfile;
+char * c_runfile;
 
 FILE * logfile;
 FILE * errfile;
 cStr * str_tzname;
 
 Int  c_interactive;
+Bool readonly_db;
 Bool running;
 Bool atomic;
 Int  heartbeat_freq;

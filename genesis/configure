@@ -435,7 +435,7 @@ if test $ac_cv_prog_gcc = yes; then
   fi
 else
   GCC=
-  test "${CFLAGS+set}" = set || CFLAGS="-g"
+  test "${CFLAGS+set}" = set || CFLAGS=""
 fi
 
 # Extract the first word of "makedepend", so it can be a program name with args.
@@ -2132,8 +2132,8 @@ cat <<END
 END
 
 
-if eval "test \"`echo '$''{'ac_cv_prog_gcc'+set}'`\" = set"; then
-    opt_default='-O3'
+if test "$ac_cv_prog_gcc" = yes; then
+    opt_default='-O2'
     cat <<END
 # You are running gcc, suggested:
 #
@@ -2269,7 +2269,7 @@ END
         echo "- Generating module files for" $mod_config
         owd=`pwd`
         cd $moddir
-        objs=`./modbuild $mod_config`;
+        objs=`perl modbuild $mod_config`;
         cd $owd
         MOD_O=`echo $objs`
 #    else

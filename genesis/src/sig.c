@@ -43,10 +43,9 @@ void catch_SIGFPE(int sig) {
 }
 
 void catch_SIGCHLD(int sig) {
-    /* ah, our kiddie is done, tell it to go away */
     waitpid(-1, NULL, WNOHANG);
 
-    /* some older OS's reset the signal handler, rather annoying */
+    /* reset the signal so we catch it again */
     signal(SIGCHLD, catch_SIGCHLD);
 }
 
@@ -88,10 +87,27 @@ void catch_signal(int sig) {
         case SIGUSR2:
             /* let the db do what it wants from here */
             break;
-        case SIGUSR1:
-            /* USR1 goes back to the main loop */
+        case SIGUSR1: {
+            cData * d;
+            cList * l;
+ 
+            /* First cancel all preempted and suspended tasks */
+            l = task_list();
+            for (d=list_first(l); d; d=list_next(l, d)) {
+                /* boggle */
+                if (d->type != INTEGER)
+                    continue;
+                task_cancel(d->u.val);
+            }
+            list_discard(l);
+
+            /* now cancel the current task */
+            task_cancel(task_id);
+
+            /* jump back to the main loop */
             longjmp(main_jmp, 1);
             break;
+        }
         case SIGILL:
             /* lets panic and hopefully shutdown without frobbing the db */
             panic(sig_name(sig));

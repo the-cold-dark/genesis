@@ -13,12 +13,6 @@
 #include "util.h"
 #include "opcodes.h"
 
-#ifdef HAVE_GETTIMEOFDAY
-#if defined(sys_ultrix) || defined(sys_solaris)
-Int gettimeofday (struct timeval *tp, struct timezone *tzp);
-#endif
-#endif
-
 void func_time(void) {
     /* Take no arguments. */
     if (!func_init_0())

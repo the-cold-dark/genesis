@@ -6,6 +6,8 @@
 // The block allocation algorithm in this code is due to Marcus J. Ranum.
 */
 
+#define _binarydb_
+
 #include "defs.h"
 
 #include <sys/param.h>
@@ -38,6 +40,10 @@ static Int last_free = 0;	/* Last known or suspected free block */
 
 static FILE *database_file = NULL;
 
+static char *dump_bitmap  = NULL;
+static Int   dump_blocks;
+static Int   last_dumped;
+
 static char *bitmap = NULL;
 static Int bitmap_blocks = 0;
 static Int allocated_blocks = 0;
@@ -63,7 +69,7 @@ extern Long cur_search, db_top;
                 FAIL("Cannot create directory \"%s\".\n"); \
         } \
     }
-    
+
 #define init_bitmaps() { \
         if (stat(fdb_objects, &statbuf) < 0) \
             FAIL("Cannot stat database file \"%s/objects\".\n"); \
@@ -133,7 +139,7 @@ void init_binary_db(void) {
                   /* eat the newline */
                   if (buf[strlen(buf) - 1] == (char) 10)
                       buf[strlen(buf) - 1] = (char) NULL;
-  
+
                   if (!strcmp(buf, SYSTEM_TYPE))
                       outdated = 0;
               }
@@ -151,7 +157,7 @@ It was compiled on %s with coldcc %d.%d-%d and module key %li\n\
 This system is %s with coldcc %d.%d-%d and module key %li\n\n",
         c_dir_binary, buf, atoi(v_major), atoi(v_minor), atoi(v_patch),
         atol(magicmod), SYSTEM_TYPE, VERSION_MAJOR, VERSION_MINOR,
-        VERSION_PATCH, (Long) MAGIC_MODNUMBER);
+        VERSION_PATCH, (long) MAGIC_MODNUMBER);
         FAIL("Unable to load database \"%s\".\n");
     }
 
@@ -160,7 +166,7 @@ This system is %s with coldcc %d.%d-%d and module key %li\n\n",
     init_bitmaps();
     sync_index();
     fprintf (errfile, "Binary database fragmentation: %.2f%%\n",
-             (float) db_fragmentation());
+		100.0*(1.0-(float)allocated_blocks/(float)bitmap_blocks));
 
     db_clean = 1;
 }
@@ -286,12 +292,102 @@ static void db_mark(off_t start, Int size)
     blocks = NEEDED(size, BLOCK_SIZE);
     allocated_blocks+=blocks;
 
-
     while (start + blocks > bitmap_blocks)
 	grow_bitmap(bitmap_blocks + DB_BITBLOCK);
 
     for (i = start; i < start + blocks; i++)
 	bitmap[i >> 3] |= (1 << (i & 7));
+}
+
+/* This routine copies the object from the current binary to the
+   dump binary. It will first check whether copying is needed.
+   Called from db_unmark and db_put (to prevent dirtying the undumped
+   objects) */
+
+static void dump_copy (off_t start, Int blocks)
+{
+    Int i;
+    char buf[BLOCK_SIZE];
+
+    /* check if we need to do this */
+    for (i=start; i<start+blocks; i++) {
+	if (i < dump_blocks && (bitmap[i >> 3] & (1 << (i&7))))
+	    break;
+    }
+
+    if (i == start+blocks) return;
+
+    if (fseek(database_file, BLOCK_OFFSET (start), SEEK_SET))
+        panic("fseek(\"%s\") in copy: %s", database_file, strerror(errno));
+
+    /* PORTABILITY WARNING : THIS FSEEK MAKES THE FILE LONGER IN SOME CASES.
+       Checked on Solaris, should work on others. */
+
+    if (fseek(dump_db_file,  BLOCK_OFFSET (start), SEEK_SET))
+        panic("fseek(\"%s\") in copy: %s", dump_db_file, strerror(errno));
+    for (i=0; i<blocks; i+=16) {
+	fread (buf, 1, BLOCK_SIZE, database_file);
+	fwrite (buf, 1, BLOCK_SIZE, dump_db_file);
+	dump_bitmap[i >> 3] &= ~(1 << (i&7));
+    }
+}
+
+/* open the dump database. return -1 on failure (can't open the file),
+   -2 -> we are already dumping */
+
+Int db_start_dump(char *dump_objects_filename) {
+    if (dump_db_file)
+	return -2;
+    dump_db_file = fopen(dump_objects_filename, "wb+");
+    if (!dump_db_file)
+	return -1;
+    last_dumped = 0;
+    dump_blocks = bitmap_blocks;
+    dump_bitmap = EMALLOC(char, (bitmap_blocks / 8)+1);
+    memcpy(dump_bitmap, bitmap, (bitmap_blocks / 8)+1);
+    return 0;
+}
+
+/* this is the main hook. It's supposed to be called from the main loop, with
+   the maximal number of blocks you want to dump.
+   return: 0 -> either dump continues, or we weren't dumping before
+           1 -> dump finished, -1 -> unspecified error
+	   call it with maxblocks = between 8 and 64 */
+
+Int dump_some_blocks (Int maxblocks)
+{
+    Int dofseek = 1;
+    char buf[BLOCK_SIZE];
+
+    if (!dump_db_file)
+	return DUMP_NOT_IN_PROGRESS;
+    while (maxblocks) {
+	if ( (dump_bitmap[last_dumped >> 3] & (1 << (last_dumped & 7))) ) {
+	    if (dofseek) {
+		if (fseek(database_file, BLOCK_OFFSET (last_dumped), SEEK_SET))
+                   panic("fseek(\"%s\"..): %s", database_file, strerror(errno));
+		if (fseek(dump_db_file,  BLOCK_OFFSET (last_dumped), SEEK_SET))
+                   panic("fseek(\"%s\"..): %s", dump_db_file, strerror(errno));
+		dofseek=0;
+	    }
+	    fread (buf, 1, BLOCK_SIZE, database_file);
+	    fwrite (buf, 1, BLOCK_SIZE, dump_db_file);
+	    dump_bitmap[last_dumped >> 3] &= ~(1 << (last_dumped & 7));
+	    maxblocks--;
+	}
+	else
+	    dofseek=1;
+
+	if (last_dumped++ >= dump_blocks) {
+	    if (fclose (dump_db_file))
+	        panic("Unable to close dump file '%s'", dump_db_file);
+	    dump_db_file = NULL;
+	    free (dump_bitmap);
+	    dump_bitmap=NULL;
+	    return DUMP_FINISHED;
+	}
+    }
+    return DUMP_DUMPED_BLOCKS;
 }
 
 static void db_unmark(off_t start, Int size)
@@ -301,10 +397,12 @@ static void db_unmark(off_t start, Int size)
     blocks = NEEDED(size, BLOCK_SIZE);
     allocated_blocks-=blocks;
 
+    if (dump_db_file) dump_copy (start, blocks);
+
     /* Remember a free block was here. */
     last_free = start;
 
-    for (i = start; i < start + blocks; i++) 
+    for (i = start; i < start + blocks; i++)
 	bitmap[i >> 3] &= ~(1 << (i & 7));
 }
 
@@ -312,26 +410,26 @@ static Int db_alloc(Int size)
 {
     Int blocks_needed, b, count, starting_block, over_the_top;
 
-#ifdef LOWBLOAT_DB
-    /*
-    // this will reduce how much your database bloats, however it will
-    // be slower as it searches the whole database for free blocks.
-    // For now this is an option to reduce the amount of bloat occuring,
-    // until an alternate allocator is created.
-    */
-    b = 0;
-#else
     b = last_free;
-#endif
     blocks_needed = NEEDED(size, BLOCK_SIZE);
     over_the_top = 0;
 
     while (1) {
+
+	if (b < bitmap_blocks && bitmap[b >> 3] == (char)255) {
+	    /* 8 full blocks. Let's run away from this! */
+	    b = (b & ~7) + 8;
+	    while (b < bitmap_blocks && bitmap[b >> 3] == (char)255) {
+		b += 8;
+	    }
+	}
+
 	if (b >= bitmap_blocks) {
 	    /* Only wrap around once. */
 	    if (!over_the_top) {
 		b = 0;
 		over_the_top = 1;
+		continue;
 	    } else {
 		grow_bitmap(b + DB_BITBLOCK);
 	    }
@@ -344,7 +442,13 @@ static Int db_alloc(Int size)
 		break;
 	    b++;
 	    if (b >= bitmap_blocks)
-		grow_bitmap(b + DB_BITBLOCK);
+		/* time to wrap around if we still haven't */
+		if (!over_the_top) {
+		    b=0;
+		    over_the_top=1;
+		    break;
+		} else
+		    grow_bitmap(b + DB_BITBLOCK);
 	}
 
 	if (count == blocks_needed) {
@@ -388,6 +492,9 @@ Int db_put(Obj *obj, Long objnum)
 	    db_unmark(LOGICAL_BLOCK(old_offset), old_size);
 	    new_offset = BLOCK_OFFSET(db_alloc(new_size));
 	} else {
+	    if (dump_db_file)
+		dump_copy (LOGICAL_BLOCK(old_offset),
+			   NEEDED(old_size, BLOCK_SIZE));
 	    new_offset = old_offset;
 	}
     } else {
@@ -460,8 +567,23 @@ void db_flush(void)
     db_is_clean();
 }
 
-static void db_is_clean(void)
-{
+void finish_backup(void) {
+    FILE * fp;
+    char buf[BUF];
+    
+    strcpy(buf, c_dir_binary);
+    strcat(buf, ".bak/.clean");
+    fp = open_scratch_file(buf, "w");
+    if (!fp)
+        panic("Cannot create file 'clean'.");
+    fprintf(fp, "%d\n%d\n%d\n%li\n%li\n",
+                VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH,
+                (long) MAGIC_MODNUMBER, cur_search);
+    fputs(SYSTEM_TYPE, fp);
+    close_scratch_file(fp);
+}
+
+static void db_is_clean(void) {
     FILE *fp;
 
     if (db_clean)
@@ -471,10 +593,9 @@ static void db_is_clean(void)
     fp = open_scratch_file(c_clean_file, "w");
     if (!fp)
 	panic("Cannot create file 'clean'.");
-
     fprintf(fp, "%d\n%d\n%d\n%li\n%li\n",
                 VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH,
-                (Long) MAGIC_MODNUMBER, cur_search);
+                (long) MAGIC_MODNUMBER, cur_search);
     fputs(SYSTEM_TYPE, fp);
     close_scratch_file(fp);
     db_clean = 1;
@@ -497,7 +618,7 @@ INTERNAL void _check_obj(Long objnum, cList * parents, char * name) {
              * obj2;
     Long       other;
     Ident      id = ident_get(name);
-    
+
     if (!obj)
         obj = object_new(objnum, parents);
 
@@ -509,7 +630,7 @@ INTERNAL void _check_obj(Long objnum, cList * parents, char * name) {
             object_del_objname(obj2);
             cache_discard(obj2);
         }
-    } 
+    }
 
     object_set_objname(obj, id);
     cache_discard(obj);
@@ -531,6 +652,4 @@ void init_core_objects(void) {
     list_discard(parents);
 }
 
-Float db_fragmentation(void) {
-    return (Float) 100.0*(1.0-(float)allocated_blocks/(float)bitmap_blocks);
-}
+#undef _binarydb_

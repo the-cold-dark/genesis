@@ -38,28 +38,28 @@ Long       line_count;
 Long       method_start;
 Obj * cur_obj;
 
-#define LINECOUNT (printf("Line %ld: ", line_count))
+#define LINECOUNT (printf("Line %ld: ", (long) line_count))
 
-#define ERR(__s)  (printf("Line %ld: %s\n",          line_count, __s))
+#define ERR(__s)  (printf("Line %ld: %s\n", (long) line_count, __s))
 
 #define ERRf(__s, __x) { \
-        printf("Line %ld: ", line_count); \
+        printf("Line %ld: ", (long) line_count); \
         printf(__s, __x); \
         fputc(10, logfile); \
     }
 
 #define WARN(_printf_) \
-        printf("Line %ld: WARNING: ", line_count); \
+        printf("Line %ld: WARNING: ", (long) line_count); \
         printf _printf_; \
         fputc(10, stdout)
 
 #define DIE(__s) { \
-        printf("Line %ld: ERROR: %s\n", line_count, __s); \
+        printf("Line %ld: ERROR: %s\n", (long) line_count, __s); \
         shutdown(); \
     }
 
 #define DIEf(__fmt, __arg) { \
-        printf("Line %ld: ERROR: ", line_count); \
+        printf("Line %ld: ERROR: ", (long) line_count); \
         printf(__fmt, __arg); \
         fputc(10, logfile); \
         shutdown(); \
@@ -78,7 +78,6 @@ Obj * cur_obj;
 #define MATCH(__s, __t, __l) (!strnccmp(__s, __t, __l) && isspace(__s[__l]))
 #define NEXT_SPACE(__s) {for (; *__s && !isspace(*__s) && *__s != NULL; __s++);}
 #define NEXT_WORD(__s)  {for (; isspace(*__s) && *__s != NULL; __s++);}
-
 
 /* this is here, rather than in data.c, because it would be lint for genesis */
 
@@ -1424,7 +1423,7 @@ INTERNAL char * method_definition(Method * m);
 INTERNAL void print_objname(Obj * obj, FILE * fp) {
     if (!obj || obj->objname == -1) {
         fputc('#', fp);
-        fprintf(fp, "%li", obj->objnum);
+        fprintf(fp, "%li", (long) obj->objnum);
     } else {
         fputc('$', fp);
         fputs(ident_name(obj->objname), fp);

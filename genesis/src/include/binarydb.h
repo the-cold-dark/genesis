@@ -13,6 +13,12 @@
 #define READ_WRITE_EXECUTE 0700
 #endif
 
+#define DUMP_BLOCK_SIZE      16
+#define DUMP_NOT_IN_PROGRESS -2
+#define DUMP_FAILED_TO_CLOSE -1
+#define DUMP_FINISHED        1
+#define DUMP_DUMPED_BLOCKS   0
+
 void   init_binary_db(void);
 void   init_new_db(void);
 Int    init_db(Int force_textdump);
@@ -27,6 +33,16 @@ void   db_close(void);
 void   db_flush(void);
 void   init_core_objects(void);
 Float  db_fragmentation(void);
+Int    db_start_dump (char *dump_objects_filename);
+Int    dump_some_blocks (Int maxblocks);
+void   finish_backup(void);
+
+/* global primarily so we can know if we are dumping */
+#ifdef _binarydb_
+FILE *dump_db_file = NULL;
+#else
+extern FILE *dump_db_file;
+#endif
 
 #endif
 

@@ -9,16 +9,30 @@
 #include <string.h>
 #include "cdc_db.h"
 
-/*
-// ORDER_BYTES is buggy, don't enable it unless you are willing 
-// and able to field problems which may arise.
-*/
+#define COMPRESS ENABLED
 #define ORDER_BYTES DISABLED
 
 /* Write a four-byte number to fp in a consistent byte-order. */
 void write_long(Long n, FILE *fp)
 {
-#if ORDER_BYTES
+#if COMPRESS
+                    /* figure the size of this based off sizeof(Int) etc */
+    Int sign, i, h, buf[17];
+ 
+    sign = n<0 ? 1 : 0;  
+    n = abs(n);
+    h = 1;
+    buf[0] = n&15;
+    n >>= 4;
+    while (n) {
+      buf[h++] = n & 255;
+      n >>= 8;
+    } 
+    buf[0] += (h << 5) + (sign << 4);
+    for (i=0; i<h; i++)
+      putc(buf[i], fp);
+#else
+#  if ORDER_BYTES
     /* Since first byte is special, special-case 0 as well. */
     if (!n) {
 	putc(96, fp);
@@ -35,15 +49,32 @@ void write_long(Long n, FILE *fp)
     }
 
     putc(96, fp);
-#else
+#  else
     fwrite(&n, sizeof(Long), 1, fp);
+#  endif
 #endif
 }
 
 /* Read a four-byte number in a consistent byte-order. */
 Long read_long(FILE *fp)
 {
-#if ORDER_BYTES
+#if COMPRESS
+    Int sign, i, h, n, k;
+ 
+    h = (unsigned)getc(fp) & 255;
+    sign = h & 16;
+    n = h & 15;
+    k = 4;
+    h = h >> 5;
+    for (i=0; i<h-1; i++) {
+      n += ((unsigned)getc(fp) & 255) << k;
+      k += 8;
+    }
+    if (sign) n=-n;
+    return n;
+
+#else
+# if ORDER_BYTES
     Int c;
     Long n, place;
 
@@ -63,18 +94,31 @@ Long read_long(FILE *fp)
 	n += place * (c - 32);
 	place *= 64;
     }
-#else
+# else
     Long    l;
   
     fread(&l, sizeof(Long), 1, fp);
 
     return l;
+# endif
 #endif
 }
 
 Int size_long(Long n)
 {
-#if ORDER_BYTES
+#if COMPRESS
+    Int h;
+
+    n = abs(n);
+    h = 1;
+    n >>= 4;
+    while (n) {
+      h++;
+      n >>= 8;
+    }
+    return h;
+#else
+# if ORDER_BYTES
     Int count = 2;
 
     if (!n)
@@ -85,8 +129,9 @@ Int size_long(Long n)
 	count++;
     }
     return count;
-#else
+# else
     return sizeof(n);
+# endif
 #endif
 }
 

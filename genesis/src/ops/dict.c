@@ -57,3 +57,18 @@ void func_dict_contains(void) {
     push_int(val);
 }
 
+void func_dict_union(void) {
+    cData * args;
+    Int      val;
+    cDict * dict1, * dict2;
+
+    if (!func_init_2(&args, DICT, DICT))
+        return;
+
+    dict1 = dict_dup(DICT1);
+    dict2 = dict_dup(DICT2);
+    pop(2);
+
+    push_dict(dict_union(dict2, dict1));
+}
+

@@ -21,7 +21,7 @@
 
 COLDC_FUNC(add_var) {
     cData * args;
-    long     result;
+    Long     result;
 
     /* Accept a symbol argument a data value to assign to the variable. */
     if (!func_init_1(&args, SYMBOL))
@@ -38,7 +38,7 @@ COLDC_FUNC(add_var) {
 
 COLDC_FUNC(del_var) {
     cData * args;
-    long     result;
+    Long     result;
 
     /* Accept one symbol argument. */
     if (!func_init_1(&args, SYMBOL))
@@ -84,7 +84,7 @@ COLDC_FUNC(variables) {
 COLDC_FUNC(set_var) {
     cData * args,
              d;
-    long     result;
+    Long     result;
 
     /* Accept a symbol for the variable name and a data value of any type. */
     if (!func_init_2(&args, SYMBOL, 0))
@@ -106,7 +106,7 @@ COLDC_FUNC(set_var) {
 COLDC_FUNC(get_var) {
     cData * args,
              d;
-    long     result;
+    Long     result;
 
     /* Accept a symbol argument. */
     if (!func_init_1(&args, SYMBOL))
@@ -125,7 +125,7 @@ COLDC_FUNC(get_var) {
 
 COLDC_FUNC(clear_var) {
     cData * args;
-    long     result = 0;
+    Long     result = 0;
 
     /* Accept a symbol argument. */
     if (!func_init_1(&args, SYMBOL))
@@ -794,7 +794,7 @@ COLDC_FUNC(objname) {
 
 COLDC_FUNC(lookup) {
     cData *args;
-    long objnum;
+    Long objnum;
 
     if (!func_init_1(&args, SYMBOL))
         return;

@@ -192,3 +192,17 @@ NATIVE_METHOD(dict_del_elem) {
     RETURN_DICT(dict);
 }
 
+NATIVE_METHOD(dict_union) {
+    cDict * dict1, * dict2;
+
+    INIT_2_ARGS(DICT, DICT)
+
+    dict1 = dict_dup(DICT1);
+    dict2 = dict_dup(DICT2);
+
+    CLEAN_STACK();
+    anticipate_assignment();
+
+    RETURN_DICT(dict_union(dict1, dict2));
+}
+

@@ -8,12 +8,16 @@
 #define cdc_pcode_h
 
 #include "grammar.h"
-#include "execute.h"
-#include "native.h"
-#include "opcodes.h"
+
 #include "token.h"
 #include "codegen.h"
 #include "code_prv.h"
+
+#ifndef _grammar_y_
+#include "execute.h"
+#include "native.h"
+#include "opcodes.h"
 #include "decode.h"
+#endif
 
 #endif

@@ -8,9 +8,10 @@ native $buffer.from_string()         str_to_buf
 native $buffer.from_strings()        strings_to_buf
 native $dictionary.keys()            dict_keys
 native $dictionary.add()             dict_add
-#native $dictionary.add_elem()        dict_add_elem
+native $dictionary.union()           dict_union
+#native $dictionary.add_elem()       dict_add_elem
 native $dictionary.del()             dict_del
-#native $dictionary.del_elem()        dict_del_elem
+#native $dictionary.del_elem()       dict_del_elem
 native $dictionary.contains()        dict_contains
 native $network.hostname()           hostname
 native $network.ip()                 ip

@@ -6,6 +6,15 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-9 [] Brandon Gillespie, Miroslav Silovic
+      * Fixed a few things that cropped up when compiling on other systems
+      * Added some compression code to the binary database (Miro)
+      * Added asyncrynous backups to binarydb (Miro)
+      * Added anti-bloat measures (Miro)
+      * Calling 'backup()' will now initiate the backup, but will likely
+        return long before the backup is complete.  When a backup is finished
+        the driver calls $sys.backup_done().
+      * New function and native dict_union()/$dictionary.union() (Miro)
 1.0-8 [] Brandon Gillespie, Miroslav Silovic
       * Added 'join()', hooked into $list.join() (native)
       * Finished 'graft()' functions for string, list and buffer, will

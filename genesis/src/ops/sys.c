@@ -55,14 +55,13 @@ INTERNAL Bool backup_file(char * file) {
     strcpy(source, c_dir_binary);
     strcat(source, "/");
     strcat(source, file);
+    strcpy(dest, c_dir_binary);
+    strcat(dest, ".bak/");
+    strcat(dest, file);
 
     from_fd = open(source, O_RDONLY, 0);
     if (from_fd == F_FAILURE)
         x_THROW(source)
-
-    strcpy(dest, c_dir_binary);
-    strcat(dest, ".bak/");
-    strcat(dest, file);
 
     to_fd = open(dest, (O_WRONLY|O_TRUNC|O_CREAT), (S_IRUSR|S_IWUSR));
     if (to_fd == F_FAILURE)
@@ -96,14 +95,17 @@ INTERNAL Bool backup_file(char * file) {
 }
 
 void func_backup(void) {
-    char          buf[BUF];
-    struct stat   statbuf;
+    char            buf[BUF];
+    struct stat     statbuf;
     struct dirent * dent;
-    DIR      * dp;
+    DIR           * dp;
 
     /* Accept no arguments. */
     if (!func_init_0())
         return;
+
+    if (dump_db_file)
+        THROW((perm_id, "A dump is already in progress!"))
 
     /* get binary.bak, make sure its ours */
     strcpy(buf, c_dir_binary);
@@ -121,10 +123,10 @@ void func_backup(void) {
     /* sync the db */
     cache_sync();
 
+    /* copy the index files and '.clean' */
     dp = opendir(c_dir_binary); 
     while ((dent = readdir(dp)) != NULL) {
-        if (strncmp(dent->d_name, ".", 1) == F_SUCCESS &&
-            strcmp(dent->d_name, ".clean")) /* true == failed to match */
+        if (*(dent->d_name) == '.' || !strncmp(dent->d_name, "objects", 7))
             continue;
 
         if (!backup_file(dent->d_name)) {
@@ -134,6 +136,12 @@ void func_backup(void) {
     }
     closedir(dp);
 
+    /* start asyncrynous backup of the object db file */
+    strcat(buf, "/objects");
+    if (db_start_dump(buf))
+        THROW((perm_id, "Unable to open dump db file \"%s\"", buf))
+
+    /* return '1' */
     push_int(1);
 }
 

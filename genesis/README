@@ -15,9 +15,8 @@ Read doc/CHANGES for information on release changes.
 
 Known Bugs:
 
-  * Database problems on a DEC alpha, may not exist anymore with the
-    Int and Long definitions (Read the CHANGES file).  Email
-    brandon@cold.org if you are running on a DEC Alpha.
+  * $dictionary.del_elem and $dictionary.add_elem cause crashes, they
+    are disabled in the cdc.mod
 
 ------------------------------------------------------------------------
 FURTHER INFORMATION
@@ -56,7 +55,7 @@ NOTES
 Verified to compile on:
 
     * FreeBSD 2.1-R and 2.1.5
-    * DEC OSF/1 2.0 (Note: it will have problems on a DEC alpha processor)
+    * DEC OSF/1 2.0
     * DEC Ultrix 4.4
     * Sun Solaris 2.5
 

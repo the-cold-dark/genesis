@@ -312,3 +312,36 @@ INTERNAL void double_hashtab_size(cDict *dict)
 	insert_key(dict, i);
 }
 
+/* WARNING: This will discard both arguments! */
+cDict *dict_union (cDict *d1, cDict *d2) {
+    int i, pos;
+
+    if (d1->keys->len > d2->keys->len) {
+        cDict *t;
+        t=d1; d1=d2; d2=t;
+    }
+
+    d2=dict_prep(d2);
+
+    for (i=0; i<d1->keys->len; i++) {
+        cData *key=&d1->keys->el[i], *value=&d1->values->el[i];
+
+        pos = search(d2, key);
+        /* forget the add if it's already there */
+        if (pos != -1)
+            continue;
+
+        /* Add the key and value to the list. */
+        d2->keys = list_add(d2->keys, key);
+        d2->values = list_add(d2->values, value);
+
+        /* Check if we should resize the hash table. */
+        if (d2->keys->len > d2->hashtab_size)
+            double_hashtab_size(d2);
+        else
+            insert_key(d2, d2->keys->len - 1);
+    }
+    dict_discard(d1);
+    return d2;
+}
+

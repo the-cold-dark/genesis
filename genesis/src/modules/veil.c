@@ -71,7 +71,7 @@ void uninit_veil(void) {
 // -------------------------------------------------------------------
 // internal function for buffer -> VEIL packet
 */
-cList * cBufo_veil_packets(cBuf * buf) {
+cList * buf_to_veil_packets(cBuf * buf) {
     Int             flags,
                     session,
                     length,
@@ -174,7 +174,7 @@ NATIVE_METHOD(to_veil_pkts) {
         buf = buffer_append(buffer_dup(_BUF(ARG1)), _BUF(ARG2));
     }
 
-    packets = cBufo_veil_packets(buf);
+    packets = buf_to_veil_packets(buf);
 
     buffer_discard(buf);
 

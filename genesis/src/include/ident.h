@@ -17,7 +17,7 @@ extern Ident servnf_id, varexists_id, dictionary_id, keynf_id, address_id;
 extern Ident refused_id, net_id, timeout_id, other_id, failed_id;
 extern Ident heartbeat_id, regexp_id, buffer_id, namenf_id, salt_id;
 extern Ident function_id, opcode_id, method_id, interpreter_id;
-extern Ident directory_id, eof_id;
+extern Ident directory_id, eof_id, backup_done_id;
 
 extern Ident public_id, protected_id, private_id, root_id, driver_id;
 extern Ident noover_id, sync_id, locked_id, native_id, fork_id, atomic_id;

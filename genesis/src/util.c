@@ -100,7 +100,7 @@ char *long_to_ascii(Long num, Number_buf nbuf) {
     return p + 1;
 #else
     *nbuf++ = (char) 0;
-    sprintf(nbuf, "%ld", num);
+    sprintf(nbuf, "%ld", (long) num);
     return nbuf;
 #endif
 }

@@ -30,6 +30,7 @@ COLDC_FUNC(dict_keys);
 COLDC_FUNC(dict_add);
 COLDC_FUNC(dict_del);
 COLDC_FUNC(dict_contains);
+COLDC_FUNC(dict_union);
 COLDC_FUNC(error);
 COLDC_FUNC(traceback);
 COLDC_FUNC(throw);

@@ -115,8 +115,8 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %token F_MATCH_PATTERN F_MATCH_REGEXP F_REGEXP F_SPLIT F_CRYPT F_UPPERCASE
 %token F_LOWERCASE F_STRCMP F_LISTLEN F_SUBLIST F_INSERT F_JOIN F_REPLACE
 %token F_DELETE F_SETADD F_SETREMOVE F_UNION
-%token F_DICT_KEYS F_DICT_ADD F_DICT_DEL F_DICT_ADD_ELEM
-%token F_DICT_DEL_ELEM F_DICT_CONTAINS F_BUFLEN F_BUF_REPLACE
+%token F_DICT_KEYS F_DICT_ADD F_DICT_DEL F_DICT_UNION
+%token F_DICT_CONTAINS F_BUFLEN F_BUF_REPLACE
 %token F_BUF_TO_STRINGS F_STRINGS_TO_BUF F_STR_TO_BUF F_BUF_TO_STR
 %token F_SUBBUF F_VERSION F_RANDOM F_TIME F_LOCALTIME F_MTIME
 %token F_STRFTIME F_CTIME F_MIN F_MAX F_ABS F_LOOKUP F_METHOD_FLAGS
@@ -142,7 +142,7 @@ extern Pile *compiler_pile;	/* We free this pile after compilation. */
 %token F_TAN F_SQRT F_ASIN F_ACOS F_ATAN F_POW F_ATAN2
 
 /* Reserved for future use. */
-%token FORK
+/*%token FORK*/
 
 /*
 // LAST_TOKEN tells opcodes.c how much space to allocate

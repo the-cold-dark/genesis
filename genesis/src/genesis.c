@@ -27,6 +27,21 @@ INTERNAL void main_loop(void);
 void usage (char * name);
 
 /*
+// if we have a logs/genesis.run, unlink it when we exit,
+// hooked into exiting with 'atexit()'
+*/
+void unlink_runningfile(void) {
+    if (unlink(c_runfile)) {
+        char buf[BUF];
+
+        /* grasp! */
+        strcpy(buf, "rm -f ");
+        strcat(buf, c_runfile);
+        system(buf);
+    }
+}
+
+/*
 // --------------------------------------------------------------------
 //
 // The big kahuna
@@ -130,7 +145,7 @@ INTERNAL void initialize(Int argc, char **argv) {
                         break;
                     case 'p':
                         argv += getarg(name,&buf,opt,argv,&argc,usage);
-                        NEWFILE(c_pidfile, buf);
+                        NEWFILE(c_runfile, buf);
                         break;
                     case 's': {
                         char * p;
@@ -245,9 +260,10 @@ INTERNAL void initialize(Int argc, char **argv) {
     }
 
     /* print the PID */
-    if ((fp = fopen(c_pidfile, "wb")) != NULL) {
+    if ((fp = fopen(c_runfile, "wb")) != NULL) {
         fprintf(fp, "%ld\n", (long) getpid());
         fclose(fp);
+        atexit(unlink_runningfile);
     } else {
         fprintf(errfile, "genesis pid: %ld\n", (long) getpid());
     }
@@ -321,17 +337,23 @@ INTERNAL void main_loop(void) {
 
         /* cache_sanity_check(); */
 
+        /* determine io wait */
         if (heartbeat_freq != -1) {
             next = (last - (last % heartbeat_freq)) + heartbeat_freq;
             GETTIME();
-            seconds = (SECS >= next) ? 0 : next - SECS;
-            seconds = (preempted ? 0 : seconds);
-
-#if 0
-     /* why did I #if 0 this ? */
             seconds = (preempted ? 0 :
                        ((SECS >= next) ? 0 : next - SECS));
-#endif
+        }
+
+        /* push our dump along, diddle with the wait if we need to */
+        switch (dump_some_blocks(DUMP_BLOCK_SIZE)) {
+            case DUMP_FINISHED:
+                finish_backup();
+                task(SYSTEM_OBJNUM, backup_done_id, 0);
+                break;
+            case DUMP_DUMPED_BLOCKS:
+                seconds = 0; /* we are still dumping, dont wait */
+                break;
         }
 
         handle_io_event_wait(seconds);
@@ -370,11 +392,11 @@ Options:\n\n\
         -x bindir      db executables directory, default: \"%s\"\n\
         -d log         alternate database logfile, default: \"%s\"\n\
         -e log         alternate error (driver) file, default: \"%s\"\n\
-        -p pidfile     alternate pid file, default: \"%s\"\n\
+        -p file        alternate runtime pid file, default: \"%s\"\n\
         -f             do not fork on startup\n\
         -s WIDTHxDEPTH Cache size, default 10x30\n\
 \n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, name, c_dir_binary,
-     c_dir_root, c_dir_bin, c_logfile, c_errfile, c_pidfile);
+     c_dir_root, c_dir_bin, c_logfile, c_errfile, c_runfile);
 }
 
 #undef _main_

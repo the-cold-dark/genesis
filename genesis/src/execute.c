@@ -291,8 +291,7 @@ void run_paused_tasks(void) {
 /*
 // ---------------------------------------------------------------
 //
-// List tasks, leave out preempted tasks as they exist only for a brief
-// moment in time anyway.
+// List tasks
 //
 */
 

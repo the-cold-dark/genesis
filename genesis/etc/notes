@@ -46,6 +46,9 @@ RELEASE INFORMATION:
       * Make stack() accept parameters to specify task id and 
         whether or not line numbers are desired. (Bruce)
       * Add 'log_malloc_size parameter for config(). (Bruce)
+      * Add explode_quoted() patch. (Jeremy Weatherford)
+      * Add calling_method() patch. (Allen Noe)
+      * Make method_bytecode() output info on jumps. (Allen Noe)
 
 1.1.9  [1-Oct-2000]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

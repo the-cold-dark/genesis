@@ -19,3 +19,7 @@ RELEASE INFORMATION:
         Brad, Colin)
       * bufidx() had an array bounds read problem. (Brad)
       * Fixed bug in strgraft() (Bruce)
+      * Fixed crash bug in coldcc (Bruce, noticed by Kipp)
+      * Fixed memory leak in signal handler (Bruce)
+      * Fixed crash bug in signal handler when no current task (Bruce)
+      * Fixed a file descriptor leak in pending connections failing (Bruce)

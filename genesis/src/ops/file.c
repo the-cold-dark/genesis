@@ -679,9 +679,14 @@ COLDC_FUNC(execute) {
         _exit(-1);
     } else if (pid > 0) {
         if (num_args == 3 && args[2].u.val) {
+            /* on at least Solaris, waitpid() won't write 0 
+             * into &status. only non-zero values
+             */
+            status = 0;
             if (waitpid(pid, &status, WNOHANG) == 0)
                 status = 0;
         } else {
+            status = 0;
             waitpid(pid, &status, 0);
         }
     } else {
@@ -698,4 +703,3 @@ COLDC_FUNC(execute) {
 
     push_int(status);
 }
-

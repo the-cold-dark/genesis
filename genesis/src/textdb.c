@@ -16,12 +16,10 @@
 #include <ctype.h>
 #include "cdc_db.h"
 #include "cdc_pcode.h"
-#include "coldcc.h"
 #include "util.h"
 #include "textdb.h"
 #include "moddef.h"
 #include "quickhash.h"
-#include "cache.h"
 
 /*
 // ------------------------------------------------------------------------
@@ -41,7 +39,6 @@ Int        use_natives;
 Long       line_count;
 Long       method_start;
 Obj * cur_obj;
-static Hash * dump_hash;
 extern Bool print_objs;
 extern Bool print_invalid;
 extern Bool print_warn;
@@ -52,7 +49,6 @@ extern Bool print_warn;
         printf("\rLine %ld: ", (long) line_count); \
         printf(__s, __x); \
         fputc('\n', stdout); \
-	fflush(stdout); \
     }
 
 #define WARN(_printf_) { \
@@ -60,13 +56,11 @@ extern Bool print_warn;
             printf("\rLine %ld: WARNING: ", (long) line_count); \
             printf _printf_; \
             fputc('\n', stdout); \
-	    fflush(stdout); \
         } \
     }
 
 #define DIE(__s) { \
         printf("\rLine %ld: ERROR: %s\n", (long) line_count, __s); \
-	fflush(stdout); \
         shutdown_coldcc(); \
     }
 
@@ -74,7 +68,6 @@ extern Bool print_warn;
         printf("\rLine %ld: ERROR: ", (long) line_count); \
         printf(__fmt, __arg); \
         fputc('\n', stdout); \
-	fflush(stdout); \
         shutdown_coldcc(); \
     }
 
@@ -114,10 +107,22 @@ extern Bool print_warn;
 /*
 // ------------------------------------------------------------------------
 */
-static Method * get_method(FILE * fp, Obj * obj, char * name);
+INTERNAL Method * get_method(FILE * fp, Obj * obj, char * name);
 char * strchop(char * str, Int len);
-static void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames);
-void blank_and_print_obj(char * what, Float percent_done, Obj * obj);
+INTERNAL void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames);
+void blank_and_print_obj(char * what, Obj * obj);
+
+/*
+// ------------------------------------------------------------------------
+// make this do more eventually
+*/
+#if 0
+INTERNAL void shutdown_coldcc(void) {
+    exit(1);
+}
+#endif
+
+extern void shutdown_coldcc(void);
 
 typedef struct holder_s holder_t;
 
@@ -138,16 +143,15 @@ struct holder_s {
     holder_t * next;
 };
 
-static holder_t * holders = NULL;
-
+holder_t * holders = NULL;
 nh_t * nhs = NULL;
 
-static Int add_objname(char * str, Long objnum, Int skip_lookup) {
+INTERNAL Int add_objname(char * str, Long objnum) {
     Ident   id = ident_get(str);
     Obj   * obj = NULL;
     Long    num = INV_OBJNUM;
 
-    if (!skip_lookup && lookup_retrieve_name(id, &num) && num != objnum) {
+    if (lookup_retrieve_name(id, &num) && num != objnum) {
         WARN(("Attempt to rebind existing objname $%s (#%li)",
                str, (long) num));
         ident_discard(id);
@@ -164,7 +168,7 @@ static Int add_objname(char * str, Long objnum, Int skip_lookup) {
         lookup_store_name(id, objnum);
 
         holder->objnum = objnum;
-        holder->str = string_dup(ident_name_str(id));
+        holder->str = string_from_chars(ident_name(id), strlen(ident_name(id)));
         holder->next = holders;
         holders = holder;
     } else {
@@ -187,54 +191,46 @@ cObjnum get_object_name(Ident id) {
 
     if (!lookup_retrieve_name(id, &num)) {
         num = db_top++;
-        add_objname(ident_name(id), num, TRUE);
+        add_objname(ident_name(id), num);
     }
 
     return num;
 }
 
 
-static void cleanup_holders(void) {
+INTERNAL void cleanup_holders(void) {
     holder_t * holder = holders,
              * old = NULL;
     Long       objnum;
     Obj      * obj;
     Ident      id;
-    cData      key;
-
-    key.type = OBJNUM;
 
     while (holder != NULL) {
-        key.u.objnum = holder->objnum;
-        if (hash_find(dump_hash, &key) == F_FAILURE) {
-            id = ident_get(string_chars(holder->str));
-            if (!lookup_retrieve_name(id, &objnum)) {
-                if (print_warn)
-                    printf("\rWARNING: Name $%s for object #%d disapppeared.\n",
-                           ident_name(id), (int) objnum);
-            } else if (objnum != holder->objnum) {
-                if (print_warn)
-                   printf("\rWARNING: Name $%s is no longer bound to object #%d.\n",
-                          ident_name(id), (int) objnum);
+        id = ident_get(string_chars(holder->str));
+        if (!lookup_retrieve_name(id, &objnum)) {
+            if (print_warn)
+                printf("\rWARNING: Name $%s for object #%d disapppeared.\n",
+                       ident_name(id), (int) objnum);
+        } else if (objnum != holder->objnum) {
+            if (print_warn)
+               printf("\rWARNING: Name $%s is no longer bound to object #%d.\n",
+                      ident_name(id), (int) objnum);
+        } else {
+            obj = cache_retrieve(holder->objnum);
+            if (obj) {
+                if (obj->objname == NOT_AN_IDENT)
+                    obj->objname = ident_dup(id);
+                cache_discard(obj);
             } else {
-                obj = cache_retrieve(holder->objnum);
-                if (obj) {
-                    if (obj->objname == NOT_AN_IDENT) {
-                        cache_dirty_object(obj);
-                        obj->objname = ident_dup(id);
-                    }
-                    cache_discard(obj);
-                } else {
-                    if (print_warn)
-                        printf("\rWARNING: Object $%s (#%d) was never defined.\n",
-                               ident_name(id), (int) objnum);
-                    lookup_remove_name(id);
-                }
+                if (print_warn)
+                    printf("\rWARNING: Object $%s (#%d) was never defined.\n",
+                           ident_name(id), (int) objnum);
+                lookup_remove_name(id);
             }
-            ident_discard(id);
         }
 
         string_discard(holder->str);
+        ident_discard(id);
         old = holder;
         holder = holder->next;
         free(old);
@@ -244,7 +240,7 @@ static void cleanup_holders(void) {
 /* only call with a method which declars a MF_NATIVE flag */
 /* holders are redundant, but it lets us keep track of methods defined
    native, but which are not */
-static nh_t * find_defined_native_method(cObjnum objnum, Ident name) {
+INTERNAL nh_t * find_defined_native_method(cObjnum objnum, Ident name) {
     nh_t * nhp;
 
     for (nhp = nhs; nhp != (nh_t *) NULL; nhp = nhp->next) {
@@ -257,7 +253,7 @@ static nh_t * find_defined_native_method(cObjnum objnum, Ident name) {
     return (nh_t *) NULL;
 }
 
-static void remember_native(Method * method) {
+INTERNAL void remember_native(Method * method) {
     nh_t  * nh;
 
     nh = find_defined_native_method(method->object->objnum, method->name);
@@ -278,51 +274,9 @@ static void remember_native(Method * method) {
     nh->method = NOT_AN_IDENT;
 }
 
-static void frob_n_print_errstr(char * err, char * name, cObjnum objnum);
+INTERNAL void frob_n_print_errstr(char * err, char * name, cObjnum objnum);
 
-static Int find_native_method(Long object, Long method_name) {
-    Ident      oname;
-    Ident      mname;
-    native_t * native;
-    Int x;
-
-    for (x = 0; x < NATIVE_LAST; x++) {
-        native = &natives[x];
-
-        if ((strlen(native->bindobj) == 0) || (strlen(native->name) == 0))
-            continue;
-
-        if (native->bindobj_ident == NOT_AN_IDENT) {
-            if (strlen(native->bindobj) == 0)
-                continue;
-            oname = ident_get(native->bindobj);
-            if (oname == NOT_AN_IDENT)
-                continue;
-            native->bindobj_ident = oname;
-        } else
-            oname = native->bindobj_ident;
-
-        if (native->name_ident == NOT_AN_IDENT) {
-            if (strlen(native->name) == 0)
-                continue;
-            mname = ident_get(native->name);
-            if (mname == NOT_AN_IDENT)
-                continue;
-            native->name_ident = mname;
-        }
-            mname = native->name_ident;
-
-        if (oname != object)
-            continue;
-
-        if (mname ==  method_name)
-            return x;
-    }
-
-    return -1;
-}
-
-static void verify_native_methods(void) {
+void verify_native_methods(void) {
     Ident      mname;
     Ident      name;
     Obj      * obj;
@@ -421,9 +375,9 @@ static void verify_native_methods(void) {
                 if (print_warn)
                     fformat(stdout, "\rWARNING: method definition %O.%s() overrides native method.\n", obj->objnum, ident_name(mname));
             } else {
-		cache_dirty_object(obj);
                 method->native = x;
                 method->m_flags |= MF_NATIVE;
+                obj->dirty = 1;
 
                 if (nh != (nh_t *) NULL)
                     nh->valid = 1;
@@ -461,8 +415,8 @@ static void verify_native_methods(void) {
             if (cur_obj) {
                 method = object_find_method_local(cur_obj, name, FROB_ANY);
                 if (method) {
-		    cache_dirty_object(cur_obj);
                     method->native = -1;
+                    cur_obj->dirty = 1;
                 }
                 cache_discard(cur_obj);
             }
@@ -480,7 +434,7 @@ static void verify_native_methods(void) {
 #define NOOBJ 0
 #define ISOBJ 1
 
-static Int get_idref(char * sp, idref_t * id, Int isobj) {
+INTERNAL Int get_idref(char * sp, idref_t * id, Int isobj) {
     char         str[BUF], * p;
     register Int x;
     char         * end;
@@ -531,7 +485,7 @@ static Int get_idref(char * sp, idref_t * id, Int isobj) {
 /*
 // ------------------------------------------------------------------------
 */
-static Long parse_to_objnum(idref_t ref) {
+INTERNAL Long parse_to_objnum(idref_t ref) {
     Long id,
          objnum = 0;
     Int  result;
@@ -556,7 +510,7 @@ static Long parse_to_objnum(idref_t ref) {
 // ------------------------------------------------------------------------
 */
 
-static Obj * handle_objcmd(char * line, char * s, Int new) {
+INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
     idref_t   obj;
     char    * p = (char) NULL,
               obj_str[BUF];
@@ -586,8 +540,7 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
         idref_t parent;
         char     par_str[BUF];
         Int      len,
-                 more = TRUE,
-                 slen;
+                 more = TRUE;
 
         /* step past ':' and skip whitespace */
         s++;
@@ -598,10 +551,9 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
             p = strchr(s, ',');
             if (p == NULL) {
                 /* we may be at the end of the line.. */
-                slen = strlen(s);
-                if (s[slen - 1] != ';')
+                if (s[strlen(s) - 1] != ';')
                     DIE("Parse Error, unterminated directive.")
-                s[slen - 1] = (char) NULL;
+                s[strlen(s) - 1] = (char) NULL;
                 strcpy(par_str, s);
                 len = strlen(par_str);
                 more = FALSE;
@@ -650,7 +602,6 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
                 WARN(("old: attempt to destroy $sys ignored."));
             } else {
                 ERRf("old: destroying object %s.", obj_str);
-		cache_dirty_object(target);
                 target->dead = 1;
                 cache_discard(target);
                 target = NULL;
@@ -668,18 +619,8 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
             /* $root and $sys should ALWAYS exist */
             target = cache_retrieve(objnum);
         } else {
-	    // XXX: this code makes a bad assumption that is no longer universally true
-	    //      if target is a parent with children in the cache, its refcount won't
-	    //      be 1 and so the discard won't actually get rid of the object and the
-	    //      object_new is going to cause problems because it assumes that the
-	    //      objnum doesn't exist.
-	    //
-	    //      The code that makes this unsafe isn't checked in, so at the moment its
-	    //      still safe
-	    //
             if ((target = cache_retrieve(objnum))) {
                 WARN(("new: destroying existing object %s.", obj_str));
-		cache_dirty_object(target);
                 target->dead = 1;
                 cache_discard(target);
                 target = NULL;
@@ -701,14 +642,10 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
 
     }
 
-    d.type = OBJNUM;
-    d.u.objnum = objnum;
-    dump_hash = hash_add(dump_hash, &d);
-
     /* if we should, add the name.  If it already has one, we just replace it.*/
     if (objnum != ROOT_OBJNUM && objnum != SYSTEM_OBJNUM) {
         if (obj.str[0] != (char) NULL)
-            add_objname(obj.str, target->objnum, objnum == INV_OBJNUM);
+            add_objname(obj.str, target->objnum);
     }
 
     /* free up this list */
@@ -720,7 +657,7 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
 /*
 // ------------------------------------------------------------------------
 */
-static void handle_parcmd(char * s, Int new) {
+INTERNAL void handle_parcmd(char * s, Int new) {
     cData     d;
     char     * p = NULL,
                obj_str[BUF];
@@ -775,7 +712,7 @@ static void handle_parcmd(char * s, Int new) {
 /*
 // ------------------------------------------------------------------------
 */
-static void handle_namecmd(char * line, char * s, Int new) {
+INTERNAL void handle_namecmd(char * line, char * s, Int new) {
     char       name[BUF];
     char     * p;
     Long       num, other;
@@ -825,35 +762,24 @@ static void handle_namecmd(char * line, char * s, Int new) {
         num = db_top++;
     }
 
-    add_objname(name, num, TRUE);
+    add_objname(name, num);
 }
 
 /*
 // ------------------------------------------------------------------------
 */
-static void handle_varcmd(char * line, char * s, Int new, Int access) {
-    static cObjnum last_definer = INV_OBJNUM;
-    static Int rc_check;
-
+INTERNAL void handle_varcmd(char * line, char * s, Int new, Int access) {
     cData      d;
     char     * p = s;
     Long       definer, var;
     idref_t    name;
     Obj      * def;
-    Int        slen;
-    Bool       result;
-    char     * var_name;
 
     if (*s == '#' || *s == '$') {
         s += get_idref(s, &name, ISOBJ);
         definer = parse_to_objnum(name);
 
-	if (last_definer != definer) {
-	    rc_check = cache_check(definer);
-	    last_definer = definer;
-	}
-
-	if (!rc_check) {
+        if (!cache_check(definer)) {
             WARN(("Ignoring object variable with invalid parent:"));
             if (strlen(line) > 55) {
                 line[50] = line[51] = line[52] = '.';
@@ -862,8 +788,7 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
             WARN(("\"%s\"", line));
             return;
         }
-
-	if (!object_has_ancestor(cur_obj->objnum, definer)) {
+        if (!object_has_ancestor(cur_obj->objnum, definer)) {
             WARN(("Ignoring object variable with no ancestor:"));
             if (strlen(line) > 55) {
                 line[50] = line[51] = line[52] = '.';
@@ -881,11 +806,8 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
     }
 
     /* strip trailing spaces and semi colons */
-    slen = strlen(s);
-    while (s[slen - 1] == ';' || isspace(s[slen - 1])) {
-        s[slen - 1] = (char) NULL;
-        slen = strlen(s);
-    }
+    while (s[strlen(s) - 1] == ';' || isspace(s[strlen(s) - 1]))
+        s[strlen(s) - 1] = (char) NULL;
 
     s += get_idref(s, &name, NOOBJ);
 
@@ -928,7 +850,6 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
                     }
                     printf(",%s:\nLine %ld: WARNING: data: %s\nLine %ld: WARNING: Defaulting value to ZERO ('0').\n",
                            ident_name(var), (long) line_count, strchop(s, 50), (long) line_count);
-	            fflush(stdout);
                 }
             }
             if (*s && *s != ';')
@@ -944,30 +865,15 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
             d.u.val = 0;
         }
 
-        result = object_put_var(cur_obj, definer, var, &d);
+        object_put_var(cur_obj, definer, var, &d);
         data_discard(&d);
-
-        if (!result) {
-            var_name = ident_name(var);
-            if (print_warn) {
-                printf("\rLine %ld: WARNING: Variable ", (long) line_count);
-                print_dbref(cur_obj, cur_obj->objnum, stdout, TRUE);
-                if (cur_obj->objnum != definer && (def = cache_retrieve(definer))) {
-                    fputc('<', stdout);
-                    print_dbref(def, definer, stdout, TRUE);
-                    fputc('>', stdout);
-                    cache_discard(def);
-                }
-                printf(",%s no longer defined.\n", var_name);
-            }
-        }
     }
 }
 
 /*
 // ------------------------------------------------------------------------
 */
-static void handle_evalcmd(FILE * fp, char * s, Int new, Int access) {
+INTERNAL void handle_evalcmd(FILE * fp, char * s, Int new, Int access) {
     Long       name;
     Method * method;
 
@@ -994,7 +900,7 @@ static void handle_evalcmd(FILE * fp, char * s, Int new, Int access) {
 /*
 // ------------------------------------------------------------------------
 */
-static Int get_method_name(char * s, idref_t * id) {
+INTERNAL Int get_method_name(char * s, idref_t * id) {
     Int    count = 0, x;
     char * p;
 
@@ -1014,7 +920,7 @@ static Int get_method_name(char * s, idref_t * id) {
     return count;
 }
 
-static void handle_bind_nativecmd(FILE * fp, char * s) {
+INTERNAL void handle_bind_nativecmd(FILE * fp, char * s) {
     idref_t    nat;
     idref_t    meth;
     Ident      inat, imeth;
@@ -1052,7 +958,7 @@ static void handle_bind_nativecmd(FILE * fp, char * s) {
     ident_discard(imeth);
 }
 
-static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
+INTERNAL void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
     char     * p = NULL;
     cObjnum   definer;
     Ident      name;
@@ -1159,15 +1065,8 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
 
     object_add_method(obj, name, method);
 
-    if (method->m_flags & MF_NATIVE) {
-        Int x;
-
-        x = find_native_method(obj->objname, name);
-        if (x != -1)
-            method->native = x;
-
+    if (method->m_flags & MF_NATIVE)
         remember_native(method);
-    }
 
     method_discard(method);
 
@@ -1179,7 +1078,7 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
 /*
 // ------------------------------------------------------------------------
 */
-static void frob_n_print_errstr(char * err, char * name, cObjnum objnum) {
+INTERNAL void frob_n_print_errstr(char * err, char * name, cObjnum objnum) {
     Int        line = 0;
     cStr * str;
 
@@ -1190,19 +1089,19 @@ static void frob_n_print_errstr(char * err, char * name, cObjnum objnum) {
         err += 2;
     }
 
-    str = format("\rLine %l: [line %d in %O.%s()]: %s",
+    str = format("\rLine %l: [line %d in %O.%s()]: %s\n",
                  method_start + line,
                  line,
                  objnum,
                  name,
                  err);
 
-    write_err("%s", str->s);
+    fputs(str->s, stderr);
 
     string_discard(str);
 }
 
-static Method * get_method(FILE * fp, Obj * obj, char * name) {
+INTERNAL Method * get_method(FILE * fp, Obj * obj, char * name) {
     Method * method;
     cList   * code,
              * errors;
@@ -1262,12 +1161,6 @@ void compile_cdc_file(FILE * fp) {
              * s;
     Obj      * obj,
              * root;
-    Long       filesize = 0;
-    struct stat statbuf;
-
-    fstat(fileno(fp), &statbuf);
-    filesize = statbuf.st_size;
-    dump_hash = hash_new(0);
 
     /* start at line 0 */
     line_count = 0;
@@ -1364,7 +1257,7 @@ void compile_cdc_file(FILE * fp) {
                 if (cur_obj != NULL)
                     cache_discard(cur_obj);
                 if (print_objs)
-                    blank_and_print_obj("Compiling ", (100.0 * ftell(fp)) / filesize, obj);
+                    blank_and_print_obj("Compiling ", obj);
                 cur_obj = obj;
             }
         } else if (MATCH(s, "parent", 6)) {
@@ -1404,12 +1297,11 @@ void compile_cdc_file(FILE * fp) {
     cache_discard(root);
     verify_native_methods();
 
-    fputs("\r", stdout);
+    fputs("\rCleaning up name holders...", stdout);
     fflush(stdout);
-    write_err("Syncing binarydb...");
-    cache_sync();
-    write_err("Cleaning up name holders...");
     cleanup_holders();
+    fputs("done.\n", stdout);
+    fflush(stdout);
 }
 
 /*
@@ -1417,8 +1309,9 @@ void compile_cdc_file(FILE * fp) {
 // decompile the binary db to a text file
 */
 Int last_length; /* used in doing fancy formatting */
+Hash * dump_hash;
 void dump_object(Long objnum, FILE *fp, Bool objnames);
-static char * method_definition(Method * m);
+INTERNAL char * method_definition(Method * m);
 
 #define PRINT_OBJNAME(__obj, __fp) { \
         fputc('$', __fp); \
@@ -1428,7 +1321,7 @@ static char * method_definition(Method * m);
         fprintf(__fp, "#%li", (long) __num); \
     }
 
-static void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames) {
+INTERNAL void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames) {
     Bool cachepull = FALSE;
 
     if (objnames) {
@@ -1462,11 +1355,16 @@ Int text_dump(Bool objnames) {
 
     fp = open_scratch_file(buf, "w");
     if (!fp) {
-        write_err("Unable to open temporary file \"%s\".", buf);
+        fprintf(stderr, "\rUnable to open temporary file \"%s\".\n", buf);
         return 0;
     }
 
     last_length = 0;
+#if 0
+    START_SEARCH();
+    dump_object(ROOT_OBJNUM, fp, objnames);
+    END_SEARCH();
+#endif
     dump_hash = hash_new(0);
     dump_object(ROOT_OBJNUM, fp, objnames);
     hash_discard(dump_hash);
@@ -1480,14 +1378,12 @@ Int text_dump(Bool objnames) {
     }
 #endif
     if (rename(buf, c_dir_textdump) == F_FAILURE) {
-        write_err("Unable to rename \"%s\" to \"%s\":\n\t%s",
+        fprintf(stderr, "\rUnable to rename \"%s\" to \"%s\":\n\t%s\n",
                 buf, c_dir_textdump, strerror(GETERR()));
         return 0;
     }
 
-    fputc('\r', stdout);
-    fflush(stdout);
-    write_err("Done decompiling.");
+    fputc('\n', stdout);
     return 1;
 }
 #define is_system(__n) (__n == ROOT_OBJNUM || __n == SYSTEM_OBJNUM)
@@ -1503,7 +1399,6 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
     Int      first,
              i;
     Method * meth;
-    static Long objects_decompiled = 0;
 
     dobj.type = OBJNUM;
     dobj.u.objnum = objnum;
@@ -1537,8 +1432,10 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
             dump_object(d->u.objnum, fp, objnames);
     }
 
-    if (hash_find(dump_hash, &dobj) != F_FAILURE)
+    if (hash_find(dump_hash, &dobj) != F_FAILURE) {
+        list_discard(objs);
         return;
+    }
     dump_hash = hash_add(dump_hash, &dobj);
 
     /* ok, get this object now */
@@ -1547,6 +1444,7 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
 #if 0
     /* did we get written out since the last check? */
     if (obj->search == cur_search) {
+        list_discard(objs);
         cache_discard(obj);
         return;
     }
@@ -1558,7 +1456,7 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
 
     /* let them know? */
     if (print_objs)
-        blank_and_print_obj("Decompiling ", (100.0 * ++objects_decompiled) / num_objects, obj);
+        blank_and_print_obj("Decompiling ", obj);
 
     /* put 'new' on everything except the system objects */
     if (!is_system(obj->objnum))
@@ -1669,7 +1567,7 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
         } \
     }
 
-static char * method_definition(Method * m) {
+INTERNAL char * method_definition(Method * m) {
     static char   buf[255];
     static char   flags[50];
     char        * s;
@@ -1719,24 +1617,22 @@ static char * method_definition(Method * m) {
     return buf;
 }
 
-void blank_and_print_obj(char * what, Float percent_done, Obj * obj) {
+void blank_and_print_obj(char * what, Obj * obj) {
     register int x;
     static Int len = 0;
     Number_buf nbuf;
     char * sn;
 
     /* white out what we just printed */
-    if (len) {
-        for (x=len; x; x--)
-            fputc('\b', stdout);
-        fputs("\b\b\b\b", stdout);
-        for (x=len; x; x--)
-            fputc(' ', stdout);
-        fputs("    \r", stdout);
-    }
+    for (x=len; x; x--)
+        fputc('\b', stdout);
+    fputs("\b\b\b\b", stdout);
+    for (x=len; x; x--)
+        fputc(' ', stdout);
+    fputs("    \r", stdout);
 
     /* let them know whats up now */
-    fprintf(stdout, "%s(%.1f%%) ", what, percent_done);
+    fputs(what, stdout);
     if (obj->objname == NOT_AN_IDENT) {
         sn = long_to_ascii(obj->objnum, nbuf);
         fputc('#', stdout);

@@ -537,7 +537,7 @@ static cBuf * pack_strings(cBuf *buf, Obj *obj)
     Int i;
 
     if (obj->strings->tab_num > 0) {
-#if 0
+#if 1
         buf = write_long(buf, obj->strings->tab_size);
         buf = write_long(buf, obj->strings->tab_num);
         buf = write_long(buf, obj->strings->blanks);
@@ -551,6 +551,7 @@ static cBuf * pack_strings(cBuf *buf, Obj *obj)
 	    buf = string_pack(buf, obj->strings->tab[i].str);
         }
 #else
+        // caused 3 crashes on TEC, disabling code until problem can be determined
         buf = write_long(buf, obj->strings->tab_size);
         for (i = 0; i < obj->strings->tab_size; i++) {
             buf = string_pack(buf, obj->strings->tab[i].str);
@@ -574,7 +575,7 @@ static void unpack_strings(cBuf *buf, Long *buf_pos, Obj *obj)
 
     size = read_long(buf, buf_pos);
     if (size != -1) {
-#if 0
+#if 1
         obj->strings = string_tab_new_with_size(size);
         obj->strings->tab_num = read_long(buf, buf_pos);
         obj->strings->blanks = read_long(buf, buf_pos);
@@ -588,6 +589,7 @@ static void unpack_strings(cBuf *buf, Long *buf_pos, Obj *obj)
 	    obj->strings->tab[i].str = string_unpack(buf, buf_pos);
         }
 #else
+        // caused 3 crashes on TEC, disabling code until problem can be determined
         obj->strings = string_tab_new_with_size(size);
         obj->strings->tab_size = size;
         obj->strings->blanks = 0;
@@ -619,7 +621,7 @@ static Int size_strings(Obj *obj)
     Int size = 0, i;
 
     if (obj->strings->tab_num > 0) {
-#if 0
+#if 1
         size += size_long(obj->strings->tab_size);
         size += size_long(obj->strings->tab_num);
         size += size_long(obj->strings->blanks);
@@ -633,6 +635,7 @@ static Int size_strings(Obj *obj)
 	    size += string_packed_size(obj->strings->tab[i].str);
         }
 #else
+        // caused 3 crashes on TEC, disabling code until problem can be determined
         size += size_long(obj->strings->tab_size);
         for (i = 0; i < obj->strings->tab_size; i++) {
             size += string_packed_size(obj->strings->tab[i].str);

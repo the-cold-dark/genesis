@@ -10,13 +10,18 @@
 #include <sys/time.h>    /* for mtime() */
 #endif
 
-#include "functions.h"
 #include "operators.h"
 #include "execute.h"
 #include "util.h"
 #include "opcodes.h"
 
-COLDC_FUNC(anticipate_assignment) {
+
+#ifndef HAVE_TM_GMTOFF
+static int last_gmtoffcheck = -1;
+static int gmt_offset = -1;
+#endif
+
+void func_anticipate_assignment(void) {
     Int opcode, ind;
     Long id;
     cData *dp, d;
@@ -61,7 +66,7 @@ COLDC_FUNC(anticipate_assignment) {
     return;
 }
 
-COLDC_FUNC(time) {
+void func_time(void) {
     /* Take no arguments. */
     if (!func_init_0())
 	return;
@@ -69,13 +74,16 @@ COLDC_FUNC(time) {
     push_int(time(NULL));
 }
 
-COLDC_FUNC(localtime) {
+void func_localtime(void) {
     struct tm * tms;
-    cData * d;
-    cList * l;
-    time_t t;
-    cData *args;
-    Int     nargs;
+    cData     * d;
+    cList     * l;
+    time_t      t;
+    cData     * args;
+    Int         nargs;
+#ifndef HAVE_TM_GMTOFF
+    struct tm * gtms;
+#endif
 
     if (!func_init_0_or_1(&args, &nargs, INTEGER))
 	return;
@@ -125,14 +133,20 @@ COLDC_FUNC(localtime) {
 #ifdef HAVE_TM_GMTOFF
     d[11].u.val = tms->tm_gmtoff;
 #else
-    d[11].u.val = 0;
+    if (last_gmtoffcheck != tms->tm_yday) {
+        int hour = tms->tm_hour; /* they use the same internal structure */
+        gtms = gmtime(&t);
+        gmt_offset = ((hour - gtms->tm_hour) * 60 * 60);
+        last_gmtoffcheck = tms->tm_yday;
+    }
+    d[11].u.val = gmt_offset;
 #endif
 
     push_list(l);
     list_discard(l);
 }
 
-COLDC_FUNC(mtime) {
+void func_mtime(void) {
 #ifdef HAVE_GETTIMEOFDAY
     struct timeval tp;
 #endif
@@ -150,7 +164,7 @@ COLDC_FUNC(mtime) {
 #endif
 }
 
-COLDC_FUNC(ctime) {
+void func_ctime(void) {
     cData *args;
     Int num_args;
     time_t tval;
@@ -179,7 +193,7 @@ COLDC_FUNC(ctime) {
     string_discard(str);
 }
 
-COLDC_FUNC(bind_function) {
+void func_bind_function(void) {
     cData * args;
     Int      opcode;
 
@@ -200,7 +214,7 @@ COLDC_FUNC(bind_function) {
     push_int(1);
 }
 
-COLDC_FUNC(unbind_function) {
+void func_unbind_function(void) {
     cData *args;
     Int   opcode;
 
@@ -222,7 +236,7 @@ COLDC_FUNC(unbind_function) {
 }
 
 #ifdef DRIVER_DEBUG
-COLDC_FUNC(debug_callers) {
+void func_debug_callers(void) {
     cData *args;
 
     if (!func_init_1(&args, INTEGER))
@@ -236,7 +250,7 @@ COLDC_FUNC(debug_callers) {
         start_debug();
 }
 
-COLDC_FUNC(call_trace) {
+void func_call_trace(void) {
     if (!func_init_0())
       return;
 

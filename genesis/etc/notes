@@ -14,6 +14,7 @@ RELEASE INFORMATION:
       * fix object size for objects without an objnum (Brad)
       * fix parent list leak in binarydb decompilation (Brad)
       * fix method_bytecode() bug with 'catch any' (Allen Noe)
+      * fix gmt offset calculation on some platforms (Brandon)
 
 1.1.9  [1-Oct-100]
       * removed phk_malloc -- modern OS mallocs are decent (Brandon)

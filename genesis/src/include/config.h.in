@@ -20,6 +20,9 @@
 /* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
 #undef HAVE_SYS_WAIT_H
 
+/* workaround for lame RedHat Linux placement of ndbm.h */
+#undef DBM_H_FILE
+
 /* Define if your struct dirent has d_namlen */
 #undef HAVE_D_NAMLEN
 

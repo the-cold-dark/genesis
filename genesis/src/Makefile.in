@@ -45,23 +45,20 @@ CRYPT_O    = shs.o crypt.o
 PCODE_O    = codegen.o execute.o opcodes.o token.o native.o
 MOD_O      = @MOD_O@
 OMOD_O     = `echo $(MOD_O) | sed -e 's/modules\///g'`
-MALLOC_O   = @MALLOC_O@
-COMMON_O   = $(MALLOC_O) $(DATA_O) $(DB_O) $(IO_O) $(MISC_O) \
+COMMON_O   = $(DATA_O) $(DB_O) $(IO_O) $(MISC_O) \
              $(PCODE_O) $(OPS_O) $(MOD_O) $(CRYPT_O)
 DRIVER_O   = $(GRAMMAR_O) genesis.o $(COMMON_O)
 COMPILER_O = $(GRAMMAR_O) coldcc.o textdb.o $(COMMON_O)
 CONTROL_O  = control.o
-DNSSERV_O  = dnsserv.o dns.o
 
-EVERYTHING_O = genesis.o control.o coldcc.o $(COMMON_O) $(DNSSERV_O)
+EVERYTHING_O = genesis.o control.o coldcc.o $(COMMON_O)
 EVERYTHING_C = `echo $(EVERYTHING_O) | sed -e 's/\.o/.c/g'`
 
 DRIVER = genesis
 COMPILER = coldcc
 CONTROL = control
-DNSSERV = dnsserv
 
-EXES = $(COMPILER) $(DRIVER) $(DNSSERV)
+EXES = $(COMPILER) $(DRIVER)
 
 all: $(GRAMMAR_O) include/parse.h Data Modules Ops $(EXES)
 
@@ -83,9 +80,6 @@ $(DRIVER): $(DRIVER_O)
 $(COMPILER): $(COMPILER_O)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(COMPILER_O) $(LIBS) -o $@
 
-$(DNSSERV): $(DNSSERV_O)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(DNSSERV_O) $(LIBS) -o $@
-
 clean:
 	rm -f include/parse.h grammar.c *~ *.BAK *.bak y.output *.core
 	rm -f $(EXES)
@@ -93,10 +87,6 @@ clean:
 	@cd $(MODULES); make $@
 	@cd $(OPSDIR); make $@
 	@cd $(DATADIR); make $@
-
-## malloc doesnt want the -pedantic
-malloc.o:
-	$(CC) $(MCFLAGS) -c malloc.c
 
 scrub:
 	rm -f *.o include/parse.h grammar.c *~ *.BAK *.bak y.output *.core
@@ -141,7 +131,7 @@ lint:
 	$(LINT) $(INCLUDE) -u $(EVERYTHING_C)
 
 # I duplicate scrub because of the recusion involved in calling modules
-patchable:
+patchable: commitable
 	rm -f *.o include/parse.h grammar.c *~ *.BAK *.bak y.output *.core
 	rm -rf binary
 	rm -f textdump*

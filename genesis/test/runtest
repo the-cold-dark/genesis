@@ -25,7 +25,7 @@ perl -e 'while (<>) {
              }
          }' < $testin 1> $expected 2> $testdb
 
-coldcc -o -W -t $testdb 1> $output 2>/dev/null
+./coldcc -o -W -t $testdb 1> $output 2>/dev/null
 
 ## temporary hack until I fix the problems with output files in
 ## coldcc

@@ -105,6 +105,8 @@ NATIVE_METHOD(status) {
     d[2].u.val = (cNum) r.ru_stime.tv_sec; /* system time used (seconds) */
     d[3].u.val = (cNum) r.ru_stime.tv_usec;/* system time used (microseconds) */
     d[4].u.val = (cNum) r.ru_maxrss;
+    d[5].u.val = (cNum) 0;
+    d[6].u.val = (cNum) 0;
     d[7].u.val = (cNum) r.ru_idrss;       /* integral unshared data size */
     d[8].u.val = (cNum) r.ru_minflt;      /* page reclaims */
     d[9].u.val = (cNum) r.ru_majflt;      /* page faults */

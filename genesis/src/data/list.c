@@ -365,7 +365,7 @@ int list_index(cList * list, cData * search, int origin) {
     if (origin > len || !origin)
         return F_FAILURE;
 
-    if (origin == len)
+    if (origin > len)
         return 0;
 
     origin--;

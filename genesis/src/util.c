@@ -319,7 +319,7 @@ char * timestamp (char * str) {
     sprintf(s, "%d %3s %2d %d:%.2d",
             tms->tm_mday,
             months[tms->tm_mon],
-            tms->tm_year,
+            tms->tm_year + 1900,
             tms->tm_hour,
             tms->tm_min);
 
@@ -375,7 +375,16 @@ cStr *fgetstring(FILE *fp) {
     p = string_chars(line);
     if (fgets(p, BUF, fp)) {
 	len = strlen(p);
+#ifdef __Win32__
+        /* DOS and Windows text files may use \r\n or \n as a line termination */
+        if ((len >= 2) && (p[len - 2] == '\r')) {
+            p[len - 2] = (char) NULL;
+            line->len = len - 2;
+            return line;
+        } else if (p[len - 1] == '\n') {
+#else
         if (p[len - 1] == '\n') {
+#endif
             p[len - 1] = (char) NULL;
             line->len = len - 1;
             return line;
@@ -387,7 +396,15 @@ cStr *fgetstring(FILE *fp) {
             /* drop to something less efficient for bigger cases */
             while (fgets(buf, BIGBUF, fp)) {
         	len = strlen(buf);
+#ifdef __Win32__
+	        /* DOS and Windows text files may use \r\n or \n as a line termination */
+	        if ((len >= 2) && (buf[len - 2] == '\r')) {
+	            line = string_add_chars(line, buf, len - 2);
+		    return line;
+                } else if (buf[len - 1] == '\n') {
+#else
         	if (buf[len - 1] == '\n') {
+#endif
         	    line = string_add_chars(line, buf, len-1);
         	    return line;
         	} else {
@@ -480,12 +497,23 @@ void init_scratch_file(void) {
 
 INTERNAL void claim_fd(Int i) {
 #ifdef __Win32__
-    reserve_fds[i] = open("null_file", O_WRONLY | O_CREAT);
+    reserve_fds[i] = open("null_file", O_WRONLY | O_CREAT, S_IREAD | S_IWRITE);
 #else
     reserve_fds[i] = open("/dev/null", O_WRONLY);
 #endif
     if (reserve_fds[i] == -1)
 	panic("Couldn't reset reserved fd.");
+}
+
+void uninit_scratch_file(void) {
+    Int i;
+
+    for (i = 0; i < MAX_SCRATCH; i++)
+        close(reserve_fds[i]);
+
+#ifdef __Win32__
+    unlink("null_file");
+#endif
 }
 
 #define add_char(__s, __c) { *__s = __c; __s++; }

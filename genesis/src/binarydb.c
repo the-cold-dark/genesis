@@ -108,6 +108,7 @@ extern Long db_top;
             FAIL("Cannot open object database file \"%s/objects\".\n"); \
     }
 
+#ifndef __Win32__
 INTERNAL Bool good_perms(struct stat * sb) {
     if (!geteuid())
         return YES;
@@ -117,6 +118,7 @@ INTERNAL Bool good_perms(struct stat * sb) {
         return YES;
     return NO;
 }
+#endif
 
 void verify_clean(void) {
     Bool isdirty = YES;
@@ -401,14 +403,16 @@ static Int db_alloc(Int size)
 	    if (bitmap[b >> 3] & (1 << (b & 7)))
 		break;
 	    b++;
-	    if (b >= bitmap_blocks)
+	    if (b >= bitmap_blocks) {
 		/* time to wrap around if we still haven't */
 		if (!over_the_top) {
 		    b=0;
 		    over_the_top=1;
 		    break;
-		} else
+		} else {
 		    grow_bitmap(b + DB_BITBLOCK);
+                }
+            }
 	}
 
 	if (count == blocks_needed) {

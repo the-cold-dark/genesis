@@ -17,7 +17,7 @@
 #define     ERR_NETUNREACH   WSAENETUNREACH
 #define     ERR_TIMEDOUT     WSAETIMEDOUT
 #define     ERR_CONNREFUSED  WSAECONNREFUSED
-#define     ERR_AGAIN        WSAWOULDBLOCK
+#define     ERR_AGAIN        WSAEWOULDBLOCK
 
 #define GETERR()      GetLastError()
 #define SETERR(_err_) SetLastError(_err_)

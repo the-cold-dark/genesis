@@ -127,6 +127,7 @@ int main(int argc, char **argv) {
     db_close();
     flush_output();
     close_files();
+    uninit_scratch_file();
     if (errfile)
         fclose(errfile);
     if (logfile)
@@ -180,10 +181,10 @@ INTERNAL void initialize(Int argc, char **argv) {
     cList   * args;
     cStr     * str;
     cData     arg;
-    char     * opt,
-             * name,
+    char     * opt = NULL,
+             * name = NULL,
              * basedir = NULL,
-             * buf;
+             * buf = NULL;
     FILE     * fp;
     Bool       dofork = YES;
     pid_t      pid;
@@ -548,6 +549,12 @@ INTERNAL void main_loop(void) {
             GETTIME();
             seconds = (preempted ? 0 :
                        ((SECS >= next) ? 0 : next - SECS));
+        } else {
+            /*
+            // If no heartbeat is set, we should still resume
+            // periodically, even if no I/O events have occurred.
+            */
+            seconds = preempted ? 0 : NO_HEARTBEAT_INTERVAL;
         }
 
         /* push our dump along, diddle with the wait if we need to */
@@ -597,13 +604,13 @@ Usage: %s [base dir] [options]\n\n\
 Options:\n\n\
     -v          version.\n\
     -f          do not fork on startup\n\
-    -db <dir>   alternate binary directory, default: \"%s\"\n\
-    -dr <dir>   alternate root file directory, defualt: \"%s\"\n\
-    -dx <dir>   alternate executables directory, default: \"%s\"\n\
-    -ld <file>  alternate database logfile, default: \"%s\"\n\
-    -lg <file>  alternate driver (genesis) logfile, default: \"%s\"\n\
-    -lp <file>  alternate runtime pid logfile, default: \"%s\"\n\
-    -s <size>   Cache size, given as WIDTHxDEPTH, default %dx%d\n\
+    -db <dir>   alternate binary directory, current: \"%s\"\n\
+    -dr <dir>   alternate root file directory, current: \"%s\"\n\
+    -dx <dir>   alternate executables directory, current: \"%s\"\n\
+    -ld <file>  alternate database logfile, current: \"%s\"\n\
+    -lg <file>  alternate driver (genesis) logfile, current: \"%s\"\n\
+    -lp <file>  alternate runtime pid logfile, current: \"%s\"\n\
+    -s <size>   Cache size, given as WIDTHxDEPTH, current: %dx%d\n\
     -n <name>   specify the hostname (rather than looking it up)\n\
     -u <user>   if running as root, setuid to this user.  This only works\n\
                 in unix.  Genesis must first be run as root.\n\
@@ -632,5 +639,3 @@ cObjnum get_object_name(Ident id) {
         num = db_top++;
     return num;
 }
-
-

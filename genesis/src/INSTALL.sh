@@ -41,7 +41,7 @@ inst_prog () {
     chmod $mode "$install/$what"
 }
 
-for b in genesis coldcc dnsserv; do
+for b in genesis coldcc; do
     inst_prog $b "."
 done
 

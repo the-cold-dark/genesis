@@ -124,7 +124,7 @@ Int match_crypted(cStr * encrypted, cStr * possible) {
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $Id: crypt.c,v 1.32 1998/07/22 07:07:29 braddr Exp $
+ * $Id: crypt.c,v 1.33 2001/01/07 00:45:05 braddr Exp $
  *
  ***
  *** This license somewhat applies to shs_crypt() as its based off PHK's

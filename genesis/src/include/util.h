@@ -10,6 +10,11 @@ typedef char Number_buf[NUMBER_BUF_SIZE];
 
 #include <stdarg.h>
 
+/* needed for unlink() in Borland */
+#ifdef __Win32__
+#include <io.h>
+#endif
+
 #define NUM_CHARS 256
 #define LCASE(c) lowercase[(int) c]
 #define UCASE(c) uppercase[(int) c]
@@ -43,6 +48,7 @@ char     * english_integer(Int n, Number_buf nbuf);
 Ident      parse_ident(char **sptr);
 FILE     * open_scratch_file(char *name, char *type);
 void       close_scratch_file(FILE *fp);
+void       uninit_scratch_file(void);
 void       init_scratch_file(void);
 Int        parse_strcpy(char * s1, char * s2, Int len);
 Int        is_valid_id(char * str, Int len);

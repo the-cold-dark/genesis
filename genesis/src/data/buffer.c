@@ -319,8 +319,7 @@ INTERNAL int buf_rindexc(uChar * buf, int len, uChar sub, int origin) {
 int buffer_index(cBuf * buf, uChar * ss, int slen, int origin) {
     int     len;
     uChar * s,
-          * p,
-          * lastp;
+          * p;
     Bool    reverse = NO;
 
     s = buf->s;
@@ -339,24 +338,26 @@ int buffer_index(cBuf * buf, uChar * ss, int slen, int origin) {
             return buf_rindexc(s, len, *ss, origin);
         return buf_rindexs(s, len, ss, slen, origin);
     } else {
-        origin--;
-        len -= origin;
-        if (len < slen)
+        int xlen = len;
+
+        origin--;   
+        xlen -= origin;
+
+        if (xlen < slen)
             return 0;
+
         p = s + origin;
-        p = (uChar *) memchr(p, *ss, len);
-        if (slen == 1) {
+
+        p = (uChar *) memchr(p, *ss, xlen);
+
+        if (slen == 1)
             return p ? ((p - s) + 1) : 0;
-        } else {
-            slen--;
-            lastp = p - 1;
-            while (p && (p+slen < s+len)) {
-                if (MEMCMP(p + 1, ss + 1, slen) == 0)
-                    return (p - s) + 1;
-                len -= (p - lastp);
-                lastp = p;
-                p = (uChar *) memchr(p+1, *ss, len);
-            }
+
+        while (p && (p+slen <= s+len)) {
+            if (MEMCMP(p, ss, slen) == 0)
+                return (p - s) + 1;
+            xlen = len - ((p - s) + 1);
+            p = (uChar *) memchr(p+1, *ss, xlen);
         }
     }
     return 0;

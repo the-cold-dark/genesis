@@ -7,13 +7,70 @@ contributors to that version.
 -------------------------------------------------------------------------
 
 
+1.1.9  [1-Oct-100]
+      * removed phk_malloc -- modern OS mallocs are decent (Brandon)
+      * misc cleanup (Generic Bob)
+      * removed dnsserv (Brandon)
+      * fix for ctime() in Borland (Psyclone)
+      * Fixed inconsistent behavior in stridx(), listidx(), and
+        bufidx() when presented with an empty first argument. (Bruce)
+
+1.1.8  [20-Nov-99] Brandon, Allen Noe
+      * Committed the bufidx() fix to the stable branch.  Due to
+        inexperience with CVS the fix did not get moved to the STABLE
+        branch, and thus never made it in the release.  It is now. (Brandon)
+      * fixed ndbm problems in RedHat and other Linux breeds (Brandon)
+      * miscellaneous compile warning cleanups (Allen Noe)
+      * fix to no-heartbeat runaway condition (Allen Noe)
+      * ''Y2K'' fix for driver.log date format (Allen Noe)
+      * fixed create([]) bug and added regression test (Brandon)
+1.1.7  [28-Jul-99] Brandon
+      * Fixed bufidx() bug even more -- hopefully for the last time (Brandon)
+      * Fixed listidx() bug when using single-element lists (Brandon)
+1.1.6  [15-Jul-99] Bruce, Jon Lambert, Brad, Robert Bradley
+      * Fixed coldcc -h screen. (Bruce)
+      * Lots of Win32 fixes (Jon Lambert)
+      * Fixed bufidx() bug (Brad)
+      * Woops.  Left match_begin() fix out of 1.1p5.  Got it here now.  (Bruce)
+      * Fixed crashbug in 'old' command for coldcc (Bruce)
+      * Fixed inconsistency in method_info() (Bruce)
+      * Win32 fixes (Robert Bradley)
+      * Args for $dictionary.union() native were reversed. (Bruce)
+
+          >>>>> NOTE: this will effect any calls in this manner,
+          >>>>> before you use this driver, make sure to make changes 
+          >>>>> in your core!      
+
+1.1p5   [25-Sept-98] Bruce, Brad, Colin, Brandon
+      * Brought random() into agreement with docs and enforced it by
+        throwing ~range when arg is negative or zero. (Bruce)
+      * Network I/O made non-blocking for incoming connections (Bruce,
+        Brad, Colin)
+      * Add check to be sure backup() was able to open the directory.
+        (Bruce)
+      * Removed memset() on Win32 from emalloc() (Bruce)
+      * Changed tell to ctell to resolve solaris 2.6 conflict (Brad)
+      * bufidx() had an array bounds read problem. (Brad)
+      * Fixed bug in strgraft() (Bruce)
+      * Fixed crash bug in coldcc (Bruce, noticed by Kipp)
+      * Fixed memory leak in signal handler (Bruce)
+      * Fixed crash bug in signal handler when no current task (Bruce)
+      * Fixed write_long to work properly on 64 bit systems (Brad)
+      * Fixed execute() to return an exit status of 0 properly  (Bruce)
+      * Fixed memory leak in unbind_port() (Bruce)
+      * Fixed abs() to throw an error when the arg isn't an integer or
+        float (Bruce)
+      * Fixed files() to check for NULL after opendir() and fixed a
+        memory leak (Brandon)
+      * Fixed bug in match_begin() (Brandon)
+      * Fixed uninitialized read in $sys._status() native (Bruce)
 1.1p4b  [2-Jun-98] Brandon Gillespie
       * really fixed the match_pattern bug--it passes all test conditions
         (before it wasn't testing all conditions)  (Brandon)
-1.1p4a [27-May-98] Brandon Gillespie
+1.1p4a  [27-May-98] Brandon Gillespie
       * fixed a bug with the match_pattern change
       * commited the test dir to the CVS tree so it shows up in the release
-1.1p4  [27-May-98] Bruce Mitchener, Brian Buchanen, Brandon Gillespie
+1.1p4   [27-May-98] Bruce Mitchener, Brian Buchanen, Brandon Gillespie
       * fixed some error reports (Bruce)
       * fixed an include problem with Solaris, and some warnings (Bruce)
       * fixed bug with set_method_access on an invalid method (Bruce)
@@ -23,8 +80,8 @@ contributors to that version.
       * fixed *graft() function bugs (Bruce/Brandon)
       * re-integrated and updated testing utility (Brandon/Bruce)
       * fixed 'make lint' (Brandon)
-
-1.1p3  [2-Apr-98]
+
+1.1p3   [2-Apr-98]
       * fixed a few minor memory leaks (Bruce)
       * fixed a maxint comparison problem (Brad)
       * reduced unecessary buffer copies when reading data from a
@@ -40,7 +97,7 @@ contributors to that version.
         executing task (Brandon)
       * adjusted select() to also check for file descriptors with
         exceptions--allowing for later cleanup (Brandon)
-1.1p2  [22-Dec-97]
+1.1p2   [22-Dec-97]
       * fixed problem with frame depth and forking methods (Bruce)
       * added tz offset as 12 element to localtime() -- this was
         unintentionally left out of the original implementation (Brandon)
@@ -53,21 +110,21 @@ contributors to that version.
         by Kipp (Brandon)
       * fixed a bug where the WIDTH x DEPTH settings in configure were
         being ignored (Brandon)
-1.1p1  [18-Nov-97]
+1.1p1   [18-Nov-97]
       * added primes.b for bc, created by Brad, revised by Brandon
       * #-x decompiling in textdumps would mess up the dict in the binary
         database, this has been fixed (hopefully once and for all)
       * Fixed minor syntax problems, crufted up the releasing mechanism
-1.1p0  [17-Nov-97] Brandon
+1.1p0   [17-Nov-97] Brandon
       * Branched 1.1.0-STABLE
-1.0-38 [17-Nov-97] Brandon, Brian
+1.0-38  [17-Nov-97] Brandon, Brian
       * cache_info() added to help people determine a decent size for their
         cache width/depth (Brandon)
       * fixed a old object hanging bug--no discard in breadth_search (Brian)
       * panic will now dump core after syncing, rather than exiting (Brandon)
       * negative objnums always test false, now (Brandon)
       * fixed %S/%s bug in $dns.ip() (Brandon)
-1.0-37 [18-Sep-97] Brandon
+1.0-37  [18-Sep-97] Brandon
       * added 'partial or 'full option to $http.encode(), default
         is 'full, if 'partial is given it will only encode what
         is required for the path part of an HTTP URL (Brandon)
@@ -80,12 +137,12 @@ contributors to that version.
         correctly, with a var definition (Brandon)
       * depth search of ancestors on $root was returning [] not [$root]
       * buf_to_str*() was removing '\t' instead of translating it to a space
-1.0-36 [10-Jul-97] Brandon
+1.0-36  [10-Jul-97] Brandon
       * fixed bug which was saying #0 ($sys) was invalid (Brandon)
-1.0-35 [09-Jul-97] Brandon
+1.0-35  [09-Jul-97] Brandon
       * fixed a bug in compiling $names in textdumps.
       * fixed a bug with #-xx becoming #xx again.
-1.0-34 [07-Jul-97] Brandon
+1.0-34  [07-Jul-97] Brandon
       * removed descendants()--its algorithm is inherently flawed and
         may misorder objects if a parent loop exists and parents are
         on different levels (Brandon)
@@ -93,7 +150,7 @@ contributors to that version.
         with searches, but instead using Hash (Brandon)
       * adjusted configure a little more, to handle ~user escapes
         on systems where ~user escapes does not work (Brandon)
-1.0-33 [03-Jul-97] Brandon, Brad
+1.0-33  [03-Jul-97] Brandon, Brad
       * Negative objnums are allowed, and now represent invalid aspects
         of the respective number (so #-1525 would represent the objnum
         for an invalid object #1525.  This is used when textdumping) (Brandon)
@@ -104,7 +161,7 @@ contributors to that version.
       * changed how UCASE/LCASE work for better cacheing
       * Fixed a problem in configure (Brandon)
       * niggled here and there from purify warnings (Brandon/Brad)
-1.0-32 [01-Jul-97] Miro, Brandon, others
+1.0-32  [01-Jul-97] Miro, Brandon, others
       * Crufted up configure to include install information.  Crufted
         up base makefile, install actually installs now (Brandon)
       * Cleaned up some ANSI incompatabilities (Brandon)
@@ -118,7 +175,7 @@ contributors to that version.
       * fixed bug in scatter assignments (Patrick, Miro, Brad)
       * updated list_union() to use Hash in the top-end situations
         where more than twelve elements exist overall (Miro)
-1.0-31 [26-Jun-97] Brandon
+1.0-31  [26-Jun-97] Brandon
       * fixed bug with bufidx().. was using the wrong var and reading
         out of its memory bounds (Brandon)
       * fixed float parsing a bit, [1..2] is now functional again,
@@ -137,14 +194,14 @@ contributors to that version.
         argument of 'depth or 'breadth to specify which order.  Added
         descendants(), which is always breadth (Brandon).
       * changed textdump to use descendants() instead of search (Brandon)
-1.0-30 [26-Jun-97] Brandon
+1.0-30  [26-Jun-97] Brandon
       * fixed bug with [un]bind_port() and open_connection(): stack wasn't
         cleaning up correctly (Brandon)
       * fixed potential (but not likely unless we used C threads) SEGV
         bug in object cache handling (Brandon)
       * added frob_class() to devalue class(), class() still works
         but frob_class() should be used in lieu..more standard (Brandon)
-1.0-29 [28-May-97] Brad, Brandon
+1.0-29  [28-May-97] Brad, Brandon
       * fixed a memory leak in float parsing (Brad)
       * added -W flag to shutoff warnings in coldcc (Brandon)
       * updated the VEIL module to function per new specs (Brandon)
@@ -153,14 +210,14 @@ contributors to that version.
       * fixed some method decompiling of things (parenthesis) (Brandon)
       * fixed frame depth for paused/suspended tasks (Brandon)
       * fixed listgraft() wierdness (Brad)
-1.0-28 [29-Apr-97] Brian, Miro, Brandon
+1.0-28  [29-Apr-97] Brian, Miro, Brandon
       * fixed bug in inherit_var() (Brian)
       * fixed bug in bufidx() (Miro)
       * fixed buggy method_bytecode (Miro)
       * fixed bug in += with STR on the left and a SYM on the right (Brian)
       * fixed my braindead changes to cache searching, by simply reverting
         back to how it was--will re-write (and debug) in p29 (Brandon)
-1.0-27 [10-Apr-97] Miro, Brian
+1.0-27  [10-Apr-97] Miro, Brian
       * fixed a bug, removed an extra cache_discard that completely bombed
         the server if the object got swapped while task still used the
         method  (Miro)
@@ -171,13 +228,13 @@ contributors to that version.
         traceback could be generated (Miro)
       * wrapped up default_var() and inherited_var() -- no cacheing of
         results occurs with inherited_var(), use it wisely (Brian)
-1.0-26 [22-Mar-97] Miro, Brandon
+1.0-26  [22-Mar-97] Miro, Brandon
       * Fixed crypt() and match_crypted() for 64bit OS's (Brandon)
       * minor bug in fromliteral() fixed, in regard to handled frobs (Miro)
       * changed how searching is handled, to reduce collisions and not
         overflow.  Also changed it so an object is dirty if obj->dirty
         OR obj->search == cur_search. (Brandon)
-1.0-25 [10-Mar-97] Brandon, Miro, Brad/Ted
+1.0-25  [10-Mar-97] Brandon, Miro, Brad/Ted
       * new mechanism for type handling: the basic methods are called via
         function pointers, so you don't have to hunt for switches through
         the driver for every type you want to add (Miro)
@@ -193,7 +250,7 @@ contributors to that version.
       * fixed a bug with parsing large floats from literals (Brad/Ted)
       * fixed ;1e-9 bug (Miro)
       * fixed spelling error (Miro)
-1.0-24 [10-Feb-97] Brandon, Jon Lambert
+1.0-24  [10-Feb-97] Brandon, Jon Lambert
       * The third argument to list_method() now is a bitfield with
         the following flags: 1=Full Parens, 2=Full Braces; which
         can be OR'ed as appropriate (Brandon)
@@ -221,7 +278,7 @@ contributors to that version.
       * Any 'stat' info returned from a file function will now format the
         file mode as an octal number in a string (Brandon)
       * a touch more cleanup with Win32 and Win32 docs (Jon)
-1.0-23 [4-Feb-97] Miro, Brandon, Jon Lambert
+1.0-23  [4-Feb-97] Miro, Brandon, Jon Lambert
       * Wrapped up Win32 support in the source (Jon Lambert)
       * Fixed bug in task cancelling (Miro)
       * Fixed minor bug in split() (if last element was blank, and "b"
@@ -229,18 +286,18 @@ contributors to that version.
       * Standardized arg ... [more]; format to follow scatter assignments,
         will accept both formats but decompile as @more now. (Miro)
       * fixed a bug in join() (Brandon)
-1.0-22 [15-Jan-97] Brian, Miro, Brandon
+1.0-22  [15-Jan-97] Brian, Miro, Brandon
       * fixed corruption bug in scatter assignments causing crashes (Miro)
       * fixed leak in scatter assignment (Miro)
       * fixed defaults for cache width/depth so they initialized correctly.
       * fixed a minor inconsistency in strfmt() with %e (Brian)
-1.0-21 [21-Dec-96] Brandon
+1.0-21  [21-Dec-96] Brandon
       * fixed a problem with buf_to_str() -- its less efficient again, but
         is at least stable.
       * strsub() $string.replace() accept the same 'flags' as strsed()
       * at William Colburn's suggested updated the way the driver figures
         out it's own hostname.
-1.0-20 [20-Dec-96] Brandon, Miro, Brad Roberts, Brian Buchanan
+1.0-20  [20-Dec-96] Brandon, Miro, Brad Roberts, Brian Buchanan
       * $network.hostname()/.ip() now return the machine's primary
         hostname/ip, if no argument is given (Brandon)
       * Corrected logic in string_prep() and list_prep()--it would not
@@ -256,15 +313,15 @@ contributors to that version.
       * Added default assignment (?=) (Miro)
       * fixed some stack-corrupting bugs in file-ops (Brandon/Miro/Brad)
       * tweaked how frob-methods are chosen (Brian)
-1.0-19 [14-Nov-96] Brandon Gillespie, Miroslav Silovic
+1.0-19  [14-Nov-96] Brandon Gillespie, Miroslav Silovic
       * Signifigantly sped up symbols and methods lookups. (Miro)
       * added 'config()' to be used to set task limits.  Currently recognized
         limits: 'datasize 'fork 'calldepth 'recursion 'objswap
         Only 'calldepth does anything, at the moment.  (Brandon)
       * Fixed a bug in $list.transpose() (Miro)
-1.0-18 [05-Nov-96] Brandon Gillespie
+1.0-18  [05-Nov-96] Brandon Gillespie
       * Included some of Brian's fixes that I accidentally left out of p17
-1.0-17 [04-Nov-96] Miroslav Silovic, Brian Buchanan
+1.0-17  [04-Nov-96] Miroslav Silovic, Brian Buchanan
       * Included a few scripts in 'bin' again (Brandon)
       * Fixed unkillable object bug caused by reprogramming methods (Brian)
       * Fixed method_info() to find local methods only (Brian)
@@ -284,12 +341,12 @@ contributors to that version.
       * $dictionary.union fixed to insert keys in consistant order (Miro)
       * UDP networking added (hooked into the existing functions) (Miro)
       * ("string" * INTEGER) returns string repeated INTEGER times (Miro)
-1.0-16 [24-Oct-96] Brandon Gillespie
+1.0-16  [24-Oct-96] Brandon Gillespie
       * Fixed some bugs with $string.dbquote_explode()
       * Fixed a bug with forked methods, they were not cleaning up the
         stack and returning the task id.
       * Fixed MINLONG, now references LONG_MIN from the newer limits.h
-1.0-15 [22-Oct-96] Miroslav Silovic, Brad Roberts, Brandon Gillespie
+1.0-15  [22-Oct-96] Miroslav Silovic, Brad Roberts, Brandon Gillespie
       * Fixed a few leaks pointed out after running through pure. (Miro)
       * Forked methods now work.  Just set the flag +forked on the method,
         and it will fork off when called (Brandon).
@@ -319,7 +376,7 @@ contributors to that version.
       * Fixed where line-counting got off with simple catch statements,
         only works in the general case of non-nested catches.  Line-counting
         will still get off if you have nested catches. (Brandon)
-1.0-14 [22-Sep-96] Brandon Gillespie, Miroslav Silovic
+1.0-14  [22-Sep-96] Brandon Gillespie, Miroslav Silovic
       * at one point I had an odd idea to allow people to submit bytecode
         as well as lists of strings.  I adjusted the method handling
         functions in anticipation of this, and later realized what a
@@ -361,13 +418,13 @@ contributors to that version.
         eventually change this to be the actual characters. (Brandon)
       * changed fread() on text to eat all meta characters (it converts
         \t to a space). (Brandon)
-1.0-13 [20-Aug-96] Brandon Gillespie, Miroslav Silovic
+1.0-13  [20-Aug-96] Brandon Gillespie, Miroslav Silovic
       * binary database patch to fix wild db growth (Miro)
       * toerr() was always throwing (my stupidity: Brandon)
       * added match_crypted(), this was supposed to have been done a
         while ago.  Use this to match crypt()'ed strings--it handles
         varying cases (Brandon).
-1.0-12 [13-Aug-96] Brandon Gillespie
+1.0-12  [13-Aug-96] Brandon Gillespie
       * Added bitwise native methods to $integer, in the cdc module.
       * our own inet_aton() is added for those systems that do not have it,
         courtesy of Luc Girardin <girardin@hei.unige.ch>.
@@ -375,7 +432,7 @@ contributors to that version.
         which caused it to overflow into other memory.
       * fixed the textdump reading quote problem
       * open_connection() was not returning after it threw an error (bad)
-1.0-11 [2-Aug-96] Brandon Gillespie, Miroslav Silovic
+1.0-11  [2-Aug-96] Brandon Gillespie, Miroslav Silovic
       * Added the ability to bind to seperate and multiple IP addresses
         with 'bind_port()' (Brandon)
         Because of this, the following has changed:
@@ -389,7 +446,7 @@ contributors to that version.
       * Found an old bug which was hanging objects, if a method
         threw an error due to method protection object references
         were not cleaned up in the cache. (Miro)
-1.0-10 [26-Jul-96] Miroslav Silovic, Brad Roberts, Brandon Gillespie
+1.0-10  [26-Jul-96] Miroslav Silovic, Brad Roberts, Brandon Gillespie
       * Fixed a problem where natives would get frobbed if you
         recompiled them. (Brandon)
       * Lots of leaks plugged in coldcc. (Miro, Brandon, Brad)
@@ -409,7 +466,7 @@ contributors to that version.
             strsed(str, key, ...)
       * Fixed NULL usage to cast to char, cleans up warnings in Linux,
         also included fix for handling SIGPIPE again (Brad)
-1.0-9 [13-Jul-96] Brandon Gillespie, Miroslav Silovic
+1.0-9   [13-Jul-96] Brandon Gillespie, Miroslav Silovic
       * logs/genesis.run contains the pid of genesis, and is removed when
         genesis exits.
       * Fixed a few things that cropped up when compiling on other systems
@@ -420,7 +477,7 @@ contributors to that version.
         return long before the backup is complete.  When a backup is finished
         the driver calls $sys.backup_done().
       * New function and native dict_union()/$dictionary.union() (Miro)
-1.0-8 [] Brandon Gillespie, Miroslav Silovic
+1.0-8   [] Brandon Gillespie, Miroslav Silovic
       * Added 'join()', hooked into $list.join() (native)
       * Finished 'graft()' functions for string, list and buffer, will
         not hook into natives.
@@ -492,25 +549,25 @@ contributors to that version.
       * Added '*' characters to pad and precision in strfmt(), like in
         standard printf()'s.
       * Fixed strfmt(), it was dying on '%%' => '%' escapes.
-1.0-4  [26-Apr-96] Brandon Gillespie
+1.0-4   [26-Apr-96] Brandon Gillespie
       * Maintenance
       * 'compile()' now is a clone of 'add_method()', when the full
         parse-tree capabilities are available they will be different.
       * changed calls to 'time()' to use 'gettimeofday()', most modern
         OS's wrap time() around this anyway.
       * added 'user()' and 'set_user()'.
-1.0-3  [22-Apr-96] Brandon Gillespie
+1.0-3   [22-Apr-96] Brandon Gillespie
       * Fixed a bug in decompiling -- ++ += -= etc, they assumed the
         variable was always a local variable, this bombed when using
         an object variable.
       * Textdb compiling blasted method code if it was a native method,
         this was an oversight on my behalf.
       * tweaked malloc.c a touch
-1.0-2  [21-Apr-96] Brandon Gillespie
+1.0-2   [21-Apr-96] Brandon Gillespie
       * the change to backup() assumed files were always the same, which
         they are not (it depends upon the dbm implementation you are using),
         changed backup() to use readdir() to read the directory.
-1.0-1  [20-Apr-96] Brandon Gillespie
+1.0-1   [20-Apr-96] Brandon Gillespie
       * Bug fix: uppercase/lowercase and their native equivalents, and
         native .capitalize() were not duplicating strings correctly
         (sometimes causing a segv, if used in the wrong situation).
@@ -525,15 +582,15 @@ contributors to that version.
       * Include our own malloc for those who wish a nice implementation.
         Code is from Poul-Henning Kamp.
       * upgraded backup() to be more efficient
-1.0-0  [17-Apr-96] Brandon Gillespie
+1.0-0   [17-Apr-96] Brandon Gillespie
       * Bug fix, "xxxx".native() caused a segmentation violation, the
         problem was mine, I wasn't cleaning up the stack correctly after
         completing a native method call.
-0.4-4  [16-Apr-96] Brandon Gillespie
+0.4-4   [16-Apr-96] Brandon Gillespie
       * last function change to get the math functions to sit correctly,
         'log()' has been changed to 'dblog()', and the logarithmic float
         function is 'log()'.
-0.4-3  [16-Apr-96] Brandon Gillespie
+0.4-3   [16-Apr-96] Brandon Gillespie
       * This release is 1.0 alpha
       * The following functions have been removed, because their native
         counterparts now work:
@@ -545,21 +602,21 @@ contributors to that version.
             strftime()
             encode()
             decode()
-0.4-2  [] Brandon Gillespie
+0.4-2   [] Brandon Gillespie
       * Native methods
-0.4-1  [] Brandon Gillespie
-0.4-0  [] Brandon Gillespie
-0.3-9  [8-Mar-96] Brandon Gillespie
+0.4-1   [] Brandon Gillespie
+0.4-0   [] Brandon Gillespie
+0.3-9   [8-Mar-96] Brandon Gillespie
         more, but I forget, lots of bug squishing
-0.3-8  [20-Feb-96] Brandon Gillespie
+0.3-8   [20-Feb-96] Brandon Gillespie
       * changed bind_port() and open_connection() to use the current object,
         rather than specifying the object as a second argument.
-0.3-7  [20-Feb-96] Brandon Gillespie
+0.3-7   [20-Feb-96] Brandon Gillespie
       * bug fixes, yipee
       * finalized command-line syntax
 0.3-4~6 [Feb-96]: Brandon Gillespie
       * many bug fixes
-0.3-3  [30-Jan-96]: Brandon Gillespie
+0.3-3   [30-Jan-96]: Brandon Gillespie
       * completed file ops
             fopen()
             fstat() => [bytes,blocks,type,mode,owner,group,last access times]
@@ -579,14 +636,14 @@ contributors to that version.
       * tinkered with textdb.c a bit, changed how 'name' directive works.
       * changed 'chparents()' to be object oriented (using 'this()' as the
         object parents are changing on).
-0.3-2  [18-Jan-96]: Dancer
+0.3-2   [18-Jan-96]: Dancer
       * C functions write_long()/read_long()/size_long() replaced with
         non-byteorder caring functions -- they are a nice idea, but unstable.
         Someone should work on a solid version of these.
       * Fixed some problems in textdb.c (sometimes $root and $sys would
         get axed, hacked a more standard COPY def for strings.
       * crufted up panic()
-0.3-1  [  -Jan-96]: Brandon Gillespie
+0.3-1   [  -Jan-96]: Brandon Gillespie
       * Converted all occurances of 'dbref' to 'objnum' (respectively)
         For standardization with 'objname' (change 'dbref symbols to
         'objnum symbols).
@@ -615,7 +672,7 @@ contributors to that version.
             [new]             => connection() (returns [readable,writable,dead])
             timestamp()       => (removed,
                                   replace with strftime("%d %h %y %H:%M")
-0.3-0  [14-Dec-95]: Brandon Gillespie, Miroslav Silovic
+0.3-0   [14-Dec-95]: Brandon Gillespie, Miroslav Silovic
       * Regexp didn't release reference to the integer pairs, causing a
         minor leak each time a match was called. Unfortunately, commands
         like @display and @show called regexp matches hundreds of times,
@@ -629,35 +686,35 @@ contributors to that version.
             $root and have .set_objname() handle permissions.
           + del_objname() added, this will remove the object name.
           + objname() added.
-0.2-10 [19-Nov-95]: Brandon Gillespie
+0.2-10  [19-Nov-95]: Brandon Gillespie
       * cleanup of quick 2-9 release which had things wrong.  Also fixed
         a minor bug in dump.c (found by Gregory D Lewis
         <glewis@maths.adelaide.edu.au>).  Updated some of the note-*
         documents.
-0.2-9 []: Brandon Gillespie
+0.2-9   []: Brandon Gillespie
       * cleanup
-0.2-8 [24-Oct-95]: Brandon Gillespie
+0.2-8   [24-Oct-95]: Brandon Gillespie
       * Fixed buf_to_veil_packets() and buf_from_veil_packets()
       * Forgot to remove a temporary hack to fix a bug a while back.
         This was causing it to write an object to disk every time it
         was removed from the cache, not just when it was dirty.
-0.2-7 [22-Oct-95]: Brandon Gillespie
+0.2-7   [22-Oct-95]: Brandon Gillespie
       * Fixed a bug in execute.c, would SEGV if method access was
         anything other than driver or public and the driver called
         the method.
-0.2-6 [21-Oct-95]: Brandon Gillespie, Miroslav Silovic
+0.2-6   [21-Oct-95]: Brandon Gillespie, Miroslav Silovic
       * Added file base routines (Brandon).
       * Multiple connections to the same object are no longer allowed,
         an old connection is booted when a new one starts, on that object.
         This is a rare case anyway (due to bad coding in-db), and should
         be a transparent change (Brandon).
       * Found major memory leak in method_free (Miroslav).
-0.2-5 [12-Oct-95]: Brandon
+0.2-5   [12-Oct-95]: Brandon
       * Fixed problems in argument handling with genesis, other
         cleanups (nice generic terminology).
-0.2-4 []: Brandon
+0.2-4   []: Brandon
       * damn, forgot what I changed.
-0.2-3 []: Brandon
+0.2-3   []: Brandon
       * Fixed long-time bug in lowercase and uppercase, they were calling
         prepare_to_modify, unnecessarily, which was causing problems.
       * Created Cold Process Controller (control).  Control will
@@ -669,11 +726,11 @@ contributors to that version.
         will also decompile a binary to text.  This functionality will
         be removed from the driver.  Coldcc will also have added
         functionality.
-0.2-2 [23-Sep-95]: Dancer
+0.2-2   [23-Sep-95]: Dancer
       * fixed many places where objects were not marked dirty and they
         should be.
       * fixed a bug in task scheduling (execute.c:task_delete())
-0.2-1 [20-Sep-95]: Brandon, Dancer
+0.2-1   [20-Sep-95]: Brandon, Dancer
       * Caching problems worked on, code by Dancer (help from Miroslav)
       * Pile allocation fixed (Dancer)
       * Bug in bind/unbind function fixed, uses symbols uniformely now
@@ -688,7 +745,7 @@ contributors to that version.
         references for objects, ala: "string".('explode)(); (Brandon)
       * fixed strfmt() bug (big evil one) (Brandon)
       * random cleanup (Brandon)
-0.2-0 [11-Sep-95]: Brandon Gillespie, Miroslav Silovic
+0.2-0   [11-Sep-95]: Brandon Gillespie, Miroslav Silovic
       * Added Floating Point support (Miroslav)
       * Fixed memory leak in match_pattern() (Miroslav)
       * New Function: method() (returns method in current frame)
@@ -723,7 +780,7 @@ contributors to that version.
       * New Function: method_state() returns the method state as a symbol
       * New Function: set_method_state() sets the method state
       * New Function: set_method_state() sets the method state
-0.1-5 [7-Aug-95]: Brandon Gillespie, Miroslav Silovic, Jeff Kesselman
+0.1-5   [7-Aug-95]: Brandon Gillespie, Miroslav Silovic, Jeff Kesselman
       * New Function: clear_var() (Brandon, Miroslav)
       * New Functions: localtime(), strftime() and timestamp() (Brandon)
       * New Function: buffer_tail() (Jeff Kesselman)
@@ -735,7 +792,7 @@ contributors to that version.
       * Added file management routines, seperate development source
         for developers, distribution source is a modified version of
         the development source.  (Brandon)
-0.1-4 [16-May-95]: Brandon Gillespie, Miroslav Silovic
+0.1-4   [16-May-95]: Brandon Gillespie, Miroslav Silovic
       * Fixed "E" in "aeiou" bug (Brandon Gillespie)
       * Fixed ugly nasty bug in function binding (Brandon Gillespie)
       * Fixed regexp bug, had backwards logic (Miroslav Silovic)
@@ -744,7 +801,7 @@ contributors to that version.
       * Signal handler resets signals after each catch, for SYSV systems
         (I don't believe BSD systems need to do this, but I could be
         wrong).  (Brandon Gillespie)
-0.1-3 [13-Mar-95]: Robert de Forest, Brandon Gillespie
+0.1-3   [13-Mar-95]: Robert de Forest, Brandon Gillespie
       * assignments changed to expressions (Robert de Forest)
       * dynamic function binding (Brandon Gillespie)
         Before this change a select set of functions were hardcode
@@ -767,13 +824,13 @@ contributors to that version.
             next_objnum() =>   next_dbref()
             toobj()       =>   todbref()
         Yes, this is redundant, lets hope its the last time.
-0.1-2 [03-Mar-95]: Brandon Gillespie
-      More cleanup, fixed some Signal problems for Linux
-0.1-1 [02-Mar-95]: Brandon Gillespie
-      Cleanup to configure script, added USE_GETRUSAGE flag
+0.1-2   [03-Mar-95]: Brandon Gillespie
+      * More cleanup, fixed some Signal problems for Linux
+0.1-1   [02-Mar-95]: Brandon Gillespie
+      * Cleanup to configure script, added USE_GETRUSAGE flag
 ------------
-0.1-0 [01-Mar-95]: Brandon Gillespie
-0.0-3 [..-...-..]: Brandon Gillespie
+0.1-0   [01-Mar-95]: Brandon Gillespie
+0.0-3   [..-...-..]: Brandon Gillespie
       * added signal handler
       * changed main loop structure, previously:
              1. flush_defunct connections/records

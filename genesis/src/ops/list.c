@@ -243,6 +243,12 @@ COLDC_FUNC(listidx) {
     else
         origin = 1;
     
+    if (!LIST1->len) {
+        pop(argc);
+        push_int(0);
+        return;
+    }
+
     if ((r = list_index(LIST1, &args[1], origin)) == F_FAILURE)
         THROW((range_id, "Origin is beyond the range of the list."))
     

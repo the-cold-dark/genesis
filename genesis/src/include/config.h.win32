@@ -37,7 +37,7 @@
 #define CACHE_WIDTH 64
 #define CACHE_DEPTH 10
 
-#define RESTRICTIVE_FILES 1
+/* #undef RESTRICTIVE_FILES */
 
 #define SYSTEM_TYPE "i386-unknown-win32"
 

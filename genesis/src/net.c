@@ -350,8 +350,21 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
 	}
     }
 
+#ifdef __Win32__
+    /* Winsock 2.0 will return EINVAL (invalid argument) if there are no 
+       sockets checked in any of the FDSETs.  At least one server must be
+       listening before the call is made.  Winsock 1.1 behaves differently.
+     */
+
+    if (servers || connections || pendings) {
+#endif
     /* Call select(). */
     count = select(nfds, &read_fds, &write_fds, &except_fds, tvp);
+#ifdef __Win32__
+    } else {
+        count = 0;
+    }
+#endif
 
     /* Lose horribly if select() fails on anything but an interrupted system
      * call.  On ERR_INTR, we'll return 0. */
@@ -468,7 +481,7 @@ Long non_blocking_connect(char *addr, Int port, Int *socket_return)
     } while (result == SOCKET_ERROR && GETERR() == ERR_INTR);
 
     *socket_return = fd;
-    if (result != SOCKET_ERROR || GETERR() == ERR_INPROGRESS)
+    if (result != SOCKET_ERROR || GETERR() == ERR_INPROGRESS || GETERR() == ERR_AGAIN)
 	return NOT_AN_IDENT;
     else
 	return translate_connect_error(GETERR());
@@ -517,7 +530,7 @@ Long udp_connect(char *addr, Int port, Int *socket_return)
     } while (result == SOCKET_ERROR && GETERR() == ERR_INTR);
 
     *socket_return = fd;
-    if (result != SOCKET_ERROR || GETERR() == ERR_INPROGRESS)
+    if (result != SOCKET_ERROR || GETERR() == ERR_INPROGRESS || GETERR() == ERR_AGAIN)
 	return NOT_AN_IDENT;
     else
 	return translate_connect_error(GETERR());

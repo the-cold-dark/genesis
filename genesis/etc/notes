@@ -10,24 +10,10 @@ Help can be found through the web site, or on the mailing list
       http://www.cold.org/info/lists
 
 RELEASE INFORMATION:
-1.1p5   [????????] Bruce, Brad, Colin, Brandon
-      * Brought random() into agreement with docs and enforced it by
-        throwing ~range when arg is negative or zero. (Bruce)
-      * Network I/O made non-blocking for incoming connections (Bruce,
-        Brad, Colin)
-      * Add check to be sure backup() was able to open the directory. (Bruce)
-      * Removed memset() on Win32 from emalloc() (Bruce)
-      * Changed tell to ctell to resolve solaris 2.6 conflict (Brad)
-      * bufidx() had an array bounds read problem. (Brad)
-      * Fixed bug in strgraft() (Bruce)
-      * Fixed crash bug in coldcc (Bruce, noticed by Kipp)
-      * Fixed memory leak in signal handler (Bruce)
-      * Fixed crash bug in signal handler when no current task (Bruce)
-      * Fixed write_long to work properly on 64 bit systems (Brad)
-      * Fixed execute() to return an exit status of 0 properly  (Bruce)
-      * Fixed memory leak in unbind_port() (Bruce)
-      * Fixed abs() to throw an error when the arg isn't an integer or
-        float (Bruce)
-      * Fixed files() to check for NULL after opendir() and fixed a
-        memory leak (Brandon)
-      * Fixed bug in match_begin() (Brandon)
+1.1.9  [1-Oct-100]
+      * removed phk_malloc -- modern OS mallocs are decent (Brandon)
+      * misc cleanup (Generic Bob)
+      * removed dnsserv (Brandon)
+      * fix for ctime() in Borland (Psyclone)
+      * Fixed inconsistent behavior in stridx(), listidx(), and
+        bufidx() when presented with an empty first argument. (Bruce)

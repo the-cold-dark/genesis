@@ -82,7 +82,7 @@ void func_dict_union(void) {
     pop(2);
 
     /* dict_union will discard the dicts */
-    d = dict_union(dict2, dict1);
+    d = dict_union(dict1, dict2);
 
     push_dict(d);
     dict_discard(d);

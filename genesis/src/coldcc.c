@@ -339,19 +339,20 @@ Options:\n\n\
     -h              This message.\n\
     -d              Decompile.\n\
     -c              Compile (default).\n\
-    -b binary       binary db directory name, default: \"%s\"\n\
-    -t target       target text db, default: \"%s\"\n\
-                    if this is \"stdin\" it will read from stdin\n\
+    -b binary       binary db directory name, current: \"%s\"\n\
+    -t target       target text db, current: \"%s\"\n\
+                    If this is \"stdin\" it will read from stdin\n\
                     instead.  <target> may be a directory or file.\n\
     -p              Partial compile, compile object(s) and insert\n\
                     into database accordingly.  Can be used with -w\n\
                     for a ColdC code verification program.\n\
-    +|-#            Print/Do not print object numbers by default\n\
+    +|-#            Print/Do not print object numbers by default.\n\
                     Default option is +#\n\
                     print object names by default, if they exist.\n\
     -s WIDTHxDEPTH  Cache size, default 10x30\n\
-    -n              List native method configuration\n\
-    +|-o            Print/Do not print objects as they are processed\n\
+    -n              List native method configuration.\n\
+    +|-o            Print/Do not print objects as they are processed.\n\
+    -W              Do not print warnings.\n\
 \n\
 \n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, name, c_dir_binary, c_dir_textdump);
 }

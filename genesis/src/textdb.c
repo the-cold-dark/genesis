@@ -605,6 +605,8 @@ INTERNAL Obj * handle_objcmd(char * line, char * s, Int new) {
                 target->dead = 1;
                 cache_discard(target);
                 target = NULL;
+                list_discard(parents);
+                return NULL;
             }
         }
     } else if (new == N_NEW) {
@@ -1344,6 +1346,9 @@ INTERNAL void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames) {
 Int text_dump(Bool objnames) {
     FILE      * fp;
     char        buf[BUF];
+#ifdef __Win32__
+    struct stat statbuf;
+#endif
 
     /* Open the output file. */
     sprintf(buf, "%s.out", c_dir_textdump);
@@ -1366,6 +1371,12 @@ Int text_dump(Bool objnames) {
 
     close_scratch_file(fp);
 
+#ifdef __Win32__
+    /* rename() on Win32 won't overwrite a file as it does on Unix */
+    if (stat(c_dir_textdump, &statbuf) == 0) {
+        unlink(c_dir_textdump);
+    }
+#endif
     if (rename(buf, c_dir_textdump) == F_FAILURE) {
         fprintf(stderr, "\rUnable to rename \"%s\" to \"%s\":\n\t%s\n",
                 buf, c_dir_textdump, strerror(GETERR()));

@@ -16,7 +16,7 @@ INTERNAL char *string_token(char *s, Int len, Int *token_len);
 INTERNAL char *identifier_token(char *s, Int len, Int *token_len);
 
 static cList *code;
-static cur_line, cur_pos;
+static Int cur_line, cur_pos;
 
 /* Words with same first letters must be together. */
 static struct {

@@ -41,7 +41,7 @@ void init_defs(void) {
 #ifdef HAVE_TM_ZONE
     time(&t);
     tms = localtime(&t);
-    str_tzname = string_from_chars(tms->tm_zone, strlen(tms->tm_zone));
+    str_tzname = string_from_chars((char *)tms->tm_zone, strlen(tms->tm_zone));
 #else
 # ifdef HAVE_TZNAME 
     str_tzname = string_from_chars(tzname[0], strlen(tzname[0]));

@@ -66,6 +66,13 @@
 
 /*
 // ---------------------------------------------------------------------
+// This is what the core execution loop should wait (seconds), if no
+// heartbeat is set (this will not add a heartbeat)
+*/
+#define NO_HEARTBEAT_INTERVAL 2
+
+/*
+// ---------------------------------------------------------------------
 // Clean objects out of the cache?  This gives you a smaller memory
 // imprint, but it usually causes more work for the server as it will
 // be constantly removing and pulling objects in an dout of the cache.

@@ -194,6 +194,12 @@ COLDC_FUNC(bufidx) {
     } else
         THROW((type_id, "Second argument must be a buffer or integer."))
 
+    if (!buffer_len(BUF1)) {
+        pop(argc);
+        push_int(0);
+        return;
+    }
+
     if ((r = buffer_index(BUF1, cp, clen, origin)) == F_FAILURE)
         THROW((range_id, "Origin is beyond the range of the buffer."))
 

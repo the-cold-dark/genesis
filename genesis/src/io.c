@@ -487,7 +487,7 @@ void flush_output(void) {
 	     * If it would've blocked, then don't change len or s,
              * so set the bytes written to 0
              */
-            if ((r = SOCKET_ERROR) && (GETERR() == ERR_AGAIN))
+            if ((r == SOCKET_ERROR) && (GETERR() == ERR_AGAIN))
                 r = 0;
             len -= r;
             s += r;

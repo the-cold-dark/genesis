@@ -12,7 +12,11 @@
 #endif
 #include <sys/stat.h>
 #ifdef __UNIX__
+#ifdef DBM_H_FILE
+#include DBM_H_FILE
+#else
 #include <ndbm.h>
+#endif
 #else
 #include "ndbm.h"
 #endif

@@ -211,7 +211,17 @@ COLDC_FUNC(match_begin) {
       sep_len = 1;
     }
 
-    for (p = s - sep_len; p; p = strcstr(p + 1, sep)) {
+    /* check the beginning */
+    p = strcstr(s, sep);
+    if (p != s) {
+        if (strnccmp(s, search, search_len) == 0) {
+            pop(num_args);
+            push_int(1);
+            return;
+        }
+    }
+
+    for (; p; p = strcstr(p + sep_len, sep)) {
 	/* We found a separator; see if it's followed by search. */
 	if (strnccmp(p + sep_len, search, search_len) == 0) {
 	    pop(num_args);
@@ -542,6 +552,12 @@ COLDC_FUNC(stridx) {
 
     if (!string_length(STR2))
         THROW((type_id, "No search string.")) 
+
+    if (!string_length(STR1)) {
+        pop(argc);
+        push_int(0);
+       return;
+    }
 
     if ((r = string_index(STR1, STR2, origin)) == F_FAILURE)
         THROW((range_id, "Origin is beyond the range of the string."))

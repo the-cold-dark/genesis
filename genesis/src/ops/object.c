@@ -443,10 +443,9 @@ COLDC_FUNC(method_info) {
                 str = string_add_chars(str, ", ", 2);
         }
         if (method->rest != -1) {
-            str = string_addc(str, '[');
+            str = string_addc(str, '@');
             s = ident_name(object_get_ident(method->object, method->rest));
             str = string_add_chars(str, s, strlen(s));
-            str = string_addc(str, ']');
         }
     }
 
@@ -683,8 +682,12 @@ COLDC_FUNC(create) {
     if (!func_init_1(&args, LIST))
         return;
 
-    /* Get parents list from second argument. */
+    /* we need some parents */
     parents = args[0].u.list;
+    if (list_length(parents) <= 0) {
+        cthrow(type_id, "No parents specified.");
+        return;
+    }
 
     /* Verify that all parents are objnums. */
     for (d = list_first(parents); d; d = list_next(parents, d)) {

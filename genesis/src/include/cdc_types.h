@@ -48,7 +48,6 @@ struct cBuf {
 };
 
 struct cData {
-    Int type;
     union {
         cNum       val;
         cFloat     fval;
@@ -62,6 +61,7 @@ struct cData {
         cBuf     * buffer;
 	void     * instance;
     } u;
+    Int type;
 };
 
 struct cList {

@@ -966,8 +966,8 @@ INTERNAL void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
             } else if (!strnccmp(p, "native", 6)) {
                 p += 6;
                 flags |= MF_NATIVE;
-            } else if (!strnccmp(p, "fork", 4)) {
-                p += 4;
+            } else if (!strnccmp(p, "forked", 6)) {
+                p += 6;
                 flags |= MF_FORK;
             } else if (*p == '{' || *p == ';') {
                 break;
@@ -1566,7 +1566,7 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
     fputs(";\n", fp);
 
     /* if we are doing number-only, put a name definition in */
-    if (!objnames && obj->objname != -1) {
+    if (!objnames && obj->objname != -1 && !is_system(obj->objnum)) {
         fputs("name $", fp);
         fputs(ident_name(obj->objname), fp);
         fprintf(fp, " #%li", (long) obj->objnum);
@@ -1690,7 +1690,7 @@ INTERNAL char * method_definition(Method * m) {
     ADD_FLAG(MF_SYNC, ", synchronized", "synchronized");
     ADD_FLAG(MF_LOCK, ", locked", "locked");
     ADD_FLAG(MF_NATIVE, ", native", "native");
-    ADD_FLAG(MF_FORK, ", fork", "fork");
+    ADD_FLAG(MF_FORK, ", forked", "forked");
 
     if (flag) {
         strcat(buf, ": ");

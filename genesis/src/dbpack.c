@@ -7,12 +7,16 @@
 #include "defs.h"
 
 #include <string.h>
+#include <limits.h>
 #include "cdc_db.h"
 
 #define COMPRESS ENABLED
 #define ORDER_BYTES DISABLED
 
-#define MINLONG -(2^31)
+#ifndef LONG_MIN
+#error "Your OS doesnt define LONG_MIN!!  You can try to define it as"
+#error "(-2147483647-1), which is the correct value for a 32 bit long."
+#endif
 
 /* Write a four-byte number to fp in a consistent byte-order. */
 void write_long(Long n, FILE *fp)
@@ -20,7 +24,7 @@ void write_long(Long n, FILE *fp)
 #if COMPRESS
     Int sign, i, h, buf[5];
 
-    if (n == MINLONG)
+    if (n == LONG_MIN)
     {
         putc(0xA0, fp);
         putc(0x00, fp);
@@ -119,7 +123,7 @@ Int size_long(Long n)
 #if COMPRESS
     Int h;
 
-    if (n == MINLONG)
+    if (n == LONG_MIN)
         return 5;
     n = abs(n);
     h = 1;

@@ -35,6 +35,7 @@ Int stack_pos, stack_size;
 Int *arg_starts, arg_pos, arg_size;
 Long task_id=1;
 Long next_task_id=1;
+Long call_environ=1;
 Long tick;
 
 #define DEBUG_VM DISABLED
@@ -301,6 +302,7 @@ Int fork_method(Obj * obj,
     VMState * current = vm_current(),
             * fvm;
     Int       count, spos, result;
+    int       i;
 
     /* get a new execution environment */
     init_execute();
@@ -320,12 +322,14 @@ Int fork_method(Obj * obj,
     result = frame_start(obj, method, sender, caller, user,
                          0, arg_start - stack_start, is_frob);
 
-    if (result == CALL_OK) {
-        /* pause it, and let system handle it later, as a normal paused task */
-        task_pause();
-    } else {
+    if (result == CALL_ERROR) {
         /* we errored out, clean up the stack */
         pop(stack_pos);
+    } else {
+        /* pause it, and let system handle it later, as a normal paused task */
+        task_pause();
+        result = CALL_FORK;
+        call_environ = task_id;
     }
     store_stack();
 
@@ -335,6 +339,12 @@ Int fork_method(Obj * obj,
 
     restore_vm(current);
     ADD_TASK(vmstore, current);
+
+    /* clean up the stack */
+    if (result != CALL_ERROR) {
+        pop(stack_pos - stack_start);
+        push_int(call_environ);
+    }
 
     return result;
 }
@@ -537,7 +547,9 @@ void task(cObjnum objnum, Long name, Int num_args, ...) {
 
     /* start the task */
     ident_dup(name);
-    if (call_method(objnum, name, 0, 0, FROB_NO) == CALL_OK) {
+    if (call_method(objnum, name, 0, 0, FROB_NO) == CALL_ERROR) {
+        pop(stack_pos);
+    } else {
         execute();
         if (stack_pos != 0) {
             int x;
@@ -548,8 +560,6 @@ void task(cObjnum objnum, Long name, Int num_args, ...) {
             panic("Attempting clean shutdown.");
         }
         task_id = next_task_id++;
-    } else {
-        pop(stack_pos);
     }
     ident_discard(name);
 }
@@ -609,11 +619,11 @@ Int frame_start(Obj * obj,
                              (method->num_args == 0) ? "none" :
                              english_integer(method->num_args, nbuf2),
                              (method->rest == -1) ? "." : " or more.");
-        return CALL_NUMARGS;
+        call_error(CALL_ERR_NUMARGS)
     }
 
     if (frame_depth > MAX_CALL_DEPTH)
-        return CALL_MAXDEPTH;
+        call_error(CALL_ERR_MAXDEPTH);
     frame_depth++;
 
     if (method->rest != -1) {
@@ -919,7 +929,7 @@ Int pass_method(Int stack_start, Int arg_start) {
     Int result;
 
     if (cur_frame->method->name == -1)
-        return CALL_METHNF;
+        call_error(CALL_ERR_METHNF);
 
     /* Find the next method to handle the message. */
     method = object_find_next_method(cur_frame->object->objnum,
@@ -933,37 +943,36 @@ Int pass_method(Int stack_start, Int arg_start) {
 					     cur_frame->method->object->objnum,
 					     cur_frame->is_frob);
 	    if (!method)
-		return CALL_METHNF;
-	}
-	else {
-	    return CALL_METHNF;
-	}
+		call_error(CALL_ERR_METHNF);
+	} else
+	    call_error(CALL_ERR_METHNF);
     }
 
     if (cur_frame) {
         switch (method->m_access) {
             case MS_ROOT:
                 if (cur_frame->method->object->objnum != ROOT_OBJNUM)
-                    return CALL_ROOT;
+                    call_error(CALL_ERR_ROOT);
                 break;
             case MS_DRIVER:
                 /* if we are here, there is a current frame,
                    and the driver didn't send this */
-                return CALL_DRIVER;
+                call_error(CALL_ERR_DRIVER);
         }
     }
 
     /* Start the new frame. */
     if (method->native == -1) {
-        result = frame_start(cur_frame->object, method, cur_frame->sender,
+        if (method->m_flags & MF_FORK)
+            result = fork_method(cur_frame->object, method, cur_frame->sender,
+                             cur_frame->caller, cur_frame->user, stack_start,
+                             arg_start, cur_frame->is_frob);
+        else
+            result = frame_start(cur_frame->object, method, cur_frame->sender,
                              cur_frame->caller, cur_frame->user, stack_start,
                              arg_start, cur_frame->is_frob);
     } else {
-#if 0
-        call_native_method(method, stack_start, arg_start, method->object->objnum);
-#else
         call_native_method(method, stack_start, arg_start);
-#endif
         result = CALL_NATIVE;
     }
     cache_discard(method->object);
@@ -988,7 +997,7 @@ Int call_method(cObjnum objnum,     /* the object */
     /* Get the target object from the cache. */
     obj = cache_retrieve(objnum);
     if (!obj)
-        return CALL_OBJNF;
+        call_error(CALL_ERR_OBJNF);
 
     /* Find the method to run. */
     method = object_find_method(objnum, name, is_frob);
@@ -997,12 +1006,12 @@ Int call_method(cObjnum objnum,     /* the object */
 	    method = object_find_method(objnum, name, FROB_RETRY);
 	    if (!method) {
 		cache_discard(obj);
-		return CALL_METHNF;
+		call_error(CALL_ERR_METHNF);
 	    }
 	}
 	else {
-		cache_discard(obj);
-		return CALL_METHNF;
+            cache_discard(obj);
+            call_error(CALL_ERR_METHNF);
 	}
     }
 
@@ -1023,21 +1032,21 @@ Int call_method(cObjnum objnum,     /* the object */
                 if (cur_frame->method->object->objnum!=method->object->objnum){
                     cache_discard(obj);
                     cache_discard(method->object);
-                    return CALL_PRIVATE;
+                    call_error(CALL_ERR_PRIVATE);
                 }
                 break;
             case MS_PROTECTED:
                 if (cur_frame->object->objnum != objnum) {
                     cache_discard(obj);
                     cache_discard(method->object);
-                    return CALL_PROT;
+                    call_error(CALL_ERR_PROT);
                 }
                 break;
             case MS_ROOT:
                 if (cur_frame->method->object->objnum != ROOT_OBJNUM) {
                     cache_discard(obj);
                     cache_discard(method->object);
-                    return CALL_ROOT;
+                    call_error(CALL_ERR_ROOT);
                 }
                 break;
             case MS_DRIVER:
@@ -1045,7 +1054,7 @@ Int call_method(cObjnum objnum,     /* the object */
                    and the driver didn't send this */
                 cache_discard(obj);
                 cache_discard(method->object);
-                return CALL_DRIVER;
+                call_error(CALL_ERR_DRIVER);
         }
     }
 

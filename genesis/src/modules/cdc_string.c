@@ -512,8 +512,9 @@ NATIVE_METHOD(word) {
 }
 
 NATIVE_METHOD(dbquote_explode) {
-    Int             len;
+    Int             len, sublen;
     cData           d;
+    cStr          * str;
     cList         * out;
     char            quote = '"',
                   * sorig;
@@ -521,14 +522,19 @@ NATIVE_METHOD(dbquote_explode) {
                   * p,
                   * t;
             
-    INIT_1_ARG(STRING);
-                
+    INIT_1_OR_2_ARGS(STRING, STRING);
+
+    if (argc == 2) {
+       if (string_length(STR2) > 1)
+           THROW((type_id, "The second argument must be a single character."))
+       quote = string_chars(STR2)[0];
+    }
     s = sorig = string_chars(STR1);
     len = string_length(STR1);
-                    
+
     out = list_new(0);
     d.type = STRING;
-            
+
     forever {
         while (*s && *s == ' ') s++;
         
@@ -538,18 +544,20 @@ NATIVE_METHOD(dbquote_explode) {
             if (p == s) 
                 goto next;
 
-            /* dropping a NULL where the quote is will stop strchr() */
-            *p = (char) NULL;
+            sublen = p - s;
  
-            for (t = strchr(s, ' '); t; t = strchr(s, ' ')) {
+            for (t = (char *) memchr((void *) s, (int) ' ', sublen); t;
+                 t = (char *) memchr((void *) s, (int) ' ', sublen))
+            {
                 if (t > s)
                     ADD_WORD(s, t - s)
 
                 while (*t == ' ') t++;
+                sublen -= t - s;
                 s = t;
             }
     
-            if (*s)
+            if (*s && sublen)
                 ADD_WORD(s, p - s)
  
             next:
@@ -589,7 +597,6 @@ NATIVE_METHOD(dbquote_explode) {
         }       
     }
 
-    /* Pop the arguments and push the list onto the stack. */
     CLEAN_RETURN_LIST(out);
 }
 

@@ -92,17 +92,33 @@ struct handler_info {
     Handler_info *next;
 };
 
+#define MF_NONE      0    /* No flags */
+#define MF_NOOVER    1    /* not overridable */
+#define MF_SYNC      2    /* synchronized */
+#define MF_LOCK      4    /* locked */
+#define MF_NATIVE    8    /* native */
+#define MF_FORK      16   /* fork */
+#define MF_UNDF2     32   /* undefined */
+#define MF_UNDF3     64   /* undefined */
+#define MF_UNDF4     128  /* undefined */
+
 /* define these seperately, so we can switch the result of 'call_method' */
 #define    CALL_OK       0
-#define    CALL_NUMARGS  1
-#define    CALL_MAXDEPTH 2
-#define    CALL_OBJNF    3
-#define    CALL_METHNF   4
-#define    CALL_PRIVATE  5
-#define    CALL_PROT     6
-#define    CALL_ROOT     7
-#define    CALL_DRIVER   8
-#define    CALL_NATIVE   9
+#define    CALL_NATIVE   1
+#define    CALL_FORK     2
+#define    CALL_ERROR    3
+
+#define    call_error(_err_) { call_environ = _err_; return CALL_ERROR; }
+
+#define    CALL_ERR_NONE     0
+#define    CALL_ERR_NUMARGS  1
+#define    CALL_ERR_MAXDEPTH 2
+#define    CALL_ERR_OBJNF    3
+#define    CALL_ERR_METHNF   4
+#define    CALL_ERR_PRIVATE  5
+#define    CALL_ERR_PROT     6
+#define    CALL_ERR_ROOT     7
+#define    CALL_ERR_DRIVER   8
 
 extern Frame *cur_frame;
 extern cData *stack;
@@ -110,6 +126,7 @@ extern Int stack_pos, stack_size;
 extern Int *arg_starts, arg_pos, arg_size;
 extern cStr *numargs_str;
 extern Long task_id;
+extern Long call_environ;
 extern Long tick;
 extern VMState * preempted;
 extern VMState * suspended;

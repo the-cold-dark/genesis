@@ -685,46 +685,34 @@ void op_start_args(void) {
     arg_pos++;
 }
 
-/* this is redundant, but 99% of the time we dont need it assigned, so
-   assigning it always would be wasteful */
-#define setobj(__o) ( d.type = OBJNUM, d.u.objnum = __o )
-
-INTERNAL void handle_method_call(Int result, cObjnum objnum, Ident message) {
+INTERNAL void handle_method_error(cObjnum objnum, Ident message) {
     cData d;
 
-    switch (result) {
-        case CALL_OK:
-        case CALL_NATIVE:
-            break;
-        case CALL_NUMARGS:
+    d.type = OBJNUM;
+    d.u.objnum = objnum;
+    switch (call_environ) {
+        case CALL_ERR_NUMARGS:
             interp_error(numargs_id, numargs_str);
             break;
-        case CALL_MAXDEPTH:
-            setobj(objnum);
+        case CALL_ERR_MAXDEPTH:
             cthrow(maxdepth_id, "Maximum call depth exceeded.");
             break;
-        case CALL_OBJNF:
-            setobj(objnum);
+        case CALL_ERR_OBJNF:
             cthrow(objnf_id, "Target (%D) not found.", &d);
             break;
-        case CALL_METHNF:
-            setobj(objnum);
+        case CALL_ERR_METHNF:
             cthrow(methodnf_id, "%D.%I not found.", &d, message);
             break;
-        case CALL_PRIVATE:
-            setobj(objnum);
+        case CALL_ERR_PRIVATE:
             cthrow(private_id, "%D.%I is private.", &d, message);
             break;
-        case CALL_PROT:
-            setobj(objnum);
+        case CALL_ERR_PROT:
             cthrow(protected_id, "%D.%I is protected.", &d, message);
             break;
-        case CALL_ROOT:
-            setobj(objnum);
+        case CALL_ERR_ROOT:
             cthrow(root_id, "%D.%I can only be called by $root.", &d, message);
             break;
-        case CALL_DRIVER:
-            setobj(objnum);
+        case CALL_ERR_DRIVER:
             cthrow(driver_id, "%D.%I can only be by the driver.", &d, message);
             break;
     }
@@ -736,9 +724,8 @@ void op_pass(void) {
     arg_start = arg_starts[--arg_pos];
 
     /* Attempt to pass the message we're processing. */
-    handle_method_call(pass_method(arg_start, arg_start),
-                       cur_frame->object->objnum,
-                       cur_frame->method->name);
+    if (pass_method(arg_start, arg_start) == CALL_ERROR)
+        handle_method_error(cur_frame->object->objnum, cur_frame->method->name);
 }
 
 void op_message(void) {
@@ -783,14 +770,15 @@ void op_message(void) {
     /* Attempt to send the message. */
     ident_dup(message);
 
-    handle_method_call(call_method(objnum, message, target - stack, arg_start, is_frob),
-                       objnum, message);
+    if (call_method(objnum, message, target - stack, arg_start, is_frob) ==
+                                                                   CALL_ERROR)
+        handle_method_error(objnum, message);
 
     ident_discard(message);
 }
 
 void op_expr_message(void) {
-    Int arg_start;
+    Int arg_start, result;
     Bool is_frob=FROB_NO;
     cData *target, *message_data;
     Long objnum, message;
@@ -842,8 +830,9 @@ void op_expr_message(void) {
     /* Attempt to send the message. */
     ident_dup(message);
     
-    handle_method_call(call_method(objnum, message, target - stack, arg_start, is_frob),
-                       objnum, message);
+    if (call_method(objnum, message, target - stack, arg_start, is_frob) ==
+         CALL_ERROR)
+        handle_method_error(objnum, message);
 
     ident_discard(message);
 }

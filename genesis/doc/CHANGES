@@ -6,6 +6,11 @@ line includes the version, the date of release (in brackets), and
 contributors to that version.
 -------------------------------------------------------------------------
 
+1.0-16 [24-Oct-96] Brandon Gillespie
+      * Fixed some bugs with $string.dbquote_explode()
+      * Fixed a bug with forked methods, they were not cleaning up the
+        stack and returning the task id.
+      * Fixed MINLONG, now references LONG_MIN from the newer limits.h
 1.0-15 [22-Oct-96] Miroslav Silovic, Brad Roberts, Brandon Gillespie
       * Fixed a few leaks pointed out after running through pure. (Miro)
       * Forked methods now work.  Just set the flag +forked on the method,

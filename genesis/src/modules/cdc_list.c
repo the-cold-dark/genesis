@@ -303,3 +303,132 @@ NATIVE_METHOD(sort) {
 
     CLEAN_RETURN_LIST(out);
 }
+
+static Int validate_dict_args(cList * list, cData * key) {
+    cData * elem;
+
+    for (elem = list_first(list); elem; elem = list_next(list, elem)) {
+        if ((elem->type != DICT) || !dict_contains(elem->u.dict, key)) {
+            THROW((type_id,
+                  "Values in list must be dicts and contain the right key."))
+        }
+    }
+
+    return 1;
+}
+
+static Int validate_list_args(cList * list, Int offset) {
+    cData * elem;
+
+    for (elem = list_first(list); elem; elem = list_next(list, elem)) {
+        if ((elem->type != LIST) || (offset > list_length(elem->u.list))) {
+            THROW((type_id,
+                   "Values in list must be lists of the right length."))
+        }
+    }
+
+    return 1;
+}
+
+static Int validate_sorted_args(Int stack_start, Int arg_start) {
+    Int offset;
+    DEF_args;
+    DEF_argc;
+    CHECK_BINDING
+    INIT_ARG1(LIST)
+    if (argc == 2) {
+        if (args[ARG2].type == LIST) {
+            THROW((methoderr_id, "Inserting list data requires an index value"))
+        } else if (args[ARG2].type == DICT) {
+            THROW((methoderr_id, "Inserting dict data requires a key value"))
+        }
+    } else if ((argc != 2) && (argc != 3)) {
+        THROW_NUM_ERROR(argc, "two or three")
+    }
+
+    if (args[ARG2].type == LIST) {
+        if (args[ARG3].type != INTEGER) {
+            THROW((type_id, "List data requires an integral index value"))
+        }
+
+        offset = INT3 - 1;
+
+        if ((offset < 0) || (offset > list_length(LIST1))) {
+            THROW((type_id, "Third arg must be an offset into the data."))
+        }
+
+        if (!validate_list_args(LIST1, offset))
+            return 0;
+    } else if (args[ARG2].type == DICT) {
+        if (!dict_contains(DICT2, &args[ARG3])) {
+            THROW((type_id, "Third arg must be a key into the data."))
+        }
+
+        if (!validate_dict_args(LIST1, &args[ARG3]))
+            return 0;
+    }
+
+    return 1;
+}
+
+NATIVE_METHOD(sorted_index) {
+}
+
+NATIVE_METHOD(sorted_insert) {
+    cList * out,
+          * list;
+    cData   data,
+            key;
+
+    DEF_args;
+    DEF_argc;
+
+    if (!validate_sorted_args(stack_start, arg_start))
+        return NULL;
+
+    list = list_dup(LIST1);
+    data_dup(&data, &args[ARG2]);
+
+    if (argc == 3)
+        data_dup(&key, &args[ARG3]);
+
+    /* Do the work! */
+    out = list_add_sorted(list, &data, &key);
+
+    data_discard(&data);
+    if (argc == 3)
+        data_discard(&key);
+
+    CLEAN_RETURN_LIST(out);
+}
+
+NATIVE_METHOD(sorted_delete) {
+    cList * out,
+          * list;
+    cData   data,
+            key;
+
+    DEF_args;
+    DEF_argc;
+
+    if (!validate_sorted_args(stack_start, arg_start))
+        return NULL;
+
+    list = list_dup(LIST1);
+    data_dup(&data, &args[ARG2]);
+
+    if (argc == 3)
+        data_dup(&key, &args[ARG3]);
+
+    out = list_delete_sorted_element(list, &data, &key);
+
+    data_discard(&data);
+    if (argc == 3)
+        data_discard(&key);
+
+    CLEAN_RETURN_LIST(out);
+}
+
+NATIVE_METHOD(sorted_validate) {
+
+}

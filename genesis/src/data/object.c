@@ -164,7 +164,7 @@ void object_destroy(Obj *object) {
      * otherwise, invalidate just the entries for the dead object.
      */
     if ((list_length(object->children) != 0) || (has_methods)) {
-        cur_stamp++;
+        method_cache_invalidate_all();
     } else {
         method_cache_invalidate(object->objnum);
     }
@@ -452,7 +452,7 @@ Int object_change_parents(Obj *object, cList *parents)
 
     /* Invalidate the method cache. */
     /* NOTE:  is there a better way to invalidate this? */
-    cur_stamp++;
+    method_cache_invalidate_all();
 
     /* Invalidate the ancestor cache */
     cur_anc_stamp++;
@@ -1103,12 +1103,21 @@ static void method_cache_invalidate(cObjnum objnum) {
      * Invalidate cache entries by decrementing the stamp.
      * Don't set it to 0, that way method_cache_set() can handle
      * the ident_discard() properly
+     * Make sure that the stamp is already greater than 0
+     * to avoid false invalidations where objnum == 0, so
+     * it will catch all of the uninitialized entries in the
+     * cache, who will have objnum == 0, but also stamp == 0.
      */
     for (i = 0; i < METHOD_CACHE_SIZE; i++) {
-        if (method_cache[i].objnum == objnum) {
-            method_cache[i].stamp--;
+        if ((method_cache[i].objnum == objnum) &&
+            (method_cache[i].stamp > 0)) {
+            method_cache[i].stamp = 1;
         }
     }
+}
+
+static void method_cache_invalidate_all() {
+    cur_stamp++;
 }
 
 
@@ -1134,8 +1143,11 @@ void object_add_method(Obj *object, Long name, Method *method) {
     Int ind, hval;
 
     /* Invalidate the method cache. */
-    /* NOTE:  is there a better way to invalidate this? */
-    cur_stamp++;
+    if (list_length(object->children) != 0) {
+        method_cache_invalidate_all();
+    } else {
+        method_cache_invalidate(object->objnum);
+    }
 
     cache_dirty_object(object);
 
@@ -1221,7 +1233,11 @@ Int object_del_method(Obj *object, Long name) {
 	    object->methods.blanks = ind;
 
             /* Invalidate the method cache. */
-            cur_stamp++;
+            if (list_length(object->children) != 0) {
+                method_cache_invalidate_all();
+            } else {
+                method_cache_invalidate(object->objnum);
+            }
 
 	    /* Return one, meaning the method was successfully deleted. */
 	    return 1;
@@ -1281,7 +1297,7 @@ Int object_set_method_access(Obj * object, Long name, Int access) {
         /*
 	 * only invalidate when changing access to or from 'frob' access.
          */
-        cur_stamp++;
+        method_cache_invalidate_all();
     }
     cache_dirty_object(object);
 

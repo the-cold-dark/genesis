@@ -226,6 +226,7 @@ static Bool    method_cache_check(Long objnum, Long name, Long after,
 static void    method_cache_set(Long objnum, Long name, Long after,
                                 Long loc, Bool is_frob, Bool failed);
 static void    method_cache_invalidate(cObjnum objnum);
+static void    method_cache_invalidate_all();
 static void    search_object(Long objnum, Search_params *params);
 static void    method_delete_code_refs(Method * method);
 
@@ -288,8 +289,8 @@ Long num_objects;
 
 /* Validity count for method cache (incrementing this count invalidates all
  * cache entries. */
-static Int cur_stamp = 1;
-static Int cur_anc_stamp = 1;
+static Int cur_stamp = 2;
+static Int cur_anc_stamp = 2;
 
 #else /* _object_ */
 

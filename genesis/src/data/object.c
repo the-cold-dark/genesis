@@ -448,9 +448,9 @@ cList * object_ancestors_breadth(Long objnum) {
 static Bool ancestor_cache_check(cObjnum objnum, cObjnum ancestor,
                                  Bool *is_ancestor)
 {
-    cObjnum i;
+    uLong i;
 
-    i = (objnum  + (ancestor * MAGIC_NUMBER)) % ANCESTOR_CACHE_SIZE;
+    i = (uLong)(objnum  + (ancestor * MAGIC_NUMBER)) % ANCESTOR_CACHE_SIZE;
 
     if ((ancestor_cache[i].stamp == cur_anc_stamp) &&
         (ancestor_cache[i].objnum == objnum) &&
@@ -468,9 +468,9 @@ static Bool ancestor_cache_check(cObjnum objnum, cObjnum ancestor,
 static void ancestor_cache_set(cObjnum objnum, cObjnum ancestor,
                                Bool is_ancestor)
 {
-    cObjnum i;
+    uLong i;
 
-    i = (objnum + (ancestor * MAGIC_NUMBER)) % ANCESTOR_CACHE_SIZE;
+    i = (uLong)(objnum + (ancestor * MAGIC_NUMBER)) % ANCESTOR_CACHE_SIZE;
 
     if (ancestor_cache[i].stamp == cur_anc_stamp)
         ancestor_cache_collisions++;
@@ -1220,9 +1220,9 @@ static Bool method_cache_check(Long objnum, Long name, Long after, Bool is_frob,
 
 static void method_cache_set(Long objnum, Long name, Long after, Long loc, Bool is_frob, Bool failed)
 {
-    Int i;
+    uLong i;
 
-    i = (10 + objnum + (name << 4) + (is_frob << 8) + after) % METHOD_CACHE_SIZE;
+    i = (uLong)(10 + objnum + (name << 4) + (is_frob << 8) + after) % METHOD_CACHE_SIZE;
     if (method_cache[i].stamp != 0) {
       ident_discard(method_cache[i].name);
       if (method_cache[i].stamp == cur_stamp)
@@ -1242,7 +1242,8 @@ static void method_cache_set(Long objnum, Long name, Long after, Long loc, Bool 
 cList * method_cache_info() {
     cList * entry;
     cData * d;
-    Int used_buckets, i;
+    Int     used_buckets;
+    uLong   i;
 
     used_buckets = 0;
     for (i = 0; i < METHOD_CACHE_SIZE; i++) {
@@ -1274,7 +1275,7 @@ cList * method_cache_info() {
 }
 
 static void method_cache_invalidate(cObjnum objnum) {
-    Int i;
+    uLong i;
 
     /*
      * Invalidate cache entries by decrementing the stamp.

@@ -274,6 +274,12 @@ COLDC_FUNC(random) {
     if (!func_init_1(&args, INTEGER))
         return;
 
+    /* If INT1 is negative, throw ~range */
+    if (INT1 < 0) {
+        cthrow(range_id, "Maximum value was less than 0.");
+        return;  
+    }
+ 
     /* Replace argument on stack with a random number. */
     INT1 = random_number(INT1) + 1;
 }
@@ -335,6 +341,9 @@ COLDC_FUNC(abs) {
             INT1 = -INT1;
     } else if (args[0].type == FLOAT) {
         FLOAT1 = (cFloat) fabs((double) FLOAT1);
+    } else {
+        cthrow(type_id, "Argument (%D) is not an integer or float.", &args[ARG1]);
+        return;
     }
 }
 

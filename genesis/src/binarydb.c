@@ -78,7 +78,7 @@ static char *bitmap = NULL;
 static Int bitmap_blocks = 0;
 static Int allocated_blocks = 0;
 
-char c_clean_file[255];
+static char c_clean_file[255];
 
 static Int db_clean;
 static cStr *pad_string;

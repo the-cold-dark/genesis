@@ -294,37 +294,6 @@ Int remove_server(Int port) {
 /*
 // --------------------------------------------------------------------
 */
-#if 0
-INTERNAL void connection_read(Conn *conn) {
-    unsigned char temp[BIGBUF];
-    Int len;
-    cBuf *buf;
-    cData d;
-
-    len = SOCK_READ(conn->fd, (char *) temp, BIGBUF);
-    if (len == SOCKET_ERROR) {
-        if (GETERR() == ERR_INTR)
-            return;
-        if (GETERR() != ERR_AGAIN) {
-            /* The connection closed. */
-            conn->flags.readable = 0;
-            conn->flags.dead = 1;
-            return;
-        }
-    }
-
-    conn->flags.readable = 0;
-
-    /* We successfully read some data.  Handle it. */
-    buf = buffer_new(len);
-    MEMCPY(buf->s, temp, len);
-    d.type = BUFFER;
-    d.u.buffer = buf;
-    task(conn->objnum, parse_id, 1, &d);
-    buffer_discard(buf);
-}
-#else
-
 /* rewrote to reduce buffer copies, by reading from the socket into a
    pre-allocated static buffer that we re-use.  -Brandon */
 INTERNAL void connection_read(Conn *conn) {
@@ -364,7 +333,6 @@ INTERNAL void connection_read(Conn *conn) {
     task(conn->objnum, parse_id, 1, &d);
     socket_buffer->refs--;
 }
-#endif
 
 /*
 // --------------------------------------------------------------------

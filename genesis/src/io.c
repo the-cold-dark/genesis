@@ -199,7 +199,7 @@ Conn * find_connection(Obj * obj) {
 // there is no connection, it will be NULL, and we will know.
 */
 
-Conn * tell(Obj * obj, cBuf * buf) {
+Conn * ctell(Obj * obj, cBuf * buf) {
     Conn * conn = find_connection(obj);
 
     if (conn != NULL)

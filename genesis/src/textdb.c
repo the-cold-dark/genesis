@@ -1316,7 +1316,7 @@ INTERNAL char * method_definition(Method * m);
         fputs(ident_name(__obj->objname), __fp); \
     }
 #define PRINT_OBJNUM(__num, __fp) { \
-        fprintf(fp, "#%li", (long) __num); \
+        fprintf(__fp, "#%li", (long) __num); \
     }
 
 INTERNAL void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames) {

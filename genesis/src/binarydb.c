@@ -425,7 +425,8 @@ static void dump_copy (off_t start, Int blocks)
 /* open the dump database. return -1 on failure (can't open the file),
    -2 -> we are already dumping */
 
-Int simble_dump_start(char *dump_objects_filename) {
+Int simble_dump_start(char *dump_objects_filename)
+{
     if (dump_db_file)
 	return -2;
     dump_db_file = fopen(dump_objects_filename, "wb+");
@@ -797,7 +798,8 @@ void simble_flush(void)
                 VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH,\
                 (long) MAGIC_MODNUMBER)\
 
-void simble_dump_finish(void) {
+void simble_dump_finish(void)
+{
     FILE * fp;
     char buf[BUF];
     
@@ -810,7 +812,8 @@ void simble_dump_finish(void) {
     close_scratch_file(fp);
 }
 
-static void simble_flag_as_clean(void) {
+static void simble_flag_as_clean(void)
+{
     FILE *fp;
 
     if (db_clean)
@@ -827,7 +830,8 @@ static void simble_flag_as_clean(void) {
     db_clean = 1;
 }
 
-static void simble_flag_as_dirty(void) {
+static void simble_flag_as_dirty(void)
+{
     if (db_clean) {
 	/* Remove 'clean' file. */
 	if (unlink(c_clean_file) == -1) {
@@ -841,7 +845,8 @@ static void simble_flag_as_dirty(void) {
 /* checks for #1/$root and #0/$sys, adds them if they
    do not exist.  Call AFTER init_*_db has been called */
 
-static void _check_obj(cObjnum objnum, cList * parents, char * name) {
+static void _check_obj(cObjnum objnum, cList * parents, char * name)
+{
     Obj      * obj = cache_retrieve(objnum),
              * obj2;
     cObjnum    other;
@@ -865,7 +870,8 @@ static void _check_obj(cObjnum objnum, cList * parents, char * name) {
     cache_discard(obj);
 }
 
-void init_core_objects(void) {
+void init_core_objects(void)
+{
     cData   * d;
     cList   * parents;
 

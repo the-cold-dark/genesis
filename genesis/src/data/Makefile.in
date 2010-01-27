@@ -1,6 +1,6 @@
 # Cold driver
 
-CFLAGS=@CFLAGS@ -I../include
+CFLAGS=@CFLAGS@ -I../include -fno-strict-aliasing
 LDFLAGS=@LDFLAGS@
 LIBS=@LIBS@
 CC=@CC@

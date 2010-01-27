@@ -1,7 +1,7 @@
 # Genesis, the ColdC driver
 
 INCLUDE=-Iinclude -Imodules
-CFLAGS=@CFLAGS@ $(INCLUDE)
+CFLAGS=@CFLAGS@ $(INCLUDE) -fno-strict-aliasing
 MCFLAGS=`echo $(CFLAGS) | sed -e 's:-pedantic::'`
 LIBS=@LIBS@
 LDFLAGS=@LDFLAGS@ -Lmodules

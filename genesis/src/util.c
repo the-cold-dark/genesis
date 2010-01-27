@@ -114,7 +114,7 @@ char *long_long_to_ascii(long long num, Number_buf nbuf) {
 }
 
 char *long_to_ascii(Long num, Number_buf nbuf) {
-    char *p = nbuf + sizeof(nbuf) - 1; // point to end of buffer
+    char *p = nbuf + NUMBER_BUF_SIZE - 1; // point to end of buffer
     Int sign = 0;
     unsigned long u;
 

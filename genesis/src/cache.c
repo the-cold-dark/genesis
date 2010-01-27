@@ -714,12 +714,14 @@ void *cache_cleaner_worker(void *dummy)
 //
 */
 
+/** disabled since it doesn't work */
 /* NOTE: NOT well checked, updated to match current variable names and
  *       structure of the active list, but it might I think it might be
  *       buggy.  Does it need to walk up the stack and check every frame?
  *       How about the frame's method->obj?
  */
 void cache_sanity_check(void) {
+#if DISABLED
     Int       i;
     Obj     * obj;
     VMState * task;
@@ -747,6 +749,7 @@ end:
             ;
         }
     }
+#endif
 }
 #endif
 

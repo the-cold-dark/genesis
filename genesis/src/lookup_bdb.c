@@ -480,7 +480,7 @@ static Int get_name(Ident name, cObjnum *objnum)
 	return 0;
     }
 
-    memcpy((uChar*)(objnum), (uChar*)value.data, sizeof(objnum));
+    memcpy((uChar*)(objnum), (uChar*)value.data, sizeof(cObjnum));
 
     return 1;
 }

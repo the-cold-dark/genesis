@@ -646,7 +646,7 @@ Int simble_put(Obj *obj, cObjnum objnum, Long *sizewritten)
         buf = buffer_new(old_size);
         buf = pack_object(buf, obj);
 	if (buf->len % BLOCK_SIZE)
-	    buf = buffer_append_uchars_single_ref(buf, pad_string->s, 256 - (buf->len % BLOCK_SIZE));
+	    buf = buffer_append_uchars_single_ref(buf, (uChar*)pad_string->s, 256 - (buf->len % BLOCK_SIZE));
 	new_size = buf->len;
 
         LOCK_DB("simble_put")
@@ -679,7 +679,7 @@ Int simble_put(Obj *obj, cObjnum objnum, Long *sizewritten)
 	buf = buffer_new(0);
 	buf = pack_object(buf, obj);
 	if (buf->len % BLOCK_SIZE)
-	    buf = buffer_append_uchars_single_ref(buf, pad_string->s, 256 - (buf->len % BLOCK_SIZE));
+	    buf = buffer_append_uchars_single_ref(buf, (uChar*)pad_string->s, 256 - (buf->len % BLOCK_SIZE));
 	new_size = buf->len;
 
         LOCK_DB("simble_put")

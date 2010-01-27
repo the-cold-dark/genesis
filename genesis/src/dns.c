@@ -37,7 +37,7 @@ int lookup_name_by_ip(char * ip, char * out)
    strncpy(out, hp->h_name, DNS_MAXLEN);
    if (strlen(hp->h_name) > DNS_MAXLEN) {
        write_err("Hostname longer than DNS_MAXLEN?!?: '%s'\n", hp->h_name);
-       out[DNS_MAXLEN] = (char) NULL;
+       out[DNS_MAXLEN] = '\0';
        return DNS_OVERFLOW;
    }
    return DNS_NOERROR;
@@ -56,7 +56,7 @@ int lookup_ip_by_name(char * name, char * out)
    strncpy(out, p, DNS_MAXLEN);
    if (strlen(p) > DNS_MAXLEN) {
        write_err("Hostname longer than DNS_MAXLEN?!?: '%s'\n", hp->h_name);
-       out[DNS_MAXLEN] = (char) NULL;
+       out[DNS_MAXLEN] = '\0';
        return DNS_OVERFLOW;
    }
    return DNS_NOERROR;

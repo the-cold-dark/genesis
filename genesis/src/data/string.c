@@ -45,7 +45,7 @@ cStr *string_from_chars(char *s, Int len) {
     cStr *cnew = string_new(len);
 
     MEMCPY(cnew->s, s, len);
-    cnew->s[len] = (char) NULL;
+    cnew->s[len] = '\0';
     cnew->len = len;
     return cnew;
 }
@@ -278,7 +278,7 @@ cStr *string_add_unparsed(cStr *str, char *s, Int len) {
             if (s[i] == '"' || /* it is a slash, by default */
                 (s[i + 1] == '\\' ||
                  s[i + 1] == '"' ||
-                 s[i + 1] == (char) NULL))
+                 s[i + 1] == '\0'))
                 str = string_addc(str, '\\');
             str = string_addc(str, s[i]);
 	    s += i + 1;
@@ -417,7 +417,7 @@ cStr * string_prep(cStr *str, Int start, Int len) {
         /* Move the string's contents into a new string. */
         cnew = string_new(len);
         MEMCPY(cnew->s, str->s + start, (len > str->len) ? str->len : len);
-        cnew->s[len] = (char) NULL;
+        cnew->s[len] = '\0';
         cnew->len = len;
         string_discard(str);
         return cnew;
@@ -426,7 +426,7 @@ cStr * string_prep(cStr *str, Int start, Int len) {
         str->len = len;
         size = len + 1; /* plus one for NULL */
         str = (cStr *)erealloc(str, sizeof(cStr)+(size * sizeof(char)));
-        str->s[start+len] = (char) NULL;
+        str->s[start+len] = '\0';
         str->size = size;
         return str;
     } else {
@@ -436,7 +436,7 @@ cStr * string_prep(cStr *str, Int start, Int len) {
         }
         str->start = start;
         str->len = len;
-        str->s[start+len] = (char) NULL;
+        str->s[start+len] = '\0';
         return str;
     }
 }

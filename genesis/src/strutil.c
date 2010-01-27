@@ -463,7 +463,7 @@ cList * regexp_matches(cStr * reg, char * s, Bool sensitive, Bool * error) {
 }
 
 Int parse_regfunc_args(char * args, Int flags) {
-    while (*args != (char) NULL) {
+    while (*args != '\0') {
         switch (*args) {
             case 'b': /* keep blanks */
                 flags |= RF_BLANKS;
@@ -579,17 +579,17 @@ cStr * strsed(cStr * reg,  /* the regexp string */
     // problem as string_prep() and string_new() always malloc
     // one more char--eventually we need to fix this problem.
     */
-    s[slen] = (char) NULL;
+    s[slen] = '\0';
 
     /* Compile the regexp, note: it is free'd by string_discard() */
-    if ((rx = string_regexp(reg)) == (regexp *) NULL)
+    if ((rx = string_regexp(reg)) == NULL)
         THROW((regexp_id, "%s", gen_regerror(NULL)))
 
     /* initial regexp execution */
     if (!gen_regexec(rx, s, sensitive))
         return string_dup(ss);
 
-    for (; size < NSUBEXP && rx->startp[size] != (char) NULL; size++);
+    for (; size < NSUBEXP && rx->startp[size] != '\0'; size++);
 
     if (size == 1) { /* a constant, this is the easy one */
         if (flags & RF_GLOBAL) {
@@ -800,7 +800,7 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
     for (;;) {
         s = strchr(fmt, '%');
 
-        if (s == (char) NULL || *s == (char) NULL) {
+        if (s == NULL || *s == '\0') {
             out = string_add_chars(out, fmt, strlen(fmt));
             break;
         }
@@ -863,15 +863,15 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
                     s++;
                 fill[x++] = *s;
             }
-            fill[x] = (char) NULL;
+            fill[x] = '\0';
             s++;
         } else {
             fill[0] = ' ';
-            fill[1] = (char) NULL;
+            fill[1] = '\0';
         }
 
         /* invalid format, just abort, they need to know when it is wrong */
-        if (*s == (char) NULL) {
+        if (*s == '\0') {
             string_discard(out);
             x_THROW((type_id, "Invalid format"))
         }
@@ -959,7 +959,7 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
                 }
                 break;
             default: {
-                char fmttype[] = {(char) NULL, (char) NULL};
+                char fmttype[] = {'\0', '\0'};
                 fmttype[0] = *s;
                 string_discard(out);
                 x_THROW((error_id, "Unknown format type '%s'.", fmttype))
@@ -1064,7 +1064,7 @@ cList * strsplit(cStr * str, cStr * reg, Int flags) {
     cData     d;
 
     /* Compile the regexp, note: it is free'd by string_discard() */
-    if ((rx = string_regexp(reg)) == (regexp *) NULL)
+    if ((rx = string_regexp(reg)) == NULL)
         x_THROW((regexp_id, "%s", gen_regerror(NULL)))
 
     /* look at the regexp and see if its a simple one,

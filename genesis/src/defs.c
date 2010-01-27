@@ -11,7 +11,7 @@
 #define INIT_VAR(var, name, len) { \
         var = EMALLOC(char, len + 1); \
         strncpy(var, name, len); \
-        var[len] = (char) NULL; \
+        var[len] = '\0'; \
     }
 
 void init_defs(void) {

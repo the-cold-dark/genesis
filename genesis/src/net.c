@@ -161,7 +161,7 @@ Bool prebind_port(int port, char * addr, int tcp) {
         if (addr)
             strcpy(pb->addr, addr);
         else
-            pb->addr[0] = (char) NULL;
+            pb->addr[0] = '\0';
         pb->next = prebound;
         prebound = pb;
     } else if (server_failure_reason == address_id) {

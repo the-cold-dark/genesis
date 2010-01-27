@@ -148,7 +148,7 @@ cStr * buf_to_string(cBuf * buf) {
             else if (*q == '\t')
                 *s++ = ' ';
         }
-        *s = (char) NULL;
+        *s = '\0';
         str->len = s - str->s;
         out = string_add(out, str);
         string_discard(str);
@@ -204,7 +204,7 @@ cList *buf_to_strings(cBuf *buf, cBuf *sep)
             else if (*q == '\t')
                 *s++ = ' ';
         }
-        *s = (char) NULL;
+        *s = '\0';
         str->len = s - str->s;
 
 	d.u.str = str;

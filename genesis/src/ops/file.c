@@ -635,7 +635,7 @@ COLDC_FUNC(execute) {
     memcpy(fname, c_dir_bin, dlen);
     fname[dlen] = '/';
     memcpy(fname + dlen + 1, string_chars(args[0].u.str), len);
-    fname[len + dlen + 1] = (char) NULL;
+    fname[len + dlen + 1] = '\0';
 
     /* Build an argument list. */
     argc = list_length(script_args) + 1;

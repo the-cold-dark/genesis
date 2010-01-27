@@ -374,7 +374,7 @@ cStr *fgetstring(FILE *fp) {
         } else
 #endif
         if (p[len - 1] == '\n') {
-            p[len - 1] = (char) NULL;
+            p[len - 1] = '\0';
             line->len = len - 1;
             return line;
         } else {
@@ -559,7 +559,7 @@ Int getarg(char * n,
     char * p = opt; 
     
     p++;
-    if (*p != (char) NULL) {
+    if (*p != '\0') {
         *buf = p;
 
         return 0;

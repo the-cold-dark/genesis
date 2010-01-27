@@ -344,7 +344,7 @@ cStr *data_tostr(cData *data) {
 	return string_dup(data->u.str);
 
       case OBJNUM: {
-          char       prefix[] = {'$', (char) NULL};
+          char       prefix[] = {'$', '\0'};
           Obj * obj = cache_retrieve(data->u.objnum);
 
           if (!obj || obj->objname == -1) {
@@ -381,7 +381,7 @@ cStr *data_tostr(cData *data) {
 
 #ifdef USE_PARENT_OBSJ
       case OBJECT: {
-          char       prefix[] = {'$', (char) NULL};
+          char       prefix[] = {'$', '\0'};
 
           if (data->u.object->objname == -1) {
               s = long_to_ascii(data->u.object->objnum, nbuf);

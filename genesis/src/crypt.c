@@ -35,7 +35,7 @@ cStr * strcrypt(cStr * key, cStr * salt) {
 
         for (x=0; x < 8; x++)
             rsalt[x] = ascii64[random_number(64)];
-        rsalt[8] = (uChar) NULL;
+        rsalt[8] = 0;
         sp = rsalt;
         sl = 8;
     } else {
@@ -44,7 +44,7 @@ cStr * strcrypt(cStr * key, cStr * salt) {
             sp += 3;
             for (x=0; x < 8 && sp[x] != '$'; x++)
                 rsalt[x] = sp[x];
-            rsalt[x] = (uChar) NULL;
+            rsalt[x] = 0;
             sp = rsalt;
             sl = strlen((char *) sp);
             if (!sl)
@@ -89,7 +89,7 @@ Int match_crypted(cStr * encrypted, cStr * possible) {
         sp = ep + 3;
         for (x=0; x < 8 && sp[x] != '$'; x++)
             salt[x] = sp[x];
-        salt[x] = (uChar) NULL;
+        salt[x] = 0;
         sp = salt;
         sl = strlen((char *) sp);
 
@@ -104,7 +104,7 @@ Int match_crypted(cStr * encrypted, cStr * possible) {
         /* assume ancient DES format, with the first two chars as salt */
         salt[0] = ep[0];
         salt[1] = ep[1];
-        salt[2] = (uChar) NULL;
+        salt[2] = 0;
         sp = salt;
 #endif
         return

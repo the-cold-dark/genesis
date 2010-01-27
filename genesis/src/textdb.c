@@ -508,7 +508,7 @@ static Int get_idref(char * sp, idref_t * id, Int isobj) {
 
     /* get just the symbol */
     for (x = 0;
-         sp[x] != (char) NULL && (isalnum(sp[x]) || sp[x] == '_' || sp[x] == '$');
+         sp[x] != '\0' && (isalnum(sp[x]) || sp[x] == '_' || sp[x] == '$');
          x++);
 
     if (sp[0] == '$') {
@@ -535,7 +535,7 @@ static Long parse_to_objnum(idref_t *ref) {
          objnum = 0;
     Int  result;
 
-    if (ref->str != (char) NULL) {
+    if (ref->str != NULL) {
         if (ref->len == 4 && !strncmp(ref->str, "root", 4))
             return 1;
         else if (ref->len == 3 && !strncmp(ref->str, "sys", 3))
@@ -558,7 +558,7 @@ static Long parse_to_objnum(idref_t *ref) {
 
 static Obj * handle_objcmd(char * line, char * s, Int new) {
     idref_t   obj;
-    char    * p = (char) NULL,
+    char    * p = NULL,
               obj_str[BUF];
 #ifndef ONLY_PARSE_TEXTDB
     Obj     * target = NULL;
@@ -596,20 +596,20 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
         NEXT_WORD(s);
 
         /* get each parent, look them up */
-        while ((more && *s != (char) NULL) && running) {
+        while ((more && *s != '\0') && running) {
             p = strchr(s, ',');
             if (p == NULL) {
                 /* we may be at the end of the line.. */
                 slen = strlen(s);
                 if (s[slen - 1] != ';')
                     DIE("Parse Error, unterminated directive.");
-                s[slen - 1] = (char) NULL;
+                s[slen - 1] = '\0';
                 strcpy(par_str, s);
                 len = strlen(par_str);
                 more = FALSE;
             } else {
                 strncpy(par_str, s, p - s);
-                par_str[p - s] = (char) NULL;
+                par_str[p - s] = '\0';
                 len = p - s;
             }
             get_idref(par_str, &parent, ISOBJ);
@@ -714,7 +714,7 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
 
     /* if we should, add the name.  If it already has one, we just replace it.*/
     if (objnum != ROOT_OBJNUM && objnum != SYSTEM_OBJNUM) {
-        if (obj.str != (char) NULL) {
+        if (obj.str != NULL) {
             Ident id = ident_get_length(obj.str, obj.len);
             add_objname(id, target->objnum, objnum == INV_OBJNUM);
             ident_discard(id);
@@ -805,7 +805,7 @@ static void handle_namecmd(char * line, char * s, Int new) {
     p = s;
 
     /* skip past the name */
-    for (; *p && !isspace(*p) && *p != (char) NULL && *p != ';'; p++);
+    for (; *p && !isspace(*p) && *p != '\0' && *p != ';'; p++);
 
 #ifndef ONLY_PARSE_TEXTDB
     /* copy the name */
@@ -820,7 +820,7 @@ static void handle_namecmd(char * line, char * s, Int new) {
     }
 
     /* lets see if there is a objnum association, or if we should pick one */
-    for (; isspace(*p) && *p != (char) NULL; p++);
+    for (; isspace(*p) && *p != '\0'; p++);
 
     if (*p != ';') {
         if (!p) {
@@ -877,7 +877,7 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
             WARN(("Ignoring object variable with invalid parent:"));
             if (strlen(line) > 55) {
                 line[50] = line[51] = line[52] = '.';
-                line[53] = (char) NULL;
+                line[53] = '\0';
             }
             WARN(("\"%s\"", line));
             return;
@@ -887,7 +887,7 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
             WARN(("Ignoring object variable with no ancestor:"));
             if (strlen(line) > 55) {
                 line[50] = line[51] = line[52] = '.';
-                line[53] = (char) NULL;
+                line[53] = '\0';
             }
             WARN(("\"%s\"", line));
             return;
@@ -905,7 +905,7 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
 
     s += get_idref(s, &name, NOOBJ);
 
-    if (name.str == (char) NULL)
+    if (name.str == NULL)
         DIEf("Invalid variable name \"%s\"", p);
 
 #ifndef ONLY_PARSE_TEXTDB
@@ -927,7 +927,7 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
         d.type = -2;
 
         /* skip the current 'word' until we hit a space or a '=' */
-        for (; *s && !isspace(*s) && *s != (char) NULL && *s != '='; s++);
+        for (; *s && !isspace(*s) && *s != '\0' && *s != '='; s++);
 
         /* incase we hit a space and not a '=', bump it up to the next word */
         NEXT_WORD(s);
@@ -1031,7 +1031,7 @@ static Int get_method_name(char * s, idref_t * id) {
     if (*s == '.')
         s++, count++;
 
-    for (x=0, p=s; *p != (char) NULL; x++, p++) {
+    for (x=0, p=s; *p != '\0'; x++, p++) {
         if (isalnum(*p) || *p == '_')
             continue;
         break;
@@ -1049,7 +1049,7 @@ static void handle_bind_nativecmd(FILE * fp, char * s) {
     idref_t    meth;
 #ifndef ONLY_PARSE_TEXTDB
     Ident      inat, imeth;
-    nh_t     * n = (nh_t *) NULL;
+    nh_t     * n = NULL;
 #endif
 
     s += get_method_name(s, &nat);
@@ -1062,14 +1062,14 @@ static void handle_bind_nativecmd(FILE * fp, char * s) {
     s += get_method_name(s, &meth);
    
 #ifndef ONLY_PARSE_TEXTDB
-    if (nat.str == (char) NULL || meth.str == (char) NULL)
+    if (nat.str == NULL || meth.str == NULL)
         DIE("Invalid method name in bind_native directive.\n");
 
     inat = ident_get_length(nat.str, nat.len);
     imeth = ident_get_length(meth.str, meth.len);
 
     n = find_defined_native_method(cur_obj->objnum, imeth);
-    if (n == (nh_t *) NULL)
+    if (n == NULL)
         DIE("Attempt to bind_native to method which is not native.\n");
 
     /* if they've already bound it, we have precedence */
@@ -1120,7 +1120,7 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
 
     s += get_method_name(s, &id);
 
-    if (id.str == (char) NULL)
+    if (id.str == NULL)
         DIE("No method name.");
 
 #ifndef ONLY_PARSE_TEXTDB
@@ -1131,7 +1131,7 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
     if ((p = strchr(s, ':')) != NULL) {
         p++;
 
-        while (*p != (char) NULL && running) {
+        while (*p != '\0' && running) {
             NEXT_WORD(p);   
             if (*p == '{' || *p == ';') {
                 break;
@@ -1331,7 +1331,7 @@ void compile_cdc_file(FILE * fp) {
         /* Strip trailing spaces from the line. */
         while (line->len && isspace(line->s[line->len - 1]))
             line->len--;
-        line->s[line->len] = (char) NULL;
+        line->s[line->len] = '\0';
 
         /* Strip unprintables from the line. */
         //for (p = s = line->s; *p; p++) {
@@ -1339,7 +1339,7 @@ void compile_cdc_file(FILE * fp) {
         //        p++;
         //    *s++ = *p;
         //}
-        //*s = (char) NULL;
+        //*s = '\0';
         //line->len = s - line->s;
 
         if (!line->len) {
@@ -1349,7 +1349,7 @@ void compile_cdc_file(FILE * fp) {
 
         /* if we end in a backslash, concatenate */
         if (line->s[line->len - 1] == '\\') {
-            line->s[line->len - 1] = (char) NULL;
+            line->s[line->len - 1] = '\0';
             line->len--;
             if (str != NULL) {
                 str = string_add(str, line);
@@ -1891,11 +1891,11 @@ void blank_and_print_obj(char * what, Float percent_done, Obj * obj) {
 char * strchop(char * str, Int len) {
     register int x;
     for (x=0; x < len; x++) {
-        if (str[x] == (char) NULL)
+        if (str[x] == '\0')
             return str;
     }
     /* null terminate it and put an elipse in */
-    str[x] = (char) NULL;
+    str[x] = '\0';
     str[x-1] = str[x-2] = str[x-3] = '.';
 
     return str;

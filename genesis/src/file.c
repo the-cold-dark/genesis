@@ -214,7 +214,7 @@ cStr * read_file(filec_t * file) {
         }
         s++;
     }
-    *p = (char) NULL;
+    *p = '\0';
 
     str->len = p - string_chars(str);
 
@@ -366,9 +366,9 @@ cList * open_file(cStr * name, cStr * smode, Obj * obj) {
 
     if (rw) {
         mode[2] = '+';
-        mode[3] = (char) NULL;
+        mode[3] = '\0';
     } else {
-        mode[2] = (char) NULL;
+        mode[2] = '\0';
     }
 
     fnew->path = build_path(name->s, NULL, DISALLOW_DIR);

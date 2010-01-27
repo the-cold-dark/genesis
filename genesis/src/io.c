@@ -429,7 +429,7 @@ static void connection_discard(Conn *conn) {
 // --------------------------------------------------------------------
 */
 static void pend_discard(pending_t *pend) {
-    efree(pend);
+    TFREE(pend, 1);
 }
 
 /*

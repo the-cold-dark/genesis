@@ -227,7 +227,7 @@ char *tstrndup(char *s, Int len) {
 
     cnew = TMALLOC(char, len + 1);
     memcpy(cnew, s, len);
-    cnew[len] = (char) NULL;
+    cnew[len] = '\0';
     return cnew;
 }
 

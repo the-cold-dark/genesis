@@ -10,11 +10,12 @@ expected=expected
 binary=binary
 output=output
 errorlog=error.log
+echo=/bin/echo
 prog="$$prog"
 
 trap "rm -rf $testdb $expected $binary $output $prog; exit" 0 1 2
 
-echo -n "Testing..."
+$echo -n "Testing..."
 
 perl -e 'while (<>) {
              if (s/^\t//) {
@@ -34,13 +35,13 @@ perl -e 'while (<>) { (!/^\r/) && print; }' < $output > ${output}.tmp
 mv ${output}.tmp $output
 
 if cmp -s $expected $output; then
-    echo "All Tests pass."
+    $echo "All Tests pass."
     exit
 fi
 
-echo "FAILURE...The following test(s) failed:"
+$echo "FAILURE...The following test(s) failed:"
  
-echo '
+$echo '
 open(EXP, "expected") || die("open(expected): $!\n");
 $eline = 0;
 $test = "";

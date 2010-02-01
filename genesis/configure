@@ -2173,7 +2173,7 @@ echo 1>&6
 echo "  Checking for how to get db support" 1>&6
 
 # preferred entries are at the end of the list
-for ac_hdr in gdbm-ndbm.h db1/ndbm.h ndbm.h db.h
+for ac_hdr in gdbm-ndbm.h db1/ndbm.h db.h ndbm.h
 do
 ac_safe=`echo "$ac_hdr" | tr './\055' '___'`
 echo $ac_n "    Checking for <$ac_hdr>""... $ac_c" 1>&6
@@ -2258,7 +2258,7 @@ fi
 
 ## check for a dbm library to use..
 
-for ac_lib in gdbm gdbm_compat ndbm db; do
+for ac_lib in gdbm gdbm_compat ndbm db dbm; do
   echo $ac_n "    Checking for -l$ac_lib""... $ac_c" 1>&6
   if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib'+set}'`\" = set"; then
     echo $ac_n "(cached) $ac_c" 1>&6
@@ -2268,6 +2268,7 @@ for ac_lib in gdbm gdbm_compat ndbm db; do
     cat > conftest.$ac_ext <<EOF
 #line 1793 "configure"
 #include "confdefs.h"
+#include <stdlib.h> /* Needed for NULL */
 #define DB_DBM_HSEARCH 1
 #include <$db_header_to_use>
 int main() { return 0; }
@@ -2293,7 +2294,7 @@ EOF
 done
 
 if test -z "$db_lib_to_use"; then
-  echo "      Unable to figure out what library to ling to get db support"
+  echo "      Unable to figure out what library to link to get db support"
   exit 1
 else
   LIBS="-l$db_lib_to_use $LIBS"

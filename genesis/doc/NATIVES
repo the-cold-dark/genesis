@@ -20,7 +20,7 @@ are in src/modules:
         of the native function (as specified with the NATIVE_FUNCTION()
         macro).
       * define all of the objects used in the module by beginning a line
-        with 'objs' followed by all of the objects, seperated by a space.
+        with 'objs' followed by all of the objects, separated by a space.
         Example:
 
             objs mystuff.o morestuff.o
@@ -30,7 +30,7 @@ are in src/modules:
 
 2)  create a C include file based off the name of the module (in the
     above example this would be 'mystuff.h').  Include the following
-    in this file, replacing each occurance of 'mystuff' which your
+    in this file, replacing each occurrence of 'mystuff' which your
     appropriate module name:
 
 +-------------
@@ -61,7 +61,7 @@ NATIVE_METHOD(...);
 
 3)  create the primary C file for the module, generally named from the
     name of the file (such as 'mystuff.c'), and as is specified in step 1.
-    Format this file as follows, replacing occurances of 'mystuff' with
+    Format this file as follows, replacing occurrences of 'mystuff' with
     the name of your module:
 
 +-------------
@@ -112,13 +112,13 @@ NATIVE_METHOD(mymethod) {
     more than one word.
 
 6)  The command 'moddef' will recreate the other required module files, and
-    is usefull as you write the module.  To run it simply specify each module
+    is useful as you write the module.  To run it simply specify each module
     name on the command line (such as 'moddef cdc web veil mystuff').  If
     you do this by hand, you will have to manually insert the printed
     object files into ../Makefile (i.e. src/Makefile).
 
     When rebuilding multiple times over you will have to remove the file
-    ../native.o, there is not likely a dependancy on this so native method
+    ../native.o, there is not likely a dependency on this so native method
     changes will not appear without removing it and having it re-compiled.
 
     In general it is suggested that you 'make reconfig'.
@@ -158,7 +158,7 @@ zero based list).  The type names are abbreviated, and are as follow:
 
 Use the macro THROW() to throw an error, do not terminate the macro with a
 semi-colon as it evaluates to a bracketed statement block.  There is one
-argument to THROW which is a parethesised expression representing the
+argument to THROW which is a parenthesised expression representing the
 arguments for cthrow() (the actual throw function in C).  Args for this
 function are the same as throw() in ColdC, except for Cold formatting
 can be performed on the string (this is not printf formatting, but it is

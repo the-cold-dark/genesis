@@ -130,7 +130,7 @@ depend: $(GRAMMAR_O) include/parse.h
 lint:
 	$(LINT) $(INCLUDE) -u $(EVERYTHING_C)
 
-# I duplicate scrub because of the recusion involved in calling modules
+# I duplicate scrub because of the recursion involved in calling modules
 patchable: commitable
 	rm -f *.o include/parse.h grammar.c *~ *.BAK *.bak y.output *.core
 	rm -rf binary

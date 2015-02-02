@@ -12,14 +12,6 @@ static uChar ascii64[] =        /* 0 ... 63 => ascii - 64 */
         "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 /*
-// crypt() is not POSIX--this is here for backwards compatability,
-// nasty word that.
-*/
-#ifdef USE_OS_CRYPT
-extern char * crypt(const char *, const char *);
-#endif
-
-/*
 // Encrypt a string.  The salt can be NULL--force SHS encryption,
 // match_crypted() will handle older DES passwords
 */
@@ -97,22 +89,8 @@ Int match_crypted(cStr * encrypted, cStr * possible) {
 
         return (!strcmp((char *) ep, p_buf));
     } else {
-#ifdef USE_OS_CRYPT
-#ifdef sys_freebsd
-        sp = ep;
-#else
-        /* assume ancient DES format, with the first two chars as salt */
-        salt[0] = ep[0];
-        salt[1] = ep[1];
-        salt[2] = 0;
-        sp = salt;
-#endif
-        return
-            (!strcmp((char *) ep, (char *) crypt((char *) pp, (char *) sp)));
-#else
-        cthrow(type_id, "Driver was not compiled with OS crypt() support.");
+        cthrow(type_id, "OS crypt() support is no longer available.");
         return -1;
-#endif
     }
 }
 

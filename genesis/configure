@@ -1557,44 +1557,6 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
-# lib -lcrypt
-libcrypt=no
-echo $ac_n "  Checking for -lcrypt""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_lib_crypt'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-  libcrypt=$ac_cv_lib_crypt
-else
-  libcrypt=yes
-  ac_save_LIBS="$LIBS"
-LIBS="-lcrypt $LIBS"
-cat > conftest.$ac_ext <<EOF
-#line 1793 "configure"
-#include "confdefs.h"
-
-int main() { return 0; }
-int t() {
-crypt()
-; return 0; }
-EOF
-if eval $ac_link; then
-  rm -rf conftest*
-  eval "ac_cv_lib_crypt=yes"
-else
-  rm -rf conftest*
-  eval "ac_cv_lib_crypt=no"
-fi
-rm -f conftest*
-LIBS="$ac_save_LIBS"
-
-fi
-
-if eval "test \"`echo '$ac_cv_lib_'crypt`\" = yes"; then
-  echo "$ac_t""yes" 1>&6
-  LIBS="-lcrypt $LIBS"
-else
-  echo "$ac_t""no" 1>&6
-fi
-
 # lib -lm
 echo $ac_n "  Checking for -lm""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_lib_m'+set}'`\" = set"; then
@@ -1961,7 +1923,7 @@ EOF
 
 fi
 
-for ac_func in strftime gettimeofday mkdir select socket strcspn strerror getrusage strstr memmove crypt
+for ac_func in strftime gettimeofday mkdir select socket strcspn strerror getrusage strstr memmove
 do
 echo $ac_n "  Checking for $ac_func()""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
@@ -2345,50 +2307,6 @@ fi
 # default to cat
 if test -z "$pager"; then
     pager=cat
-fi
-
-##########################################
-## malloc
-
-##########################################
-## crypt
-cat <<END
-
-###
-### CRYPT()
-###
-# 
-# The ColdC builtin function crypt() uses SHA-1 encryption based off FreeBSD's
-# MD5 crypt().  If your OS has its own crypt() (likely DES based), and your
-# database includes DES encrypted passwords (this used to be the default for
-# ColdC crypt()), you may want to have match_crypted() use DES encryption
-# as well as SHA-1 for the DES passwords.  If your database does not have
-# any DES encrypted passwords, there is no need to include DES encryption.
-# If your database predates Genesis 1.0p14 it will have DES based passwords.
-#
-END
-
-if [ "$ac_cv_func_crypt" != yes ]; then
-    echo "#"
-    echo "# Your OS ($SYS) does not seem to support crypt()"
-    echo "#"
-    echo $ac_n "[continue]$ac_c"
-    read in
-else
-    echo
-    echo $ac_n "Include your OS crypt() in match_crypted()? [no] $ac_c"
-    read in
-    if [ "$in" = y -o "$in" = yes -o "$in" = Y -o "$in" = YES ]; then
-        cat >> confdefs.h <<EOF
-#define USE_OS_CRYPT 1
-EOF
-    else
-        ## nix libcrypt from the LIBS list
-        if [ $libcrypt = yes ]; then
-            echo "Purging -lcrypt from your libraries list";
-            LIBS=`echo $LIBS | sed -e 's: *-lcrypt *: :'`
-        fi
-    fi
 fi
 
 ##########################################

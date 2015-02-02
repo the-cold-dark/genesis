@@ -22,3 +22,6 @@ commit:
 
 config:
 	@if test ! -f src/Makefile; then ./configure; fi
+
+test: all
+	cd test; ./runtest

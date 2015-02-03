@@ -128,9 +128,6 @@
 /* Define if you have the finite function.  */
 #undef HAVE_FINITE
 
-/* Define if you have the <fcntl.h> header file.  */
-#undef HAVE_FCNTL_H
-
 /* Define if you have the <sys/file.h> header file.  */
 #undef HAVE_SYS_FILE_H
 

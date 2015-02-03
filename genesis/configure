@@ -1045,7 +1045,7 @@ EOF
 
 fi
 
-for ac_hdr in fcntl.h sys/file.h sys/time.h unistd.h vfork.h
+for ac_hdr in sys/file.h sys/time.h unistd.h vfork.h
 do
 ac_safe=`echo "$ac_hdr" | tr './\055' '___'`
 echo $ac_n "  Checking for <$ac_hdr>""... $ac_c" 1>&6

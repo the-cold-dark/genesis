@@ -16,7 +16,7 @@ MODULES=$(SRCDIR)/modules
 
 VERSION=@VERSION@
 
-OBJS      = cdc.o cdc_buffer.o cdc_dict.o cdc_integer.o cdc_list.o cdc_misc.o cdc_string.o ext_math.o veil.o web.o
+OBJS      = cdc.o cdc_buffer.o cdc_dict.o cdc_integer.o cdc_list.o cdc_misc.o cdc_string.o ext_math.o web.o
 
 SRCS = `echo $(OBJS) | sed -e 's/\.o/.c/g'`
 

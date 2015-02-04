@@ -258,7 +258,6 @@ OPS\task.obj :  ops\task.c
 
 Dep_MODULESbmodsdlib = \
    MODULES\cdc.obj\
-   MODULES\veil.obj\
    MODULES\ext_math.obj\
    MODULES\cdc_string.obj\
    MODULES\cdc_misc.obj\
@@ -272,7 +271,6 @@ Dep_MODULESbmodsdlib = \
 MODULES\mods.lib : $(Dep_MODULESbmodsdlib)
   $(TLIB) $< $(IDE_BFLAGS) $(BOptsAt_MODULESbmodsdlib) @&&|
  -+MODULES\cdc.obj &
--+MODULES\veil.obj &
 -+MODULES\ext_math.obj &
 -+MODULES\cdc_string.obj &
 -+MODULES\cdc_misc.obj &
@@ -286,11 +284,6 @@ MODULES\mods.lib : $(Dep_MODULESbmodsdlib)
 MODULES\cdc.obj :  modules\cdc.c
   $(BCC32) -P- -c @&&|
  $(CompOptsAt_MODULESbmodsdlib) $(CompInheritOptsAt_MODULESbmodsdlib) -o$@ modules\cdc.c
-|
-
-MODULES\veil.obj :  modules\veil.c
-  $(BCC32) -P- -c @&&|
- $(CompOptsAt_MODULESbmodsdlib) $(CompInheritOptsAt_MODULESbmodsdlib) -o$@ modules\veil.c
 |
 
 MODULES\ext_math.obj :  modules\ext_math.c

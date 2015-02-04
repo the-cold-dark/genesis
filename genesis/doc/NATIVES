@@ -113,7 +113,7 @@ NATIVE_METHOD(mymethod) {
 
 6)  The command 'moddef' will recreate the other required module files, and
     is useful as you write the module.  To run it simply specify each module
-    name on the command line (such as 'moddef cdc web veil mystuff').  If
+    name on the command line (such as 'moddef cdc web mystuff').  If
     you do this by hand, you will have to manually insert the printed
     object files into ../Makefile (i.e. src/Makefile).
 

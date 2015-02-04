@@ -66,8 +66,6 @@ NATIVE_METHOD(split);
 NATIVE_METHOD(regexp);
 NATIVE_METHOD(strsed);
 NATIVE_METHOD(capitalize);
-NATIVE_METHOD(to_veil_pkts);
-NATIVE_METHOD(from_veil_pkts);
 NATIVE_METHOD(and);
 NATIVE_METHOD(or);
 NATIVE_METHOD(xor);

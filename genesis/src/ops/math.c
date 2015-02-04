@@ -29,13 +29,9 @@
             THROW((fpe_id, "floating-point exception")); \
         }
 
-#ifdef HAVE_FINITE
 #define CHECK_FINITE(__x) \
-        if (!finite((double) __x)) \
+        if (!isfinite((double) __x)) \
             THROW((inf_id, "Infinite result."))
-#else
-#define CHECK_FINITE(__x)
-#endif
 
 /* man: no */
 COLDC_FUNC(sin) {

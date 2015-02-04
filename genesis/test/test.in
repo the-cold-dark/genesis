@@ -2931,13 +2931,15 @@ eval {
 
 	// Numeric test 5
 	//
-	// testing sin()
+	// testing ~inf
 	// Output
 
 		Numeric test 5
+		  1 - ~inf
 
 eval {
     dblog("Numeric test 5");
+    dblog("  1 - " + toliteral((| log(0.0) |)));
 };
 
 	// create() test with no parents

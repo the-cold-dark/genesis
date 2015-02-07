@@ -272,7 +272,7 @@ Int yylex(void)
 		    evalue=evalue * 10 + (*s - '0');
 		    s++, cur_pos++, len--;
 		}
-		if (esign) evalue =- evalue;
+		if (esign) evalue = -evalue;
 		if (evalue > 0)
 		     while (evalue--) f*=10;
                 else

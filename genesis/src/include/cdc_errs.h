@@ -10,7 +10,7 @@
 #include <errno.h>
 
 /* In VC, linked to winsock.h, is a header that defines FLOAT, this keeps it from
-   compaining and prevents it from interfering with genesis */
+   complaining and prevents it from interfering with genesis */
 #ifdef __MSVC__
 #undef FLOAT
 #endif

@@ -34,7 +34,7 @@
 // ---------------------------------------------------------------------
 // This will reduce how much your database bloats, however it will
 // be slower as it searches the whole database for free blocks.
-// For now this is an option to reduce the amount of bloat occuring,
+// For now this is an option to reduce the amount of bloat occurring,
 // until an alternate allocator is created.  If you are having a problem
 // with your database quickly bloating in size, it is suggested to
 // enable this option, unless you have a slow disk or slow disk device.
@@ -61,7 +61,7 @@
 
 /*
 // ---------------------------------------------------------------------
-// This enables execution debuging in the ColdC language--using the
+// This enables execution debugging in the ColdC language--using the
 // functions debug_callers() and call_trace().
 */
 
@@ -98,7 +98,7 @@
 // ---------------------------------------------------------------------
 // Clean objects out of the cache?  This gives you a smaller memory
 // imprint, but it usually causes more work for the server as it will
-// be constantly removing and pulling objects in an dout of the cache.
+// be constantly removing and pulling objects in and out of the cache.
 */
 #if DISABLED
 #  define CLEAN_CACHE
@@ -106,9 +106,9 @@
 
 /*
 // ---------------------------------------------------------------------
-// How persistant is an object, to stay in the cache?  This is
+// How persistent is an object, to stay in the cache?  This is
 // logarithmic, just changing it from 10 to 20 will not double the
-// persistance, it will just increase it a notch
+// persistence, it will just increase it a notch
 */
 #define OBJECT_PERSISTENCE 10
 
@@ -484,7 +484,7 @@ Int  limit_calldepth;
 Int  limit_recursion;
 Int  limit_objswap;
 
-/* driver config parameters accessable through config() */
+/* driver config parameters accessible through config() */
 Int  cache_log_flag;
 Int  cache_watch_count;
 cObjnum cache_watch_object;
@@ -540,7 +540,7 @@ extern Int  limit_calldepth;
 extern Int  limit_recursion;
 extern Int  limit_objswap;
 
-/* driver config parameters accessable through config() */
+/* driver config parameters accessible through config() */
 extern Int  cache_log_flag;
 extern Int  cache_watch_count;
 extern cObjnum cache_watch_object;

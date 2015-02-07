@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 2.8.12)
 project(GENESIS)
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/include)
@@ -27,13 +27,40 @@ INCLUDE(${CMAKE_ROOT}/Modules/CheckIncludeFile.cmake)
 CHECK_INCLUDE_FILE(vfork.h HAVE_VFORK_H)
 CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
 
+INCLUDE(CheckLibraryExists)
+SET(COLD_LIBRARIES)
+
+# Do we need libm?
+CHECK_LIBRARY_EXISTS(m sin "" LINK_LIBM)
+IF(LINK_LIBM)
+  SET(COLD_LIBRARIES
+      ${COLD_LIBRARIES}
+      -lm)
+ENDIF()
 # Try to sort out the DB stuff.
 CHECK_INCLUDE_FILE(ndbm.h HAVE_NDBM_H)
 CHECK_INCLUDE_FILE(gdbm-ndbm.h HAVE_GDBM_NDBM_H)
 IF(HAVE_NDBM_H)
   SET(DBM_H_FILE "<ndbm.h>")
+  CHECK_LIBRARY_EXISTS(ndbm dbm_open "" LINK_NDBM)
+  IF(LINK_NDBM)
+    SET(COLD_LIBRARIES
+        ${COLD_LIBRARIES}
+        -lndbm)
+  ENDIF()
 ELSEIF(HAVE_GDBM_NDBM_H)
   SET(DBM_H_FILE "<gdbm-ndbm.h>")
+  CHECK_LIBRARY_EXISTS(gdbm dbm_open "" LINK_GDBM)
+  CHECK_LIBRARY_EXISTS(gdbm_compat dbm_open "" LINK_GDBM_COMPAT)
+  IF(LINK_GDBM)
+    SET(COLD_LIBRARIES
+        ${COLD_LIBRARIES}
+        -lgdbm)
+  ELSEIF(LINK_GDBM_COMPAT)
+    SET(COLD_LIBRARIES
+        ${COLD_LIBRARIES}
+        -lgdbm_compat)
+  ENDIF()
 ELSE()
   MESSAGE(FATAL_ERROR "You must have ndbm or gdbm's ndbm emulation installed.")
 ENDIF()
@@ -69,7 +96,7 @@ CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/src/include/config.h.cmake
                ${CMAKE_BINARY_DIR}/config.h)
 
 
-FIND_PACKAGE(bison)
+FIND_PACKAGE(BISON)
 BISON_TARGET(ColdParser src/grammar.y ${CMAKE_BINARY_DIR}/parse.c)
 
 SET(MODULE_GENERATED_HEADER ${CMAKE_SOURCE_DIR}/src/modules/moddef.h)
@@ -173,3 +200,5 @@ SET(src_COMPILER
 ADD_EXECUTABLE(genesis ${src_DRIVER})
 ADD_EXECUTABLE(coldcc ${src_COMPILER})
 TARGET_COMPILE_DEFINITIONS(coldcc PRIVATE BUILDING_COLDCC)
+TARGET_LINK_LIBRARIES(genesis ${COLD_LIBRARIES})
+TARGET_LINK_LIBRARIES(coldcc ${COLD_LIBRARIES})

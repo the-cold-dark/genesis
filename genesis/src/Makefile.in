@@ -49,14 +49,12 @@ COMMON_O   = $(DATA_O) $(DB_O) $(IO_O) $(MISC_O) \
              $(PCODE_O) $(OPS_O) $(MOD_O) $(CRYPT_O)
 DRIVER_O   = $(GRAMMAR_O) genesis.o $(COMMON_O)
 COMPILER_O = $(GRAMMAR_O) coldcc.o textdb.o $(COMMON_O)
-CONTROL_O  = control.o
 
-EVERYTHING_O = genesis.o control.o coldcc.o textdb.o $(COMMON_O)
+EVERYTHING_O = genesis.o coldcc.o textdb.o $(COMMON_O)
 EVERYTHING_C = `echo $(EVERYTHING_O) | sed -e 's/\.o/.c/g'`
 
 DRIVER = genesis
 COMPILER = coldcc
-CONTROL = control
 
 EXES = $(COMPILER) $(DRIVER)
 

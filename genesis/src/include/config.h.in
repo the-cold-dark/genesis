@@ -82,9 +82,6 @@
 /* Define vfork as fork if vfork does not work.  */
 #undef vfork
 
-/* byte order */
-#undef BYTEORDER
-
 /* Sizes */
 #undef SIZEOF_CHAR
 #undef SIZEOF_SHORT

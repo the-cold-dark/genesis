@@ -14,7 +14,6 @@
 #define pid_t int
 #define RETSIGTYPE void
 #define STDC_HEADERS 1
-#define BYTEORDER 1234
 
 #define SIZEOF_CHAR 1
 #define SIZEOF_SHORT 2

@@ -8,4 +8,5 @@ src/genesis
 src/include/config.h
 src/include/parse.h
 src/modules/modbuild.last
+src/modules/moddef.h
 test/error.log

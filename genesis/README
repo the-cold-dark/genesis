@@ -12,20 +12,18 @@ Release information can be found in doc/CHANGES.
 ------------------------------------------------------------------------
 INSTALL/COMPILATION IN UNIX
 
-Genesis should compile on most ANSI/ISO C compilers.  If your compiler
-is somewhat non-standard, Genesis may compile but you will have serious
-instability problems.  The only OS which we know you WILL have problems
-with is SunOS 4.1.x (which is dead and no longer supported by Sun--we
-suggest NetBSD as an alternative).
+Genesis should compile on most ANSI/ISO C compilers. You will need
+CMake, bison and either ndbm or gdbm's ndbm emulation.
 
-To compile simply type: make
+To build:
 
-To install simply type: make install
+    mkdir build
+    cd build
+    cmake ..
+    make
 
-The directory 'bin' contains a few useful scripts for Genesis database
-manipulation.  Full installation instructions can be found at:
-
-      http://web.cold.org/genesis/install.html
+CMake contains generators for other build systems as well and they
+can be used instead of make.
 
 ------------------------------------------------------------------------
 INSTALL/COMPILATION IN WIN32

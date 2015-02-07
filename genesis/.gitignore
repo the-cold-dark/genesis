@@ -1,12 +1,3 @@
-*.o
-Makefile
-etc/config.cache
-etc/config.log
-etc/config.status
-src/coldcc
-src/genesis
-src/include/config.h
-src/include/parse.h
 src/modules/modbuild.last
 src/modules/moddef.h
 test/error.log

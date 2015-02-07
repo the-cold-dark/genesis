@@ -16,7 +16,7 @@ void init_cache(Bool spawn_cleaner);
 void uninit_cache();
 
 #ifdef USE_DIRTY_LIST
-inline void cache_dirty_object(Obj *obj);
+void cache_dirty_object(Obj *obj);
 #else
 #define cache_dirty_object(obj) obj->dirty=1
 #endif

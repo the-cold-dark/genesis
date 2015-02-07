@@ -582,7 +582,7 @@ char * data_from_literal(cData *d, char *s) {
 
 	d->type = INTEGER;
 	d->u.val = (Long) atol(s);
-	while (isdigit(*++s));
+	while (isdigit(*++s)) {};
         if (*s=='.' || *s=='e') {
  	    d->type = FLOAT;
  	    d->u.fval = (Float) atof(t);

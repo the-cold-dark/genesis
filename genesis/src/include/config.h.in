@@ -89,9 +89,6 @@
 /* Define if you have the gettimeofday function.  */
 #undef HAVE_GETTIMEOFDAY
 
-/* Define if you have the memmove function.  */
-#undef HAVE_MEMMOVE
-
 /* Define if you have the strcspn function.  */
 #undef HAVE_STRCSPN
 

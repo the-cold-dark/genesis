@@ -1692,7 +1692,7 @@ EOF
 
 fi
 
-for ac_func in gettimeofday strcspn strerror getrusage memmove
+for ac_func in gettimeofday strcspn strerror getrusage
 do
 echo $ac_n "  Checking for $ac_func()""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then

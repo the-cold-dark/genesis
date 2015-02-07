@@ -39,18 +39,7 @@ void efree(void * block);
 #define PMALLOC(pile, type, num) ((type *) pmalloc(pile, (num) * sizeof(type)))
 
 #define MEMCPY(a, b, l)		memcpy(a, b, (l) * sizeof(*(a)))
-
-#ifndef HAVE_MEMMOVE
-
-#define MEMMOVE(a, b, l)	bcopy(b, a, (l) * sizeof(*(a)))
-#define MEMCMP(a, b, l)		bcmp(a, b, (l) * sizeof(*(a)))
-
-#else
-
 #define MEMMOVE(a, b, l)	memmove(a, b, (l) * sizeof(*(a)))
 #define MEMCMP(a, b, l)		memcmp(a, b, (l) * sizeof(*(a)))
 
 #endif
-
-#endif
-

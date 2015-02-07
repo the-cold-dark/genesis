@@ -133,7 +133,7 @@ struct handler_info {
 #define MF_UNDF3     64   /* undefined */
 #define MF_UNDF4     128  /* undefined */
 
-/* define these seperately, so we can switch the result of 'call_method' */
+/* define these separately, so we can switch the result of 'call_method' */
 #define    CALL_OK       0
 #define    CALL_NATIVE   1
 #define    CALL_FORK     2

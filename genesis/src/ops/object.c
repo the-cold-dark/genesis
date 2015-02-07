@@ -10,7 +10,7 @@
 // which is why they are not modularized (such as object functions) or
 // they are inherent to the functionality of ColdC
 //
-// The need to split these into seperate files is not too great, as they
+// The need to split these into separate files is not too great, as they
 // will not be changing often.
 */
 
@@ -1049,7 +1049,7 @@ COLDC_FUNC(method_bytecode) {
         d.type = SYMBOL;
         d.u.symbol = info->symbol;
         list = list_add(list, &d);
-        /* dont bother discarding, we didnt dup twice */
+        /* don't bother discarding, we didn't dup twice */
         x++;
 
         if (info->arg1) {

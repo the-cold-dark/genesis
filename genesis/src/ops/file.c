@@ -10,7 +10,7 @@
 // which is why they are not modularized (such as object functions) or
 // they are inherent to the functionality of ColdC
 //
-// The need to split these into seperate files is not too great, as they
+// The need to split these into separate files is not too great, as they
 // will not be changing often.
 */
 
@@ -69,7 +69,7 @@ COLDC_FUNC(fopen) {
     }
 
     /* open the file, it will automagically be set on the current object,
-       if we are sucessfull, otherwise our stat list is NULL */
+       if we are successful, otherwise our stat list is NULL */
     stat = open_file(STR1, (argc == 2 ? STR2 : NULL), cur_frame->object);
 
     /* if its null, open_file() threw an error */
@@ -400,7 +400,7 @@ COLDC_FUNC(frename) {
     } else if (!(from = build_path(args[0].u.str->s, &sbuf, ALLOW_DIR)))
         return;
 
-    /* stat it seperately so that we can give a better error */
+    /* stat it separately so that we can give a better error */
     to = build_path(STR2->s, NULL, ALLOW_DIR);
     if (stat(to->s, &sbuf) == 0) {
         cthrow(file_id, "Destination \"%s\" already exists.", to->s);

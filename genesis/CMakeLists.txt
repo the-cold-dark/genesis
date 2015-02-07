@@ -23,11 +23,14 @@ SET(USE_PARENT_OBJS OFF CACHE BOOL "EXPERIMENTAL: still in development.")
 INCLUDE(${CMAKE_SOURCE_DIR}/Modules/GetTriple.cmake)
 GET_TARGET_TRIPLE(SYSTEM_TYPE TARGET_ARCH TARGET_VENDOR TARGET_OS)
 
+INCLUDE(${CMAKE_ROOT}/Modules/CheckFunctionExists.cmake)
 INCLUDE(${CMAKE_ROOT}/Modules/CheckIncludeFile.cmake)
+INCLUDE(${CMAKE_ROOT}/Modules/CheckLibraryExists.cmake)
+INCLUDE(${CMAKE_ROOT}/Modules/CheckTypeSize.cmake)
+
 CHECK_INCLUDE_FILE(vfork.h HAVE_VFORK_H)
 CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
 
-INCLUDE(CheckLibraryExists)
 SET(COLD_LIBRARIES)
 
 # Do we need libm?
@@ -42,11 +45,15 @@ CHECK_INCLUDE_FILE(ndbm.h HAVE_NDBM_H)
 CHECK_INCLUDE_FILE(gdbm-ndbm.h HAVE_GDBM_NDBM_H)
 IF(HAVE_NDBM_H)
   SET(DBM_H_FILE "<ndbm.h>")
-  CHECK_LIBRARY_EXISTS(ndbm dbm_open "" LINK_NDBM)
-  IF(LINK_NDBM)
-    SET(COLD_LIBRARIES
-        ${COLD_LIBRARIES}
-        -lndbm)
+  # On Mac OS X, we don't have to link against anything else.
+  CHECK_FUNCTION_EXISTS(dbm_open HAVE_DBM_OPEN)
+  IF(NOT HAVE_DBM_OPEN)
+    CHECK_LIBRARY_EXISTS(ndbm dbm_open "" LINK_NDBM)
+    IF(LINK_NDBM)
+      SET(COLD_LIBRARIES
+          ${COLD_LIBRARIES}
+          -lndbm)
+    ENDIF()
   ENDIF()
 ELSEIF(HAVE_GDBM_NDBM_H)
   SET(DBM_H_FILE "<gdbm-ndbm.h>")
@@ -73,7 +80,6 @@ IF(WINDOWS)
   SET(__Win32__ 1)
 ENDIF()
 
-INCLUDE(${CMAKE_ROOT}/Modules/CheckTypeSize.cmake)
 CHECK_TYPE_SIZE("char" SIZEOF_CHAR)
 CHECK_TYPE_SIZE("short" SIZEOF_SHORT)
 CHECK_TYPE_SIZE("int" SIZEOF_INT)
@@ -83,7 +89,6 @@ CHECK_TYPE_SIZE("float" SIZEOF_FLOAT)
 CHECK_TYPE_SIZE("double" SIZEOF_DOUBLE)
 CHECK_TYPE_SIZE("long double" SIZEOF_LDOUBLE)
 
-INCLUDE(${CMAKE_ROOT}/Modules/CheckFunctionExists.cmake)
 CHECK_FUNCTION_EXISTS(getrusage HAVE_GETRUSAGE)
 CHECK_FUNCTION_EXISTS(gettimeofday HAVE_GETTIMEOFDAY)
 CHECK_FUNCTION_EXISTS(inet_aton HAVE_INET_ATON)

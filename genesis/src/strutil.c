@@ -14,13 +14,13 @@
 
 /* We use MALLOC_DELTA to keep the memory allocated in fields thirty-two bytes
  * less than a power of two, assuming fields are twelve bytes. */
-#define MALLOC_DELTA		3
-#define FIELD_STARTING_SIZE	8
+#define MALLOC_DELTA                3
+#define FIELD_STARTING_SIZE        8
 
 typedef struct {
     char *start;
     char *end;
-    Bool strip;			/* Strip backslashes? */
+    Bool strip;                        /* Strip backslashes? */
 } Field;
 
 static char *match_coupled_wildcard(char *ctemplate, char *s);
@@ -30,7 +30,7 @@ static void add_field(char *start, char *end, Bool strip);
 
 static Field * fields;
 static Int field_pos, field_size;
-    
+
 void init_match(void) {
     fields = EMALLOC(Field, FIELD_STARTING_SIZE);
     field_size = FIELD_STARTING_SIZE;
@@ -51,89 +51,89 @@ cList * match_template(char *ctemplate, char *s) {
 
     /* Strip leading spaces in template. */
     while (*ctemplate == ' ')
-	ctemplate++;
+        ctemplate++;
 
     while (*ctemplate) {
 
-	/* Skip over spaces in s. */
-	while (*s == ' ')
-	    s++;
+        /* Skip over spaces in s. */
+        while (*s == ' ')
+            s++;
 
-	/* Is the next template entry a wildcard? */
-	if (*ctemplate == '*') {
-	    /* Check for coupled wildcard ("*=*"). */
-	    if (ctemplate[1] == '=' && ctemplate[2] == '*') {
-		ctemplate += 2;
-		coupled = 1;
-	    } else {
-		coupled = 0;
-	    }
+        /* Is the next template entry a wildcard? */
+        if (*ctemplate == '*') {
+            /* Check for coupled wildcard ("*=*"). */
+            if (ctemplate[1] == '=' && ctemplate[2] == '*') {
+                ctemplate += 2;
+                coupled = 1;
+            } else {
+                coupled = 0;
+            }
 
-	    /* Template is invalid if wildcard is not alone. */
-	    if (ctemplate[1] && ctemplate[1] != ' ')
-		return NULL;
+            /* Template is invalid if wildcard is not alone. */
+            if (ctemplate[1] && ctemplate[1] != ' ')
+                return NULL;
 
-	    /* Skip over spaces to find next token. */
-	    while (*++ctemplate == ' ');
+            /* Skip over spaces to find next token. */
+            while (*++ctemplate == ' ');
 
-	    /* Two wildcards in a row is illegal. */
-	    if (*ctemplate == '*')
-		return NULL;
+            /* Two wildcards in a row is illegal. */
+            if (*ctemplate == '*')
+                return NULL;
 
-	    /* Match the wildcard.  This also matches the next token, if there
-	     * is one, and adds the appropriate fields. */
-	    if (coupled)
-		s = match_coupled_wildcard(ctemplate, s);
-	    else
-		s = match_wildcard(ctemplate, s);
-	    if (!s)
-		return NULL;
-	} else {
-	    /* Match the word pattern.  This does not add any fields, so we
-	     * do it ourselves.*/
-	    p = match_word_pattern(ctemplate, s);
-	    if (!p)
-		return NULL;
-	    add_field(s, p, FALSE);
-	    s = p;
-	}
+            /* Match the wildcard.  This also matches the next token, if there
+             * is one, and adds the appropriate fields. */
+            if (coupled)
+                s = match_coupled_wildcard(ctemplate, s);
+            else
+                s = match_wildcard(ctemplate, s);
+            if (!s)
+                return NULL;
+        } else {
+            /* Match the word pattern.  This does not add any fields, so we
+             * do it ourselves.*/
+            p = match_word_pattern(ctemplate, s);
+            if (!p)
+                return NULL;
+            add_field(s, p, FALSE);
+            s = p;
+        }
 
-	/* Get to next token in ctemplate, if there is one. */
-	while (*ctemplate && *ctemplate != ' ')
-	    ctemplate++;
-	while (*ctemplate == ' ')
-	    ctemplate++;
+        /* Get to next token in ctemplate, if there is one. */
+        while (*ctemplate && *ctemplate != ' ')
+            ctemplate++;
+        while (*ctemplate == ' ')
+            ctemplate++;
     }
 
     /* Ignore any trailing spaces in s. */
     while (*s == ' ')
-	s++;
+        s++;
 
     /* If there's anything left over in s, the match failed. */
     if (*s)
-	return NULL;
+        return NULL;
 
     /* The match succeeded.  Construct a list of the fields. */
     l = list_new(field_pos);
     d = list_empty_spaces(l, field_pos);
     for (i = 0; i < field_pos; i++) {
-	s = fields[i].start;
-	if (fields[i].strip && fields[i].end > s) {
-	    str = string_new(fields[i].end - s);
-	    p = (char *)memchr(s, '\\', fields[i].end - 1 - s);
-	    while (p) {
-		str = string_add_chars(str, s, p - s);
-		str = string_addc(str, p[1]);
-		s = p + 2;
-		p = (char *)memchr(s, '\\', fields[i].end - 1 - s);
-	    }
-	    str = string_add_chars(str, s, fields[i].end - s);
-	} else {
-	    str = string_from_chars(s, fields[i].end - s);
-	}
-	d->type = STRING;
-	d->u.str = str;
-	d++;
+        s = fields[i].start;
+        if (fields[i].strip && fields[i].end > s) {
+            str = string_new(fields[i].end - s);
+            p = (char *)memchr(s, '\\', fields[i].end - 1 - s);
+            while (p) {
+                str = string_add_chars(str, s, p - s);
+                str = string_addc(str, p[1]);
+                s = p + 2;
+                p = (char *)memchr(s, '\\', fields[i].end - 1 - s);
+            }
+            str = string_add_chars(str, s, fields[i].end - s);
+        } else {
+            str = string_from_chars(s, fields[i].end - s);
+        }
+        d->type = STRING;
+        d->u.str = str;
+        d++;
     }
 
     return l;
@@ -146,31 +146,31 @@ static char *match_coupled_wildcard(char *ctemplate, char *s) {
 
     /* Check for quoted text. */
     if (*s == '"') {
-	/* Find the end of the quoted text. */
-	p = s + 1;
-	while (*p && *p != '"') {
-	    if (*p == '\\' && p[1])
-		p++;
-	    p++;
-	}
+        /* Find the end of the quoted text. */
+        p = s + 1;
+        while (*p && *p != '"') {
+            if (*p == '\\' && p[1])
+                p++;
+            p++;
+        }
 
-	/* Skip whitespace after quoted text. */
-	for (q = p + 1; *q && *q == ' '; q++);
+        /* Skip whitespace after quoted text. */
+        for (q = p + 1; *q && *q == ' '; q++);
 
-	/* Move on if next character is an equals sign. */
-	if (*q == '=') {
-	    for (q++; *q && *q == ' '; q++);
-	    add_field(s + 1, p, TRUE);
-	    return match_wildcard(ctemplate, q);
-	} else {
-	    return NULL;
-	}
+        /* Move on if next character is an equals sign. */
+        if (*q == '=') {
+            for (q++; *q && *q == ' '; q++);
+            add_field(s + 1, p, TRUE);
+            return match_wildcard(ctemplate, q);
+        } else {
+            return NULL;
+        }
     }
 
     /* Find first occurrance of an equal sign. */
     p = strchr(s, '=');
     if (!p)
-	return NULL;
+        return NULL;
 
     /* Add field up to first nonspace character before equalsign, and move on
      * starting from the first nonspace character after it. */
@@ -187,67 +187,67 @@ static char * match_wildcard(char *ctemplate, char *s) {
 
     /* If no token follows the wildcard, then the match succeeds. */
     if (!*ctemplate) {
-	p = s + strlen(s);
-	add_field(s, p, FALSE);
-	return p;
+        p = s + strlen(s);
+        add_field(s, p, FALSE);
+        return p;
     }
 
     /* There's a word pattern to match.  Check if wildcard match is quoted. */
     if (*s == '"') {
-	/* Find the end of the quoted text. */
-	p = s + 1;
-	while (*p && *p != '"') {
-	    if (*p == '\\' && p[1])
-		p++;
-	    p++;
-	}
+        /* Find the end of the quoted text. */
+        p = s + 1;
+        while (*p && *p != '"') {
+            if (*p == '\\' && p[1])
+                p++;
+            p++;
+        }
 
-	/* Skip whitespace after quoted wildcard match. */
-	for (q = p + 1; *q == ' '; q++);
+        /* Skip whitespace after quoted wildcard match. */
+        for (q = p + 1; *q == ' '; q++);
 
-	/* Next token must match here. */
-	r = match_word_pattern(ctemplate, q);
-	if (r) {
-	    add_field(s + 1, p, TRUE);
-	    add_field(q, r, FALSE);
-	    return r;
-	} else {
-	    return NULL;
-	}
+        /* Next token must match here. */
+        r = match_word_pattern(ctemplate, q);
+        if (r) {
+            add_field(s + 1, p, TRUE);
+            add_field(q, r, FALSE);
+            return r;
+        } else {
+            return NULL;
+        }
     } else if (*s == '\\') {
-	/* Skip an initial backslash.  This is so a wildcard match can start
-	 * with a double quote without being a quoted match. */
-	s++;
+        /* Skip an initial backslash.  This is so a wildcard match can start
+         * with a double quote without being a quoted match. */
+        s++;
     }
 
     /* There is an unquoted wildcard match.  Start by looking here. */
     p = match_word_pattern(ctemplate, s);
     if (p) {
-	add_field(s, s, FALSE);
-	add_field(s, p, FALSE);
-	return p;
+        add_field(s, s, FALSE);
+        add_field(s, p, FALSE);
+        return p;
     }
 
     /* Look for more words to match. */
     p = s;
     while (*p) {
-	if (*p == ' ') {
-	    /* Skip to end of word separator and try next word. */
-	    q = p + 1;
-	    while (*q == ' ')
-		q++;
-	    r = match_word_pattern(ctemplate, q);
-	    if (r) {
-		/* It matches; add wildcard field and word field. */
-		add_field(s, p, FALSE);
-		add_field(q, r, FALSE);
-		return r;
-	    }
-	    /* No match; continue looking at q. */
-	    p = q;
-	} else {
-	    p++;
-	}
+        if (*p == ' ') {
+            /* Skip to end of word separator and try next word. */
+            q = p + 1;
+            while (*q == ' ')
+                q++;
+            r = match_word_pattern(ctemplate, q);
+            if (r) {
+                /* It matches; add wildcard field and word field. */
+                add_field(s, p, FALSE);
+                add_field(q, r, FALSE);
+                return r;
+            }
+            /* No match; continue looking at q. */
+            p = q;
+        } else {
+            p++;
+        }
     }
 
     /* No words matched, so the match fails. */
@@ -261,56 +261,56 @@ static char * match_word_pattern(char *ctemplate, char *s) {
 
     while (*ctemplate && *ctemplate != ' ' && *ctemplate != '|') {
 
-	if (*ctemplate == '"' || *ctemplate == '*') {
-	    /* Invalid characters in a word pattern; match fails. */
-	    return NULL;
+        if (*ctemplate == '"' || *ctemplate == '*') {
+            /* Invalid characters in a word pattern; match fails. */
+            return NULL;
 
-	} else if (*ctemplate == '?') {
-	    /* A question mark tells us that the matching string can be
-	     * abbreviated down to this point. */
-	    abbrev = 1;
+        } else if (*ctemplate == '?') {
+            /* A question mark tells us that the matching string can be
+             * abbreviated down to this point. */
+            abbrev = 1;
 
-	} else if (LCASE(*p) != LCASE(*ctemplate)) {
-	    /* The match succeeds if we're at the end of the word in p and
-	     * abbrev is set. */
-	    if (abbrev && (!*p || *p == ' '))
-		return p;
+        } else if (LCASE(*p) != LCASE(*ctemplate)) {
+            /* The match succeeds if we're at the end of the word in p and
+             * abbrev is set. */
+            if (abbrev && (!*p || *p == ' '))
+                return p;
 
-	    /* Otherwise the match against this word fails.  Try the next word
-	     * if there is one, or fail if there isn't.  Also catch illegal
-	     * characters (* and ") in the word and return NULL if we find
-	     * them. */
-	    while (*ctemplate && !strchr(" |*\"", *ctemplate))
-		ctemplate++;
-	    if (*ctemplate == '|')
-		return match_word_pattern(ctemplate + 1, s);
-	    else
-		return NULL;
+            /* Otherwise the match against this word fails.  Try the next word
+             * if there is one, or fail if there isn't.  Also catch illegal
+             * characters (* and ") in the word and return NULL if we find
+             * them. */
+            while (*ctemplate && !strchr(" |*\"", *ctemplate))
+                ctemplate++;
+            if (*ctemplate == '|')
+                return match_word_pattern(ctemplate + 1, s);
+            else
+                return NULL;
 
-	} else {
-	    p++;
-	}
+        } else {
+            p++;
+        }
 
-	ctemplate++;
+        ctemplate++;
     }
 
     /* We came to the end of the word in the template.  If we're also at the
      * end of the word in p, then the match succeeds.  Otherwise, try the next
      * word if there is one, and fail if there isn't. */
     if (!*p || *p == ' ')
-	return p;
+        return p;
     else if (*ctemplate == '|')
-	return match_word_pattern(ctemplate + 1, s);
+        return match_word_pattern(ctemplate + 1, s);
     else
-	return NULL;
+        return NULL;
 }
 
 /* Add a field.  strip should be true if this is a field for a wildcard not at
  * the end of the template. */
 static void add_field(char *start, char *end, Bool strip) {
     if (field_pos >= field_size) {
-	field_size = field_size * 2 + MALLOC_DELTA;
-	fields = EREALLOC(fields, Field, field_size);
+        field_size = field_size * 2 + MALLOC_DELTA;
+        fields = EREALLOC(fields, Field, field_size);
     }
     fields[field_pos].start = start;
     fields[field_pos].end = end;
@@ -330,11 +330,11 @@ cList * match_pattern(char *pattern, char *s) {
      * list if pattern and s are equivalent, or fail if they aren't. */
     p = strchr(pattern, '*');
     if (!p)
-	return (strccmp(pattern, s) == 0) ? list_new(0) : NULL;
+        return (strccmp(pattern, s) == 0) ? list_new(0) : NULL;
 
     /* Fail if s and pattern don't match up to wildcard. */
     if (strnccmp(pattern, s, p - pattern) != 0)
-	return NULL;
+        return NULL;
 
     /* Consider s starting after the part that matches the pattern up to the
      * wildcard. */
@@ -342,13 +342,13 @@ cList * match_pattern(char *pattern, char *s) {
 
     /* Match always succeeds if wildcard is at end of line. */
     if (!p[1]) {
-	list = list_new(1);
-	str = string_from_chars(s, strlen(s));
-	d.type = STRING;
-	d.u.str = str;
-	list = list_add(list, &d);
+        list = list_new(1);
+        str = string_from_chars(s, strlen(s));
+        d.type = STRING;
+        d.u.str = str;
+        list = list_add(list, &d);
         string_discard(str);
-	return list;
+        return list;
     }
 
     /* Find first potential match of rest of pattern. */
@@ -356,20 +356,20 @@ cList * match_pattern(char *pattern, char *s) {
 
     /* As long as we have a potential match... */
     while (q && *q) {
-	/* Check to see if this is actually a match. */
-	list = match_pattern(p + 1, q);
-	if (list) {
-	    /* It matched.  Append a field and return the list. */
-	    str = string_from_chars(s, q - s);
-	    d.type = STRING;
-	    d.u.str = str;
-	    list = list_add(list, &d);
-	    string_discard(str);
-	    return list;
-	}
+        /* Check to see if this is actually a match. */
+        list = match_pattern(p + 1, q);
+        if (list) {
+            /* It matched.  Append a field and return the list. */
+            str = string_from_chars(s, q - s);
+            d.type = STRING;
+            d.u.str = str;
+            list = list_add(list, &d);
+            string_discard(str);
+            return list;
+        }
 
-	/* Find next potential match. */
-	q = strcchr(q+1, p[1]);
+        /* Find next potential match. */
+        q = strcchr(q+1, p[1]);
     }
 
     /* Return failure. */
@@ -378,7 +378,7 @@ cList * match_pattern(char *pattern, char *s) {
 
 cList * match_regexp(cStr * reg, char * s, Bool sensitive, Bool *error) {
     cList  * fields = (cList *) NULL,
-           * elemlist; 
+           * elemlist;
     regexp * rx;
     cData    d;
     Int      i;
@@ -395,7 +395,7 @@ cList * match_regexp(cStr * reg, char * s, Bool sensitive, Bool *error) {
         for (i = 0; i < NSUBEXP; i++) {
             elemlist = list_new(2);
 
-            d.type = INTEGER; 
+            d.type = INTEGER;
             if (!rx->startp[i]) {
                 d.u.val = 0;
                 elemlist = list_add(elemlist, &d);
@@ -444,12 +444,12 @@ cList * regexp_matches(cStr * reg, char * s, Bool sensitive, Bool * error) {
     for (size=1; size < NSUBEXP && rx->startp[size] != NULL; size++);
 
     d.type = STRING;
-    
+
     if (size == 1) {
         fields = list_new(1);
-        d.u.str = REGSTR(rx, 0); 
+        d.u.str = REGSTR(rx, 0);
         fields = list_add(fields, &d);
-        string_discard(d.u.str); 
+        string_discard(d.u.str);
     } else {
         fields = list_new(size-1);
         for (i = 1; i < size && rx->startp[i] != NULL; i++) {
@@ -481,7 +481,7 @@ Int parse_regfunc_args(char * args, Int flags) {
                 flags &= ~RF_SENSITIVE;
                 break;
         }
-        args++; 
+        args++;
     }
     return flags;
 }
@@ -630,9 +630,9 @@ cStr * strsed(cStr * reg,  /* the regexp string */
         if (flags & RF_GLOBAL) {  /* they would, the bastards */
             Int depth = 100;
             char * rxs = s;
-    
+
             out = string_new(slen + ((rlen * size) * mult));
-    
+
             if ((i = rx->startp[0] - s))
                 out = string_add_chars(out, s, i);
 
@@ -699,7 +699,7 @@ cStr * strsed(cStr * reg,  /* the regexp string */
                 if (rx->startp[x] != NULL && (i=rx->endp[x]-rx->startp[x]))
                     out = string_add_chars(out, rx->startp[x], i);
 
-                q++; 
+                q++;
                 p = q;
             }
 

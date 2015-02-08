@@ -501,8 +501,8 @@ void flush_output(void) {
             r = SOCK_WRITE(conn->fd, s, len);
             if ((r == SOCKET_ERROR) && (GETERR() != ERR_AGAIN))
                 break;
-	    /* 
-	     * If it would've blocked, then don't change len or s,
+            /*
+             * If it would've blocked, then don't change len or s,
              * so set the bytes written to 0
              */
             if ((r == SOCKET_ERROR) && (GETERR() == ERR_AGAIN))

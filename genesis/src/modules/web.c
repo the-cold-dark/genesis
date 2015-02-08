@@ -4,7 +4,7 @@
 
 /*
 // RFC 1738:
-//    
+//
 //   Many URL schemes reserve certain characters for a special meaning:
 //   their appearance in the scheme-specific part of the URL has a
 //   designated semantics. If the character corresponding to an octet is
@@ -31,8 +31,8 @@
 
 module_t web_module = {YES, init_web, YES, uninit_web};
 
-#define DONT_ESCAPE	"$-_.+!*'(),:@&=~"
-#define DONT_ESCAPE_LEN	16
+#define DONT_ESCAPE        "$-_.+!*'(),:@&=~"
+#define DONT_ESCAPE_LEN        16
 
 /* we pre-define this for speed */
 char * dec_2_hex[] = {
@@ -162,7 +162,7 @@ static cStr * html_escape(cStr * in) {
     if (!memchr(s, '<', len) &&
         !memchr(s, '>', len) &&
         !memchr(s, '&', len) &&
-	!memchr(s, '\"', len))
+        !memchr(s, '\"', len))
         return string_dup(in);
 
     /* doh, they do.. */
@@ -223,7 +223,7 @@ NATIVE_METHOD(html_escape) {
     INIT_1_ARG(STRING);
 
     orig = string_dup(STR1);
-  
+
     CLEAN_STACK();
     anticipate_assignment();
 

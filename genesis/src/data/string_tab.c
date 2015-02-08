@@ -29,7 +29,7 @@ StringTab *string_tab_new_with_size(Long size)
     memset(new_tab->hashtab, -1, sizeof(Long) * new_tab->tab_size);
 
     for (i = 0; i < new_tab->tab_size; i++)
-	new_tab->tab[i].next = i + 1;
+        new_tab->tab[i].next = i + 1;
 
     new_tab->tab[new_tab->tab_size - 1].next = -1;
 
@@ -46,8 +46,8 @@ void string_tab_free(StringTab *tab)
     Int i;
 
     for (i = 0; i < tab->tab_size; i++) {
-	if (tab->tab[i].str)
-	    string_discard(tab->tab[i].str);
+        if (tab->tab[i].str)
+            string_discard(tab->tab[i].str);
     }
     efree(tab->tab);
     efree(tab->hashtab);
@@ -59,7 +59,7 @@ void string_tab_fixup_hashtab(StringTab *tab, Long num)
     Long i, ind;
 
     for (i = 0; i < num; i++) {
-	if (tab->tab[i].str) {
+        if (tab->tab[i].str) {
             ind = tab->tab[i].hash % tab->tab_size;
             tab->tab[i].next = tab->hashtab[ind];
             tab->hashtab[ind] = i;
@@ -73,41 +73,41 @@ static Ident string_tab_from_hash(StringTab *tab, uLong hval, cStr * str) {
     /* Look for an existing identifier. */
     ind = tab->hashtab[hval % tab->tab_size];
     while (ind != -1) {
-	if (tab->tab[ind].hash == hval &&
+        if (tab->tab[ind].hash == hval &&
             tab->tab[ind].str->len == str->len &&
             strcmp(string_chars(tab->tab[ind].str), string_chars(str)) == 0) {
-	    tab->tab[ind].refs++;
-	    return ind;
-	}
-	ind = tab->tab[ind].next;
+            tab->tab[ind].refs++;
+            return ind;
+        }
+        ind = tab->tab[ind].next;
     }
 
     /* Check if we have to resize the table. */
     if (tab->blanks == -1) {
 
-	/* Allocate new space for table. */
-	if (tab->tab_size > 4096)
-	    new_size = tab->tab_size + 4096;
-	else
-	    new_size = tab->tab_size * 2 + MALLOC_DELTA;
+        /* Allocate new space for table. */
+        if (tab->tab_size > 4096)
+            new_size = tab->tab_size + 4096;
+        else
+            new_size = tab->tab_size * 2 + MALLOC_DELTA;
 
-	tab->tab = EREALLOC(tab->tab, StringTabEntry, new_size);
-	tab->hashtab = EREALLOC(tab->hashtab, Long, new_size);
+        tab->tab = EREALLOC(tab->tab, StringTabEntry, new_size);
+        tab->hashtab = EREALLOC(tab->hashtab, Long, new_size);
 
-	/* Make new string of blanks. */
-	memset(&(tab->tab[tab->tab_size]), 0, sizeof(StringTabEntry)*(new_size-tab->tab_size));
-	for (ind = tab->tab_size; ind < new_size - 1; ind++) {
-	    tab->tab[ind].next = ind + 1;
-	}
-	tab->tab[ind].next = -1;
-	tab->blanks = tab->tab_size;
+        /* Make new string of blanks. */
+        memset(&(tab->tab[tab->tab_size]), 0, sizeof(StringTabEntry)*(new_size-tab->tab_size));
+        for (ind = tab->tab_size; ind < new_size - 1; ind++) {
+            tab->tab[ind].next = ind + 1;
+        }
+        tab->tab[ind].next = -1;
+        tab->blanks = tab->tab_size;
 
-	/* Reset hash table. */
-	memset(tab->hashtab, -1, sizeof(Long) * new_size);
+        /* Reset hash table. */
+        memset(tab->hashtab, -1, sizeof(Long) * new_size);
 
-	ind = tab->tab_size;
-	tab->tab_size = new_size;
-	string_tab_fixup_hashtab(tab, ind);
+        ind = tab->tab_size;
+        tab->tab_size = new_size;
+        string_tab_fixup_hashtab(tab, ind);
     }
 
     /* Install symbol at first blank. */
@@ -154,21 +154,21 @@ void string_tab_discard(StringTab *tab, Ident id) {
     tab->tab[id].refs--;
 
     if (!tab->tab[id].refs) {
-	/* Get the hash table thread for this entry. */
-	ind = hash_string(tab->tab[id].str) % tab->tab_size;
+        /* Get the hash table thread for this entry. */
+        ind = hash_string(tab->tab[id].str) % tab->tab_size;
 
-	/* Free the string. */
-	string_discard(tab->tab[id].str);
-	tab->tab[id].str = NULL;
-	tab->tab[id].hash = 0;
+        /* Free the string. */
+        string_discard(tab->tab[id].str);
+        tab->tab[id].str = NULL;
+        tab->tab[id].hash = 0;
 
-	/* Find the pointer to this entry. */
-	for (p = &tab->hashtab[ind]; p && *p != id; p = &tab->tab[*p].next);
+        /* Find the pointer to this entry. */
+        for (p = &tab->hashtab[ind]; p && *p != id; p = &tab->tab[*p].next);
 
-	/* Remove this entry and add it to blanks. */
-	*p = tab->tab[id].next;
-	tab->tab[id].next = tab->blanks;
-	tab->blanks = id;
+        /* Remove this entry and add it to blanks. */
+        *p = tab->tab[id].next;
+        tab->tab[id].next = tab->blanks;
+        tab->blanks = id;
         tab->tab_num--;
     }
 }

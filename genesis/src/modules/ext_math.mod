@@ -6,7 +6,7 @@ native $math.sub()                sub
 native $math.dot()                dot
 native $math.distance()           distance
 native $math.cross()              cross
-native $math.scale()              scale  
+native $math.scale()              scale
 native $math.is_lower()           is_lower
 native $math.transpose()          transpose
 

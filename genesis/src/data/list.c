@@ -19,7 +19,7 @@ static cList *generic_empty_list;
 /* We use MALLOC_DELTA to keep our blocks about 32 bytes less than a power of
  * two.  We also have to account for the size of a List (16 bytes) which gets
  * added in before we allocate.  This works if a Data is sixteen bytes. */
-  
+
 #define MALLOC_DELTA    3
 #define STARTING_SIZE   (16 - MALLOC_DELTA)
 
@@ -365,7 +365,7 @@ cList *list_union(cList *list1, cList *list2) {
         }
     } else {
         Hash * tmp;
-        
+
         tmp = hash_new_with(list1);
         list_discard(list1);
         for (d = start; d < end; d++) {
@@ -412,7 +412,7 @@ cStr * list_join(cList * list, cStr * sep) {
     cData * d;
     cStr * s;
     char * sp;
-    
+
     /* figure up the size of the resulting string */
     size = sep->len * (list->len - 1);
     for (d=list_first(list); d; d = list_next(list, d)) {
@@ -426,12 +426,12 @@ cStr * list_join(cList * list, cStr * sep) {
     s = string_new(size);
 
     d = list_first(list);
-    ADD_TOSTR() 
+    ADD_TOSTR()
     for (d=list_next(list, d); d; d = list_next(list, d)) {
         s = string_add(s, sep);
         ADD_TOSTR()
-    }   
-    
+    }
+
     return s;
 }
 
@@ -443,7 +443,7 @@ int list_index(cList * list, cData * search, int origin) {
           * end;
 
     len = list_length(list);
-    
+
     if (origin < 0) {
         reverse = YES;
         origin = -origin;

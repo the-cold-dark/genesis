@@ -40,7 +40,7 @@ if cmp -s $expected $output; then
 fi
 
 $echo "FAILURE...The following test(s) failed:"
- 
+
 $echo '
 open(EXP, "expected") || die("open(expected): $!\n");
 $eline = 0;
@@ -77,4 +77,4 @@ while (!eof(STDIN)) {
     print "-- ${test}\n   Expected:\n${exp}   Received:\n${rec}";
 }' > $prog
 
-diff $expected $output | perl $prog 
+diff $expected $output | perl $prog

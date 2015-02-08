@@ -27,8 +27,8 @@ NATIVE_METHOD(buf_replace) {
     if (pos < 0)
         THROW((range_id, "Position (%d) is less than one.", pos + 1))
     else if (pos >= buffer_len(BUF1))
-	THROW((range_id, "Position (%d) is greater than buffer length (%d).",
-	      pos + 1, buffer_len(BUF1)))
+        THROW((range_id, "Position (%d) is greater than buffer length (%d).",
+              pos + 1, buffer_len(BUF1)))
 
     ch = INT3;
     buf = buffer_dup(BUF1);
@@ -78,7 +78,7 @@ NATIVE_METHOD(bufsub) {
 
     if (old->len == 0)
         THROW((type_id, ""))
-    
+
     anticipate_assignment();
 
     CLEAN_RETURN_BUFFER(buffer_bufsub(buf, old, new));
@@ -131,7 +131,7 @@ NATIVE_METHOD(strings_to_buf) {
     sep = (argc == 2) ? BUF2 : NULL;
 
     for (d = list_first(list), i=0; d; d = list_next(list, d),i++) {
-	if (d->type != STRING)
+        if (d->type != STRING)
             THROW((type_id, "List element %d (%D) not a string.", i + 1, d))
     }
 

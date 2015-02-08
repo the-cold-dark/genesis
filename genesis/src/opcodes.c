@@ -49,7 +49,7 @@ static Op_info op_info[] = {
 
 #ifdef USE_BIG_FLOATS
     /* Big floats are the size of two ints */
-    { FLOAT,		"FLOAT",	   op_float, INTEGER, INTEGER },
+    { FLOAT,            "FLOAT",           op_float, INTEGER, INTEGER },
 #else
     /* By the time it examines the arg, the FLOAT has already been
        cast into an INTEGER, so we just need to let it know its an INT */
@@ -90,7 +90,7 @@ static Op_info op_info[] = {
     { PROPAGATE_END,    "PROPAGATE_END",   op_propagate_end },
 
     /* Arithmetic and relational operators (arithop.c). */
-    { '!',           "!",               op_not },
+    { '!',              "!",               op_not },
     { NEG,              "NEG",             op_negate },
     { '*',              "*",               op_multiply },
     { '/',              "/",               op_divide },

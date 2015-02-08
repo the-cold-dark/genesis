@@ -84,9 +84,9 @@ NATIVE_METHOD(strsub) {
 
     if (argc == 4)
         flags = parse_regfunc_args(string_chars(STR4), flags);
-    
+
     out = strsub(STR1, STR2, STR3, flags);
-    
+
     CLEAN_RETURN_STRING(out);
 }
 
@@ -109,7 +109,7 @@ NATIVE_METHOD(pad) {
                    INIT_ARG1(STRING)
                    break;
         default:   THROW_NUM_ERROR(ARG_COUNT, "two or three")
-    } 
+    }
 
     str = string_dup(STR1);
     len = (INT2 > 0) ? INT2 : -INT2;
@@ -162,7 +162,7 @@ NATIVE_METHOD(match_begin) {
                    INIT_ARG1(STRING)
                    break;
         default:   THROW_NUM_ERROR(ARG_COUNT, "two or three")
-    } 
+    }
 
     s = string_chars(STR1);
 
@@ -253,7 +253,7 @@ NATIVE_METHOD(regexp) {
     }
 
     fields = regexp_matches(STR2, string_chars(STR1), sensitive, &error);
-    
+
     if (fields) {
         CLEAN_RETURN_LIST(fields);
     } else {
@@ -430,10 +430,10 @@ NATIVE_METHOD(trim) {
 NATIVE_METHOD(split) {
     Int      flags = RF_NONE;
     cList  * list;
-    
+
     INIT_2_OR_3_ARGS(STRING, STRING, STRING);
 
-    if (argc == 3)  
+    if (argc == 3)
         flags = parse_regfunc_args(string_chars(STR3), flags);
 
     /* if list is NULL strsplit() threw an error */
@@ -515,7 +515,7 @@ NATIVE_METHOD(dbquote_explode) {
     register char * s,
                   * p,
                   * t;
-            
+
     INIT_1_OR_2_ARGS(STRING, STRING);
 
     if (argc == 2) {
@@ -531,15 +531,15 @@ NATIVE_METHOD(dbquote_explode) {
 
     for (;;) {
         while (*s && *s == ' ') s++;
-        
+
         p = strchr(s, quote);
 
         if (p) {
-            if (p == s) 
+            if (p == s)
                 goto next;
 
             sublen = p - s;
- 
+
             for (t = (char *) memchr((void *) s, (int) ' ', sublen); t;
                  t = (char *) memchr((void *) s, (int) ' ', sublen))
             {
@@ -550,16 +550,16 @@ NATIVE_METHOD(dbquote_explode) {
                 sublen -= t - s;
                 s = t;
             }
-    
+
             if (*s && sublen)
                 ADD_WORD(s, p - s)
- 
+
             next:
 
             s = ++p;
             p = strchr(s, quote);
 
-            t = p;  
+            t = p;
 
             if (!p || !*p) goto end;
 
@@ -570,10 +570,10 @@ NATIVE_METHOD(dbquote_explode) {
                 while (*p && *p != quote)
                     *t++ = *p++;
             }
-    
+
             ADD_WORD(s, t - s)
-    
-            s = ++p; 
+
+            s = ++p;
         } else {
             end:
 
@@ -583,12 +583,12 @@ NATIVE_METHOD(dbquote_explode) {
                 while (*p == ' ') p++;
                 s = p;
             }
- 
+
             if (*s)
                 ADD_WORD(s, (sorig + len) - s)
-    
+
             break;
-        }       
+        }
     }
 
     CLEAN_RETURN_LIST(out);

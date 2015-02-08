@@ -67,22 +67,22 @@ COLDC_FUNC(bind_port) {
     port=INT1;
 
     if (((port >= 0) ? tcp_server(port, addr, cur_frame->object->objnum)
-	             : udp_server(-port, addr, cur_frame->object->objnum))) {
+                     : udp_server(-port, addr, cur_frame->object->objnum))) {
         pop(argc);
-	push_int(1);
+        push_int(1);
     } else if (server_failure_reason == address_id)
         THROW((address_id, "Invalid bind address: %s", addr))
     else if (server_failure_reason == socket_id)
         THROW((socket_id, "Couldn't create server socket."))
     else if (server_failure_reason == preaddr_id)
-        THROW((preaddr_id, 
+        THROW((preaddr_id,
                "Couldn't bind to port %d: prebound address conflict", INT1))
     else if (server_failure_reason == pretype_id) {
         if (port > 0)
-            THROW((pretype_id, 
+            THROW((pretype_id,
                "Couldn't bind to TCP port %d: already prebound as UDP", INT1))
         else
-            THROW((pretype_id, 
+            THROW((pretype_id,
                "Couldn't bind to UDP port %d: already prebound as TCP", INT1))
     } else if (addr)
         THROW((server_failure_reason,
@@ -125,9 +125,9 @@ COLDC_FUNC(open_connection) {
     port = args[1].u.val;
 
     if (argc==2)
-	r = make_connection(address, port, cur_frame->object->objnum);
+        r = make_connection(address, port, cur_frame->object->objnum);
     else
-	r = make_udp_connection(address, port, cur_frame->object->objnum);
+        r = make_udp_connection(address, port, cur_frame->object->objnum);
     if (r == address_id)
         THROW((address_id, "Invalid address"))
     else if (r == socket_id)

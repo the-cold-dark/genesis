@@ -29,17 +29,17 @@ pthread_mutex_t db_mutex;
 
 #ifdef DEBUG_DB_LOCK
 #define LOCK_DB(func) \
-	write_err("%s: locking db", func); \
-	pthread_mutex_lock(&db_mutex); \
-	write_err("%s: locked db", func);
+        write_err("%s: locking db", func); \
+        pthread_mutex_lock(&db_mutex); \
+        write_err("%s: locked db", func);
 #define UNLOCK_DB(func) \
-	pthread_mutex_unlock(&db_mutex); \
-	write_err("%s: unlocked db", func);
+        pthread_mutex_unlock(&db_mutex); \
+        write_err("%s: unlocked db", func);
 #else /* thread, no debugging */
 #define LOCK_DB(func) \
-	pthread_mutex_lock(&db_mutex);
+        pthread_mutex_lock(&db_mutex);
 #define UNLOCK_DB(func) \
-	pthread_mutex_unlock(&db_mutex);
+        pthread_mutex_unlock(&db_mutex);
 #endif
 #else /* no thread */
 #define LOCK_DB(func)
@@ -55,17 +55,17 @@ pthread_mutex_t db_mutex;
 #endif
 
 /* suggested by xmath as possibly faster
-#define NEEDED(n, b)            (((n) + ((b) - 1)) / (b))
-#define ROUND_UP(n, b)          (((n) + ((b) - 1)) % (b))
+#define NEEDED(n, b)    (((n) + ((b) - 1)) / (b))
+#define ROUND_UP(n, b)  (((n) + ((b) - 1)) % (b))
 */
 
-#define NEEDED(n, b)		(((n) % (b)) ? (n) / (b) + 1 : (n) / (b))
-#define ROUND_UP(a, m)		(((a) - 1) + (m) - (((a) - 1) % (m)))
+#define NEEDED(n, b)    (((n) % (b)) ? (n) / (b) + 1 : (n) / (b))
+#define ROUND_UP(a, m)  (((a) - 1) + (m) - (((a) - 1) % (m)))
 
-#define	BLOCK_SIZE		256		/* Default block size */
-#define	DB_BITBLOCK		10240		/* Bitmap growth in blocks */
-#define	LOGICAL_BLOCK(off)	((off) / BLOCK_SIZE)
-#define	BLOCK_OFFSET(block)	((block) * BLOCK_SIZE)
+#define BLOCK_SIZE          256         /* Default block size */
+#define DB_BITBLOCK         10240       /* Bitmap growth in blocks */
+#define LOGICAL_BLOCK(off)  ((off) / BLOCK_SIZE)
+#define BLOCK_OFFSET(block) ((block) * BLOCK_SIZE)
 
 static void simble_mark(off_t start, Int size);
 static void simble_unmark(off_t start, Int size);
@@ -75,7 +75,7 @@ static void simble_flag_as_clean(void);
 static void simble_flag_as_dirty(void);
 static void simble_verify_clean(void);
 
-static Int last_free = 0;	/* Last known or suspected free block */
+static Int last_free = 0;        /* Last known or suspected free block */
 
 static FILE *database_file = NULL;
 
@@ -97,9 +97,9 @@ extern Long num_objects;
 
 /* this isn't the most graceful way, but *shrug* */
 #define WARN(_s_) { \
-	fprintf(errfile, _s_, c_dir_binary); \
-	if (errfile != stderr) \
-	    fprintf(stderr, _s_, c_dir_binary); \
+        fprintf(errfile, _s_, c_dir_binary); \
+        if (errfile != stderr) \
+            fprintf(stderr, _s_, c_dir_binary); \
     }
 
 #define FAIL(_s_) { WARN(_s_) exit(1); }
@@ -145,7 +145,7 @@ extern Long num_objects;
 #define sync_index() { \
         objnum = lookup_first_objnum(); \
         while (objnum != NOT_AN_IDENT) { \
-	    ++num_objects; \
+            ++num_objects; \
             if (!lookup_retrieve_objnum(objnum, &offset, &size)) \
                 FAIL("Database index (\"%s/index\") is inconsistent.\n"); \
             if (objnum >= db_top) \
@@ -225,8 +225,8 @@ static void simble_verify_clean(void) {
                         "** it:   <%s> %d.%d-%d (module key %li)\n"
                         "** this: <%s> %d.%d-%d (module key %li)\n",
                 c_dir_binary, system, atoi(v_major), atoi(v_minor),
-		atoi(v_patch), atol(magicmod), SYSTEM_TYPE, VERSION_MAJOR,
-		VERSION_MINOR, VERSION_PATCH, (long) MAGIC_MODNUMBER);
+                atoi(v_patch), atol(magicmod), SYSTEM_TYPE, VERSION_MAJOR,
+                VERSION_MINOR, VERSION_PATCH, (long) MAGIC_MODNUMBER);
         FAIL("Unable to load database \"%s\": incompatible.\n");
     }
 }
@@ -312,18 +312,18 @@ static void display_bitmap()
     memset(line, 0, sizeof(line));
     while (i < (bitmap_blocks/8))
     {
-	line[j++] = hex[(bitmap[i] & 0xF0) >> 4];
-	line[j++] = hex[bitmap[i] & 0x0F];
-	i++;
-	if (!(i%4))
-	    line[j++] = ' ';
-	if (!(i%16))
-	{
-	    line[j++] = 0;
-	    write_err("%s", line);
-	    j = 0;
-	    memset(line, 0, sizeof(line));
-	}
+        line[j++] = hex[(bitmap[i] & 0xF0) >> 4];
+        line[j++] = hex[bitmap[i] & 0x0F];
+        i++;
+        if (!(i%4))
+            line[j++] = ' ';
+        if (!(i%16))
+        {
+            line[j++] = 0;
+            write_err("%s", line);
+            j = 0;
+            memset(line, 0, sizeof(line));
+        }
     }
 }
 #endif
@@ -345,10 +345,10 @@ static void simble_mark(off_t start, Int size)
     allocated_blocks += blocks;
 
     while (start + blocks > bitmap_blocks)
-	simble_grow_bitmap(bitmap_blocks + DB_BITBLOCK);
+        simble_grow_bitmap(bitmap_blocks + DB_BITBLOCK);
 
     for (i = start; i < start + blocks; i++)
-	bitmap[i >> 3] |= (1 << (i & 7));
+        bitmap[i >> 3] |= (1 << (i & 7));
 }
 
 /* This routine copies the object from the current binary to the
@@ -364,14 +364,14 @@ static void dump_copy (off_t start, Int blocks)
 
     /* check if we need to do this */
     for (i=start; i<start+blocks; i++) {
-	if (i < dump_blocks && (bitmap[i >> 3] & (1 << (i&7))))
-	    break;
+        if (i < dump_blocks && (bitmap[i >> 3] & (1 << (i&7))))
+            break;
     }
 
     if (i == start+blocks) return;
 
     if (fseeko(database_file, BLOCK_OFFSET (start), SEEK_SET)) {
-	UNLOCK_DB("dump_copy")
+        UNLOCK_DB("dump_copy")
         panic("fseeko(\"%s\") in copy: %s", database_file, strerror(errno));
     }
 
@@ -379,13 +379,13 @@ static void dump_copy (off_t start, Int blocks)
        Checked on Solaris, should work on others. */
 
     if (fseeko(dump_db_file,  BLOCK_OFFSET (start), SEEK_SET)) {
-	UNLOCK_DB("dump_copy")
+        UNLOCK_DB("dump_copy")
         panic("fseeko(\"%s\") in copy: %s", dump_db_file, strerror(errno));
     }
     for (i=0; i<blocks; i++) {
-	fread (buf, 1, BLOCK_SIZE, database_file);
-	fwrite (buf, 1, BLOCK_SIZE, dump_db_file);
-	dump_bitmap[(start+i) >> 3] &= ~(1 << ((start+i)&7));
+        fread (buf, 1, BLOCK_SIZE, database_file);
+        fwrite (buf, 1, BLOCK_SIZE, dump_db_file);
+        dump_bitmap[(start+i) >> 3] &= ~(1 << ((start+i)&7));
     }
 #else
     off_t block = 0;
@@ -397,7 +397,7 @@ static void dump_copy (off_t start, Int blocks)
     if (blocks > dump_blocks)
         blocks = dump_blocks;
 
-    while (block < blocks) {                                                                
+    while (block < blocks) {
         if ( (dump_bitmap[block >> 3] & (1 << (block & 7))) ) {
             if (dofseek) {
                 if (fseeko(database_file, BLOCK_OFFSET (block), SEEK_SET)) {
@@ -427,10 +427,10 @@ static void dump_copy (off_t start, Int blocks)
 
 Int simble_dump_start(char *dump_objects_filename) {
     if (dump_db_file)
-	return -2;
+        return -2;
     dump_db_file = fopen(dump_objects_filename, "wb+");
     if (!dump_db_file)
-	return -1;
+        return -1;
     last_dumped = 0;
 
     LOCK_DB("simble_dump_start")
@@ -448,7 +448,7 @@ Int simble_dump_start(char *dump_objects_filename) {
    the maximal number of blocks you want to dump.
    return: 0 -> either dump continues, or we weren't dumping before
            1 -> dump finished, -1 -> unspecified error
-	   call it with maxblocks = between 8 and 64 */
+           call it with maxblocks = between 8 and 64 */
 
 Int simble_dump_some_blocks (Int maxblocks)
 {
@@ -456,44 +456,44 @@ Int simble_dump_some_blocks (Int maxblocks)
     char buf[BLOCK_SIZE];
 
     if (!dump_db_file)
-	return DUMP_NOT_IN_PROGRESS;
+        return DUMP_NOT_IN_PROGRESS;
 
     LOCK_DB("simble_dump_some_blocks")
 
     while (maxblocks) {
-	if ( (dump_bitmap[last_dumped >> 3] & (1 << (last_dumped & 7))) ) {
-	    if (dofseek) {
-		if (fseeko(database_file, BLOCK_OFFSET (last_dumped), SEEK_SET)) {
-		    UNLOCK_DB("simble_dump_some_blocks")
+        if ( (dump_bitmap[last_dumped >> 3] & (1 << (last_dumped & 7))) ) {
+            if (dofseek) {
+                if (fseeko(database_file, BLOCK_OFFSET (last_dumped), SEEK_SET)) {
+                    UNLOCK_DB("simble_dump_some_blocks")
                     panic("fseeko(\"%s\"..): %s", database_file, strerror(errno));
-		}
-		if (fseeko(dump_db_file,  BLOCK_OFFSET (last_dumped), SEEK_SET)) {
-		    UNLOCK_DB("simble_dump_some_blocks")
+                }
+                if (fseeko(dump_db_file,  BLOCK_OFFSET (last_dumped), SEEK_SET)) {
+                    UNLOCK_DB("simble_dump_some_blocks")
                     panic("fseeko(\"%s\"..): %s", dump_db_file, strerror(errno));
-		}
-		dofseek=0;
-	    }
-	    fread (buf, 1, BLOCK_SIZE, database_file);
-	    fwrite (buf, 1, BLOCK_SIZE, dump_db_file);
-	    dump_bitmap[last_dumped >> 3] &= ~(1 << (last_dumped & 7));
-	    maxblocks--;
-	}
-	else
-	    dofseek=1;
+                }
+                dofseek=0;
+            }
+            fread (buf, 1, BLOCK_SIZE, database_file);
+            fwrite (buf, 1, BLOCK_SIZE, dump_db_file);
+            dump_bitmap[last_dumped >> 3] &= ~(1 << (last_dumped & 7));
+            maxblocks--;
+        }
+        else
+            dofseek=1;
 
-	if (last_dumped++ >= dump_blocks) {
-	    if (fclose (dump_db_file)) {
-		UNLOCK_DB("simble_dump_some_blocks")
-	        panic("Unable to close dump file '%s'", dump_db_file);
-	    }
-	    dump_db_file = NULL;
-	    free (dump_bitmap);
-	    dump_bitmap=NULL;
+        if (last_dumped++ >= dump_blocks) {
+            if (fclose (dump_db_file)) {
+                UNLOCK_DB("simble_dump_some_blocks")
+                panic("Unable to close dump file '%s'", dump_db_file);
+            }
+            dump_db_file = NULL;
+            free (dump_bitmap);
+            dump_bitmap=NULL;
 
-	    UNLOCK_DB("simble_dump_some_blocks")
+            UNLOCK_DB("simble_dump_some_blocks")
 
-	    return DUMP_FINISHED;
-	}
+            return DUMP_FINISHED;
+        }
     }
 
     UNLOCK_DB("simble_dump_some_blocks")
@@ -514,7 +514,7 @@ static void simble_unmark(off_t start, Int size)
     last_free = start;
 
     for (i = start; i < start + blocks; i++)
-	bitmap[i >> 3] &= ~(1 << (i & 7));
+        bitmap[i >> 3] &= ~(1 << (i & 7));
 }
 
 static Int simble_alloc(Int size)
@@ -531,53 +531,53 @@ static Int simble_alloc(Int size)
 
     for (;;) {
 
-	if (b < bitmap_blocks && bitmap[b >> 3] == (char)255) {
-	    /* 8 full blocks. Let's run away from this! */
-	    b = (b & ~7) + 8;
-	    while (b < bitmap_blocks && bitmap[b >> 3] == (char)255) {
-		b += 8;
-	    }
-	}
+        if (b < bitmap_blocks && bitmap[b >> 3] == (char)255) {
+            /* 8 full blocks. Let's run away from this! */
+            b = (b & ~7) + 8;
+            while (b < bitmap_blocks && bitmap[b >> 3] == (char)255) {
+                b += 8;
+            }
+        }
 
-	if (b >= bitmap_blocks) {
-	    /* Only wrap around once. */
-	    if (!over_the_top) {
-		b = 0;
-		over_the_top = 1;
-		continue;
-	    } else {
-		simble_grow_bitmap(b + DB_BITBLOCK);
-	    }
-	}
+        if (b >= bitmap_blocks) {
+            /* Only wrap around once. */
+            if (!over_the_top) {
+                b = 0;
+                over_the_top = 1;
+                continue;
+            } else {
+                simble_grow_bitmap(b + DB_BITBLOCK);
+            }
+        }
 
-	starting_block = b;
+        starting_block = b;
 
-	for (count = 0; count < blocks_needed; count++) {
-	    if (bitmap[b >> 3] & (1 << (b & 7)))
-		break;
-	    b++;
-	    if (b >= bitmap_blocks) {
-		/* time to wrap around if we still haven't */
-		if (!over_the_top) {
-		    b = 0;
-		    over_the_top = 1;
-		    break;
-		} else {
-		    simble_grow_bitmap(b + ROUND_UP(blocks_needed-count, DB_BITBLOCK));
+        for (count = 0; count < blocks_needed; count++) {
+            if (bitmap[b >> 3] & (1 << (b & 7)))
+                break;
+            b++;
+            if (b >= bitmap_blocks) {
+                /* time to wrap around if we still haven't */
+                if (!over_the_top) {
+                    b = 0;
+                    over_the_top = 1;
+                    break;
+                } else {
+                    simble_grow_bitmap(b + ROUND_UP(blocks_needed-count, DB_BITBLOCK));
                 }
             }
-	}
+        }
 
-	if (count == blocks_needed) {
-	    /* Mark these blocks taken and return the starting block. */
-	    allocated_blocks+=count;
-	    for (b = starting_block; b < starting_block + count; b++)
-		bitmap[b >> 3] |= (1 << (b & 7));
-	    last_free = b;
-	    return starting_block;
-	}
+        if (count == blocks_needed) {
+            /* Mark these blocks taken and return the starting block. */
+            allocated_blocks+=count;
+            for (b = starting_block; b < starting_block + count; b++)
+                bitmap[b >> 3] |= (1 << (b & 7));
+            last_free = b;
+            return starting_block;
+        }
 
-	b++;
+        b++;
     }
 }
 
@@ -593,14 +593,14 @@ Int simble_get(Obj *object, cObjnum objnum, Long *sizeread)
 
     /* Get the object location for the objnum. */
     if (!lookup_retrieve_objnum(objnum, &offset, &size))
-	return 0;
+        return 0;
 
     LOCK_DB("simble_get")
 
     /* seek to location */
     if (fseeko(database_file, offset, SEEK_SET)) {
-	UNLOCK_DB("simble_get")
-	return 0;
+        UNLOCK_DB("simble_get")
+        return 0;
     }
 
     if (sizeread)
@@ -622,15 +622,15 @@ Int simble_get(Obj *object, cObjnum objnum, Long *sizeread)
 static Int check_free_blocks(Int blocks_needed, Int b)
 {
     Int count;
-    
+
     if (b >= bitmap_blocks)
-	return 0;
+        return 0;
     for (count = 0; count < blocks_needed; count++) {
-	if (bitmap[b >> 3] & (1 << (b & 7)))
-	    break;
-	b++;
-	if (b >= bitmap_blocks)
-	    break;
+        if (bitmap[b >> 3] & (1 << (b & 7)))
+            break;
+        b++;
+        if (b >= bitmap_blocks)
+            break;
     }
     return count == blocks_needed;
 }
@@ -645,66 +645,66 @@ Int simble_put(Obj *obj, cObjnum objnum, Long *sizewritten)
     if (lookup_retrieve_objnum(objnum, &old_offset, &old_size)) {
         buf = buffer_new(old_size);
         buf = pack_object(buf, obj);
-	if (buf->len % BLOCK_SIZE)
-	    buf = buffer_append_uchars_single_ref(buf, (uChar*)pad_string->s, 256 - (buf->len % BLOCK_SIZE));
-	new_size = buf->len;
+        if (buf->len % BLOCK_SIZE)
+            buf = buffer_append_uchars_single_ref(buf, (uChar*)pad_string->s, 256 - (buf->len % BLOCK_SIZE));
+        new_size = buf->len;
 
         LOCK_DB("simble_put")
         simble_flag_as_dirty();
 
-	if ((tmp1=NEEDED(new_size, BLOCK_SIZE)) > (tmp2=NEEDED(old_size, BLOCK_SIZE))) {
-	    /* check for the possible realloc */
-	    if (check_free_blocks(tmp1 - tmp2, LOGICAL_BLOCK(old_offset)+tmp2)) {
-		/* no, we don't have to move, just overwrite */
-		if (dump_db_file)
-		    dump_copy (LOGICAL_BLOCK(old_offset), tmp1);
-		simble_mark(LOGICAL_BLOCK(old_offset) + tmp2,
-			BLOCK_SIZE * (tmp1 - tmp2));
-		new_offset = old_offset;
-	    } else {
-		simble_unmark(LOGICAL_BLOCK(old_offset), old_size);
-		new_offset = BLOCK_OFFSET((off_t)simble_alloc(new_size));
-	    }
+        if ((tmp1=NEEDED(new_size, BLOCK_SIZE)) > (tmp2=NEEDED(old_size, BLOCK_SIZE))) {
+            /* check for the possible realloc */
+            if (check_free_blocks(tmp1 - tmp2, LOGICAL_BLOCK(old_offset)+tmp2)) {
+                /* no, we don't have to move, just overwrite */
+                if (dump_db_file)
+                    dump_copy (LOGICAL_BLOCK(old_offset), tmp1);
+                simble_mark(LOGICAL_BLOCK(old_offset) + tmp2,
+                        BLOCK_SIZE * (tmp1 - tmp2));
+                new_offset = old_offset;
+            } else {
+                simble_unmark(LOGICAL_BLOCK(old_offset), old_size);
+                new_offset = BLOCK_OFFSET((off_t)simble_alloc(new_size));
+            }
         } else {
-	    if (dump_db_file)
-		dump_copy (LOGICAL_BLOCK(old_offset), tmp2);
-	    if (tmp1 < tmp2) {
-		simble_unmark(LOGICAL_BLOCK(old_offset) + tmp1,
-			  BLOCK_SIZE * (tmp2 - tmp1));
-	    }
-	    new_offset = old_offset;
-	}
+            if (dump_db_file)
+                dump_copy (LOGICAL_BLOCK(old_offset), tmp2);
+            if (tmp1 < tmp2) {
+                simble_unmark(LOGICAL_BLOCK(old_offset) + tmp1,
+                          BLOCK_SIZE * (tmp2 - tmp1));
+            }
+            new_offset = old_offset;
+        }
     } else {
-	++num_objects;
-	buf = buffer_new(0);
-	buf = pack_object(buf, obj);
-	if (buf->len % BLOCK_SIZE)
-	    buf = buffer_append_uchars_single_ref(buf, (uChar*)pad_string->s, 256 - (buf->len % BLOCK_SIZE));
-	new_size = buf->len;
+        ++num_objects;
+        buf = buffer_new(0);
+        buf = pack_object(buf, obj);
+        if (buf->len % BLOCK_SIZE)
+            buf = buffer_append_uchars_single_ref(buf, (uChar*)pad_string->s, 256 - (buf->len % BLOCK_SIZE));
+        new_size = buf->len;
 
         LOCK_DB("simble_put")
         simble_flag_as_dirty();
 
-	new_offset = BLOCK_OFFSET((off_t)simble_alloc(new_size));
+        new_offset = BLOCK_OFFSET((off_t)simble_alloc(new_size));
     }
 
     /* Don't store it if it hasn't changed! */
     if ((new_offset != old_offset) ||
       (new_size   != old_size)) {
         if (!lookup_store_objnum(objnum, new_offset, new_size)) {
-	    UNLOCK_DB("simble_put")
-	    buffer_discard(buf);
+            UNLOCK_DB("simble_put")
+            buffer_discard(buf);
             if (sizewritten) *sizewritten = 0;
-	    return 0;
+            return 0;
         }
     }
 
     if (fseeko(database_file, new_offset, SEEK_SET)) {
-	UNLOCK_DB("simble_put")
-	buffer_discard(buf);
-	write_err("ERROR: Seek failed for %l.", objnum);
+        UNLOCK_DB("simble_put")
+        buffer_discard(buf);
+        write_err("ERROR: Seek failed for %l.", objnum);
         if (sizewritten) *sizewritten = 0;
-	return 0;
+        return 0;
     }
 
     old_size = fwrite(buf->s, sizeof(uChar), new_size, database_file);
@@ -735,11 +735,11 @@ Int simble_del(cObjnum objnum)
 
     /* Get offset and size of key. */
     if (!lookup_retrieve_objnum(objnum, &offset, &size))
-	return 0;
+        return 0;
 
     /* Remove key from location db. */
     if (!lookup_remove_objnum(objnum))
-	return 0;
+        return 0;
 
     LOCK_DB("simble_del")
 
@@ -751,11 +751,11 @@ Int simble_del(cObjnum objnum)
 
     /* Mark object dead in file */
     if (fseeko(database_file, offset, SEEK_SET)) {
-	write_err("ERROR: Failed to seek to object %l.", objnum);
+        write_err("ERROR: Failed to seek to object %l.", objnum);
 
         UNLOCK_DB("simble_del")
 
-	return 0;
+        return 0;
     }
 
     buf = buffer_new(size);
@@ -800,7 +800,7 @@ void simble_flush(void)
 void simble_dump_finish(void) {
     FILE * fp;
     char buf[BUF];
-    
+
     strcpy(buf, c_dir_binary);
     strcat(buf, ".bak/.clean");
     fp = open_scratch_file(buf, "wb");
@@ -814,13 +814,13 @@ static void simble_flag_as_clean(void) {
     FILE *fp;
 
     if (db_clean)
-	return;
+        return;
 
     /* Create 'clean' file. */
     fp = open_scratch_file(c_clean_file, "wb");
     if (!fp) {
-	UNLOCK_DB("simble_flag_as_clean")
-	panic("Cannot create file 'clean'.");
+        UNLOCK_DB("simble_flag_as_clean")
+        panic("Cannot create file 'clean'.");
     }
     write_clean_file(fp);
     close_scratch_file(fp);
@@ -829,12 +829,12 @@ static void simble_flag_as_clean(void) {
 
 static void simble_flag_as_dirty(void) {
     if (db_clean) {
-	/* Remove 'clean' file. */
-	if (unlink(c_clean_file) == -1) {
-	    UNLOCK_DB("simble_flag_as_clean")
-	    panic("Cannot remove file 'clean'.");
-	}
-	db_clean = 0;
+        /* Remove 'clean' file. */
+        if (unlink(c_clean_file) == -1) {
+            UNLOCK_DB("simble_flag_as_clean")
+            panic("Cannot remove file 'clean'.");
+        }
+        db_clean = 0;
     }
 }
 

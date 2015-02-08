@@ -36,8 +36,8 @@ void init_util(void) {
     int i;
 
     for (i = 0; i < NUM_CHARS; i++) {
-	lowercase[i] = (int) (isupper(i) ? tolower(i) : i);
-	uppercase[i] = (int) (islower(i) ? toupper(i) : i);
+        lowercase[i] = (int) (isupper(i) ? tolower(i) : i);
+        uppercase[i] = (int) (islower(i) ? toupper(i) : i);
     }
     srand(time(NULL) + getpid());
 }
@@ -47,12 +47,12 @@ uLong hash_nullchar(char * s) {
 
     /* Algorithm by Peter J. Weinberger. */
     for (; *s; s++) {
-	hashval = (hashval << 4) + *s;
-	g = hashval & 0xf0000000;
-	if (g) {
-	    hashval ^= g >> 24;
-	    hashval ^= g;
-	}
+        hashval = (hashval << 4) + *s;
+        g = hashval & 0xf0000000;
+        if (g) {
+            hashval ^= g >> 24;
+            hashval ^= g;
+        }
     }
     return hashval;
 }
@@ -67,12 +67,12 @@ uLong hash_string(cStr * str) {
 
     /* Algorithm by Peter J. Weinberger. */
     for (; len; len--, s++) {
-	hashval = (hashval << 4) + *s;
-	g = hashval & 0xf0000000;
-	if (g) {
-	    hashval ^= g >> 24;
-	    hashval ^= g;
-	}
+        hashval = (hashval << 4) + *s;
+        g = hashval & 0xf0000000;
+        if (g) {
+            hashval ^= g >> 24;
+            hashval ^= g;
+        }
     }
 
     return hashval;
@@ -88,12 +88,12 @@ uLong hash_string_nocase(cStr * str) {
 
     /* Algorithm by Peter J. Weinberger. */
     for (; len; len--, s++) {
-	hashval = (hashval << 4) + (*s & 0x5f);
-	g = hashval & 0xf0000000;
-	if (g) {
-	    hashval ^= g >> 24;
-	    hashval ^= g;
-	}
+        hashval = (hashval << 4) + (*s & 0x5f);
+        g = hashval & 0xf0000000;
+        if (g) {
+            hashval ^= g >> 24;
+            hashval ^= g;
+        }
     }
 
     return hashval;
@@ -104,7 +104,7 @@ Long atoln(char *s, Int n) {
     Long val = 0;
 
     while (n-- && isdigit(*s))
-	val = val * 10 + *s++ - '0';
+        val = val * 10 + *s++ - '0';
     return val;
 }
 
@@ -119,7 +119,7 @@ char *long_to_ascii(Long num, Number_buf nbuf) {
     unsigned long u;
 
     if (num < 0) {
-	sign = 1;
+        sign = 1;
         u = ((unsigned long)(-(1+num))) + 1;
     } else {
         u = num;
@@ -127,12 +127,12 @@ char *long_to_ascii(Long num, Number_buf nbuf) {
 
     *p = 0;
     do {
-	*--p = u % 10 + '0';
-	u /= 10;
+        *--p = u % 10 + '0';
+        u /= 10;
     } while (u);
 
     if (sign)
-	*--p = '-';
+        *--p = '-';
 
     return p;
 }
@@ -141,7 +141,7 @@ char * float_to_ascii(Float num, Number_buf nbuf) {
     int i;
 #ifdef USE_BIG_FLOATS
     sprintf (nbuf, "%.15g", num);
-#else        
+#else
     sprintf (nbuf, "%g", num);
 #endif
     for (i=0; nbuf[i]; i++)
@@ -156,14 +156,14 @@ char * float_to_ascii(Float num, Number_buf nbuf) {
 /* Compare two strings, ignoring case. */
 Int strccmp(char *s1, char *s2) {
     while (*s1 && LCASE(*s1) == LCASE(*s2))
-	s1++, s2++;
+        s1++, s2++;
     return LCASE(*s1) - LCASE(*s2);
 }
 
 /* Compare two strings up to n characters, ignoring case. */
 Int strnccmp(char *s1, char *s2, Int n) {
     while (n-- && *s1 && LCASE(*s1) == LCASE(*s2))
-	s1++, s2++;
+        s1++, s2++;
     return (n >= 0) ? LCASE(*s1) - LCASE(*s2) : 0;
 }
 
@@ -172,8 +172,8 @@ char *strcchr(char *s, Int c) {
     c = LCASE(c);
 
     for (; *s; s++) {
-	if (LCASE(*s) == c)
-	    return s;
+        if (LCASE(*s) == c)
+            return s;
     }
     return (c) ? NULL : s;
 }
@@ -186,8 +186,8 @@ char *strcstr(char *s, char *search) {
         return NULL;
 
     for (p = strcchr(s, *search); p; p = strcchr(p + 1, *search)) {
-	if (strnccmp(p, search, search_len) == 0)
-	    return p;
+        if (strnccmp(p, search, search_len) == 0)
+            return p;
     }
 
     return NULL;
@@ -210,7 +210,7 @@ Long random_number(Long n) {
 #else
     if (RAND_MAX >> 8 >= n)
 #endif
-	num >>= 8;
+        num >>= 8;
     return num % n;
 }
 
@@ -226,53 +226,53 @@ cStr * vformat(char * fmt, va_list arg) {
 
     for (;;) {
 
-	/* Find % or end of string. */
-	p = strchr(fmt, '%');
-	if (!p || !p[1]) {
-	    /* No more percents; copy rest and stop. */
-	    buf = string_add_chars(buf, fmt, strlen(fmt));
-	    break;
-	}
-	buf = string_add_chars(buf, fmt, p - fmt);
+        /* Find % or end of string. */
+        p = strchr(fmt, '%');
+        if (!p || !p[1]) {
+            /* No more percents; copy rest and stop. */
+            buf = string_add_chars(buf, fmt, strlen(fmt));
+            break;
+        }
+        buf = string_add_chars(buf, fmt, p - fmt);
 
-	switch (p[1]) {
+        switch (p[1]) {
 
-	  case '%':
-	    buf = string_addc(buf, '%');
-	    break;
+          case '%':
+            buf = string_addc(buf, '%');
+            break;
 
-	  case 's':
-	    s = va_arg(arg, char *);
-	    if (s)
-	        buf = string_add_chars(buf, s, strlen(s));
-	    else
-	        buf = string_add_chars(buf, "*null*", 6);
-	    break;
+          case 's':
+            s = va_arg(arg, char *);
+            if (s)
+                buf = string_add_chars(buf, s, strlen(s));
+            else
+                buf = string_add_chars(buf, "*null*", 6);
+            break;
 
-	  case 'S':
-	    str = va_arg(arg, cStr *);
-	    buf = string_add(buf, str);
-	    break;
+          case 'S':
+            str = va_arg(arg, cStr *);
+            buf = string_add(buf, str);
+            break;
 
-	  case 'd':
-	    s = long_to_ascii(va_arg(arg, Int), nbuf);
-	    buf = string_add_chars(buf, s, strlen(s));
-	    break;
+          case 'd':
+            s = long_to_ascii(va_arg(arg, Int), nbuf);
+            buf = string_add_chars(buf, s, strlen(s));
+            break;
 
-	  case 'l':
-	    s = long_to_ascii(va_arg(arg, Long), nbuf);
-	    buf = string_add_chars(buf, s, strlen(s));
-	    break;
+          case 'l':
+            s = long_to_ascii(va_arg(arg, Long), nbuf);
+            buf = string_add_chars(buf, s, strlen(s));
+            break;
 
-	  case 'D':
-	    str = data_to_literal(va_arg(arg, cData *), DF_WITH_OBJNAMES);
-	    if (string_length(str) > MAX_DATA_DISPLAY) {
-		str = string_truncate(str, MAX_DATA_DISPLAY - 3);
-		str = string_add_chars(str, "...", 3);
-	    }
-	    buf = string_add_chars(buf, string_chars(str), string_length(str));
-	    string_discard(str);
-	    break;
+          case 'D':
+            str = data_to_literal(va_arg(arg, cData *), DF_WITH_OBJNAMES);
+            if (string_length(str) > MAX_DATA_DISPLAY) {
+                str = string_truncate(str, MAX_DATA_DISPLAY - 3);
+                str = string_add_chars(str, "...", 3);
+            }
+            buf = string_add_chars(buf, string_chars(str), string_length(str));
+            string_discard(str);
+            break;
 
           case 'O': {
             cData d;
@@ -284,16 +284,16 @@ cStr * vformat(char * fmt, va_list arg) {
           }
           break;
 
-	  case 'I':
-	    s = ident_name(va_arg(arg, Long));
-	    if (is_valid_ident(s))
-		buf = string_add_chars(buf, s, strlen(s));
-	    else
-		buf = string_add_unparsed(buf, s, strlen(s));
-	    break;
-	}
+          case 'I':
+            s = ident_name(va_arg(arg, Long));
+            if (is_valid_ident(s))
+                buf = string_add_chars(buf, s, strlen(s));
+            else
+                buf = string_add_unparsed(buf, s, strlen(s));
+            break;
+        }
 
-	fmt = p + 2;
+        fmt = p + 2;
     }
 
     va_end(arg);
@@ -310,7 +310,7 @@ cStr * format(char *fmt, ...) {
     return str;
 }
 
-/* 
+/*
 // builds a timestamp in the almost rfc850 format (DD MMM YY HH:MM)
 //
 // Added: 30 Jul 1995 - BJG
@@ -336,7 +336,7 @@ char * timestamp (char * str) {
             tms->tm_year + 1900,
             tms->tm_hour,
             tms->tm_min,
-	    tms->tm_sec);
+            tms->tm_sec);
 
     return s;
 }
@@ -364,7 +364,7 @@ cStr *fgetstring(FILE *fp) {
     line = string_new(BUF);
     p = string_chars(line);
     if (fgets(p, BUF, fp)) {
-	len = strlen(p);
+        len = strlen(p);
 #ifdef __Win32__
         /* DOS and Windows text files may use \r\n or \n as a line termination */
         if ((len >= 2) && (p[len - 2] == '\r')) {
@@ -384,58 +384,58 @@ cStr *fgetstring(FILE *fp) {
 
             /* drop to something less efficient for bigger cases */
             while (fgets(buf, BIGBUF, fp)) {
-        	len = strlen(buf);
+                len = strlen(buf);
 #ifdef __Win32__
-	        /* DOS and Windows text files may use \r\n or \n as a line termination */
-	        if ((len >= 2) && (buf[len - 2] == '\r')) {
-	            line = string_add_chars(line, buf, len - 2);
-		    return line;
+                /* DOS and Windows text files may use \r\n or \n as a line termination */
+                if ((len >= 2) && (buf[len - 2] == '\r')) {
+                    line = string_add_chars(line, buf, len - 2);
+                    return line;
                 } else
 #endif
-        	if (buf[len - 1] == '\n') {
-        	    line = string_add_chars(line, buf, len-1);
-        	    return line;
-        	} else {
-        	    line = string_add_chars(line, buf, len);
+                if (buf[len - 1] == '\n') {
+                    line = string_add_chars(line, buf, len-1);
+                    return line;
+                } else {
+                    line = string_add_chars(line, buf, len);
                 }
             }
         }
     }
 
     if (line->len > 0) {
-	return line;
+        return line;
     } else {
-	string_discard(line);
-	return NULL;
+        string_discard(line);
+        return NULL;
     }
 }
 
 char * english_type(Int type) {
     switch (type) {
-      case INTEGER:	return "an integer";
-      case FLOAT:	return "a float";
-      case STRING:	return "a string";
-      case OBJNUM:	return "a objnum";
-      case LIST:	return "a list";
-      case SYMBOL:	return "a symbol";
-      case T_ERROR:	return "an error";
-      case FROB:	return "a frob";
-      case DICT:	return "a dictionary";
-      case BUFFER:	return "a buffer";
-      case OBJECT:	return "an object";
-    default:		{INSTANCE_RECORD(type, r); return r->name; }
+      case INTEGER:        return "an integer";
+      case FLOAT:        return "a float";
+      case STRING:        return "a string";
+      case OBJNUM:        return "a objnum";
+      case LIST:        return "a list";
+      case SYMBOL:        return "a symbol";
+      case T_ERROR:        return "an error";
+      case FROB:        return "a frob";
+      case DICT:        return "a dictionary";
+      case BUFFER:        return "a buffer";
+      case OBJECT:        return "an object";
+    default:                {INSTANCE_RECORD(type, r); return r->name; }
     }
 }
 
 char *english_integer(Int n, Number_buf nbuf) {
     static char *first_eleven[] = {
-	"no", "one", "two", "three", "four", "five", "six", "seven",
-	"eight", "nine", "ten" };
+        "no", "one", "two", "three", "four", "five", "six", "seven",
+        "eight", "nine", "ten" };
 
     if (n <= 10)
-	return first_eleven[n];
+        return first_eleven[n];
     else
-	return long_to_ascii(n, nbuf);
+        return long_to_ascii(n, nbuf);
 }
 
 Ident parse_ident(char **sptr) {
@@ -462,13 +462,13 @@ FILE *open_scratch_file(char *name, char *type) {
     FILE *fp;
 
     if (fds_used == MAX_SCRATCH)
-	return NULL;
+        return NULL;
 
     close(reserve_fds[fds_used++]);
     fp = fopen(name, type);
     if (!fp) {
-	claim_fd(--fds_used);
-	return NULL;
+        claim_fd(--fds_used);
+        return NULL;
     }
     return fp;
 }
@@ -482,7 +482,7 @@ void init_scratch_file(void) {
     Int i;
 
     for (i = 0; i < MAX_SCRATCH; i++)
-	claim_fd(i);
+        claim_fd(i);
 }
 
 static void claim_fd(Int i) {
@@ -492,7 +492,7 @@ static void claim_fd(Int i) {
     reserve_fds[i] = open("/dev/null", O_WRONLY);
 #endif
     if (reserve_fds[i] == -1)
-	panic("Couldn't reset reserved fd.");
+        panic("Couldn't reset reserved fd.");
 }
 
 void uninit_scratch_file(void) {
@@ -556,8 +556,8 @@ Int getarg(char * n,
            Int  * argc,
            void (*usage)(char *))
 {
-    char * p = opt; 
-    
+    char * p = opt;
+
     p++;
     if (*p != '\0') {
         *buf = p;

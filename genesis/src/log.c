@@ -25,11 +25,11 @@ void panic(char * s, ...) {
     fputc('\n',errfile);
 
     if (!panic_state) {
-	panic_state = YES;
+        panic_state = YES;
         fprintf(errfile, "[%s] doing binary dump...", timestamp(NULL));
-	cache_sync();
+        cache_sync();
         fputs("Done\n", errfile);
-	log_all_task_stacks(FALSE, write_err);
+        log_all_task_stacks(FALSE, write_err);
     }
 
     fprintf(errfile, "[%s] Creating Core Image...\n", timestamp(NULL));

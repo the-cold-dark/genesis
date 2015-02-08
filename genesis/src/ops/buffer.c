@@ -7,7 +7,7 @@
 #include "cdc_pcode.h"
 
 COLDC_FUNC(bufgraft) {
-    cData * args;  
+    cData * args;
     register cBuf * new, * b1, * b2;
     Int pos;
 
@@ -68,10 +68,10 @@ COLDC_FUNC(buf_replace) {
 
     pos = _INT(ARG2) - 1;
     if (pos < 0)
-	THROW((range_id, "Position (%d) is less than one.", pos + 1))
+        THROW((range_id, "Position (%d) is less than one.", pos + 1))
     else if (pos >= buffer_len(_BUF(ARG1)))
-	THROW((range_id, "Position (%d) is greater than buffer length (%d).",
-	      pos + 1, buffer_len(_BUF(ARG1))))
+        THROW((range_id, "Position (%d) is greater than buffer length (%d).",
+              pos + 1, buffer_len(_BUF(ARG1))))
 
     _BUF(ARG1) = buffer_replace(_BUF(ARG1), pos, _INT(ARG3));
 
@@ -83,7 +83,7 @@ COLDC_FUNC(subbuf) {
     Int start, len, nargs, blen;
 
     if (!func_init_2_or_3(&args, &nargs, BUFFER, INTEGER, INTEGER))
-	return;
+        return;
 
     blen = args[0].u.buffer->len;
     start = args[1].u.val - 1;
@@ -115,7 +115,7 @@ COLDC_FUNC(bufsub) {
     new = buffer_dup(BUF3);
 
     if (old->len == 0)
-	    THROW((type_id, "Can't replace empty buffer"))
+            THROW((type_id, "Can't replace empty buffer"))
 
     anticipate_assignment();
     buf = buffer_bufsub(buf, old, new);
@@ -130,7 +130,7 @@ COLDC_FUNC(buf_to_str) {
     cStr * str;
 
     if (!func_init_1(&args, BUFFER))
-	return;
+        return;
 
     str = buf_to_string(args[0].u.buffer);
 
@@ -146,7 +146,7 @@ COLDC_FUNC(buf_to_strings) {
     cBuf *sep;
 
     if (!func_init_1_or_2(&args, &num_args, BUFFER, BUFFER))
-	return;
+        return;
 
     sep = (num_args == 2) ? args[1].u.buffer : NULL;
     list = buf_to_strings(args[0].u.buffer, sep);
@@ -161,7 +161,7 @@ COLDC_FUNC(str_to_buf) {
     cBuf *buf;
 
     if (!func_init_1(&args, STRING))
-	return;
+        return;
     buf = buffer_from_string(args[0].u.str);
     pop(1);
     push_buffer(buf);
@@ -176,13 +176,13 @@ COLDC_FUNC(strings_to_buf) {
     cList *list;
 
     if (!func_init_1_or_2(&args, &num_args, LIST, BUFFER))
-	return;
+        return;
 
     list = args[0].u.list;
     sep = (num_args == 2) ? args[1].u.buffer : NULL;
 
     for (d = list_first(list), i=0; d; d = list_next(list, d),i++) {
-	if (d->type != STRING)
+        if (d->type != STRING)
             THROW((type_id, "List element %d (%D) not a string.", i + 1, d))
     }
 
@@ -199,13 +199,13 @@ COLDC_FUNC(bufidx) {
     uChar   c;
     int     clen;
     uChar * cp;
-    
+
     INIT_2_OR_3_ARGS(BUFFER, ANY_TYPE, INTEGER);
-    
+
     if (argc == 3)
         origin = INT3;
     else
-        origin = 1; 
+        origin = 1;
 
     if (args[1].type == INTEGER) {
         c = (uChar) args[1].u.val;
@@ -222,11 +222,11 @@ COLDC_FUNC(bufidx) {
         push_int(0);
         return;
     }
-    
+
     if ((r = buffer_index(BUF1, cp, clen, origin)) == F_FAILURE)
         THROW((range_id, "Origin is beyond the range of the buffer."))
 
-    pop(argc); 
+    pop(argc);
     push_int(r);
 }
 

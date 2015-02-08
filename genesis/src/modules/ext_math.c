@@ -12,8 +12,8 @@ static int check_one_vector(cList *l1, Int *len_ret)
 
     len=list_length(l1);
     for (i=0; i<len; i++) {
-	if (list_elem(l1,i)->type != FLOAT)
-	    THROW((type_id, "Arguments must be lists of floats."))
+        if (list_elem(l1,i)->type != FLOAT)
+            THROW((type_id, "Arguments must be lists of floats."))
     }
     *len_ret=len;
     RETURN_TRUE;
@@ -25,12 +25,12 @@ static int check_vectors(cList *l1, cList *l2, Int *len_ret)
 
     len=list_length(l1);
     if (list_length(l2)!=len)
-	THROW((range_id, "Arguments are not of the same length."))
+        THROW((range_id, "Arguments are not of the same length."))
     for (i=0; i<len; i++) {
-	if (list_elem(l1,i)->type != FLOAT)
-	    THROW((type_id, "Arguments must be lists of floats."))
-	if (list_elem(l2,i)->type != FLOAT)
-	    THROW((type_id, "Arguments must be lists of floats."))
+        if (list_elem(l1,i)->type != FLOAT)
+            THROW((type_id, "Arguments must be lists of floats."))
+        if (list_elem(l2,i)->type != FLOAT)
+            THROW((type_id, "Arguments must be lists of floats."))
     }
     *len_ret=len;
     RETURN_TRUE;
@@ -45,16 +45,16 @@ NATIVE_METHOD(minor) {
     l1=LIST1;
     l2=LIST2;
     if (!check_vectors (l1,l2,&len))
-	RETURN_FALSE;
+        RETURN_FALSE;
     l=list_new(len);
     l->len=len;
     for (i=0; i<len; i++) {
-	Float p,q;
+        Float p,q;
 
-	p=list_elem(l1,i)->u.fval;
-	q=list_elem(l2,i)->u.fval;
-	list_elem(l,i)->type=FLOAT;
-	list_elem(l,i)->u.fval=p<q ? p : q;
+        p=list_elem(l1,i)->u.fval;
+        q=list_elem(l2,i)->u.fval;
+        list_elem(l,i)->type=FLOAT;
+        list_elem(l,i)->u.fval=p<q ? p : q;
     }
     CLEAN_RETURN_LIST(l);
 }
@@ -67,16 +67,16 @@ NATIVE_METHOD(major) {
     l1=LIST1;
     l2=LIST2;
     if (!check_vectors (l1,l2,&len))
-	RETURN_FALSE;
+        RETURN_FALSE;
     l=list_new(len);
     l->len=len;
     for (i=0; i<len; i++) {
-	Float p,q;
+        Float p,q;
 
-	p=list_elem(l1,i)->u.fval;
-	q=list_elem(l2,i)->u.fval;
-	list_elem(l,i)->type=FLOAT;
-	list_elem(l,i)->u.fval=p>q ? p : q;
+        p=list_elem(l1,i)->u.fval;
+        q=list_elem(l2,i)->u.fval;
+        list_elem(l,i)->type=FLOAT;
+        list_elem(l,i)->u.fval=p>q ? p : q;
     }
     CLEAN_RETURN_LIST(l);
 }
@@ -89,16 +89,16 @@ NATIVE_METHOD(add) {
     l1=LIST1;
     l2=LIST2;
     if (!check_vectors (l1,l2,&len))
-	RETURN_FALSE;
+        RETURN_FALSE;
     l=list_new(len);
     l->len=len;
     for (i=0; i<len; i++) {
-	Float p,q;
+        Float p,q;
 
-	p=list_elem(l1,i)->u.fval;
-	q=list_elem(l2,i)->u.fval;
-	list_elem(l,i)->type=FLOAT;
-	list_elem(l,i)->u.fval=p+q;
+        p=list_elem(l1,i)->u.fval;
+        q=list_elem(l2,i)->u.fval;
+        list_elem(l,i)->type=FLOAT;
+        list_elem(l,i)->u.fval=p+q;
     }
     CLEAN_RETURN_LIST(l);
 }
@@ -111,16 +111,16 @@ NATIVE_METHOD(sub) {
     l1=LIST1;
     l2=LIST2;
     if (!check_vectors (l1,l2,&len))
-	RETURN_FALSE;
+        RETURN_FALSE;
     l=list_new(len);
     l->len=len;
     for (i=0; i<len; i++) {
-	Float p,q;
+        Float p,q;
 
-	p=list_elem(l1,i)->u.fval;
-	q=list_elem(l2,i)->u.fval;
-	list_elem(l,i)->type=FLOAT;
-	list_elem(l,i)->u.fval=p-q;
+        p=list_elem(l1,i)->u.fval;
+        q=list_elem(l2,i)->u.fval;
+        list_elem(l,i)->type=FLOAT;
+        list_elem(l,i)->u.fval=p-q;
     }
     CLEAN_RETURN_LIST(l);
 }
@@ -134,13 +134,13 @@ NATIVE_METHOD(dot) {
     l1=LIST1;
     l2=LIST2;
     if (!check_vectors (l1,l2,&len))
-	RETURN_FALSE;
+        RETURN_FALSE;
     for (s=0.0,i=0; i<len; i++) {
-	Float p,q;
+        Float p,q;
 
-	p=list_elem(l1,i)->u.fval;
-	q=list_elem(l2,i)->u.fval;
-	s+=p*q;
+        p=list_elem(l1,i)->u.fval;
+        q=list_elem(l2,i)->u.fval;
+        s+=p*q;
     }
     CLEAN_RETURN_FLOAT(s);
 }
@@ -154,14 +154,14 @@ NATIVE_METHOD(distance) {
     l1=LIST1;
     l2=LIST2;
     if (!check_vectors (l1,l2,&len))
-	RETURN_FALSE;
+        RETURN_FALSE;
     for (s=0.0,i=0; i<len; i++) {
-	Float p,q,d;
+        Float p,q,d;
 
-	p=list_elem(l1,i)->u.fval;
-	q=list_elem(l2,i)->u.fval;
-	d=p-q;
-	s+=d*d;
+        p=list_elem(l1,i)->u.fval;
+        q=list_elem(l2,i)->u.fval;
+        d=p-q;
+        s+=d*d;
     }
     CLEAN_RETURN_FLOAT(sqrt(s));
 }
@@ -175,9 +175,9 @@ NATIVE_METHOD(cross) {
     l1=LIST1;
     l2=LIST2;
     if (!check_vectors (l1,l2,&len))
-	RETURN_FALSE;
+        RETURN_FALSE;
     if (len!=3)
-	THROW((range_id,"The vectors are not of length 3."))
+        THROW((range_id,"The vectors are not of length 3."))
     l=list_new(len);
     l->len=len;
     f=list_elem(l,0);
@@ -199,15 +199,15 @@ NATIVE_METHOD(scale) {
     l1=LIST2;
     f=FLOAT1;
     if (!check_one_vector (l1,&len))
-	RETURN_FALSE;
+        RETURN_FALSE;
     l=list_new(len);
     l->len=len;
     for (i=0; i<len; i++) {
-	Float p;
+        Float p;
 
-	p=list_elem(l1,i)->u.fval;
-	list_elem(l,i)->type=FLOAT;
-	list_elem(l,i)->u.fval=p*f;
+        p=list_elem(l1,i)->u.fval;
+        list_elem(l,i)->type=FLOAT;
+        list_elem(l,i)->u.fval=p*f;
     }
     CLEAN_RETURN_LIST(l);
 }

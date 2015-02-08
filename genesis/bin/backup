@@ -73,7 +73,7 @@ $day = "$l_mday$months[$l_mon]$l_year";
 rename("binary.bak", "binary-${day}");
 system("tar", "-cf", "binary-${day}.tar", "binary-${day}");
 system("gzip", "-9f", "binary-${day}.tar");
-system("rm", "-rf", "binary-${day}"); 
+system("rm", "-rf", "binary-${day}");
 
 ## regular FIFO shuffle, give it 100 seconds leeway
 if (($last + $regular_interval) <= ($time + 100)) {

@@ -59,9 +59,9 @@ struct cData {
         cFrob    * frob;
         cDict    * dict;
         cBuf     * buffer;
-	void     * instance;
+        void     * instance;
 #ifdef USE_PARENT_OBJS
-	Obj	 * object;
+        Obj         * object;
 #endif
     } u;
     Int type;

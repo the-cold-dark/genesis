@@ -27,7 +27,7 @@ Ident SEEK_SET_id, SEEK_CUR_id, SEEK_END_id, preaddr_id, pretype_id;
 Ident breadth_id, depth_id, full_id, partial_id;
 
 /* limits */
-Ident datasize_id, forkdepth_id, calldepth_id, recursion_id, objswap_id;     
+Ident datasize_id, forkdepth_id, calldepth_id, recursion_id, objswap_id;
 Ident left_id, right_id, both_id;
 
 /* config options */

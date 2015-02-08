@@ -216,9 +216,9 @@ Obj * object_new(cObjnum objnum, cList * parents) {
 #endif
 
     if (objnum == -1)
-	objnum = db_top++;
+        objnum = db_top++;
     else if (objnum >= db_top)
-	db_top = objnum + 1;
+        db_top = objnum + 1;
 
     cnew = cache_get_holder(objnum);
 
@@ -234,7 +234,7 @@ Obj * object_new(cObjnum objnum, cList * parents) {
     cthis.type = OBJECT;
     for (d=list_first(parents); d; d=list_next(parents, d))
     {
-	cthis.u.object = cache_retrieve(d->u.objnum);
+        cthis.u.object = cache_retrieve(d->u.objnum);
         cnew->parent_objs = list_add(cnew->parent_objs, &cthis);
     }
 #endif
@@ -245,9 +245,9 @@ Obj * object_new(cObjnum objnum, cList * parents) {
     cnew->vars.blanks = 0;
     cnew->vars.size = VAR_STARTING_SIZE;
     for (i = 0; i < VAR_STARTING_SIZE; i++) {
-	cnew->vars.hashtab[i] = -1;
-	cnew->vars.tab[i].name = -1;
-	cnew->vars.tab[i].next = i + 1;
+        cnew->vars.hashtab[i] = -1;
+        cnew->vars.tab[i].name = -1;
+        cnew->vars.tab[i].next = i + 1;
     }
     cnew->vars.tab[VAR_STARTING_SIZE - 1].next = -1;
 
@@ -273,9 +273,9 @@ void object_alloc_methods(Obj *object) {
     object->methods->blanks = 0;
     object->methods->size = METHOD_STARTING_SIZE;
     for (i = 0; i < METHOD_STARTING_SIZE; i++) {
-	object->methods->hashtab[i] = -1;
-	object->methods->tab[i].m = NULL;
-	object->methods->tab[i].next = i + 1;
+        object->methods->hashtab[i] = -1;
+        object->methods->tab[i].m = NULL;
+        object->methods->tab[i].next = i + 1;
     }
     object->methods->tab[METHOD_STARTING_SIZE - 1].next = -1;
 
@@ -314,10 +314,10 @@ void object_free(Obj *object) {
 
     /* Free variable names and contents. */
     for (i = 0; i < object->vars.size; i++) {
-	if (object->vars.tab[i].name != -1) {
-	    ident_discard(object->vars.tab[i].name);
-	    data_discard(&object->vars.tab[i].val);
-	}
+        if (object->vars.tab[i].name != -1) {
+            ident_discard(object->vars.tab[i].name);
+            data_discard(&object->vars.tab[i].val);
+        }
     }
     efree(object->vars.tab);
     efree(object->vars.hashtab);
@@ -325,8 +325,8 @@ void object_free(Obj *object) {
     /* Free methods. */
     if (object->methods) {
         for (i = 0; i < object->methods->size; i++) {
-	    if (object->methods->tab[i].m)
-	        method_free(object->methods->tab[i].m);
+            if (object->methods->tab[i].m)
+                method_free(object->methods->tab[i].m);
         }
         efree(object->methods->tab);
         efree(object->methods->hashtab);
@@ -336,9 +336,9 @@ void object_free(Obj *object) {
 
         /* Discard method's identifiers. */
         for (i = 0; i < object->methods->num_idents; i++) {
-	    if (object->methods->idents[i].id != NOT_AN_IDENT) {
-	        ident_discard(object->methods->idents[i].id);
-	    }
+            if (object->methods->idents[i].id != NOT_AN_IDENT) {
+                ident_discard(object->methods->idents[i].id);
+            }
         }
         efree(object->methods->idents);
 
@@ -465,7 +465,7 @@ void object_destroy(Obj *object) {
          * Also, check if any kid hits zero parents, and reparent it to our
          * parents if it does. */
         children = object->children;
-    
+
         cthis.type = OBJNUM;
         cthis.u.objnum = object->objnum;
 #ifdef USE_PARENT_OBJS
@@ -510,7 +510,7 @@ void object_destroy(Obj *object) {
 // -----------------------------------------------------------------
 */
 static void object_update_parents(Obj * object,
-				    cList *(*list_op)(cList *, cData *))
+                                    cList *(*list_op)(cList *, cData *))
 {
     Obj * p;
     cList     * parents;
@@ -524,20 +524,20 @@ static void object_update_parents(Obj * object,
     parents = object->parents;
 
     for (d = list_first(parents); d; d = list_next(parents, d)) {
-	p = cache_retrieve(d->u.objnum);
-	cache_dirty_object(p);
+        p = cache_retrieve(d->u.objnum);
+        cache_dirty_object(p);
 
         if (!p->children)
             p->children = list_new(0);
 
-	p->children = (*list_op)(p->children, &cthis);
+        p->children = (*list_op)(p->children, &cthis);
 
         if (list_length(p->children) == 0) {
             list_discard(p->children);
             p->children = NULL;
         }
 
-	cache_discard(p);
+        cache_discard(p);
     }
 }
 
@@ -562,7 +562,7 @@ static Hash * object_ancestors_depth_aux(cObjnum objnum, Hash * h) {
     cache_discard(obj);
 
     for (d = list_last(parents); d; d = list_prev(parents, d))
-	h = object_ancestors_depth_aux(d->u.objnum, h);
+        h = object_ancestors_depth_aux(d->u.objnum, h);
 
     list_discard(parents);
 
@@ -669,7 +669,7 @@ static void ancestor_cache_set(cObjnum objnum, cObjnum ancestor,
 
     if (ancestor_cache[i].stamp == cur_anc_stamp)
         ancestor_cache_collisions++;
-    
+
     ancestor_cache[i].stamp = cur_anc_stamp;
     ancestor_cache[i].objnum = objnum;
     ancestor_cache[i].ancestor = ancestor;
@@ -684,7 +684,7 @@ Int object_has_ancestor(cObjnum objnum, cObjnum ancestor)
     Bool anc_cache_check;
 
     if (objnum == ancestor)
-	return 1;
+        return 1;
 
     if (ancestor_cache_check(objnum, ancestor, &anc_cache_check))
         return anc_cache_check;
@@ -706,8 +706,8 @@ static Int object_has_ancestor_aux(cObjnum objnum, cObjnum ancestor)
     /* Don't search an object twice. */
     object = cache_retrieve(objnum);
     if (SEARCHED(object)) {
-	cache_discard(object);
-	return 0;
+        cache_discard(object);
+        return 0;
     }
     HAVE_SEARCHED(object);
 
@@ -716,9 +716,9 @@ static Int object_has_ancestor_aux(cObjnum objnum, cObjnum ancestor)
 
     for (d = list_first(parents); d; d = list_next(parents, d)) {
         /* Do this check first since it is trivial
-	 * The result of this will be cached in the
-	 * caller. */
-	if (d->u.objnum == ancestor) {
+         * The result of this will be cached in the
+         * caller. */
+        if (d->u.objnum == ancestor) {
             list_discard(parents);
             return 1;
         }
@@ -726,17 +726,17 @@ static Int object_has_ancestor_aux(cObjnum objnum, cObjnum ancestor)
            have a true result. */
         if (ancestor_cache_check(d->u.objnum, ancestor, &anc_cache_check) &&
             anc_cache_check) {
-	    list_discard(parents);
-	    return anc_cache_check;
-	}
+            list_discard(parents);
+            return anc_cache_check;
+        }
     }
 
     for (d = list_first(parents); d; d = list_next(parents, d)) {
-	if (object_has_ancestor_aux(d->u.objnum, ancestor)) {
+        if (object_has_ancestor_aux(d->u.objnum, ancestor)) {
             ancestor_cache_set(d->u.objnum, ancestor, TRUE);
-	    list_discard(parents);
-	    return 1;
-	}
+            list_discard(parents);
+            return 1;
+        }
     }
 
     ancestor_cache_set(objnum, ancestor, FALSE);
@@ -760,11 +760,11 @@ Int object_change_parents(Obj *object, cList *parents)
      * any cycles.  If something is wrong, return the index of the parent that
      * caused the problem. */
     for (d = list_first(parents); d; d = list_next(parents, d)) {
-	if (d->type != OBJNUM)
-	    return d - list_first(parents);
-	parent = d->u.objnum;
-	if (!cache_check(parent) || object_has_ancestor(parent, object->objnum))
-	    return d - list_first(parents);
+        if (d->type != OBJNUM)
+            return d - list_first(parents);
+        parent = d->u.objnum;
+        if (!cache_check(parent) || object_has_ancestor(parent, object->objnum))
+            return d - list_first(parents);
     }
 
     /* Invalidate the method cache. */
@@ -796,7 +796,7 @@ Int object_change_parents(Obj *object, cList *parents)
     cthis.type = OBJECT;
     for (d=list_first(parents); d; d=list_next(parents, d))
     {
-	cthis.u.object = cache_retrieve(d->u.objnum);
+        cthis.u.object = cache_retrieve(d->u.objnum);
         object->parent_objs = list_add(object->parent_objs, &cthis);
     }
 #endif
@@ -845,30 +845,30 @@ Int object_add_ident(Obj *object, char *ident)
 
     /* Look for blanks while checking for an equivalent identifier. */
     for (i = 0; i < object->methods->num_idents; i++) {
-	if (object->methods->idents[i].id == -1) {
-	    blank = i;
-	} else if (object->methods->idents[i].id == id) {
-	    /* We already have this id.  Up the reference count on the object's
-	     * copy if it, discard this function's copy of it, and return the
-	     * index into the object's identifier table. */
-	  object->methods->idents[i].refs++;
-	  ident_discard(id);
-	  return i;
-	}
+        if (object->methods->idents[i].id == -1) {
+            blank = i;
+        } else if (object->methods->idents[i].id == id) {
+            /* We already have this id.  Up the reference count on the object's
+             * copy if it, discard this function's copy of it, and return the
+             * index into the object's identifier table. */
+          object->methods->idents[i].refs++;
+          ident_discard(id);
+          return i;
+        }
     }
 
     /* Fill in a blank if we found one. */
     if (blank != -1) {
-	object->methods->idents[blank].id = id;
-	object->methods->idents[blank].refs = 1;
-	return blank;
+        object->methods->idents[blank].id = id;
+        object->methods->idents[blank].refs = 1;
+        return blank;
     }
 
     /* Check to see if we have to enlarge the table. */
     if (i >= object->methods->idents_size) {
-	object->methods->idents_size = object->methods->idents_size * 2 + MALLOC_DELTA;
-	object->methods->idents = EREALLOC(object->methods->idents, Ident_entry,
-				           object->methods->idents_size);
+        object->methods->idents_size = object->methods->idents_size * 2 + MALLOC_DELTA;
+        object->methods->idents = EREALLOC(object->methods->idents, Ident_entry,
+                                           object->methods->idents_size);
     }
 
     /* Add the string to the end of the table. */
@@ -886,7 +886,7 @@ void object_discard_ident(Obj *object, Int ind)
     object->methods->idents[ind].refs--;
     if (!object->methods->idents[ind].refs) {
       /*write_err("##object_discard_ident %d %s",
-	object->methods->idents[ind].id, ident_name(object->methods->idents[ind].id));*/
+        object->methods->idents[ind].id, ident_name(object->methods->idents[ind].id));*/
 
       ident_discard(object->methods->idents[ind].id);
       object->methods->idents[ind].id = NOT_AN_IDENT;
@@ -899,7 +899,7 @@ Ident object_get_ident(Obj *object, Int ind) {
 
 Ident object_add_var(Obj *object, Ident name) {
     if (object_find_var(object, object->objnum, name))
-	return varexists_id;
+        return varexists_id;
     object_create_var(object, object->objnum, name);
     return NOT_AN_IDENT;
 }
@@ -914,23 +914,23 @@ Ident object_del_var(Obj *object, Ident name)
      * of the variables. */
     indp = &object->vars.hashtab[ident_hash(name) % object->vars.size];
     for (; *indp != -1; indp = &object->vars.tab[*indp].next) {
-	var = &object->vars.tab[*indp];
-	if (var->name == name && var->cclass == object->objnum) {
-	    cache_dirty_object(object);
+        var = &object->vars.tab[*indp];
+        if (var->name == name && var->cclass == object->objnum) {
+            cache_dirty_object(object);
 
-	    /*  write_err("##object_del_var %d %s", var->name, ident_name(var->name));*/
-	    ident_discard(var->name);
-	    data_discard(&var->val);
-	    var->name = -1;
+            /*  write_err("##object_del_var %d %s", var->name, ident_name(var->name));*/
+            ident_discard(var->name);
+            data_discard(&var->val);
+            var->name = -1;
 
-	    /* Remove ind from hash table thread, and add it to blanks
-	     * thread. */
-	    *indp = var->next;
-	    var->next = object->vars.blanks;
-	    object->vars.blanks = var - object->vars.tab;
+            /* Remove ind from hash table thread, and add it to blanks
+             * thread. */
+            *indp = var->next;
+            var->next = object->vars.blanks;
+            object->vars.blanks = var - object->vars.tab;
 
-	    return NOT_AN_IDENT;
-	}
+            return NOT_AN_IDENT;
+        }
     }
 
     return varnf_id;
@@ -941,12 +941,12 @@ Ident object_assign_var(Obj *object, Obj *cclass, Ident name, cData *val) {
 
     /* Make sure variable exists in cclass (method object). */
     if (!object_find_var(cclass, cclass->objnum, name))
-	return varnf_id;
+        return varnf_id;
 
     /* Get variable slot on object, creating it if necessary. */
     var = object_find_var(object, cclass->objnum, name);
     if (!var)
-	var = object_create_var(object, cclass->objnum, name);
+        var = object_create_var(object, cclass->objnum, name);
 
     cache_dirty_object(object);
 
@@ -997,14 +997,14 @@ Ident object_retrieve_var(Obj *object, Obj *cclass, Ident name, cData *ret)
 
     /* Make sure variable exists on cclass. */
     if (!object_find_var(cclass, cclass->objnum, name))
-	return varnf_id;
+        return varnf_id;
 
     var = object_find_var(object, cclass->objnum, name);
     if (var) {
-	data_dup(ret, &var->val);
+        data_dup(ret, &var->val);
     } else {
-	ret->type = INTEGER;
-	ret->u.val = 0;
+        ret->type = INTEGER;
+        ret->u.val = 0;
     }
 
     return NOT_AN_IDENT;
@@ -1078,7 +1078,7 @@ Bool object_put_var(Obj *object, cObjnum cclass, Ident name, cData *val)
 
     var = object_find_var(object, cclass, name);
     if (!var)
-	var = object_create_var(object, cclass, name);
+        var = object_create_var(object, cclass, name);
     data_discard(&var->val);
     data_dup(&var->val, val);
     return TRUE;
@@ -1095,31 +1095,31 @@ static Var *object_create_var(Obj *object, cObjnum cclass, Ident name)
     /* If the variable table is full, expand it and its corresponding hash
      * table. */
     if (object->vars.blanks == -1) {
-	Int new_size, i;
+        Int new_size, i;
 
-	/* Compute new size and resize tables. */
-	new_size = object->vars.size * 2 + MALLOC_DELTA + 1;
-	object->vars.tab = EREALLOC(object->vars.tab, Var, new_size);
-	object->vars.hashtab = EREALLOC(object->vars.hashtab, Int, new_size);
+        /* Compute new size and resize tables. */
+        new_size = object->vars.size * 2 + MALLOC_DELTA + 1;
+        object->vars.tab = EREALLOC(object->vars.tab, Var, new_size);
+        object->vars.hashtab = EREALLOC(object->vars.hashtab, Int, new_size);
 
-	/* Refill hash table. */
-	for (i = 0; i < new_size; i++)
-	    object->vars.hashtab[i] = -1;
-	for (i = 0; i < object->vars.size; i++) {
-	    ind = ident_hash(object->vars.tab[i].name) % new_size;
-	    object->vars.tab[i].next = object->vars.hashtab[ind];
-	    object->vars.hashtab[ind] = i;
-	}
+        /* Refill hash table. */
+        for (i = 0; i < new_size; i++)
+            object->vars.hashtab[i] = -1;
+        for (i = 0; i < object->vars.size; i++) {
+            ind = ident_hash(object->vars.tab[i].name) % new_size;
+            object->vars.tab[i].next = object->vars.hashtab[ind];
+            object->vars.hashtab[ind] = i;
+        }
 
-	/* Create new thread of blanks, setting names to -1. */
-	for (i = object->vars.size; i < new_size; i++) {
-	    object->vars.tab[i].name = -1;
-	    object->vars.tab[i].next = i + 1;
-	}
-	object->vars.tab[new_size - 1].next = -1;
-	object->vars.blanks = object->vars.size;
+        /* Create new thread of blanks, setting names to -1. */
+        for (i = object->vars.size; i < new_size; i++) {
+            object->vars.tab[i].name = -1;
+            object->vars.tab[i].next = i + 1;
+        }
+        object->vars.tab[new_size - 1].next = -1;
+        object->vars.blanks = object->vars.size;
 
-	object->vars.size = new_size;
+        object->vars.size = new_size;
     }
 
     /* Add variable at first blank. */
@@ -1166,9 +1166,9 @@ static Var *object_find_var(Obj *object, cObjnum cclass, Ident name)
     /* Traverse hash table thread, stopping if we get a match on the name. */
     ind = object->vars.hashtab[ident_hash(name) % object->vars.size];
     for (; ind != -1; ind = object->vars.tab[ind].next) {
-	var = &object->vars.tab[ind];
-	if (var->name == name && var->cclass == cclass)
-	    return var;
+        var = &object->vars.tab[ind];
+        if (var->name == name && var->cclass == cclass)
+            return var;
     }
 
     return NULL;
@@ -1196,7 +1196,7 @@ Method *object_find_method(cObjnum objnum, Ident name, Bool is_frob) {
     /* Look for cached value. */
     method_cache_hit = method_cache_check(objnum, name, -1, is_frob, &method);
     if (method_cache_hit)
-	return method;
+        return method;
 
     object = cache_retrieve(objnum);
     parents = list_dup(object->parents);
@@ -1214,7 +1214,7 @@ Method *object_find_method(cObjnum objnum, Ident name, Bool is_frob) {
             params.stop_at = -1;
             params.done = 0;
             params.last_method_found = NULL;
-	    params.is_frob = is_frob;
+            params.is_frob = is_frob;
             for (d = list_last(parents); d; d = list_prev(parents, d))
                 search_object(d->u.objnum, &params);
             method = params.last_method_found;
@@ -1227,15 +1227,15 @@ Method *object_find_method(cObjnum objnum, Ident name, Bool is_frob) {
     /* If we have not found a method defined above, or the top method we
        have found is overridable */
     if (!method || !(method->m_flags & MF_NOOVER)) {
-	object = cache_retrieve(objnum);
-	local_method = object_find_method_local(object, name, is_frob);
-	if (local_method) {
-	    if (method)
-		cache_discard(method->object);
-	    method = local_method;
-	} else {
-	    cache_discard(object);
-	}
+        object = cache_retrieve(objnum);
+        local_method = object_find_method_local(object, name, is_frob);
+        if (local_method) {
+            if (method)
+                cache_discard(method->object);
+            method = local_method;
+        } else {
+            cache_discard(object);
+        }
     }
 
     method_cache_set(objnum, name, -1, (method ? method->object->objnum : -2), is_frob, (method ? FALSE : TRUE));
@@ -1258,32 +1258,32 @@ Method *object_find_next_method(cObjnum objnum, Ident name,
     /* Check cache. */
     method_cache_hit = method_cache_check(objnum, name, after, is_frob, &method);
     if (method_cache_hit)
-	return method;
+        return method;
 
     object = cache_retrieve(objnum);
     parents = object->parents;
 
     if (list_length(parents) == 1) {
-	/* Object has only one parent; search recursively. */
-	parent = list_elem(parents, 0)->u.objnum;
-	cache_discard(object);
-	if (objnum == after)
-	    method = object_find_method(parent, name, is_frob);
-	else
-	    method = object_find_next_method(parent, name, after, is_frob);
+        /* Object has only one parent; search recursively. */
+        parent = list_elem(parents, 0)->u.objnum;
+        cache_discard(object);
+        if (objnum == after)
+            method = object_find_method(parent, name, is_frob);
+        else
+            method = object_find_next_method(parent, name, after, is_frob);
     } else {
-	/* Object has more than one parent; use complicated search. */
-	START_SEARCH();
-	params.name = name;
-	params.stop_at = (objnum == after) ? -1 : after;
-	params.done = 0;
-	params.last_method_found = NULL;
-	params.is_frob = is_frob;
-	for (d = list_last(parents); d; d = list_prev(parents, d))
-	    search_object(d->u.objnum, &params);
-	cache_discard(object);
-	method = params.last_method_found;
-	END_SEARCH();
+        /* Object has more than one parent; use complicated search. */
+        START_SEARCH();
+        params.name = name;
+        params.stop_at = (objnum == after) ? -1 : after;
+        params.done = 0;
+        params.last_method_found = NULL;
+        params.is_frob = is_frob;
+        for (d = list_last(parents); d; d = list_prev(parents, d))
+            search_object(d->u.objnum, &params);
+        cache_discard(object);
+        method = params.last_method_found;
+        END_SEARCH();
     }
 
     method_cache_set(objnum, name, after, (method ? method->object->objnum : -2), is_frob, (method ? FALSE : TRUE));
@@ -1310,37 +1310,37 @@ static void search_object(cObjnum objnum, Search_params *params)
 
     /* Traverse the parents list backwards. */
     for (d = list_last(parents); d; d = list_prev(parents, d))
-	search_object(d->u.objnum, params);
+        search_object(d->u.objnum, params);
     list_discard(parents);
 
     /* If the search is done, don't visit this object. */
     if (params->done)
-	return;
+        return;
 
     /* If we were searching for a next method after a given object, then this
      * might be the given object, in which case we should stop. */
     if (objnum == params->stop_at) {
-	params->done = 1;
-	return;
+        params->done = 1;
+        return;
     }
 
     /* Visit this object.  First, get it back from the cache. */
     object = cache_retrieve(objnum);
     method = object_find_method_local(object, params->name, params->is_frob);
     if (method) {
-	/* We found a method on this object.  Discard the reference count on
-	 * the last method found's object, if we have one, and set this method
-	 * as the last one found.  Leave object's reference count there, since
-	 * we don't want it to get swapped out. */
-	if (params->last_method_found)
-	    cache_discard(params->last_method_found->object);
-	params->last_method_found = method;
+        /* We found a method on this object.  Discard the reference count on
+         * the last method found's object, if we have one, and set this method
+         * as the last one found.  Leave object's reference count there, since
+         * we don't want it to get swapped out. */
+        if (params->last_method_found)
+            cache_discard(params->last_method_found->object);
+        params->last_method_found = method;
 
-	/* If this method is non-overridable, the search is done. */
+        /* If this method is non-overridable, the search is done. */
         if (method->m_flags & MF_NOOVER)
-	    params->done = 1;
+            params->done = 1;
     } else {
-	cache_discard(object);
+        cache_discard(object);
     }
 }
 
@@ -1357,25 +1357,25 @@ Method *object_find_method_local(Obj *object, Ident name, Bool is_frob)
     ind = ident_hash(name) % object->methods->size;
     method = object->methods->hashtab[ind];
     if (is_frob == FROB_ANY) {
-	for (; method != -1; method = object->methods->tab[method].next) {
-	    meth=object->methods->tab[method].m;
-	    if (meth->name == name)
-		return object->methods->tab[method].m;
-	}
+        for (; method != -1; method = object->methods->tab[method].next) {
+            meth=object->methods->tab[method].m;
+            if (meth->name == name)
+                return object->methods->tab[method].m;
+        }
     }
     else if (is_frob == FROB_YES) {
-	for (; method != -1; method = object->methods->tab[method].next) {
-	    meth=object->methods->tab[method].m;
-	    if (meth->name == name && meth->m_access == MS_FROB )
-		return object->methods->tab[method].m;
-	}
+        for (; method != -1; method = object->methods->tab[method].next) {
+            meth=object->methods->tab[method].m;
+            if (meth->name == name && meth->m_access == MS_FROB )
+                return object->methods->tab[method].m;
+        }
     }
     else {
-	for (; method != -1; method = object->methods->tab[method].next) {
-	    meth=object->methods->tab[method].m;
-	    if (meth->name == name && meth->m_access != MS_FROB )
-		return object->methods->tab[method].m;
-	}
+        for (; method != -1; method = object->methods->tab[method].next) {
+            meth=object->methods->tab[method].m;
+            if (meth->name == name && meth->m_access != MS_FROB )
+                return object->methods->tab[method].m;
+        }
     }
 
     return NULL;
@@ -1389,8 +1389,8 @@ static Bool method_cache_check(cObjnum objnum, Ident name,
 
     i = (10 + objnum + (name << 4) + (is_frob << 8) + after) % METHOD_CACHE_SIZE;
     if (method_cache[i].stamp == cur_stamp && method_cache[i].objnum == objnum &&
-	method_cache[i].name == name && method_cache[i].after == after &&
-	method_cache[i].loc != -1 && method_cache[i].is_frob==is_frob) {
+        method_cache[i].name == name && method_cache[i].after == after &&
+        method_cache[i].loc != -1 && method_cache[i].is_frob==is_frob) {
         method_cache_hits++;
         if (!method_cache[i].failed) {
             object = cache_retrieve(method_cache[i].loc);
@@ -1402,8 +1402,8 @@ static Bool method_cache_check(cObjnum objnum, Ident name,
         }
     } else {
         method_cache_misses++;
-	*method = NULL;
-	return FALSE;
+        *method = NULL;
+        return FALSE;
     }
 }
 
@@ -1487,7 +1487,7 @@ static void method_cache_invalidate(cObjnum objnum) {
     }
 
     method_cache_partials++;
-    
+
     if (log_method_cache == 2) {
         write_err("Method cache partially invalidated for obj #%l", objnum);
         log_current_task_stack(FALSE, write_err);
@@ -1577,33 +1577,33 @@ void object_add_method(Obj *object, Ident name, Method *method) {
     /* If the method table is full, expand it and its corresponding hash
      * table. */
     if (object->methods->blanks == -1) {
-	Int new_size, i, ind;
+        Int new_size, i, ind;
 
-	/* Compute new size and resize tables. */
-	new_size = object->methods->size * 2 + MALLOC_DELTA + 1;
-	object->methods->tab = EREALLOC(object->methods->tab, struct mptr,
-				       new_size);
-	object->methods->hashtab = EREALLOC(object->methods->hashtab, Int,
-					   new_size);
+        /* Compute new size and resize tables. */
+        new_size = object->methods->size * 2 + MALLOC_DELTA + 1;
+        object->methods->tab = EREALLOC(object->methods->tab, struct mptr,
+                                       new_size);
+        object->methods->hashtab = EREALLOC(object->methods->hashtab, Int,
+                                           new_size);
 
-	/* Refill hash table. */
-	for (i = 0; i < new_size; i++)
-	    object->methods->hashtab[i] = -1;
-	for (i = 0; i < object->methods->size; i++) {
-	    ind = ident_hash(object->methods->tab[i].m->name) % new_size;
-	    object->methods->tab[i].next = object->methods->hashtab[ind];
-	    object->methods->hashtab[ind] = i;
-	}
+        /* Refill hash table. */
+        for (i = 0; i < new_size; i++)
+            object->methods->hashtab[i] = -1;
+        for (i = 0; i < object->methods->size; i++) {
+            ind = ident_hash(object->methods->tab[i].m->name) % new_size;
+            object->methods->tab[i].next = object->methods->hashtab[ind];
+            object->methods->hashtab[ind] = i;
+        }
 
-	/* Create new thread of blanks and set method pointers to null. */
-	for (i = object->methods->size; i < new_size; i++) {
-	    object->methods->tab[i].m = NULL;
-	    object->methods->tab[i].next = i + 1;
-	}
-	object->methods->tab[new_size - 1].next = -1;
-	object->methods->blanks = object->methods->size;
+        /* Create new thread of blanks and set method pointers to null. */
+        for (i = object->methods->size; i < new_size; i++) {
+            object->methods->tab[i].m = NULL;
+            object->methods->tab[i].next = i + 1;
+        }
+        object->methods->tab[new_size - 1].next = -1;
+        object->methods->blanks = object->methods->size;
 
-	object->methods->size = new_size;
+        object->methods->size = new_size;
     }
 
     method->object = object;
@@ -1633,8 +1633,8 @@ Int object_del_method(Obj *object, Ident name, Bool replacing) {
     ind = ident_hash(name) % object->methods->size;
     indp = &object->methods->hashtab[ind];
     for (; *indp != -1; indp = &object->methods->tab[*indp].next) {
-	ind = *indp;
-	if (object->methods->tab[ind].m->name == name) {
+        ind = *indp;
+        if (object->methods->tab[ind].m->name == name) {
             /* check the lock at a higher level, this is a better
                location to put it, but it causes logistic problems */
             /* ack, we found it, but its locked! */
@@ -1643,17 +1643,17 @@ Int object_del_method(Obj *object, Ident name, Bool replacing) {
 
             cache_dirty_object(object);
 
-	    /* ok, we can discard it. */
-	    method_discard(object->methods->tab[ind].m);
-	    object->methods->tab[ind].m = NULL;
+            /* ok, we can discard it. */
+            method_discard(object->methods->tab[ind].m);
+            object->methods->tab[ind].m = NULL;
 
-	    /* Remove ind from the hash table thread, and add it to the blanks
-	     * thread. */
-	    *indp = object->methods->tab[ind].next;
-	    object->methods->tab[ind].next = object->methods->blanks;
-	    object->methods->blanks = ind;
+            /* Remove ind from the hash table thread, and add it to the blanks
+             * thread. */
+            *indp = object->methods->tab[ind].next;
+            object->methods->tab[ind].next = object->methods->blanks;
+            object->methods->blanks = ind;
 
-	    if (replacing == FALSE) {
+            if (replacing == FALSE) {
                 /* Invalidate the method cache. */
                 if (object->children && list_length(object->children) != 0) {
                     method_cache_invalidate_all();
@@ -1662,9 +1662,9 @@ Int object_del_method(Obj *object, Ident name, Bool replacing) {
                 }
             }
 
-	    /* Return one, meaning the method was successfully deleted. */
-	    return 1;
-	}
+            /* Return one, meaning the method was successfully deleted. */
+            return 1;
+        }
     }
 
     /* Return zero, meaning no method was found to delete. */
@@ -1723,7 +1723,7 @@ Int object_set_method_access(Obj * object, Ident name, Int access) {
     }
     if ((method->m_access == MS_FROB) || (access == MS_FROB)) {
         /*
-	 * only invalidate when changing access to or from 'frob' access.
+         * only invalidate when changing access to or from 'frob' access.
          */
         method_cache_invalidate_all();
     }
@@ -1738,7 +1738,7 @@ Method * method_new(void) {
 
     method->m_flags  = MF_NONE;
     method->m_access = MS_PUBLIC;
-    method->native   = -1; 
+    method->native   = -1;
 
     /* usually everything else is initialized elsewhere */
     return method;
@@ -1753,20 +1753,20 @@ void method_free(Method *method)
     if (method->name != -1)
         ident_discard(method->name);
     if (method->num_args)
-	TFREE(method->argnames, method->num_args);
+        TFREE(method->argnames, method->num_args);
     if (method->num_vars)
-	TFREE(method->varnames, method->num_vars);
+        TFREE(method->varnames, method->num_vars);
     TFREE(method->opcodes, method->num_opcodes);
     if (method->num_error_lists) {
-	/* Discard identifiers held in the method's error lists. */
-	for (i = 0; i < method->num_error_lists; i++) {
-	  elist = &method->error_lists[i];
-	  for (j = 0; j < elist->num_errors; j++) {
-	    ident_discard(elist->error_ids[j]);
-	  }
+        /* Discard identifiers held in the method's error lists. */
+        for (i = 0; i < method->num_error_lists; i++) {
+          elist = &method->error_lists[i];
+          for (j = 0; j < elist->num_errors; j++) {
+            ident_discard(elist->error_ids[j]);
+          }
           TFREE(elist->error_ids, elist->num_errors);
-	}
-	TFREE(method->error_lists, method->num_error_lists);
+        }
+        TFREE(method->error_lists, method->num_error_lists);
     }
     efree(method);
 }
@@ -1778,37 +1778,37 @@ void method_delete_code_refs(Method *method)
     Op_info *info;
 
     for (i = 0; i < method->num_args; i++)
-	object_discard_ident(method->object, method->argnames[i]);
+        object_discard_ident(method->object, method->argnames[i]);
     if (method->rest != -1)
-	object_discard_ident(method->object, method->rest);
+        object_discard_ident(method->object, method->rest);
 
     for (i = 0; i < method->num_vars; i++)
-	object_discard_ident(method->object, method->varnames[i]);
+        object_discard_ident(method->object, method->varnames[i]);
 
     i = 0;
     while (i < method->num_opcodes) {
-	opcode = method->opcodes[i];
+        opcode = method->opcodes[i];
 
-	/* Use opcode info table for anything else. */
-	info = &op_table[opcode];
-	for (j = 0; j < 2; j++) {
-	    arg_type = (j == 0) ? info->arg1 : info->arg2;
-	    if (arg_type) {
-		i++;
-		switch (arg_type) {
+        /* Use opcode info table for anything else. */
+        info = &op_table[opcode];
+        for (j = 0; j < 2; j++) {
+            arg_type = (j == 0) ? info->arg1 : info->arg2;
+            if (arg_type) {
+                i++;
+                switch (arg_type) {
 
-		  case STRING:
-		    object_discard_string(method->object, method->opcodes[i]);
-		    break;
+                  case STRING:
+                    object_discard_string(method->object, method->opcodes[i]);
+                    break;
 
-		  case IDENT:
-		    object_discard_ident(method->object, method->opcodes[i]);
-		    break;
+                  case IDENT:
+                    object_discard_ident(method->object, method->opcodes[i]);
+                    break;
 
-		}
-	    }
-	}
-	i++;
+                }
+            }
+        }
+        i++;
     }
 
 }
@@ -1821,8 +1821,8 @@ Method * method_dup(Method * method) {
 void method_discard(Method *method) {
     method->refs--;
     if (!method->refs) {
-	method_delete_code_refs(method);
-	method_free(method);
+        method_delete_code_refs(method);
+        method_free(method);
     }
 }
 
@@ -1871,7 +1871,7 @@ void object_load_parent_objs(Obj * obj)
     cthis.type = OBJECT;
     for (d=list_first(obj->parents); d; d=list_next(obj->parents, d))
     {
-	cthis.u.object = cache_retrieve(d->u.objnum);
+        cthis.u.object = cache_retrieve(d->u.objnum);
         obj->parent_objs = list_add(obj->parent_objs, &cthis);
     }
 }

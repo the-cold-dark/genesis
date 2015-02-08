@@ -82,16 +82,16 @@ struct error_action_specifier {
     Int stack_pos;
     Int arg_pos;
     union {
-	struct {
-	    Int end;
-	} critical;
-	struct {
-	    Int end;
-	} propagate;
-	struct {
-	    Int error_list;
-	    Int handler;
-	} ccatch;
+        struct {
+            Int end;
+        } critical;
+        struct {
+            Int end;
+        } propagate;
+        struct {
+            Int error_list;
+            Int handler;
+        } ccatch;
     } u;
     Error_action_specifier *next;
 };
@@ -169,9 +169,9 @@ Int  frame_start(Obj *obj,
                  cObjnum sender,
                  cObjnum caller,
                  cObjnum user,
-		 Int stack_start,
+                 Int stack_start,
                  Int arg_start,
-		 Bool is_frob);
+                 Bool is_frob);
 void pop_native_stack(Int start);
 void frame_return(void);
 void anticipate_assignment(void);
@@ -217,11 +217,11 @@ Int func_init_0_or_1(cData **args, Int *num_args, Int type1);
 Int func_init_0_to_2(cData **args, Int *num_args, Int type1, Int type2);
 Int func_init_1_or_2(cData **args, Int *num_args, Int type1, Int type2);
 Int func_init_2_or_3(cData **args, Int *num_args, Int type1, Int type2,
-		     Int type3);
+                     Int type3);
 Int func_init_3_or_4(cData **args, Int *num_args, Int type1, Int type2,
-		     Int type3, Int type4);
+                     Int type3, Int type4);
 Int func_init_1_to_3(cData **args, Int *num_args, Int type1, Int type2,
-		     Int type3);
+                     Int type3);
 void func_num_error(Int num_args, char *required);
 void func_type_error(char *which, cData *wrong, char *required);
 void cthrow(Long id, char *fmt, ...);
@@ -242,7 +242,7 @@ void      vm_pause(void);
 VMState * vm_lookup(Long tid);
 cList   * vm_list(void);
 cList   * vm_stack(Frame * frame_to_trace, Bool calculate_line_numbers);
-void      log_task_stack(Long taskid, cList * stack, 
+void      log_task_stack(Long taskid, cList * stack,
                          void (logroutine)(char*,...));
 void      run_paused_tasks(void);
 void      bind_opcode(Int opcode, cObjnum objnum);

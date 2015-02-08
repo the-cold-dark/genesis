@@ -43,7 +43,7 @@ NATIVE_METHOD(strftime) {
     tt = ((argc == 2) ? (time_t) INT2 : time(NULL));
 #endif
     t  = localtime(&tt);
- 
+
     fmt = string_chars(STR1);
 
     /* some OS's are weird and do odd things when you end in %

@@ -28,7 +28,7 @@ extern regexp * gen_regcomp(char *exp);
 extern int      gen_regexec(regexp *prog, char *string, int case_flag);
 extern char   * gen_regerror(char *msg);
 
-#define	MAGIC	0234
+#define        MAGIC        0234
 
 #endif
 

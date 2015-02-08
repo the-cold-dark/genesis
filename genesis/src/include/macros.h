@@ -29,8 +29,8 @@
  * // -----------------------------------------------------------------------
  * */
 
-#define ROUND_UP(a, m)		(((a) - 1) + (m) - (((a) - 1) % (m)))
-#define BUFFER_DATA_INCREMENT	512
+#define ROUND_UP(a, m)                (((a) - 1) + (m) - (((a) - 1) % (m)))
+#define BUFFER_DATA_INCREMENT        512
 
 
 /*
@@ -358,14 +358,14 @@
 
 #define INSTANCE_INIT(_class_,_name_) \
     { \
-       _name_,		      \
+       _name_,                      \
        0,                     \
        CAT(pack_,_class_),      \
        CAT(unpack_,_class_),    \
        CAT(size_,_class_),      \
        CAT(compare_,_class_),   \
        CAT(hash_,_class_),      \
-       CAT(dup_,_class_),	      \
+       CAT(dup_,_class_),              \
        CAT(discard_,_class_),   \
        CAT(string_,_class_)     \
     }

@@ -26,12 +26,12 @@
  * retains up to MAX_BLOCKS blocks of memory in the pile to avoid repeated
  * mallocs and frees of large blocks. */
 
-#define MAX(a, b)	(((a) >= (b)) ? (a) : (b))
+#define MAX(a, b)        (((a) >= (b)) ? (a) : (b))
 
-#define TRAY_INC	sizeof(Tlist)
-#define NUM_TRAYS	4
-#define MAX_USE_TRAY	(NUM_TRAYS * TRAY_INC)
-#define TRAY_ELEM	508
+#define TRAY_INC        sizeof(Tlist)
+#define NUM_TRAYS        4
+#define MAX_USE_TRAY        (NUM_TRAYS * TRAY_INC)
+#define TRAY_ELEM        508
 
 #define PILE_BLOCK_SIZE 254
 #define MAX_PILE_BLOCKS 8
@@ -117,7 +117,7 @@ void *erealloc(void *ptr, size_t size)
 
     newptr = realloc(ptr, size);
     if (!newptr)
-	panic("erealloc(%ld) failed.", size);
+        panic("erealloc(%ld) failed.", size);
 
     if (log_malloc_size &&
         (log_malloc_size <= size) &&
@@ -139,27 +139,27 @@ void *tmalloc(size_t size)
 
     /* If the block isn't fairly small, fall back on malloc(). */
     if (size > MAX_USE_TRAY)
-	return emalloc(size);
+        return emalloc(size);
 
     /* Find the appropriate tray to use. */
     t = (size - 1) / TRAY_INC;
 
     /* If we're out of tray elements, make a new tray. */
     if (!trays[t]) {
-	Tblocks *tmp = EMALLOC(Tblocks, 1);
+        Tblocks *tmp = EMALLOC(Tblocks, 1);
         tmp->block = EMALLOC(Tlist, TRAY_ELEM);
         tmp->next = tray_blocks;
         tray_blocks = tmp;
 
-	trays[t] = (void*)tmp->block;
+        trays[t] = (void*)tmp->block;
 
-	/* n is the number of Tlists we need for each tray element. */
-	n = t + 1;
+        /* n is the number of Tlists we need for each tray element. */
+        n = t + 1;
 
-	/* Link up tray elements. */
-	for (i = 0; i <= TRAY_ELEM - (2 * n); i += n)
-	    trays[t][i].next = &trays[t][i + n];
-	trays[t][i].next = NULL;
+        /* Link up tray elements. */
+        for (i = 0; i <= TRAY_ELEM - (2 * n); i += n)
+            trays[t][i].next = &trays[t][i + n];
+        trays[t][i].next = NULL;
     }
 
     /* Return the first tray element, and set trays[t] to the next tray
@@ -176,8 +176,8 @@ void tfree(void *ptr, size_t size)
     /* If the block size is greater than MAX_USE_TRAY, then tmalloc() didn't
      * pull it out of a tray, so just free it normally. */
     if (size > MAX_USE_TRAY) {
-	efree(ptr);
-	return;
+        efree(ptr);
+        return;
     }
 
     /* Add this element to the appropriate tray. */
@@ -193,12 +193,12 @@ void *trealloc(void *ptr, size_t oldsize, size_t newsize)
     /* If neither the old block or the new block is fairly small, then just
      * fall back on realloc(). */
     if (oldsize > MAX_USE_TRAY && newsize > MAX_USE_TRAY)
-	return erealloc(ptr, newsize);
+        return erealloc(ptr, newsize);
 
     /* If sizes are such that we would be using the same tray for both blocks,
      * just return the old pointer. */
     if ((oldsize - 1) / TRAY_INC == (newsize - 1) / TRAY_INC)
-	return ptr;
+        return ptr;
 
     /* Allocate a new tray, copy into it, and free the old tray. */
     cnew = tmalloc(newsize);

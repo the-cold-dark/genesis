@@ -21,16 +21,16 @@ pthread_mutex_t lookup_mutex;
 #ifdef DEBUG_LOOKUP_LOCK
 #define LOCK_LOOKUP(func) \
         write_err("%s: locking db", func); \
-	pthread_mutex_lock(&lookup_mutex); \
-	write_err("%s: locked db", func);
+        pthread_mutex_lock(&lookup_mutex); \
+        write_err("%s: locked db", func);
 #define UNLOCK_LOOKUP(func) \
-	pthread_mutex_unlock(&lookup_mutex); \
-	write_err("%s: unlocked db", func);
+        pthread_mutex_unlock(&lookup_mutex); \
+        write_err("%s: unlocked db", func);
 #else
 #define LOCK_LOOKUP(func) \
-	pthread_mutex_lock(&lookup_mutex);
+        pthread_mutex_lock(&lookup_mutex);
 #define UNLOCK_LOOKUP(func) \
-	pthread_mutex_unlock(&lookup_mutex);
+        pthread_mutex_unlock(&lookup_mutex);
 #endif
 #else
 #define LOCK_LOOKUP(func)
@@ -43,8 +43,8 @@ pthread_mutex_t lookup_mutex;
 #include DBM_H_FILE
 
 #ifdef S_IRUSR
-#define READ_WRITE		(S_IRUSR | S_IWUSR)
-#define READ_WRITE_EXECUTE	(S_IRUSR | S_IWUSR | S_IXUSR)
+#define READ_WRITE                (S_IRUSR | S_IWUSR)
+#define READ_WRITE_EXECUTE        (S_IRUSR | S_IWUSR | S_IXUSR)
 #else
 #define READ_WRITE 0600
 #define READ_WRITE_EXECUTE 0700
@@ -79,14 +79,14 @@ void lookup_open(char *name, Int cnew) {
 #endif
 
     if (cnew)
-	dbp = dbm_open(name, O_TRUNC | O_RDWR | O_CREAT | O_BINARY, READ_WRITE);
+        dbp = dbm_open(name, O_TRUNC | O_RDWR | O_CREAT | O_BINARY, READ_WRITE);
     else
-	dbp = dbm_open(name, O_RDWR | O_BINARY, READ_WRITE);
+        dbp = dbm_open(name, O_RDWR | O_BINARY, READ_WRITE);
     if (!dbp)
-	fail_to_start("Cannot open dbm database file.");
+        fail_to_start("Cannot open dbm database file.");
 
     for (i = 0; i < NAME_CACHE_SIZE; i++)
-	name_cache[i].name = NOT_AN_IDENT;
+        name_cache[i].name = NOT_AN_IDENT;
 }
 
 void lookup_close(void) {
@@ -109,7 +109,7 @@ void lookup_sync(void) {
     UNLOCK_LOOKUP("lookup_sync")
 
     if (!dbp)
-	panic("Cannot reopen dbm database file.");
+        panic("Cannot reopen dbm database file.");
 }
 
 Int lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size)
@@ -124,8 +124,8 @@ Int lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size)
     value = dbm_fetch(dbp, key);
     if (!value.dptr)
     {
-	UNLOCK_LOOKUP("lookup_retrieve_objnum")
-	return 0;
+        UNLOCK_LOOKUP("lookup_retrieve_objnum")
+        return 0;
     }
 
     parse_offset_size_value(value, offset, size);
@@ -142,9 +142,9 @@ Int lookup_store_objnum(cObjnum objnum, off_t offset, Int size)
     key = objnum_key(objnum, nbuf1);
     value = offset_size_value(offset, size, nbuf2);
     if (dbm_store(dbp, key, value, DBM_REPLACE)) {
-	write_err("ERROR: Failed to store key %l.", objnum);
+        write_err("ERROR: Failed to store key %l.", objnum);
         UNLOCK_LOOKUP("lookup_store_objnum")
-	return 0;
+        return 0;
     }
 
     UNLOCK_LOOKUP("lookup_store_objnum")
@@ -160,9 +160,9 @@ Int lookup_remove_objnum(cObjnum objnum)
     /* Remove the key from the database. */
     key = objnum_key(objnum, nbuf);
     if (dbm_delete(dbp, key)) {
-	write_err("ERROR: Failed to delete key %l.", objnum);
+        write_err("ERROR: Failed to delete key %l.", objnum);
         UNLOCK_LOOKUP("lookup_remove_objnum")
-	return 0;
+        return 0;
     }
     UNLOCK_LOOKUP("lookup_remove_objnum")
     return 1;
@@ -175,9 +175,9 @@ cObjnum lookup_first_objnum(void)
 
     key = dbm_firstkey(dbp);
     if (key.dptr == NULL)
-	return INV_OBJNUM;
+        return INV_OBJNUM;
     if (key.dsize > 1 && *(char*)key.dptr == 0)
-	return atoln(key.dptr + 1, key.dsize - 1);
+        return atoln(key.dptr + 1, key.dsize - 1);
     return lookup_next_objnum();
 }
 
@@ -188,9 +188,9 @@ cObjnum lookup_next_objnum(void)
 
     key = dbm_nextkey(dbp);
     if (key.dptr == NULL)
-	return NOT_AN_IDENT;
+        return NOT_AN_IDENT;
     if (key.dsize > 1 && *(char*)key.dptr == 0)
-	return atoln(key.dptr + 1, key.dsize - 1);
+        return atoln(key.dptr + 1, key.dsize - 1);
     return lookup_next_objnum();
 }
 
@@ -202,9 +202,9 @@ Int lookup_retrieve_name(Ident name, cObjnum *objnum)
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
         name_cache_hits++;
-	*objnum = name_cache[i].objnum;
+        *objnum = name_cache[i].objnum;
         UNLOCK_LOOKUP("lookup_retrieve_name")
-	return 1;
+        return 1;
     }
 
     name_cache_misses++;
@@ -212,14 +212,14 @@ Int lookup_retrieve_name(Ident name, cObjnum *objnum)
     /* Get it from the database. */
     if (!get_name(name, objnum)) {
         UNLOCK_LOOKUP("lookup_retrieve_name")
-	return 0;
+        return 0;
     }
 
     /* Discard the old cache entry if it exists. */
     if (name_cache[i].name != NOT_AN_IDENT) {
-	if (name_cache[i].dirty)
-	    store_name(name_cache[i].name, name_cache[i].objnum);
-	ident_discard(name_cache[i].name);
+        if (name_cache[i].dirty)
+            store_name(name_cache[i].name, name_cache[i].objnum);
+        ident_discard(name_cache[i].name);
     }
 
     /* Make a new cache entry. */
@@ -240,19 +240,19 @@ Int lookup_store_name(Ident name, cObjnum objnum)
 
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
-	if (name_cache[i].objnum != objnum) {
-	    name_cache[i].objnum = objnum;
-	    name_cache[i].dirty = 1;
-	}
+        if (name_cache[i].objnum != objnum) {
+            name_cache[i].objnum = objnum;
+            name_cache[i].dirty = 1;
+        }
         UNLOCK_LOOKUP("lookup_store_name")
-	return 1;
+        return 1;
     }
 
     /* Discard the old cache entry if it exists. */
     if (name_cache[i].name != NOT_AN_IDENT) {
-	if (name_cache[i].dirty)
-	    store_name(name_cache[i].name, name_cache[i].objnum);
-	ident_discard(name_cache[i].name);
+        if (name_cache[i].dirty)
+            store_name(name_cache[i].name, name_cache[i].objnum);
+        ident_discard(name_cache[i].name);
     }
 
     /* Make a new cache entry. */
@@ -273,21 +273,21 @@ Int lookup_remove_name(Ident name)
     LOCK_LOOKUP("lookup_remove_name")
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
-	/* Delete it from the cache.  If it's not on disk, then we're done. */
-	/*write_err("##lookup_remove_name %d %s", name_cache[i].name, ident_name(name_cache[i].name));*/
-	ident_discard(name_cache[i].name);
-	name_cache[i].name = NOT_AN_IDENT;
-	if (!name_cache[i].on_disk) {
+        /* Delete it from the cache.  If it's not on disk, then we're done. */
+        /*write_err("##lookup_remove_name %d %s", name_cache[i].name, ident_name(name_cache[i].name));*/
+        ident_discard(name_cache[i].name);
+        name_cache[i].name = NOT_AN_IDENT;
+        if (!name_cache[i].on_disk) {
             UNLOCK_LOOKUP("lookup_remove_name")
-	    return 1;
-	}
+            return 1;
+        }
     }
 
     /* Remove the key from the database. */
     key = name_key(name);
     if (dbm_delete(dbp, key)) {
         UNLOCK_LOOKUP("lookup_remove_name")
-	return 0;
+        return 0;
     }
 
     UNLOCK_LOOKUP("lookup_remove_name")
@@ -370,11 +370,11 @@ static void sync_name_cache(void)
     write_err ("Syncing lookup name cache...");
 
     for (i = 0; i < NAME_CACHE_SIZE; i++) {
-	if (name_cache[i].name != NOT_AN_IDENT && name_cache[i].dirty) {
-	    store_name(name_cache[i].name, name_cache[i].objnum);
-	    name_cache[i].dirty = 0;
-	    name_cache[i].on_disk = 1;
-	}
+        if (name_cache[i].name != NOT_AN_IDENT && name_cache[i].dirty) {
+            store_name(name_cache[i].name, name_cache[i].objnum);
+            name_cache[i].dirty = 0;
+            name_cache[i].on_disk = 1;
+        }
     }
 }
 
@@ -388,8 +388,8 @@ static Int store_name(Ident name, cObjnum objnum)
 
     key = name_key(name);
     if (dbm_store(dbp, key, value, DBM_REPLACE)) {
-	write_err("ERROR: Failed to store key %s.", name);
-	return 0;
+        write_err("ERROR: Failed to store key %s.", name);
+        return 0;
     }
 
     return 1;
@@ -403,7 +403,7 @@ static Int get_name(Ident name, cObjnum *objnum)
     key = name_key(name);
     value = dbm_fetch(dbp, key);
     if (!value.dptr)
-	return 0;
+        return 0;
 
     *objnum = atol(value.dptr);
     return 1;

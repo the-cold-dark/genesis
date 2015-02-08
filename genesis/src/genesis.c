@@ -171,7 +171,7 @@ static void get_my_hostname(void) {
     /* for those OS's that do not do this */
     memset(cbuf, 0, LINE);
     if (!gethostname(cbuf, LINE)) {
-        if (cbuf[LINE-1] != '\0') { 
+        if (cbuf[LINE-1] != '\0') {
             fprintf(stderr, "Unable to determine hostname: name too long.\n");
         } else {
             string_discard(str_hostname);
@@ -237,7 +237,7 @@ static void initialize(Int argc, char **argv) {
         opt = *argv;
         if (*opt == '-') {
             opt++;
- 
+
             /* catch db options */
             if (*opt == '-') {
                 addarg(opt);
@@ -253,7 +253,7 @@ static void initialize(Int argc, char **argv) {
                     exit(1);
                 }
                 argv += getarg(name,&buf,opt,argv,&argc,usage);
-                switch (*opt) { 
+                switch (*opt) {
                   case 'b':
                       NEWFILE(c_dir_binary, buf);
                       break;
@@ -277,7 +277,7 @@ static void initialize(Int argc, char **argv) {
                     exit(1);
                 }
                 argv += getarg(name,&buf,opt,argv,&argc,usage);
-                switch (*opt) { 
+                switch (*opt) {
                   case 'd':
                       NEWFILE(c_logfile, buf);
                       break;
@@ -341,8 +341,8 @@ static void initialize(Int argc, char **argv) {
               }
 #ifdef __UNIX__
             case 'g': {
-                struct group * gr; 
- 
+                struct group * gr;
+
                 argv += getarg(name,&buf,opt,argv,&argc,usage);
                 if (buf[0] == '#') {
                     gid = (gid_t) atoi(&buf[1]);
@@ -357,8 +357,8 @@ static void initialize(Int argc, char **argv) {
                 break;
               }
             case 'u': {
-                struct passwd * pw; 
- 
+                struct passwd * pw;
+
                 argv += getarg(name,&buf,opt,argv,&argc,usage);
                 if (buf[0] == '#') {
                     uid = (uid_t) atoi(&buf[1]);
@@ -375,7 +375,7 @@ static void initialize(Int argc, char **argv) {
 #endif
             default:
                 usage(name);
-                fprintf(stderr, "** Invalid argument -%s\n** send arguments to the database by prefixing them with '--', not '-'\n", opt); 
+                fprintf(stderr, "** Invalid argument -%s\n** send arguments to the database by prefixing them with '--', not '-'\n", opt);
                 exit(1);
             }
         } else {

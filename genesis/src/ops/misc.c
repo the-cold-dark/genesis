@@ -32,19 +32,19 @@ COLDC_FUNC(anticipate_assignment) {
     Int pc;
 
     if (!func_init_0())
-	return;
+        return;
     if (!caller_frame) {
-	push_int(1);
-	return;
+        push_int(1);
+        return;
     }
 
     pc=caller_frame->pc;
 
     /* Most of this is from anticipate_assignment() */
-    
+
     /* skip error handling */
     while ((opcode = caller_frame->opcodes[pc]) == CRITICAL_END)
-	pc++;
+        pc++;
 
     switch (opcode) {
       case SET_LOCAL:
@@ -72,7 +72,7 @@ COLDC_FUNC(anticipate_assignment) {
 COLDC_FUNC(time) {
     /* Take no arguments. */
     if (!func_init_0())
-	return;
+        return;
 
     push_int(time(NULL));
 }
@@ -89,7 +89,7 @@ COLDC_FUNC(localtime) {
 #endif
 
     if (!func_init_0_or_1(&args, &nargs, INTEGER))
-	return;
+        return;
 
     if (nargs) {
         t = (time_t) args[0].u.val;
@@ -192,7 +192,7 @@ COLDC_FUNC(ctime) {
 
     /* Take an optional integer argument. */
     if (!func_init_0_or_1(&args, &num_args, INTEGER))
-	return;
+        return;
 
     tval = (num_args) ? args[0].u.val : time(NULL);
 

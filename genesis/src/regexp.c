@@ -85,21 +85,21 @@ static int case_matters;
  */
 
 /* definition    number    opnd?    meaning */
-#define    REG_END    0    /* no    End of program. */
-#define    BOL    1    /* no    Match "" at beginning of line. */
-#define    EOL    2    /* no    Match "" at end of line. */
-#define    REG_ANY    3    /* no    Match any one character. */
-#define    ANYOF    4    /* str    Match any character in this string. */
-#define    ANYBUT    5    /* str    Match any character not in this string. */
-#define    BRANCH    6    /* node    Match this alternative, or the next... */
-#define    BACK    7    /* no    Match "", "next" ptr points backward. */
-#define    EXACTLY    8    /* str    Match this string. */
-#define    NOTHING    9    /* no    Match empty string. */
-#define    STAR    10    /* node    Match this (simple) thing 0 or more times. */
-#define    PLUS    11    /* node    Match this (simple) thing 1 or more times. */
-#define    OPEN    20    /* no    Mark this point in input as start of #n. */
-            /*    OPEN+1 is number 1, etc. */
-#define    CLOSE    30    /* no    Analogous to OPEN. */
+#define REG_END   0    /* no    End of program. */
+#define BOL       1    /* no    Match "" at beginning of line. */
+#define EOL       2    /* no    Match "" at end of line. */
+#define REG_ANY   3    /* no    Match any one character. */
+#define ANYOF     4    /* str   Match any character in this string. */
+#define ANYBUT    5    /* str   Match any character not in this string. */
+#define BRANCH    6    /* node  Match this alternative, or the next... */
+#define BACK      7    /* no    Match "", "next" ptr points backward. */
+#define EXACTLY   8    /* str   Match this string. */
+#define NOTHING   9    /* no    Match empty string. */
+#define STAR     10    /* node  Match this (simple) thing 0 or more times. */
+#define PLUS     11    /* node  Match this (simple) thing 1 or more times. */
+#define OPEN     20    /* no    Mark this point in input as start of #n. */
+         /*    OPEN+1 is number 1, etc. */
+#define CLOSE    30    /* no    Analogous to OPEN. */
 
 /*
  * Opcode notes:
@@ -158,19 +158,19 @@ static int case_matters;
 /*
  * Flags to be passed up and down.
  */
-#define    HASWIDTH    01    /* Known never to match null string. */
-#define    SIMPLE        02    /* Simple enough to be STAR/PLUS operand. */
-#define    SPSTART        04    /* Starts with * or +. */
-#define    WORST        0    /* Worst case. */
+#define    HASWIDTH  01    /* Known never to match null string. */
+#define    SIMPLE    02    /* Simple enough to be STAR/PLUS operand. */
+#define    SPSTART   04    /* Starts with * or +. */
+#define    WORST      0    /* Worst case. */
 
 /*
  * Global work variables for gen_regcomp().
  */
-static char *regparse;        /* Input-scan pointer. */
+static char *regparse;     /* Input-scan pointer. */
 static int regnpar;        /* () count. */
 static char regdummy;
-static char *regcode;        /* Code-emit pointer; &regdummy = don't. */
-static long regsize;        /* Code size. */
+static char *regcode;      /* Code-emit pointer; &regdummy = don't. */
+static long regsize;       /* Code size. */
 
 /*
  * Forward declarations for gen_regcomp()'s friends.
@@ -334,7 +334,7 @@ static char * reg(int paren, int *flagp) {
     }
 
     /* Make a closing node, and hook it on the end. */
-    ender = regnode((paren) ? CLOSE+parno : REG_END);    
+    ender = regnode((paren) ? CLOSE+parno : REG_END);
     regtail(ret, ender);
 
     /* Hook the tails of the branches to the closing node. */
@@ -421,24 +421,24 @@ static char * regpiece(int *flagp) {
     else if (op == '*') {
         /* Emit x* as (x&|), where & means "self". */
         reginsert(BRANCH, ret);            /* Either x */
-        regoptail(ret, regnode(BACK));        /* and loop */
-        regoptail(ret, ret);            /* back */
-        regtail(ret, regnode(BRANCH));        /* or */
-        regtail(ret, regnode(NOTHING));        /* null. */
+        regoptail(ret, regnode(BACK));     /* and loop */
+        regoptail(ret, ret);               /* back */
+        regtail(ret, regnode(BRANCH));     /* or */
+        regtail(ret, regnode(NOTHING));    /* null. */
     } else if (op == '+' && (flags&SIMPLE))
         reginsert(PLUS, ret);
     else if (op == '+') {
         /* Emit x+ as x(&|), where & means "self". */
         next = regnode(BRANCH);            /* Either */
         regtail(ret, next);
-        regtail(regnode(BACK), ret);        /* loop back */
-        regtail(next, regnode(BRANCH));        /* or */
-        regtail(ret, regnode(NOTHING));        /* null. */
+        regtail(regnode(BACK), ret);       /* loop back */
+        regtail(next, regnode(BRANCH));    /* or */
+        regtail(ret, regnode(NOTHING));    /* null. */
     } else if (op == '?') {
         /* Emit x? as (x|) */
         reginsert(BRANCH, ret);            /* Either x */
-        regtail(ret, regnode(BRANCH));        /* or */
-        next = regnode(NOTHING);        /* null. */
+        regtail(ret, regnode(BRANCH));     /* or */
+        next = regnode(NOTHING);           /* null. */
         regtail(ret, next);
         regoptail(ret, next);
     }
@@ -664,10 +664,10 @@ static void regoptail(char *p, char *val) {
 /*
  * Global work variables for gen_regexec().
  */
-static char *reginput;        /* String-input pointer. */
-static char *regbol;        /* Beginning of input, for ^ check. */
-static char **regstartp;    /* Pointer to startp array. */
-static char **regendp;        /* Ditto for endp. */
+static char *reginput;     /* String-input pointer. */
+static char *regbol;       /* Beginning of input, for ^ check. */
+static char **regstartp;   /* Pointer to startp array. */
+static char **regendp;     /* Ditto for endp. */
 
 /*
  * Forwards.
@@ -1042,7 +1042,7 @@ void regdump(regexp *r) {
         next = regnext(s);
         if (next == NULL)        /* Next ptr. */
             printf("(0)");
-        else 
+        else
             printf("(%d)", (s-r->program)+(next-s));
         s += 3;
         if (op == ANYOF || op == ANYBUT || op == EXACTLY) {

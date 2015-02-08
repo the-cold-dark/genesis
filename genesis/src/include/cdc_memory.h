@@ -30,16 +30,16 @@ void efree(void * block);
 #define efree(what) free(what)
 #endif
 
-#define EMALLOC(type, num)	 ((type *) emalloc((num) * sizeof(type)))
+#define EMALLOC(type, num)         ((type *) emalloc((num) * sizeof(type)))
 #define EREALLOC(ptr, type, num) ((type *) erealloc(ptr, (num) * sizeof(type)))
-#define TMALLOC(type, num)	 ((type *) tmalloc((num) * sizeof(type)))
-#define TFREE(ptr, num)		 tfree(ptr, (num) * sizeof(*(ptr)))
+#define TMALLOC(type, num)         ((type *) tmalloc((num) * sizeof(type)))
+#define TFREE(ptr, num)                 tfree(ptr, (num) * sizeof(*(ptr)))
 #define TREALLOC(ptr, type, old, new) \
     ((type *) trealloc(ptr, (old) * sizeof(*(ptr)), (new) * sizeof(type)))
 #define PMALLOC(pile, type, num) ((type *) pmalloc(pile, (num) * sizeof(type)))
 
-#define MEMCPY(a, b, l)		memcpy(a, b, (l) * sizeof(*(a)))
-#define MEMMOVE(a, b, l)	memmove(a, b, (l) * sizeof(*(a)))
-#define MEMCMP(a, b, l)		memcmp(a, b, (l) * sizeof(*(a)))
+#define MEMCPY(a, b, l)                memcpy(a, b, (l) * sizeof(*(a)))
+#define MEMMOVE(a, b, l)        memmove(a, b, (l) * sizeof(*(a)))
+#define MEMCMP(a, b, l)                memcmp(a, b, (l) * sizeof(*(a)))
 
 #endif

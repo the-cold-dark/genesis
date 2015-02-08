@@ -22,8 +22,8 @@
  * allocate, we add in sizeof(cStr), leaving us 32 bytes short of a power of
  * two, as desired. */
 
-#define MALLOC_DELTA	(sizeof(cStr) + 32)
-#define STARTING_SIZE	(128 - MALLOC_DELTA)
+#define MALLOC_DELTA        (sizeof(cStr) + 32)
+#define STARTING_SIZE        (128 - MALLOC_DELTA)
 
 cStr *string_new(Int size_needed) {
     cStr *cnew;
@@ -128,7 +128,7 @@ cStr *string_fread(cStr *str, Int len, FILE *fp) {
 cStr *string_add(cStr *str1, cStr *str2) {
     str1 = string_prep(str1, str1->start, str1->len + str2->len);
     MEMCPY(str1->s + str1->start + str1->len - str2->len,
-	   str2->s + str2->start, str2->len);
+           str2->s + str2->start, str2->len);
     str1->s[str1->start + str1->len] = 0;
     return str1;
 }
@@ -152,14 +152,14 @@ cStr *string_add_padding(cStr *str, char *filler, Int len, Int padding) {
     str = string_prep(str, str->start, str->len + padding);
 
     if (len == 1) {
-	/* Optimize this case using memset(). */
-	memset(str->s + str->start + str->len - padding, *filler, padding);
-	return str;
+        /* Optimize this case using memset(). */
+        memset(str->s + str->start + str->len - padding, *filler, padding);
+        return str;
     }
 
     while (padding > len) {
-	MEMCPY(str->s + str->start + str->len - padding, filler, len);
-	padding -= len;
+        MEMCPY(str->s + str->start + str->len - padding, filler, len);
+        padding -= len;
     }
     MEMCPY(str->s + str->start + str->len - padding, filler, padding);
     return str;
@@ -179,7 +179,7 @@ cStr *string_substring(cStr *str, Int start, Int len) {
 
 cStr * string_uppercase(cStr *str) {
     char *s, *end;
- 
+
     str = string_prep(str, str->start, str->len);
     s = string_chars(str);
     end = s + str->len;
@@ -203,15 +203,15 @@ cStr * string_lowercase(cStr *str) {
  * it will be placed in regexp_error, and the returned regexp will be NULL. */
 regexp *string_regexp(cStr *str) {
     if (!str->reg)
-	str->reg = gen_regcomp(str->s + str->start);
+        str->reg = gen_regcomp(str->s + str->start);
     return str->reg;
 }
 
 void string_discard(cStr *str) {
     if (!--str->refs) {
-	if (str->reg)
-	    efree(str->reg);
-	efree(str);
+        if (str->reg)
+            efree(str->reg);
+        efree(str);
     }
 }
 
@@ -247,8 +247,8 @@ cStr * string_parse(char **sptr) {
             }
             s = p;
         }
-        else 
-        {    
+        else
+        {
             /* This should never occur, since the string should always be    */
             /* terminated by a ".  So, add everything left and setup to end  */
             /* the loop */
@@ -272,20 +272,20 @@ cStr *string_add_unparsed(cStr *str, char *s, Int len) {
 
     /* Add characters to string, escaping quotes and backslashes. */
     for (;;) {
-	for (i = 0; i < len && s[i] != '"' && s[i] != '\\'; i++);
-	str = string_add_chars(str, s, i);
-	if (i < len) {
+        for (i = 0; i < len && s[i] != '"' && s[i] != '\\'; i++);
+        str = string_add_chars(str, s, i);
+        if (i < len) {
             if (s[i] == '"' || /* it is a slash, by default */
                 (s[i + 1] == '\\' ||
                  s[i + 1] == '"' ||
                  s[i + 1] == '\0'))
                 str = string_addc(str, '\\');
             str = string_addc(str, s[i]);
-	    s += i + 1;
-	    len -= i + 1;
-	} else {
-	    break;
-	}
+            s += i + 1;
+            len -= i + 1;
+        } else {
+            break;
+        }
     }
 
     return string_addc(str, '"');
@@ -295,7 +295,7 @@ char *gen_regerror(char *msg) {
     static char *regexp_error;
 
     if (msg)
-	regexp_error = msg;
+        regexp_error = msg;
     return regexp_error;
 }
 
@@ -316,36 +316,36 @@ static int str_rindexs(char * str, int len, char * sub, int slen, int origin){
         return 0;
 
     s = &str[len];
- 
+
     while (len-- >= 0) {
         if (*s == *sub) {
             if (!strncmp(s, sub, slen))
                 return (s - str) + 1;
-        } 
+        }
         s--;
     }
-    
+
     return 0;
 }
 
 static int str_rindexc(char * str, int len, char sub, int origin) {
     register char * s;
-        
+
     len -= origin;
 
     if (len < 0)
         return 0;
 
     s = &str[len];
-        
+
     while (len-- >= 0) {
         if (*s == sub)
             return (s - str) + 1;
-        s--;    
+        s--;
     }
-    
+
     return 0;
-}   
+}
 
 /*
 // returns 1..$ if item is found, 0 if it is not or -1 if an error is thrown

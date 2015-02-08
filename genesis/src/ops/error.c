@@ -8,11 +8,11 @@
 
 COLDC_FUNC(error) {
     if (!func_init_0())
-	return;
+        return;
 
     if (!cur_frame->handler_info) {
-	cthrow(error_id, "Request for handler info outside handler.");
-	return;
+        cthrow(error_id, "Request for handler info outside handler.");
+        return;
     }
 
     push_error(cur_frame->handler_info->error);
@@ -46,11 +46,11 @@ COLDC_FUNC(traceback) {
     cList * tb;
 
     if (!func_init_0())
-	return;
+        return;
 
     if (!cur_frame->handler_info) {
-	cthrow(error_id, "Request for handler info outside handler.");
-	return;
+        cthrow(error_id, "Request for handler info outside handler.");
+        return;
     }
 
     if (cur_frame->handler_info->cached_traceback != NULL) {
@@ -69,18 +69,18 @@ COLDC_FUNC(throw) {
     cStr *str;
 
     if (!func_init_2_or_3(&args, &num_args, T_ERROR, STRING, 0))
-	return;
+        return;
 
     /* Throw the error. */
     str = string_dup(args[1].u.str);
     if (num_args == 3) {
         error_arg = (cData *)emalloc(sizeof(cData));
-	data_dup(error_arg, &args[2]);
-	user_error(args[0].u.error, str, error_arg);
-	data_discard(error_arg);
+        data_dup(error_arg, &args[2]);
+        user_error(args[0].u.error, str, error_arg);
+        data_discard(error_arg);
         efree(error_arg);
     } else {
-	user_error(args[0].u.error, str, NULL);
+        user_error(args[0].u.error, str, NULL);
     }
     string_discard(str);
 }
@@ -92,11 +92,11 @@ COLDC_FUNC(rethrow) {
     cData          * arg;
 
     if (!func_init_1(&args, T_ERROR))
-	return;
+        return;
 
     if (!cur_frame->handler_info) {
-	cthrow(error_id, "Request for handler info outside handler.");
-	return;
+        cthrow(error_id, "Request for handler info outside handler.");
+        return;
     }
 
     /* Abort the current frame and propagate an error in the caller. */

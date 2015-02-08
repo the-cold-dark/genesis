@@ -23,61 +23,61 @@ static struct {
     char *word;
     Int token;
 } reserved_words[] = {
-    { "any",			ANY },
-    { "arg",			ARG },
-    { "break",			BREAK },
-    { "case",			CASE },
-    { "catch",			CATCH },
-    { "continue",		CONTINUE },
-    { "default",		DEFAULT },
-    { "disallow_overrides",	DISALLOW_OVERRIDES },
-    { "else",			ELSE },
+    { "any",                    ANY },
+    { "arg",                    ARG },
+    { "break",                  BREAK },
+    { "case",                   CASE },
+    { "catch",                  CATCH },
+    { "continue",               CONTINUE },
+    { "default",                DEFAULT },
+    { "disallow_overrides",     DISALLOW_OVERRIDES },
+    { "else",                   ELSE },
     { "filter",                 OP_FILTER },
     { "find",                   OP_FIND },
-    { "for",			FOR },
-    { "fork",			FORK },
-    { "handler",		HANDLER },
+    { "for",                    FOR },
+    { "fork",                   FORK },
+    { "handler",                HANDLER },
     { "hash",                   OP_MAPHASH },
-    { "if",			IF },
-    { "in",			OP_IN },
+    { "if",                     IF },
+    { "in",                     OP_IN },
     { "map",                    OP_MAP },
-    { "pass",			PASS },
-    { "return",			RETURN },
-    { "switch",			SWITCH },
-    { "to",			TO },
-    { "var",			VAR },
+    { "pass",                   PASS },
+    { "return",                 RETURN },
+    { "switch",                 SWITCH },
+    { "to",                     TO },
+    { "var",                    VAR },
     { "where",                  WHERE },
-    { "while",			WHILE },
-    { "with",			WITH },
+    { "while",                  WHILE },
+    { "with",                   WITH },
 
     /* these are around for backwards/future compatability */
 
     /* cryptic reserved 'words' */
-    { "(|",			CRITLEFT },
-    { "(>",			PROPLEFT },
-    { "<)",			PROPRIGHT },
-    { "<=",			LE },
-    { "..",			UPTO },
-    { "|)",			CRITRIGHT },
-    { "||",			OR },
-    { "|",			OP_COND_OTHER_ELSE },
-    { "#[",			START_DICT },
-    { "`[",			START_BUFFER },
+    { "(|",                     CRITLEFT },
+    { "(>",                     PROPLEFT },
+    { "<)",                     PROPRIGHT },
+    { "<=",                     LE },
+    { "..",                     UPTO },
+    { "|)",                     CRITRIGHT },
+    { "||",                     OR },
+    { "|",                      OP_COND_OTHER_ELSE },
+    { "#[",                     START_DICT },
+    { "`[",                     START_BUFFER },
 
-    { "&&",			AND },
-    { "==",			EQ },
-    { "=",			OP_ASSIGN },
-    { "!=",			NE },
-    { ">=",			GE },
+    { "&&",                     AND },
+    { "==",                     EQ },
+    { "=",                      OP_ASSIGN },
+    { "!=",                     NE },
+    { ">=",                     GE },
 
-    { "++",			INCREMENT },
-    { "+=",			PLUS_EQ },
-    { "--",			DECREMENT },
-    { "-=",			MINUS_EQ },
-    { "/=",			DIV_EQ },
-    { "*=",			MULT_EQ },
-    { "?=",			OPTIONAL_ASSIGN },
-    { "?",			OP_COND_IF },
+    { "++",                     INCREMENT },
+    { "+=",                     PLUS_EQ },
+    { "--",                     DECREMENT },
+    { "-=",                     MINUS_EQ },
+    { "/=",                     DIV_EQ },
+    { "*=",                     MULT_EQ },
+    { "?=",                     OPTIONAL_ASSIGN },
+    { "?",                      OP_COND_IF },
 };
 
 static struct {
@@ -85,22 +85,22 @@ static struct {
     Int num;
 } starting[128];
 
-extern Pile *compiler_pile;		/* For allocating strings. */
+extern Pile *compiler_pile;                /* For allocating strings. */
 
 void init_token(void)
 {
     Int i, c;
 
     for (i = 0; i < 128; i++)
-	starting[i].start = -1;
+        starting[i].start = -1;
 
     i = 0;
     while (i < NUM_RESERVED_WORDS) {
-	c = SUBSCRIPT(*reserved_words[i].word);
-	starting[c].start = i;
-	starting[c].num = 1;
-	for (i++; i < NUM_RESERVED_WORDS && *reserved_words[i].word == c; i++)
-	    starting[c].num++;
+        c = SUBSCRIPT(*reserved_words[i].word);
+        starting[c].start = i;
+        starting[c].num = 1;
+        for (i++; i < NUM_RESERVED_WORDS && *reserved_words[i].word == c; i++)
+            starting[c].num++;
     }
 }
 
@@ -112,8 +112,8 @@ void lex_start(cList * code_list) {
 /* Returns if s can be parsed as an identifier. */
 Bool is_valid_ident(char *s) {
     for (; *s; s++) {
-	if (!isalnum(*s) && *s != '_')
-	    return 0;
+        if (!isalnum(*s) && *s != '_')
+            return 0;
     }
     return 1;
 }
@@ -123,8 +123,8 @@ Bool string_is_valid_ident(cStr * str) {
     int    len = string_length(str);
 
     for (; len; len--, s++) {
-	if (!isalnum(*s) && *s != '_')
-	    return 0;
+        if (!isalnum(*s) && *s != '_')
+            return 0;
     }
     return 1;
 }
@@ -137,25 +137,25 @@ Bool is_reserved_word(char *s) {
 
     start = starting[SUBSCRIPT(*s)].start;
     if (start != -1) {
-	for (i = start; i < start + starting[SUBSCRIPT(*s)].num; i++) {
-	    /* Compare remaining letters of word against s. */
-	    word = reserved_words[i].word;
-	    for (j = 1; j < len && word[j]; j++) {
-		if (s[j] != word[j]) {
-		    break;
+        for (i = start; i < start + starting[SUBSCRIPT(*s)].num; i++) {
+            /* Compare remaining letters of word against s. */
+            word = reserved_words[i].word;
+            for (j = 1; j < len && word[j]; j++) {
+                if (s[j] != word[j]) {
+                    break;
                 }
-	    }
+            }
 
-	    /* Comparison fails if we didn't match all the characters in word,
-	     * or if word is an identifier and the next character in s isn't
-	     * punctuation. */
-	    if (word[j])
-		continue;
-	    if (isalpha(*s) && j < len && (isalnum(s[j]) || s[j] == '_'))
-		continue;
+            /* Comparison fails if we didn't match all the characters in word,
+             * or if word is an identifier and the next character in s isn't
+             * punctuation. */
+            if (word[j])
+                continue;
+            if (isalpha(*s) && j < len && (isalnum(s[j]) || s[j] == '_'))
+                continue;
 
-	    return TRUE;
-	}
+            return TRUE;
+        }
     }
     return FALSE;
 }
@@ -170,152 +170,152 @@ Int yylex(void)
 
     /* Find the beginning of the next token. */
     while (cur_line < list_length(code)) {
-	/* Fetch text and length of current line. */
-	d = list_elem(code, cur_line);
-	line = d->u.str;
-	s = string_chars(line);
-	len = string_length(line);
+        /* Fetch text and length of current line. */
+        d = list_elem(code, cur_line);
+        line = d->u.str;
+        s = string_chars(line);
+        len = string_length(line);
 
-	/* Scan over line for a non-space character. */
-	while (cur_pos < len && isspace(s[cur_pos]))
-	    cur_pos++;
+        /* Scan over line for a non-space character. */
+        while (cur_pos < len && isspace(s[cur_pos]))
+            cur_pos++;
 
-	/* If we didn't hit the end, return the character we stopped at. */
-	if (cur_pos < len)
-	    break;
+        /* If we didn't hit the end, return the character we stopped at. */
+        if (cur_pos < len)
+            break;
 
-	/* Go on to the next line. */
-	cur_line++;
-	cur_pos = 0;
-	d = (cData *)0;
+        /* Go on to the next line. */
+        cur_line++;
+        cur_pos = 0;
+        d = (cData *)0;
     }
     if (!d) {
-	return 0;
+        return 0;
     } else {
-	s += cur_pos;
-	len -= cur_pos;
+        s += cur_pos;
+        len -= cur_pos;
     }
 
     /* Check if it's a reserved word. */
     start = starting[SUBSCRIPT(*s)].start;
     if (start != -1) {
-	for (i = start; i < start + starting[SUBSCRIPT(*s)].num; i++) {
-	    /* Compare remaining letters of word against s. */
-	    word = reserved_words[i].word;
-	    for (j = 1; j < len && word[j]; j++) {
-		if (s[j] != word[j]) {
-		    break;
+        for (i = start; i < start + starting[SUBSCRIPT(*s)].num; i++) {
+            /* Compare remaining letters of word against s. */
+            word = reserved_words[i].word;
+            for (j = 1; j < len && word[j]; j++) {
+                if (s[j] != word[j]) {
+                    break;
                 }
-	    }
+            }
 
-	    /* Comparison fails if we didn't match all the characters in word,
-	     * or if word is an identifier and the next character in s isn't
-	     * punctuation. */
-	    if (word[j])
-		continue;
-	    if (isalpha(*s) && j < len && (isalnum(s[j]) || s[j] == '_'))
-		continue;
+            /* Comparison fails if we didn't match all the characters in word,
+             * or if word is an identifier and the next character in s isn't
+             * punctuation. */
+            if (word[j])
+                continue;
+            if (isalpha(*s) && j < len && (isalnum(s[j]) || s[j] == '_'))
+                continue;
 
-	    cur_pos += j;
-	    return reserved_words[i].token;
-	}
+            cur_pos += j;
+            return reserved_words[i].token;
+        }
     }
 
     /* Check if it's an identifier. */
     if (isalpha(*s) || *s == '_') {
-	yylval.s = identifier_token(s, len, &i);
-	cur_pos += i;
-	return IDENT;
+        yylval.s = identifier_token(s, len, &i);
+        cur_pos += i;
+        return IDENT;
     }
 
     /* Check if it's a number. */
     if (isdigit(*s)) {
         float_buf = string_new(32);
 
-	/* Convert the string to a number. */
-	yylval.num = 0;
-	while (len && isdigit(*s)) {
+        /* Convert the string to a number. */
+        yylval.num = 0;
+        while (len && isdigit(*s)) {
             float_buf = string_addc(float_buf, *s);
-	    yylval.num = yylval.num * 10 + (*s - '0');
-	    s++, cur_pos++, len--;
-	}
+            yylval.num = yylval.num * 10 + (*s - '0');
+            s++, cur_pos++, len--;
+        }
 
         if ((*s == '.' && isdigit(*(s+1))) || *s == 'e') {
-	    Float f=yylval.num;
+            Float f=yylval.num;
 
             f = atof(string_chars(float_buf));
             string_discard(float_buf);
 
-	    if (*s=='.') {
-	        Float muly=1;
+            if (*s=='.') {
+                Float muly=1;
 
-	        s++, cur_pos++, len--;
-		while (len && isdigit(*s)) {
-		    muly/=10; f+=(*s - '0')*muly;
-		    s++, cur_pos++, len--;
-		}
-	    }
+                s++, cur_pos++, len--;
+                while (len && isdigit(*s)) {
+                    muly/=10; f+=(*s - '0')*muly;
+                    s++, cur_pos++, len--;
+                }
+            }
 
-	    if (len && *s=='e') {
-		Int esign=0, evalue=0;
+            if (len && *s=='e') {
+                Int esign=0, evalue=0;
 
-	        s++, cur_pos++, len--;
-		if (len && *s=='-') {
-		    esign=1;
-		    s++, cur_pos++, len--;
-		}
-		else if (len && *s=='+') {
-		    esign=0;
-		    s++, cur_pos++, len--;
-		}
-		while (len && isdigit(*s)) {
-		    evalue=evalue * 10 + (*s - '0');
-		    s++, cur_pos++, len--;
-		}
-		if (esign) evalue = -evalue;
-		if (evalue > 0)
-		     while (evalue--) f*=10;
+                s++, cur_pos++, len--;
+                if (len && *s=='-') {
+                    esign=1;
+                    s++, cur_pos++, len--;
+                }
+                else if (len && *s=='+') {
+                    esign=0;
+                    s++, cur_pos++, len--;
+                }
+                while (len && isdigit(*s)) {
+                    evalue=evalue * 10 + (*s - '0');
+                    s++, cur_pos++, len--;
+                }
+                if (esign) evalue = -evalue;
+                if (evalue > 0)
+                     while (evalue--) f*=10;
                 else
-		     while (evalue++) f/=10;
-	    }
-	    yylval.fnum=f;
-	    return FLOAT;
-	} else {	
+                     while (evalue++) f/=10;
+            }
+            yylval.fnum=f;
+            return FLOAT;
+        } else {
             string_discard(float_buf);
-	    return INTEGER;
+            return INTEGER;
         }
     }
 
     /* Check if it's a string. */
     if (*s == '"') {
-	yylval.s = string_token(s, len, &i);
-	cur_pos += i;
-	return STRING;
+        yylval.s = string_token(s, len, &i);
+        cur_pos += i;
+        return STRING;
     }
 
     /* Check if it's an object literal, symbol, or error code. */
     if ((*s == '$' || *s == '\'' || *s == '~')) {
-	type = ((*s == '$') ? OBJNAME : ((*s == '\'') ? SYMBOL : T_ERROR));
-	if (len > 1 && s[1] == '"') {
-	    yylval.s = string_token(s + 1, len - 1, &i);
-	    cur_pos += i + 1;
-	    return type;
-	} else if (isalnum(s[1]) || s[1] == '_') {
-	    yylval.s = identifier_token(s + 1, len - 1, &i);
-	    cur_pos += i + 1;
-	    return type;
-	}
+        type = ((*s == '$') ? OBJNAME : ((*s == '\'') ? SYMBOL : T_ERROR));
+        if (len > 1 && s[1] == '"') {
+            yylval.s = string_token(s + 1, len - 1, &i);
+            cur_pos += i + 1;
+            return type;
+        } else if (isalnum(s[1]) || s[1] == '_') {
+            yylval.s = identifier_token(s + 1, len - 1, &i);
+            cur_pos += i + 1;
+            return type;
+        }
     }
 
     /* Check if it's a comment. */
     if (len >= 2 && *s == '/' && s[1] == '/') {
-	/* Copy in text after //, and move to next line. */
-	yylval.s = PMALLOC(compiler_pile, char, len - 1);
-	MEMCPY(yylval.s, s + 2, len - 2);
-	yylval.s[len - 2] = 0;
-	cur_line++;
-	cur_pos = 0;
-	return COMMENT;
+        /* Copy in text after //, and move to next line. */
+        yylval.s = PMALLOC(compiler_pile, char, len - 1);
+        MEMCPY(yylval.s, s + 2, len - 2);
+        yylval.s[len - 2] = 0;
+        cur_line++;
+        cur_pos = 0;
+        return COMMENT;
     }
 
     /* Check if it's a objnum. */
@@ -328,11 +328,11 @@ Int yylex(void)
             negative = NO;
         }
         if (len && isdigit(*s)) {
-	    yylval.num = 0;
-	    while (len && isdigit(*s)) {
-	        yylval.num = yylval.num * 10 + (*s - '0');
-	        s++, cur_pos++, len--;
-	    }
+            yylval.num = 0;
+            while (len && isdigit(*s)) {
+                yylval.num = yylval.num * 10 + (*s - '0');
+                s++, cur_pos++, len--;
+            }
             if (negative)
                 yylval.num = -yylval.num;
         } else {
@@ -368,16 +368,16 @@ static char * string_token(char * s, Int len, Int *token_len) {
     /* Count the length */
     for (i = 1; i < len && s[i] != '"'; i++) {
         if (s[i] == '\\' && i < len -1 && (s[i+1] == '"' || s[i+1] == '\\'))
-	    i++;
-	count++;
+            i++;
+        count++;
     }
 
     /* Allocate space and copy. */
     q = p = PMALLOC(compiler_pile, char, count + 1);
     for (i = 1; i < len && s[i] != '"'; i++) {
-	if (s[i] == '\\' && i < len - 1 && (s[i+1] == '"' || s[i+1] == '\\'))
-	    i++;
-	*q++ = s[i];
+        if (s[i] == '\\' && i < len - 1 && (s[i+1] == '"' || s[i+1] == '\\'))
+            i++;
+        *q++ = s[i];
     }
     *q = 0;
 
@@ -393,7 +393,7 @@ static char *identifier_token(char *s, Int len, Int *token_len)
 
     /* Count characters in identifier. */
     for (i = 1; i < len && (isalnum(s[i]) || s[i] == '_'); i++)
-	 count++;
+         count++;
 
     /* Allocate space and copy. */
     p = PMALLOC(compiler_pile, char, count + 1);

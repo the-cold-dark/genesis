@@ -5,12 +5,12 @@
 #ifndef cdc_cache_h
 #define cdc_cache_h
 
-#define CACHE_LOG_SYNC		0x0001
-#define CACHE_LOG_OVERFLOW	0x0002
-#define CACHE_LOG_CLEANUP	0x0004
-#define CACHE_LOG_DEAD_WRITE	0x0008
-#define CACHE_LOG_READ		0x0010
-#define CACHE_LOG_LOOKUP	0x0020
+#define CACHE_LOG_SYNC                0x0001
+#define CACHE_LOG_OVERFLOW        0x0002
+#define CACHE_LOG_CLEANUP        0x0004
+#define CACHE_LOG_DEAD_WRITE        0x0008
+#define CACHE_LOG_READ                0x0010
+#define CACHE_LOG_LOOKUP        0x0020
 
 void init_cache(Bool spawn_cleaner);
 void uninit_cache();

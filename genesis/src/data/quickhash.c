@@ -5,8 +5,8 @@
 #include "defs.h"
 #include "quickhash.h"
 
-#define MALLOC_DELTA			 0
-#define HASHTAB_STARTING_SIZE		 128
+#define MALLOC_DELTA                         0
+#define HASHTAB_STARTING_SIZE              128
 
 static void quickhash_increase_hashtab_size(Hash * hash);
 static void quickhash_insert_key(Hash * hash, Int i);
@@ -22,7 +22,7 @@ Hash * hash_new_with(cList *keys) {
     /* Calculate initial size of chain and hash table. */
     cnew->hashtab_size = HASHTAB_STARTING_SIZE;
     while (cnew->hashtab_size < keys->len)
-	cnew->hashtab_size = cnew->hashtab_size * 2 + MALLOC_DELTA;
+        cnew->hashtab_size = cnew->hashtab_size * 2 + MALLOC_DELTA;
 
     /* Initialize chain entries and hash table. */
     cnew->links   = EMALLOC(Int, cnew->hashtab_size);
@@ -33,13 +33,13 @@ Hash * hash_new_with(cList *keys) {
     /* Insert the keys into the hash table, eliminating duplicates. */
     i = j = 0;
     while (i < cnew->keys->len) {
-	if (i != j)
-	    cnew->keys->el[j] = cnew->keys->el[i];
-	if (hash_find(cnew, &keys->el[i]) == F_FAILURE)
-	    quickhash_insert_key(cnew, j++);
-	else
-	    data_discard(&cnew->keys->el[i]);
-	i++;
+        if (i != j)
+            cnew->keys->el[j] = cnew->keys->el[i];
+        if (hash_find(cnew, &keys->el[i]) == F_FAILURE)
+            quickhash_insert_key(cnew, j++);
+        else
+            data_discard(&cnew->keys->el[i]);
+        i++;
     }
     cnew->keys->len = j;
 
@@ -68,10 +68,10 @@ void hash_discard(Hash * hash)
 {
     hash->refs--;
     if (!hash->refs) {
-	list_discard(hash->keys);
-	efree(hash->links);
-	efree(hash->hashtab);
-	efree(hash);
+        list_discard(hash->keys);
+        efree(hash->links);
+        efree(hash->hashtab);
+        efree(hash);
     }
 }
 
@@ -87,9 +87,9 @@ Hash * hash_add(Hash * hash, cData * key) {
 
     /* Check if we should resize the hash table. */
     if (hash->keys->len > hash->hashtab_size)
-	quickhash_increase_hashtab_size(hash);
+        quickhash_increase_hashtab_size(hash);
     else
-	quickhash_insert_key(hash, hash->keys->len - 1);
+        quickhash_insert_key(hash, hash->keys->len - 1);
     return hash;
 }
 
@@ -106,8 +106,8 @@ Int hash_find(Hash * hash, cData *key) {
 
     ind = data_hash(key) % hash->hashtab_size;
     for (i = hash->hashtab[ind]; i != -1; i = hash->links[i]) {
-	if (data_cmp(&hash->keys->el[i], key) == 0)
-	    return i;
+        if (data_cmp(&hash->keys->el[i], key) == 0)
+            return i;
     }
 
     return F_FAILURE;
@@ -118,7 +118,7 @@ static void quickhash_increase_hashtab_size(Hash * hash)
     Int i;
 
     if (hash->hashtab_size > 40960)
-	hash->hashtab_size += 40960;
+        hash->hashtab_size += 40960;
     else
         hash->hashtab_size = hash->hashtab_size * 2 + MALLOC_DELTA;
 
@@ -131,7 +131,7 @@ static void quickhash_increase_hashtab_size(Hash * hash)
     printf ("rehashing... ");
     fflush (stdout);
     for (i = 0; i < hash->keys->len; i++)
-	quickhash_insert_key(hash, i);
+        quickhash_insert_key(hash, i);
     printf ("done.\n");
     fflush (stdout);
 }

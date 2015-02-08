@@ -11,7 +11,7 @@ COLDC_FUNC(dict_values) {
     cList * values;
 
     if (!func_init_1(&args, DICT))
-	return;
+        return;
 
     values = dict_values(DICT1);
     pop(1);
@@ -24,7 +24,7 @@ COLDC_FUNC(dict_keys) {
     cList * keys;
 
     if (!func_init_1(&args, DICT))
-	return;
+        return;
 
     keys = dict_keys(DICT1);
     pop(1);
@@ -36,7 +36,7 @@ COLDC_FUNC(dict_add) {
     cData * args;
 
     if (!func_init_3(&args, DICT, 0, 0))
-	return;
+        return;
 
     anticipate_assignment();
     args[0].u.dict = dict_add(args[0].u.dict, &args[1], &args[2]);
@@ -47,14 +47,14 @@ COLDC_FUNC(dict_del) {
     cData * args;
 
     if (!func_init_2(&args, DICT, 0))
-	return;
+        return;
 
     if (!dict_contains(args[0].u.dict, &args[1])) {
-	cthrow(keynf_id, "Key (%D) is not in the dictionary.", &args[1]);
+        cthrow(keynf_id, "Key (%D) is not in the dictionary.", &args[1]);
     } else {
-	anticipate_assignment();
-	args[0].u.dict = dict_del(args[0].u.dict, &args[1]);
-	pop(1);
+        anticipate_assignment();
+        args[0].u.dict = dict_del(args[0].u.dict, &args[1]);
+        pop(1);
     }
 }
 
@@ -63,7 +63,7 @@ COLDC_FUNC(dict_contains) {
     Int      val;
 
     if (!func_init_2(&args, DICT, 0))
-	return;
+        return;
 
     val = dict_contains(args[0].u.dict, &args[1]);
     pop(2);

@@ -148,14 +148,14 @@
 
 /*
 // ---------------------------------------------------------------------
-// size of method cache. use prime numbers and follow guidelines as 
+// size of method cache. use prime numbers and follow guidelines as
 // with the name cache above.
 */
 #define METHOD_CACHE_SIZE 1000003
 
 /*
 // ---------------------------------------------------------------------
-// size of ancestor cache. use prime numbers and follow guidelines as 
+// size of ancestor cache. use prime numbers and follow guidelines as
 // with the name cache above.
 */
 #define ANCESTOR_CACHE_SIZE 25601
@@ -219,7 +219,7 @@ extern char *sys_errlist[];
 #  ifdef UTS      /* what is UTS, need documentation -- BJG */
 #    define bool int
 #  else
-#    define bool char 
+#    define bool char
 #  endif
 #endif
 
@@ -288,7 +288,7 @@ typedef bool              Bool;
 # define MAX_UINT 4294967295U
 #elif SIZEOF_LONG == 4
   typedef long              Int;
-  typedef unsigned long     uInt; 
+  typedef unsigned long     uInt;
 # define MAX_INT  2147483647L
 # define MIN_INT  (- MAX_INT - 1)
 # define MAX_UINT 4294967295UL
@@ -530,8 +530,8 @@ extern cDict * cleaner_ignore_dict;
 extern Int  cleaner_wait;
 #endif
 
-extern void init_defs(void); 
-extern void uninit_defs(void); 
+extern void init_defs(void);
+extern void uninit_defs(void);
 
 /* limits configurable with 'config()' */
 extern Int  limit_datasize;

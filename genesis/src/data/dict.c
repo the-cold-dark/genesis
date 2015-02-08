@@ -6,8 +6,8 @@
 
 #include "dict.h"
 
-#define MALLOC_DELTA			 0
-#define HASHTAB_STARTING_SIZE		 8
+#define MALLOC_DELTA                         0
+#define HASHTAB_STARTING_SIZE                 8
 
 static void insert_key(cDict *dict, Int i);
 static Int search(cDict *dict, cData *key);
@@ -33,7 +33,7 @@ cDict *dict_new(cList *keys, cList *values)
     cnew->hashtab_size = HASHTAB_STARTING_SIZE;
     while (cnew->hashtab_size < keys->len) {
         if (cnew->hashtab_size > 4096)
-	    cnew->hashtab_size += 4096;
+            cnew->hashtab_size += 4096;
         else
             cnew->hashtab_size = cnew->hashtab_size * 2 + MALLOC_DELTA;
     }
@@ -48,17 +48,17 @@ cDict *dict_new(cList *keys, cList *values)
     /* Insert the keys into the hash table, eliminating duplicates. */
     i = j = 0;
     while (i < cnew->keys->len) {
-	if (i != j) {
-	    cnew->keys->el[j] = cnew->keys->el[i];
-	    cnew->values->el[j] = cnew->values->el[i];
-	}
-	if (search(cnew, &keys->el[i]) == F_FAILURE) {
-	    insert_key(cnew, j++);
-	} else {
-	    data_discard(&cnew->keys->el[i]);
-	    data_discard(&cnew->values->el[i]);
-	}
-	i++;
+        if (i != j) {
+            cnew->keys->el[j] = cnew->keys->el[i];
+            cnew->values->el[j] = cnew->values->el[i];
+        }
+        if (search(cnew, &keys->el[i]) == F_FAILURE) {
+            insert_key(cnew, j++);
+        } else {
+            data_discard(&cnew->keys->el[i]);
+            data_discard(&cnew->values->el[i]);
+        }
+        i++;
     }
     cnew->keys->len = cnew->values->len = j;
 
@@ -96,14 +96,14 @@ cDict *dict_from_slices(cList *slices)
     values = list_new(list_length(slices));
 
     for (d = list_first(slices); d; d = list_next(slices, d)) {
-	if (d->type != LIST || list_length(d->u.list) != 2) {
-	    /* Invalid slice.  Throw away what we had and return NULL. */
-	    list_discard(keys);
-	    list_discard(values);
-	    return NULL;
-	}
-	keys = list_add(keys, list_elem(d->u.list, 0));
-	values = list_add(values, list_elem(d->u.list, 1));
+        if (d->type != LIST || list_length(d->u.list) != 2) {
+            /* Invalid slice.  Throw away what we had and return NULL. */
+            list_discard(keys);
+            list_discard(values);
+            return NULL;
+        }
+        keys = list_add(keys, list_elem(d->u.list, 0));
+        values = list_add(values, list_elem(d->u.list, 1));
     }
 
     /* Slices were all valid; return new dict. */
@@ -123,21 +123,21 @@ void dict_discard(cDict *dict)
 {
     dict->refs--;
     if (!dict->refs) {
-	list_discard(dict->keys);
-	list_discard(dict->values);
-	tfree(dict->links, sizeof(Int) * dict->hashtab_size);
-	tfree(dict->hashtab, sizeof(Int) * dict->hashtab_size);
-	tfree(dict, sizeof(cDict));
+        list_discard(dict->keys);
+        list_discard(dict->values);
+        tfree(dict->links, sizeof(Int) * dict->hashtab_size);
+        tfree(dict->hashtab, sizeof(Int) * dict->hashtab_size);
+        tfree(dict, sizeof(cDict));
     }
 }
 
 Int dict_cmp(cDict *dict1, cDict *dict2)
 {
     if (list_cmp(dict1->keys, dict2->keys) == 0 &&
-	list_cmp(dict1->values, dict2->values) == 0)
-	return 0;
+        list_cmp(dict1->values, dict2->values) == 0)
+        return 0;
     else
-	return 1;
+        return 1;
 }
 
 cDict *dict_add(cDict *dict, cData *key, cData *value)
@@ -149,8 +149,8 @@ cDict *dict_add(cDict *dict, cData *key, cData *value)
     /* Just replace the value for the key if it already exists. */
     pos = search(dict, key);
     if (pos != F_FAILURE) {
-	dict->values = list_replace(dict->values, pos, value);
-	return dict;
+        dict->values = list_replace(dict->values, pos, value);
+        return dict;
     }
 
     /* Add the key and value to the list. */
@@ -159,9 +159,9 @@ cDict *dict_add(cDict *dict, cData *key, cData *value)
 
     /* Check if we should resize the hash table. */
     if (dict->keys->len > dict->hashtab_size)
-	increase_hashtab_size(dict);
+        increase_hashtab_size(dict);
     else
-	insert_key(dict, dict->keys->len - 1);
+        insert_key(dict, dict->keys->len - 1);
     return dict;
 }
 
@@ -177,9 +177,9 @@ cDict *dict_del(cDict *dict, cData *key)
      * the chain links. */
     ind = data_hash(key) % dict->hashtab_size;
     for (ip = &dict->hashtab[ind];; ip = &dict->links[*ip]) {
-	i = *ip;
-	if (data_cmp(&dict->keys->el[i], key) == 0)
-	    break;
+        i = *ip;
+        if (data_cmp(&dict->keys->el[i], key) == 0)
+            break;
     }
 
     /* Delete the element from the keys and values lists. */
@@ -198,14 +198,14 @@ cDict *dict_del(cDict *dict, cData *key)
      * decrement them.  Skip this step if the element we removed was the last
      * one. */
     if (i < dict->keys->len) {
-	for (j = 0; j < dict->keys->len; j++) {
-	    if (dict->links[j] > i)
-		dict->links[j]--;
-	}
-	for (j = 0; j < dict->hashtab_size; j++) {
-	    if (dict->hashtab[j] > i)
-		dict->hashtab[j]--;
-	}
+        for (j = 0; j < dict->keys->len; j++) {
+            if (dict->links[j] > i)
+                dict->links[j]--;
+        }
+        for (j = 0; j < dict->hashtab_size; j++) {
+            if (dict->hashtab[j] > i)
+                dict->hashtab[j]--;
+        }
     }
 
     return dict;
@@ -217,7 +217,7 @@ Long dict_find(cDict *dict, cData *key, cData *ret)
 
     pos = search(dict, key);
     if (pos == F_FAILURE)
-	return keynf_id;
+        return keynf_id;
 
     data_dup(ret, &dict->values->el[pos]);
     return NOT_AN_IDENT;
@@ -246,7 +246,7 @@ cList *dict_key_value_pair(cDict *dict, Int i)
     cList *l;
 
     if (i >= dict->keys->len)
-	return NULL;
+        return NULL;
     l = list_new(2);
     l->len = 2;
     data_dup(&l->el[0], &dict->keys->el[i]);
@@ -260,13 +260,13 @@ cStr *dict_add_literal_to_str(cStr *str, cDict *dict, int flags)
 
     str = string_add_chars(str, "#[", 2);
     for (i = 0; i < dict->keys->len; i++) {
-	str = string_addc(str, '[');
-	str = data_add_literal_to_str(str, &dict->keys->el[i], flags);
-	str = string_add_chars(str, ", ", 2);
-	str = data_add_literal_to_str(str, &dict->values->el[i], flags);
-	str = string_addc(str, ']');
-	if (i < dict->keys->len - 1)
-	    str = string_add_chars(str, ", ", 2);
+        str = string_addc(str, '[');
+        str = data_add_literal_to_str(str, &dict->keys->el[i], flags);
+        str = string_add_chars(str, ", ", 2);
+        str = data_add_literal_to_str(str, &dict->values->el[i], flags);
+        str = string_addc(str, ']');
+        if (i < dict->keys->len - 1)
+            str = string_add_chars(str, ", ", 2);
     }
     return string_addc(str, ']');
 }
@@ -275,7 +275,7 @@ cDict *dict_prep(cDict *dict) {
     cDict *cnew;
 
     if (dict->refs == 1)
-	return dict;
+        return dict;
 
     /* Duplicate the old dictionary. */
     cnew = tmalloc(sizeof(cDict));
@@ -305,8 +305,8 @@ static Int search(cDict *dict, cData *key) {
 
     ind = data_hash(key) % dict->hashtab_size;
     for (i = dict->hashtab[ind]; i != -1; i = dict->links[i]) {
-	if (data_cmp(&dict->keys->el[i], key) == 0)
-	    return i;
+        if (data_cmp(&dict->keys->el[i], key) == 0)
+            return i;
     }
 
     return F_FAILURE;
@@ -322,7 +322,7 @@ static void increase_hashtab_size(cDict *dict)
     Int i, newsize, oldsize = sizeof(Int) * dict->hashtab_size;
 
     if (dict->hashtab_size > 4096)
-	dict->hashtab_size += 4096;
+        dict->hashtab_size += 4096;
     else
         dict->hashtab_size = dict->hashtab_size * 2 + MALLOC_DELTA;
 
@@ -332,7 +332,7 @@ static void increase_hashtab_size(cDict *dict)
     memset(dict->links,   -1, newsize);
     memset(dict->hashtab, -1, newsize);
     for (i = 0; i < dict->keys->len; i++)
-	insert_key(dict, i);
+        insert_key(dict, i);
 }
 
 /* WARNING: This will discard both arguments! */

@@ -46,7 +46,7 @@ void clear_debug(void);
 cData debug;
 
 VMState *suspended = NULL, *preempted = NULL, *vmstore = NULL;
-VMStack *stack_store = NULL, *holder_cache = NULL; 
+VMStack *stack_store = NULL, *holder_cache = NULL;
 
 #define    call_error(_err_) { call_environ = _err_; return CALL_ERROR; }
 
@@ -86,7 +86,7 @@ static void store_stack(void) {
     } else {
         holder = EMALLOC(VMStack, 1);
     }
-  
+
     holder->stack = stack;
     holder->stack_size = stack_size;
 
@@ -478,7 +478,7 @@ void vm_pause(void) {
     vm->preempted = YES;
     ADD_VM_TASK(preempted, vm);
     init_execute();
-    cur_frame = NULL;  
+    cur_frame = NULL;
 }
 
 /*
@@ -517,21 +517,21 @@ cList * vm_list(void) {
     cList  * r;
     cData    elem;
     VMState * vm;
-  
+
     r = list_new(0);
-  
+
     elem.type = INTEGER;
 
     for (vm = suspended; vm; vm = vm->next) {
         elem.u.val = vm->task_id;
-        r = list_add(r, &elem); 
+        r = list_add(r, &elem);
     }
-  
+
     for (vm = preempted; vm; vm = vm->next) {
         elem.u.val = vm->task_id;
-        r = list_add(r, &elem); 
+        r = list_add(r, &elem);
     }
-  
+
     return r;
 }
 
@@ -543,7 +543,7 @@ cList * vm_stack(Frame * frame_to_trace, Bool want_line_numbers) {
     cData   d,
            * list;
     Frame  * f;
-  
+
     r = list_new(0);
     d.type = LIST;
     for (f = frame_to_trace; f; f = f->caller_frame) {
@@ -592,13 +592,13 @@ void log_task_stack(Long taskid, cList * stack, void (logroutine)(char*,...))
 
     for (frame = list_first(stack); frame; frame = list_next(stack, frame)) {
         sender = list_elem(frame->u.list, 0);
-	caller = list_elem(frame->u.list, 1);
-	method = list_elem(frame->u.list, 2);
-	lineno = list_elem(frame->u.list, 3);
-	opcode = list_elem(frame->u.list, 4);
+        caller = list_elem(frame->u.list, 1);
+        method = list_elem(frame->u.list, 2);
+        lineno = list_elem(frame->u.list, 3);
+        opcode = list_elem(frame->u.list, 4);
 
         sender_obj = cache_retrieve(sender->u.objnum);
-	if (sender_obj) {
+        if (sender_obj) {
             sender_name = ident_name(sender_obj->objname);
             cache_discard(sender_obj);
         } else {
@@ -606,20 +606,20 @@ void log_task_stack(Long taskid, cList * stack, void (logroutine)(char*,...))
         }
 
         caller_obj = cache_retrieve(caller->u.objnum);
-	caller_name = ident_name(caller_obj->objname);
-	cache_discard(caller_obj);
+        caller_name = ident_name(caller_obj->objname);
+        cache_discard(caller_obj);
 
-	method_name = ident_name(method->u.symbol);
+        method_name = ident_name(method->u.symbol);
 
         lineno_val = lineno->u.val;
         opcode_val = opcode->u.val;
 
-	if (lineno_val == -1)
+        if (lineno_val == -1)
             (logroutine)("  $%s<$%s>.%s(): opcode: %d",
                          sender_name, caller_name, method_name,
                          opcode_val);
-	else
-	    (logroutine)("  $%s<$%s>.%s(): line: %d opcode: %d", 
+        else
+            (logroutine)("  $%s<$%s>.%s(): line: %d opcode: %d",
                          sender_name, caller_name, method_name,
                          lineno_val, opcode_val);
     }
@@ -633,13 +633,13 @@ void log_task_stack(Long taskid, cList * stack, void (logroutine)(char*,...))
 void init_execute(void) {
     if (stack_store) {
         VMStack *holder;
-        
+
         stack = stack_store->stack;
         stack_size = stack_store->stack_size;
-    
+
         arg_starts = stack_store->arg_starts;
         arg_size = stack_store->arg_size;
-    
+
         holder = stack_store;
         stack_store = holder->next;
         holder->next = holder_cache;
@@ -652,7 +652,7 @@ void init_execute(void) {
     } else {
         stack = EMALLOC(cData, STACK_STARTING_SIZE);
         stack_size = STACK_STARTING_SIZE;
-    
+
         arg_starts = EMALLOC(Int, ARG_STACK_STARTING_SIZE);
         arg_size = ARG_STACK_STARTING_SIZE;
 
@@ -775,21 +775,21 @@ void vm_method(Obj *obj, Method *method) {
 /*
 // ---------------------------------------------------------------
 */
-Int frame_start(Obj * obj,
+Int frame_start(Obj    * obj,
                 Method * method,
-                cObjnum    sender,
-                cObjnum    caller,
-                cObjnum    user,
+                cObjnum  sender,
+                cObjnum  caller,
+                cObjnum  user,
                 Int      stack_start,
                 Int      arg_start,
-		Bool     is_frob)
+                Bool     is_frob)
 {
     Frame      * frame;
     Int          i,
                  num_args,
                  num_rest_args;
-    cList     * rest;
-    cData       * d, o;
+    cList      * rest;
+    cData      * d, o;
     Number_buf   nbuf1,
                  nbuf2;
 
@@ -868,8 +868,8 @@ Int frame_start(Obj * obj,
 #ifdef DRIVER_DEBUG
     if (debug.u.val > 0) {
       Int parms;
-      cList *list;  
-      cData d; 
+      cList *list;
+      cData d;
 
       parms = (debug.u.val == 2 ||
                (debug.u.val >= 4 &&
@@ -897,7 +897,7 @@ Int frame_start(Obj * obj,
 
       if (parms) {
           cList *l;
-          Int i; 
+          Int i;
 
           l = list_new(1);
           for (i = arg_start; i < stack_pos - method->num_vars; i++)
@@ -911,7 +911,7 @@ Int frame_start(Obj * obj,
       d.u.list = list;
       debug.u.list = list_add(debug.u.list, &d);
       list_discard(list);
-    }           
+    }
 #endif
 
     return CALL_OK;
@@ -927,16 +927,16 @@ void frame_return(void) {
 #ifdef DRIVER_DEBUG
     if (debug.u.val > 0) {
       cData d;
-    
+
       if (debug.type == LIST) {
           /* We skip the case when there hasn't been any calls yet,
              That's to prefent the other routine from getting confused */
           d.type = INTEGER;
           d.u.val = tick;
           debug.u.list = list_add (debug.u.list, &d);
-      }   
-    }     
-#endif    
+      }
+    }
+#endif
 
     /* Free old data on stack. */
     for (i = cur_frame->stack_start; i < stack_pos; i++)
@@ -944,7 +944,7 @@ void frame_return(void) {
     stack_pos = cur_frame->stack_start;
 
     /* Let go of method and objects. */
-    
+
 #ifdef REF_COUNT_DEBUG
     /* Check if any of the objects lost their refcounts */
     if (count_stack_refs(cur_frame->method->object->objnum) >
@@ -982,7 +982,7 @@ void frame_return(void) {
 Int meth_p_last = 0;
 
 struct meth_prof_s {
-    cObjnum objnum;
+    cObjnum  objnum;
     char     name[64];
     uLong    count;
 } meth_prof [PROFILE_MAX];
@@ -992,12 +992,12 @@ Long prof_ops[LAST_TOKEN];
 void update_execute_opcode(Int opcode) {
     register Int x;
     static short init = 1;
-        
+
     if (init) {
         for (x=0; x < LAST_TOKEN; x++)
             prof_ops[x] = 0;
         init = 0;
-    }       
+    }
 
     prof_ops[opcode]++;
 }
@@ -1120,7 +1120,7 @@ void anticipate_assignment(void) {
 
     /* skip error handling */
     while ((opcode = cur_frame->opcodes[pc]) == CRITICAL_END)
-	pc++;
+        pc++;
 
     switch (opcode) {
       case SET_LOCAL:
@@ -1209,18 +1209,18 @@ Int pass_method(Int stack_start, Int arg_start) {
     method = object_find_next_method(cur_frame->object->objnum,
                                      cur_frame->method->name,
                                      cur_frame->method->object->objnum,
-				     cur_frame->method->m_access == MS_FROB ?
+                                     cur_frame->method->m_access == MS_FROB ?
                                      FROB_YES : FROB_NO);
     if (!method) {
-	if (cur_frame->method->m_access == MS_FROB) {
-	    method = object_find_next_method(cur_frame->object->objnum,
-					     cur_frame->method->name,
-					     cur_frame->method->object->objnum,
-					     FROB_RETRY);
-	    if (!method)
-		call_error(CALL_ERR_METHNF);
-	} else
-	    call_error(CALL_ERR_METHNF);
+        if (cur_frame->method->m_access == MS_FROB) {
+            method = object_find_next_method(cur_frame->object->objnum,
+                                             cur_frame->method->name,
+                                             cur_frame->method->object->objnum,
+                                             FROB_RETRY);
+            if (!method)
+                call_error(CALL_ERR_METHNF);
+        } else
+            call_error(CALL_ERR_METHNF);
     }
 
     if (cur_frame) {
@@ -1264,7 +1264,7 @@ Int call_method(cObjnum objnum,     /* the object */
                 Ident name,         /* the method name */
                 Int stack_start,    /* start of the stack .. */
                 Int arg_start,      /* start of the args */
-		Bool is_frob)       /* how to look it up */
+                Bool is_frob)       /* how to look it up */
 {
     Obj * obj;
     Method * method;
@@ -1286,17 +1286,17 @@ Int call_method(cObjnum objnum,     /* the object */
     /* Find the method to run. */
     method = object_find_method(objnum, name, is_frob);
     if (!method) {
-	if (is_frob == FROB_YES) {
-	    method = object_find_method(objnum, name, FROB_RETRY);
-	    if (!method) {
-		cache_discard(obj);
-		call_error(CALL_ERR_METHNF);
-	    }
-	}
-	else {
+        if (is_frob == FROB_YES) {
+            method = object_find_method(objnum, name, FROB_RETRY);
+            if (!method) {
+                cache_discard(obj);
+                call_error(CALL_ERR_METHNF);
+            }
+        }
+        else {
             cache_discard(obj);
             call_error(CALL_ERR_METHNF);
-	}
+        }
     }
 
 #ifdef PROFILE_EXECUTE
@@ -1592,7 +1592,7 @@ Int func_init_0_to_2(cData **args, Int *num_args, Int type1, Int type2)
     else if (INVALID_BINDING)
         cthrow(perm_id, "%s() is bound to %O", FUNC_NAME(), FUNC_BINDING());
     else
-	return 1;
+        return 1;
 
     return 0;
 }
@@ -1635,9 +1635,9 @@ void func_type_error(char *which, cData *wrong, char *required)
 
 static Bool is_critical (void) {
     if (cur_frame
-	&& cur_frame->specifiers
-	&& cur_frame->specifiers->type==CRITICAL)
-	return TRUE;
+        && cur_frame->specifiers
+        && cur_frame->specifiers->type==CRITICAL)
+        return TRUE;
     return FALSE;
 }
 
@@ -1648,12 +1648,12 @@ void cthrow(Ident error, char *fmt, ...)
     Method  * method = NULL;
 
     if (!is_critical()) {
-	va_start(arg, fmt);
-	str = vformat(fmt, arg);
+        va_start(arg, fmt);
+        str = vformat(fmt, arg);
 
-	va_end(arg);
+        va_end(arg);
     } else
-	str = NULL;
+        str = NULL;
 
     /* protect the method in the current frame, if there is any - I
        have no idea what can call cthrow... This will prevent unexpected
@@ -1664,7 +1664,7 @@ void cthrow(Ident error, char *fmt, ...)
     if (method)
         method_discard(method);
     if (str)
-	string_discard(str);
+        string_discard(str);
 }
 
 static Traceback_info *traceback_info_new() {
@@ -1749,22 +1749,22 @@ void interp_error(Ident error, cStr *explanation)
     char *opname;
 
     if (explanation) {
-	/* Get the opcode name and decide whether it's a function or not. */
-	opname = op_table[cur_frame->last_opcode].name;
-	location_type = (islower(*opname)) ? function_id : opcode_id;
+        /* Get the opcode name and decide whether it's a function or not. */
+        opname = op_table[cur_frame->last_opcode].name;
+        location_type = (islower(*opname)) ? function_id : opcode_id;
 
-	/* Construct a two-element list giving the location. */
+        /* Construct a two-element list giving the location. */
         location = traceback_info_new();
         location->type = 1;
 
-	/* The first element is 'function or 'opcode. */
+        /* The first element is 'function or 'opcode. */
         location->location = ident_dup(location_type);
 
-	/* The second element is the symbol for the opcode. */
-	location->u.opcode = ident_dup(op_table[cur_frame->last_opcode].symbol);
+        /* The second element is the symbol for the opcode. */
+        location->u.opcode = ident_dup(op_table[cur_frame->last_opcode].symbol);
     }
     else
-	location = NULL;
+        location = NULL;
 
     start_error(error, explanation, NULL, location);
 }
@@ -1842,7 +1842,7 @@ static void start_error(Ident error, cStr *explanation, cData *arg,
     else {
         arg_to_pass->type = INTEGER;
         arg_to_pass->u.val = 0;
-	traceback=NULL;
+        traceback=NULL;
     }
 
     if (explanation)
@@ -1880,7 +1880,7 @@ void propagate_error(Traceback_info * traceback, Ident error,
 
     /* Add message to traceback. */
     if (traceback)
-	traceback = traceback_add(traceback, error);
+        traceback = traceback_add(traceback, error);
 
     /* Look for an appropriate specifier in this frame. */
     for (; cur_frame->specifiers; pop_error_action_specifier()) {
@@ -1913,7 +1913,7 @@ void propagate_error(Traceback_info * traceback, Ident error,
              * processing. */
             pop_error_action_specifier();
             if (traceback)
-		traceback_info_discard(traceback);
+                traceback_info_discard(traceback);
             return;
 
           case PROPAGATE:
@@ -1998,7 +1998,7 @@ static Traceback_info * traceback_add(Traceback_info * traceback, Ident error)
 }
 
 void pop_error_action_specifier(void)
-{ 
+{
     Error_action_specifier *old;
 
     /* Pop the first error action specifier off that stack. */
@@ -2192,29 +2192,29 @@ void bind_opcode(Int opcode, cObjnum objnum) {
 
 /* ------------------------------------------------------ */
 #ifdef DRIVER_DEBUG
-void init_debug(void) {     
+void init_debug(void) {
     debug.type = INTEGER;
     debug.u.val = 0;
-}   
+}
 
-void clear_debug(void) {   
+void clear_debug(void) {
     data_discard(&debug);
     init_debug();
-}     
-          
-void start_debug(void) {         
+}
+
+void start_debug(void) {
     data_discard(&debug);
     debug.type = INTEGER;
     debug.u.val=1;
-}   
-              
-void start_full_debug(void) {         
+}
+
+void start_full_debug(void) {
     data_discard(&debug);
     debug.type = INTEGER;
     debug.u.val=2;
-}   
+}
 
-void get_debug(cData *d) { 
+void get_debug(cData *d) {
     data_dup(d, &debug);
 }
 #endif

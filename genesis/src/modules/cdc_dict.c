@@ -164,12 +164,12 @@ NATIVE_METHOD(dict_del_elem) {
     pos = list_search(list, &elem);
 
     /* we are finished with 'elem' */
-    data_discard(&elem); 
+    data_discard(&elem);
 
     /* the element is not in the list, simply return the dictionary */
     if (pos == -1) {
-        data_discard(&dlist); 
-        data_discard(&key); 
+        data_discard(&dlist);
+        data_discard(&key);
         RETURN_DICT(dict);
     }
 

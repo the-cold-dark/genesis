@@ -11,7 +11,7 @@
 COLDC_FUNC(task_info) {
     cList * list;
     cData *args;
- 
+
     if (!func_init_1(&args, INTEGER))
         return;
 
@@ -28,7 +28,7 @@ COLDC_FUNC(task_info) {
 /* cancel a suspended task                                           */
 COLDC_FUNC(cancel) {
     cData *args;
- 
+
     if (!func_init_1(&args, INTEGER))
         return;
 

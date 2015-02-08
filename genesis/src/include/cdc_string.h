@@ -36,7 +36,7 @@ cStr * string_parse(char * *sptr);
 cStr * string_add_unparsed(cStr * str, char * s, Int len);
 char * regerror(char * msg);
 int    string_index(cStr * str, cStr * sub, int origin);
-cStr * string_prep(cStr *str, Int start, Int len); 
+cStr * string_prep(cStr *str, Int start, Int len);
 
 #define string_length(__s) ((Int) __s->len)
 #define string_chars(__s) ((char *) __s->s + __s->start)

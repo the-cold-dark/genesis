@@ -332,7 +332,7 @@ cList * open_file(cStr * name, cStr * smode, Obj * obj) {
             fnew->f.readable = fnew->f.writable = 1;
             s++;
         }
-    
+
         if (*s == '>') {
             s++;
             if (*s == '>') {

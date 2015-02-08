@@ -349,7 +349,7 @@ static void initialize(Int argc, char **argv) {
 */
 void usage (char * name) {
     fprintf (stderr,
-	     "\n-- ColdCC %d.%d-%d --\n\n"
+             "\n-- ColdCC %d.%d-%d --\n\n"
              "Usage: %s [options]\n"
              "\n"
              "Options:\n\n"

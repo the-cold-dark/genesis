@@ -274,9 +274,9 @@ COLDC_FUNC(random) {
     /* If INT1 is negative, throw ~range */
     if (INT1 <= 0) {
         cthrow(range_id, "Maximum value is less than 1.");
-        return;  
+        return;
     }
- 
+
     /* Replace argument on stack with a random number. */
     INT1 = random_number(INT1) + 1;
 }

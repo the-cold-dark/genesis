@@ -49,15 +49,15 @@ extern StringTab *idents;
 void   init_ident(void);
 void   uninit_ident(void);
 
-#define ident_get(s)		string_tab_get(idents, s)
-#define ident_get_length(s,len)	string_tab_get_length(idents, s, len)
-#define ident_get_string(str)	string_tab_get_string(idents, str)
-#define ident_discard(id)	string_tab_discard(idents, id)
-#define ident_dup(id)		string_tab_dup(idents, id)
-#define ident_name(id)		string_tab_name(idents, id)
+#define ident_get(s)                string_tab_get(idents, s)
+#define ident_get_length(s,len)        string_tab_get_length(idents, s, len)
+#define ident_get_string(str)        string_tab_get_string(idents, str)
+#define ident_discard(id)        string_tab_discard(idents, id)
+#define ident_dup(id)                string_tab_dup(idents, id)
+#define ident_name(id)                string_tab_name(idents, id)
 #define ident_name_size(id, sz) string_tab_name_size(idents, id, sz)
 #define ident_name_str(id)      string_tab_name_str(idents, id)
-#define ident_hash(id)		string_tab_hash(idents, id)
+#define ident_hash(id)                string_tab_hash(idents, id)
 
 #endif
 

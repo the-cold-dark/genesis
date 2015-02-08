@@ -22,7 +22,7 @@ RELEASE INFORMATION:
         some other missing tests. (Bruce)
       * added bufsub() and $buffer.bufsub() (Bruce)
       * Change task_stack() to let it obtain the stack for any
-        given frame and to generate either line numbers or 
+        given frame and to generate either line numbers or
         opcode index values. (Bruce)
       * Add log_task_stack() and log_all_task_stacks() callable
         from C. (Bruce)
@@ -43,7 +43,7 @@ RELEASE INFORMATION:
         variable.  (Allen Noe)
       * Win32 build fix involving VRELEASE. (Allen Noe)
       * Add func_init_0_to_2(). (Bruce)
-      * Make stack() accept parameters to specify task id and 
+      * Make stack() accept parameters to specify task id and
         whether or not line numbers are desired. (Bruce)
       * Add 'log_malloc_size parameter for config(). (Bruce)
       * Add explode_quoted() patch. (Jeremy Weatherford)
@@ -77,7 +77,7 @@ RELEASE INFORMATION:
         to ignore, the key is the only relevant part. (Brad)
       * Add config('cachewatch, $obj) and config('cachewatchcount, ##)
         to log the call stack of a specific $obj every cachewatchcount
-	dirtys. (Brad)
+        dirtys. (Brad)
       * Add ability to get both size and char* data from an ident to avoid
         useless strlen() calls. (Bruce)
       * Avoid writing back size/offset values if they haven't changed in

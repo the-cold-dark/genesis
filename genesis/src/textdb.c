@@ -53,7 +53,7 @@ extern Bool print_warn;
         printf("\rLine %ld: ", (long) line_count); \
         printf(__s, __x); \
         fputc('\n', stdout); \
-	fflush(stdout); \
+        fflush(stdout); \
     } while (0)
 
 #define WARN(_printf_) do { \
@@ -61,13 +61,13 @@ extern Bool print_warn;
             printf("\rLine %ld: WARNING: ", (long) line_count); \
             printf _printf_; \
             fputc('\n', stdout); \
-	    fflush(stdout); \
+            fflush(stdout); \
         } \
     } while (0)
 
 #define DIE(__s) do { \
         printf("\rLine %ld: ERROR: %s\n", (long) line_count, __s); \
-	fflush(stdout); \
+        fflush(stdout); \
         shutdown_coldcc(); \
     } while (0)
 
@@ -75,7 +75,7 @@ extern Bool print_warn;
         printf("\rLine %ld: ERROR: ", (long) line_count); \
         printf(__fmt, __arg); \
         fputc('\n', stdout); \
-	fflush(stdout); \
+        fflush(stdout); \
         shutdown_coldcc(); \
     } while (0)
 
@@ -336,9 +336,9 @@ static void verify_native_methods(void) {
         native = &natives[x];
 
         /* if they didn't define it right, ignore it */
-        if ((strlen(native->bindobj) == 0) || (strlen(native->name) == 0))  
+        if ((strlen(native->bindobj) == 0) || (strlen(native->name) == 0))
             continue;
-  
+
         /* get the object name */
         name = ident_get(native->bindobj);
         if (name == NOT_AN_IDENT)
@@ -348,7 +348,7 @@ static void verify_native_methods(void) {
         objnum = INV_OBJNUM;
         lookup_retrieve_name(name, &objnum);
         ident_discard(name);
-  
+
         /* die? */
         if (objnum == INV_OBJNUM) {
             if (print_warn)
@@ -419,7 +419,7 @@ static void verify_native_methods(void) {
                     fformat(stdout, "\rWARNING: method definition %O.%s() overrides native method.\n",
                             obj->objnum, ident_name(mname));
             } else {
-		cache_dirty_object(obj);
+                cache_dirty_object(obj);
                 method->native = x;
                 method->m_flags |= MF_NATIVE;
 
@@ -460,7 +460,7 @@ static void verify_native_methods(void) {
             if (cur_obj) {
                 method = object_find_method_local(cur_obj, name, FROB_ANY);
                 if (method) {
-		    cache_dirty_object(cur_obj);
+                    cache_dirty_object(cur_obj);
                     method->native = -1;
                 }
                 cache_discard(cur_obj);
@@ -655,7 +655,7 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
                 WARN(("old: attempt to destroy $sys ignored."));
             } else {
                 ERRf("old: destroying object %s.", obj_str);
-		cache_dirty_object(target);
+                cache_dirty_object(target);
                 target->dead = 1;
                 cache_discard(target);
                 target = NULL;
@@ -673,18 +673,18 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
             /* $root and $sys should ALWAYS exist */
             target = cache_retrieve(objnum);
         } else {
-	    // XXX: this code makes a bad assumption that is no longer universally true
-	    //      if target is a parent with children in the cache, its refcount won't
-	    //      be 1 and so the discard won't actually get rid of the object and the
-	    //      object_new is going to cause problems because it assumes that the
-	    //      objnum doesn't exist.
-	    //
-	    //      The code that makes this unsafe isn't checked in, so at the moment its
-	    //      still safe
-	    //
+            // XXX: this code makes a bad assumption that is no longer universally true
+            //      if target is a parent with children in the cache, its refcount won't
+            //      be 1 and so the discard won't actually get rid of the object and the
+            //      object_new is going to cause problems because it assumes that the
+            //      objnum doesn't exist.
+            //
+            //      The code that makes this unsafe isn't checked in, so at the moment its
+            //      still safe
+            //
             if ((target = cache_retrieve(objnum))) {
                 WARN(("new: destroying existing object %s.", obj_str));
-		cache_dirty_object(target);
+                cache_dirty_object(target);
                 target->dead = 1;
                 cache_discard(target);
                 target = NULL;
@@ -868,12 +868,12 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
 #ifndef ONLY_PARSE_TEXTDB
         definer = parse_to_objnum(&name);
 
-	if (last_definer != definer) {
-	    rc_check = cache_check(definer);
-	    last_definer = definer;
-	}
+        if (last_definer != definer) {
+            rc_check = cache_check(definer);
+            last_definer = definer;
+        }
 
-	if (!rc_check) {
+        if (!rc_check) {
             WARN(("Ignoring object variable with invalid parent:"));
             if (strlen(line) > 55) {
                 line[50] = line[51] = line[52] = '.';
@@ -883,7 +883,7 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
             return;
         }
 
-	if (!object_has_ancestor(cur_obj->objnum, definer)) {
+        if (!object_has_ancestor(cur_obj->objnum, definer)) {
             WARN(("Ignoring object variable with no ancestor:"));
             if (strlen(line) > 55) {
                 line[50] = line[51] = line[52] = '.';
@@ -950,7 +950,7 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
                     printf(",%s:\nLine %ld: WARNING: data: %s\n"
                            "Line %ld: WARNING: Defaulting value to ZERO ('0').\n",
                            ident_name(var), (long) line_count, strchop(s, 50), (long) line_count);
-	            fflush(stdout);
+                    fflush(stdout);
                 }
             }
 #endif
@@ -1060,7 +1060,7 @@ static void handle_bind_nativecmd(FILE * fp, char * s) {
     NEXT_WORD(s);
 
     s += get_method_name(s, &meth);
-   
+
 #ifndef ONLY_PARSE_TEXTDB
     if (nat.str == NULL || meth.str == NULL)
         DIE("Invalid method name in bind_native directive.\n");
@@ -1132,7 +1132,7 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
         p++;
 
         while (*p != '\0' && running) {
-            NEXT_WORD(p);   
+            NEXT_WORD(p);
             if (*p == '{' || *p == ';') {
                 break;
             } else if (!strnccmp(p, "nooverride", 10)) {
@@ -1403,7 +1403,7 @@ void compile_cdc_file(FILE * fp) {
                     access = A_DRIVER;
                     s += 6;
                     NEXT_WORD(s);
-                } 
+                }
                 break;
             case 'f':
             case 'F':
@@ -1411,7 +1411,7 @@ void compile_cdc_file(FILE * fp) {
                     access = A_FROB;
                     s += 4;
                     NEXT_WORD(s);
-                } 
+                }
                 break;
             case 'p':
             case 'P':
@@ -1514,7 +1514,7 @@ void compile_cdc_file(FILE * fp) {
                     s += 4;
                     NEXT_WORD(s);
                     handle_namecmd(str->s, s, new);
-                } 
+                }
                 handled = 1;
                 break;
             default:
@@ -1685,7 +1685,7 @@ static inline void dump_object_methods(Obj *obj, FILE *fp) {
             }
 
             list_discard(code);
-    
+
             /* if it is native, and they have renamed it, put a rename
                directive down */
             if (meth->m_flags & MF_NATIVE && meth->native != -1) {
@@ -1726,7 +1726,7 @@ void dump_object(Long objnum, FILE *fp, Bool objnames) {
 
     /* grab the parents list */
     objs = list_dup(obj->parents);
-    cache_discard(obj); 
+    cache_discard(obj);
 
     /* first dump any parents which haven't already been dumped. */
     if (list_length(objs) != 0) {
@@ -1873,7 +1873,7 @@ void blank_and_print_obj(char * what, Float percent_done, Obj * obj) {
     if (obj->objname == NOT_AN_IDENT) {
         sn = long_to_ascii(obj->objnum, nbuf);
         fputc('#', stdout);
-    } else {  
+    } else {
         sn = ident_name(obj->objname);
         fputc('$', stdout);
     }

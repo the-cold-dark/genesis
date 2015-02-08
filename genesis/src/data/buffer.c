@@ -31,12 +31,12 @@ cBuf *buffer_dup(cBuf *buf) {
 void buffer_discard(cBuf *buf) {
     buf->refs--;
     if (!buf->refs)
-	efree(buf);
+        efree(buf);
 }
 
 cBuf *buffer_append(cBuf *buf1, cBuf *buf2) {
     if (!buf2->len)
-	return buf1;
+        return buf1;
     buf1 = buffer_prep(buf1, buf1->len + buf2->len);
     MEMCPY(buf1->s + buf1->len, buf2->s, buf2->len);
     buf1->len += buf2->len;
@@ -45,7 +45,7 @@ cBuf *buffer_append(cBuf *buf1, cBuf *buf2) {
 
 cBuf * buffer_append_uchars_single_ref(cBuf * buf, uChar * new, Int new_len) {
     Int new_size = buf->len + new_len;
-    
+
     if (buf->size < new_size) {
         /* Resize the buffer */
         new_size = ROUND_UP(new_size + BUFFER_OVERHEAD, BUFFER_DATA_INCREMENT);
@@ -73,7 +73,7 @@ Int buffer_retrieve(cBuf *buf, Int pos) {
 
 cBuf *buffer_replace(cBuf *buf, Int pos, uInt c) {
     if (buf->s[pos] == c)
-	return buf;
+        return buf;
     buf = buffer_prep(buf, buf->len);
     buf->s[pos] = OCTET_VALUE(c);
     return buf;
@@ -92,7 +92,7 @@ cBuf *buffer_resize(cBuf *buf, Int len) {
        as it leaves some uninitialized memory in the buffer */
 
     if (len == buf->len)
-	return buf;
+        return buf;
     buf = buffer_prep(buf, len);
     buf = (cBuf*)erealloc(buf, len + BUFFER_OVERHEAD);
     buf->size = len;
@@ -182,21 +182,21 @@ cList *buf_to_strings(cBuf *buf, cBuf *sep)
     string_start = p = buf->s;
     d.type = STRING;
     while (p + seplen <= buf->s + buf->len) {
-	/* Look for sepchar staring from p. */
-	p = (unsigned char *)memchr(p, sepchar, 
-				    (buf->s + buf->len) - (p + seplen - 1));
-	if (!p)
-	    break;
+        /* Look for sepchar staring from p. */
+        p = (unsigned char *)memchr(p, sepchar,
+                                    (buf->s + buf->len) - (p + seplen - 1));
+        if (!p)
+            break;
 
-	/* Keep going if we don't match all of the separator. */
-	if (sep && MEMCMP(p + 1, sep->s + 1, seplen - 1) != 0) {
-	    p++;
-	    continue;
-	}
+        /* Keep going if we don't match all of the separator. */
+        if (sep && MEMCMP(p + 1, sep->s + 1, seplen - 1) != 0) {
+            p++;
+            continue;
+        }
 
-	/* We found a separator.  Copy the printable characters in the
-	 * intervening text into a string. */
-	str = string_new(p - string_start);
+        /* We found a separator.  Copy the printable characters in the
+         * intervening text into a string. */
+        str = string_new(p - string_start);
         s = str->s;
         for (q = string_start; q < p; q++) {
             if (ISPRINT(*q))
@@ -207,11 +207,11 @@ cList *buf_to_strings(cBuf *buf, cBuf *sep)
         *s = '\0';
         str->len = s - str->s;
 
-	d.u.str = str;
-	result = list_add(result, &d);
-	string_discard(str);
+        d.u.str = str;
+        result = list_add(result, &d);
+        string_discard(str);
 
-	string_start = p = p + seplen;
+        string_start = p = p + seplen;
     }
 
     /* Add the remainder characters to the list as a buffer. */
@@ -298,15 +298,15 @@ cBuf * buffer_bufsub(cBuf * buf, cBuf * old, cBuf * new) {
 
     if (((lo == ln) && (memcmp(old->s, new->s, lo) == 0)) ||
         (lo > lb) ||
-	(lo == 0) ||
-	(lb == 0))
+        (lo == 0) ||
+        (lb == 0))
         return buf;
 
     p = q = 1;
     cnew = buffer_new(buf->len);
     while ((p <= buf->len) &&
            (q = buffer_index(buf, old->s, lo, p)) &&
-	   (q != -1)) {
+           (q != -1)) {
         cnew = buffer_append_uchars_single_ref(cnew, buf->s + p - 1, q - p);
         cnew = buffer_append_uchars_single_ref(cnew, new->s, ln);
         p = q + lo;
@@ -353,34 +353,34 @@ int buf_rindexs(uChar * buf, int len, uChar * sub, int slen, int origin){
         return 0;
 
     s = &buf[len];
- 
+
     while (len-- >= 0) {
         if (*s == *sub) {
             if (!MEMCMP(s, sub, slen))
                 return (s - buf) + 1;
-        } 
+        }
         s--;
     }
-    
+
     return 0;
 }
 
 static int buf_rindexc(uChar * buf, int len, uChar sub, int origin) {
     register uChar * s;
-        
+
     len -= origin;
 
     if (len < 0)
         return 0;
 
     s = &buf[len];
-        
+
     while (len-- >= 0) {
         if (*s == sub)
             return (s - buf) + 1;
-        s--;    
+        s--;
     }
-    
+
     return 0;
 }
 
@@ -412,7 +412,7 @@ int buffer_index(cBuf * buf, uChar * ss, int slen, int origin) {
     } else {
         int xlen = len;
 
-        origin--;   
+        origin--;
         xlen -= origin;
 
         if (xlen < slen)

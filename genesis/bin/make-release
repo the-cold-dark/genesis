@@ -84,7 +84,7 @@ perl -e "\$incr=0;
                  }
              } elsif (/\x0c/) {
                  \$incr = 1;
-             } 
+             }
          }" < $chngs >> $notes
 
 ## make it commitable

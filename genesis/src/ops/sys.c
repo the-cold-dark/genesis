@@ -160,7 +160,7 @@ COLDC_FUNC(backup) {
 #endif
 
     /* copy the index files and '.clean' */
-    dp = opendir(c_dir_binary); 
+    dp = opendir(c_dir_binary);
     /* if this failed, then this backup can't complete. die. */
     if (dp == NULL) {
         write_err("ERROR: error in backup: %s: %s", c_dir_binary, strerror(GETERR()));
@@ -239,10 +239,10 @@ COLDC_FUNC(set_heartbeat) {
 // -----------------------------------------------------------------
 
  * Datasize limit (example: 1024K)
- * Task forking limit (for instance, 20. Each time a task forks, each 
+ * Task forking limit (for instance, 20. Each time a task forks, each
    child gets only a half of this quota)
  * Recursion depth (good default: 128)
- * Object swapping (a task can't swap an object from disk-db more than 
+ * Object swapping (a task can't swap an object from disk-db more than
    (for example) 16 times before calling pause() and preempting)
    (we might be able to do away with swap limit with Genesis 2.0, as
    we'll go multithreaded then, and it'll be much harder to lag the server)
@@ -250,16 +250,16 @@ COLDC_FUNC(set_heartbeat) {
 */
 
 #define _CONFIG_INT(id, var) \
-	if (SYM1 == id) { \
-	    if (argc == 2) { \
-	        if (args[ARG2].type != INTEGER) \
-		    THROW((type_id, "Expected an integer")) \
-		var = INT2; \
-	    } \
-	    pop(argc); \
-	    push_int(var); \
-	    return; \
-	}
+        if (SYM1 == id) { \
+            if (argc == 2) { \
+                if (args[ARG2].type != INTEGER) \
+                    THROW((type_id, "Expected an integer")) \
+                var = INT2; \
+            } \
+            pop(argc); \
+            push_int(var); \
+            return; \
+        }
 
 #define _CONFIG_CLEANERWAIT(id, var) \
         if (SYM1 == id) { \
@@ -275,29 +275,29 @@ COLDC_FUNC(set_heartbeat) {
         }
 
 #define _CONFIG_OBJNUM(id, var) \
-	if (SYM1 == id) { \
-	    if (argc == 2) { \
-	        if (args[ARG2].type != OBJNUM) \
-		    THROW((type_id, "Expected an $object")) \
-		var = OBJNUM2; \
-	    } \
-	    pop(argc); \
-	    push_objnum(var); \
-	    return; \
-	}
+        if (SYM1 == id) { \
+            if (argc == 2) { \
+                if (args[ARG2].type != OBJNUM) \
+                    THROW((type_id, "Expected an $object")) \
+                var = OBJNUM2; \
+            } \
+            pop(argc); \
+            push_objnum(var); \
+            return; \
+        }
 
 #define _CONFIG_DICT(id, var) \
-	if (SYM1 == id) { \
-	    if (argc == 2) { \
-	        if (args[ARG2].type != DICT) \
-		    THROW((type_id, "Expected a dict")) \
-		dict_discard(var); \
-		var = dict_dup(DICT2); \
-	    } \
-	    pop(argc); \
-	    push_dict(var); \
-	    return; \
-	}
+        if (SYM1 == id) { \
+            if (argc == 2) { \
+                if (args[ARG2].type != DICT) \
+                    THROW((type_id, "Expected a dict")) \
+                dict_discard(var); \
+                var = dict_dup(DICT2); \
+            } \
+            pop(argc); \
+            push_dict(var); \
+            return; \
+        }
 
 COLDC_FUNC(config) {
     cData * args;
@@ -354,8 +354,8 @@ COLDC_FUNC(cache_stats) {
         list = list_dup(ancestor_cache_history);
         entry = ancestor_cache_info();
 #else
-	list = list_new(0);
-	entry = list_new(0);
+        list = list_new(0);
+        entry = list_new(0);
 #endif
         list_entry.type = LIST;
         list_entry.u.list = entry;
@@ -366,10 +366,10 @@ COLDC_FUNC(cache_stats) {
         list = list_dup(method_cache_history);
         entry = method_cache_info();
 #else
-	list = list_new(0);
-	entry = list_new(0);
+        list = list_new(0);
+        entry = list_new(0);
 #endif
-	list_entry.type = LIST;
+        list_entry.type = LIST;
         list_entry.u.list = entry;
         list = list_add(list, &list_entry);
         list_discard(entry);

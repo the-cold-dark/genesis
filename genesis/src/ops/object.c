@@ -91,7 +91,7 @@ COLDC_FUNC(set_var) {
         return;
 
     result = object_assign_var(cur_frame->object, cur_frame->method->object,
-        		       args[0].u.symbol, &args[1]);
+                               args[0].u.symbol, &args[1]);
     if (result == varnf_id) {
         cthrow(varnf_id, "Object variable %I does not exist.", args[0].u.symbol);
     } else {
@@ -113,7 +113,7 @@ COLDC_FUNC(get_var) {
         return;
 
     result = object_retrieve_var(cur_frame->object, cur_frame->method->object,
-        			 args[0].u.symbol, &d);
+                                 args[0].u.symbol, &d);
     if (result == varnf_id) {
         cthrow(varnf_id, "Object variable %I does not exist.", args[0].u.symbol);
     } else {
@@ -152,8 +152,8 @@ COLDC_FUNC(inherited_var) {
     if (!func_init_1(&args, SYMBOL))
         return;
 
-    result = object_inherited_var(cur_frame->object, 
-                                cur_frame->method->object, SYM1, &d);
+    result = object_inherited_var(cur_frame->object,
+                                  cur_frame->method->object, SYM1, &d);
     if (result == varnf_id) {
         cthrow(varnf_id, "Object variable %I does not exist.", SYM1);
     } else {
@@ -225,7 +225,7 @@ COLDC_FUNC(add_method) {
     for (d = list_first(code); d; d = list_next(code, d)) {
         if (d->type != STRING) {
             cthrow(type_id, "Line %d (%D) is not a string.",
-        	  d - list_first(code), d);
+                   d - list_first(code), d);
             return;
         }
     }
@@ -315,10 +315,10 @@ COLDC_FUNC(method_flags) {
 
 COLDC_FUNC(set_method_flags) {
     cData  * args,
-            * d;
+           * d;
     cList  * list;
-    Int       flags,
-              new_flags = MF_NONE;
+    Int      flags,
+             new_flags = MF_NONE;
 
     if (!func_init_2(&args, SYMBOL, LIST))
         return;
@@ -356,7 +356,7 @@ COLDC_FUNC(set_method_flags) {
 }
 
 COLDC_FUNC(method_access) {
-    Int       access;
+    Int      access;
     cData  * args;
 
     if (!func_init_1(&args, SYMBOL))
@@ -411,13 +411,13 @@ COLDC_FUNC(set_method_access) {
 }
 
 COLDC_FUNC(method_info) {
-    cData   * args,
-             * list;
-    cList   * output;
+    cData  * args,
+           * list;
+    cList  * output;
     Method * method;
-    cStr * str;
-    char     * s;
-    Int        i;
+    cStr   * str;
+    char   * s;
+    Int      i;
 
     /* A symbol for the Method name. */
     if (!func_init_1(&args, SYMBOL))
@@ -790,7 +790,7 @@ COLDC_FUNC(destroy) {
         THROW((perm_id, "You can't destroy the root object."))
     else if (obj->objnum == SYSTEM_OBJNUM)
         THROW((perm_id, "You can't destroy the system object."))
-     
+
     /*
     // Set the object dead, so it will go away when nothing is
     // holding onto it.  cache_discard() will notice the dead
@@ -906,7 +906,7 @@ COLDC_FUNC(del_objname) {
 COLDC_FUNC(objname) {
     if (!func_init_0())
         return;
-  
+
     if (cur_frame->object->objname == -1)
         cthrow(namenf_id,
                "No name is assigned to #%l.",
@@ -942,7 +942,7 @@ COLDC_FUNC(lookup) {
 COLDC_FUNC(objnum) {
     if (!func_init_0())
         return;
-  
+
     push_int(cur_frame->object->objnum);
 }
 
@@ -970,9 +970,9 @@ static cList * add_op_arg(cList * out, Int type, Long op, Method * method) {
             break;
         case VAR: {
             Long id;
-    
+
             d.type = SYMBOL;
-    
+
             if (op < method->num_args) {
                 op = method->num_args - op - 1;
                 id = object_get_ident(obj, method->argnames[op]);
@@ -980,7 +980,7 @@ static cList * add_op_arg(cList * out, Int type, Long op, Method * method) {
                 break;
             }
             op -= method->num_args;
-    
+
             if (method->rest != -1) {
                 if (op == 0) {
                    id = object_get_ident(obj, method->rest);

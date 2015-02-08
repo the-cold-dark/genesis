@@ -26,8 +26,8 @@
 static SOCKET grab_port(Int port, char * addr, int socktype);
 static Long translate_connect_error(Int error);
 
-static struct sockaddr_in sockin;	/* An internet address. */
-static socklen_t addr_size = sizeof(sockin);	/* Size of sockin. */
+static struct sockaddr_in sockin;        /* An internet address. */
+static socklen_t addr_size = sizeof(sockin);        /* Size of sockin. */
 
 Long server_failure_reason;
 
@@ -74,7 +74,7 @@ int inet_aton (const char * cp, struct in_addr * addr) {
         parts[part++] = strtoul (cp, &next, 0); /* leading 0=octal, 0x=hex */
         if (errno == ERANGE)
             return 0;
-      
+
         if (*next == '.') {
             if (part >= 4)
                 return 0;
@@ -182,7 +182,7 @@ static int use_prebound(SOCKET * sock, int port, char * addr, int socktype) {
     Prebind  * pb,
             ** pbp = &prebound;
 
-    while (*pbp) { 
+    while (*pbp) {
         pb = *pbp;
         if (pb->port == port) {
             if (addr) {
@@ -238,8 +238,8 @@ static SOCKET grab_port(Int port, char * addr, int socktype) {
     /* Create a socket. */
     sock = socket(AF_INET, socktype, 0);
     if (sock == SOCKET_ERROR) {
-	server_failure_reason = socket_id;
-	return SOCKET_ERROR;
+        server_failure_reason = socket_id;
+        return SOCKET_ERROR;
     }
 
     /* Set SO_REUSEADDR option to avoid restart problems. */
@@ -247,8 +247,8 @@ static SOCKET grab_port(Int port, char * addr, int socktype) {
 
     /* Bind the socket to port. */
     if (bind(sock, (struct sockaddr *) &sockin, sizeof(sockin)) == F_FAILURE) {
-	server_failure_reason = bind_id;
-	return SOCKET_ERROR;
+        server_failure_reason = bind_id;
+        return SOCKET_ERROR;
     }
 
 #ifdef __Win32__
@@ -265,7 +265,7 @@ static SOCKET grab_port(Int port, char * addr, int socktype) {
 
 SOCKET get_tcp_socket(Int port, char * addr) {
     SOCKET sock;
-    
+
     sock = grab_port(port, addr, SOCK_STREAM);
 
     if (sock == SOCKET_ERROR)
@@ -278,7 +278,7 @@ SOCKET get_tcp_socket(Int port, char * addr) {
 
 SOCKET get_udp_socket(Int port, char * addr) {
     SOCKET sock;
-    
+
     sock = grab_port(port, addr, SOCK_DGRAM);
 
     if (sock == SOCKET_ERROR)
@@ -291,7 +291,7 @@ SOCKET get_udp_socket(Int port, char * addr) {
  * returning, or -1 if we can wait forever.  Returns nonzero if an I/O event
  * happened. */
 Int io_event_wait(Int sec, Conn *connections, server_t *servers,
-		  pending_t *pendings)
+                  pending_t *pendings)
 {
     struct timeval tv, *tvp;
     Conn *conn;
@@ -303,13 +303,13 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
 
     /* Set time structure according to sec. */
     if (sec == -1) {
-	tvp = NULL;
+        tvp = NULL;
         /* this is a rather odd thing to happen for me */
         write_err("select: forever wait");
     } else {
-	tv.tv_sec = (long) sec;
-	tv.tv_usec = 0;
-	tvp = &tv;
+        tv.tv_sec = (long) sec;
+        tv.tv_usec = 0;
+        tvp = &tv;
     }
 
     /* Begin with blank file descriptor masks and an nfds of 0. */
@@ -321,37 +321,37 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
     /* Listen for new data on connections, and also check for ability to write
      * to them if we have data to write. */
     for (conn = connections; conn; conn = conn->next) {
-	if (!conn->flags.dead) {
+        if (!conn->flags.dead) {
             FD_SET(conn->fd, &except_fds);
-	    FD_SET(conn->fd, &read_fds);
+            FD_SET(conn->fd, &read_fds);
         }
-	if (conn->write_buf->len)
-	    FD_SET(conn->fd, &write_fds);
-	if (conn->fd >= nfds)
-	    nfds = conn->fd + 1;
+        if (conn->write_buf->len)
+            FD_SET(conn->fd, &write_fds);
+        if (conn->fd >= nfds)
+            nfds = conn->fd + 1;
     }
 
     /* Listen for connections on the server sockets. */
     for (serv = servers; serv; serv = serv->next) {
-	FD_SET(serv->server_socket, &read_fds);
-	if (serv->server_socket >= nfds)
-	    nfds = serv->server_socket + 1;
+        FD_SET(serv->server_socket, &read_fds);
+        if (serv->server_socket >= nfds)
+            nfds = serv->server_socket + 1;
     }
 
     /* Check pending connections for ability to write. */
     for (pend = pendings; pend; pend = pend->next) {
-	if (pend->error != NOT_AN_IDENT) {
-	    /* The connect has already failed; just set the finished bit. */
-	    pend->finished = 1;
-	} else {
-	    FD_SET(pend->fd, &write_fds);
-	    if (pend->fd >= nfds)
-		nfds = pend->fd + 1;
-	}
+        if (pend->error != NOT_AN_IDENT) {
+            /* The connect has already failed; just set the finished bit. */
+            pend->finished = 1;
+        } else {
+            FD_SET(pend->fd, &write_fds);
+            if (pend->fd >= nfds)
+                nfds = pend->fd + 1;
+        }
     }
 
 #ifdef __Win32__
-    /* Winsock 2.0 will return EINVAL (invalid argument) if there are no 
+    /* Winsock 2.0 will return EINVAL (invalid argument) if there are no
        sockets checked in any of the FDSETs.  At least one server must be
        listening before the call is made.  Winsock 1.1 behaves differently.
      */
@@ -378,60 +378,60 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
 
     /* Check if any connections are readable or writable. */
     for (conn = connections; conn; conn = conn->next) {
-	if (FD_ISSET(conn->fd, &except_fds)) {
+        if (FD_ISSET(conn->fd, &except_fds)) {
             conn->flags.dead = 1;
             fprintf(stderr, "An exception occurred during select()\n");
         }
-	if (FD_ISSET(conn->fd, &read_fds))
-	    conn->flags.readable = 1;
-	if (FD_ISSET(conn->fd, &write_fds))
-	    conn->flags.writable = 1;
+        if (FD_ISSET(conn->fd, &read_fds))
+            conn->flags.readable = 1;
+        if (FD_ISSET(conn->fd, &write_fds))
+            conn->flags.writable = 1;
     }
 
     /* Check if any server sockets have new connections. */
     for (serv = servers; serv; serv = serv->next) {
-	if (FD_ISSET(serv->server_socket, &read_fds)) {
-	    serv->client_socket = accept(serv->server_socket,
-				 (struct sockaddr *) &sockin, &addr_size);
-	    if (serv->client_socket == SOCKET_ERROR)
-		continue;
+        if (FD_ISSET(serv->server_socket, &read_fds)) {
+            serv->client_socket = accept(serv->server_socket,
+                                 (struct sockaddr *) &sockin, &addr_size);
+            if (serv->client_socket == SOCKET_ERROR)
+                continue;
 #ifdef __Win32__
             result = 1;
             ioctlsocket(serv->client_socket, FIONBIO, &result);
 #else
             flags = fcntl(serv->client_socket, F_GETFL);
-	    flags |= O_NONBLOCK;
-	    fcntl(serv->client_socket, F_SETFL, flags);
+            flags |= O_NONBLOCK;
+            fcntl(serv->client_socket, F_SETFL, flags);
 #endif
 
-	    /* Get address and local port of client. */
-	    strcpy(serv->client_addr, inet_ntoa(sockin.sin_addr));
-	    serv->client_port = ntohs(sockin.sin_port);
+            /* Get address and local port of client. */
+            strcpy(serv->client_addr, inet_ntoa(sockin.sin_addr));
+            serv->client_port = ntohs(sockin.sin_port);
 
-	    /* Set the CLOEXEC flag on socket so that it will be closed for a
-	     * execute() operation. */
+            /* Set the CLOEXEC flag on socket so that it will be closed for a
+             * execute() operation. */
 #ifdef FD_CLOEXEC
-	    flags = fcntl(serv->client_socket, F_GETFD);
-	    flags |= FD_CLOEXEC;
-	    fcntl(serv->client_socket, F_SETFD, flags);
+            flags = fcntl(serv->client_socket, F_GETFD);
+            flags |= FD_CLOEXEC;
+            fcntl(serv->client_socket, F_SETFD, flags);
 #endif
-	}
+        }
     }
 
     /* Check if any pending connections have succeeded or failed. */
     for (pend = pendings; pend; pend = pend->next) {
-	if (FD_ISSET(pend->fd, &write_fds)) {
-	    result = getpeername(pend->fd, (struct sockaddr *) &sockin,
-				 &addr_size);
-	    if (result == SOCKET_ERROR) {
-		getsockopt(pend->fd, SOL_SOCKET, SO_ERROR, (char *) &error,
-			   &dummy);
-		pend->error = translate_connect_error(error);
-	    } else {
-		pend->error = NOT_AN_IDENT;
-	    }
-	    pend->finished = 1;
-	}
+        if (FD_ISSET(pend->fd, &write_fds)) {
+            result = getpeername(pend->fd, (struct sockaddr *) &sockin,
+                                 &addr_size);
+            if (result == SOCKET_ERROR) {
+                getsockopt(pend->fd, SOL_SOCKET, SO_ERROR, (char *) &error,
+                           &dummy);
+                pend->error = translate_connect_error(error);
+            } else {
+                pend->error = NOT_AN_IDENT;
+            }
+            pend->finished = 1;
+        }
     }
 
     /* Return nonzero, indicating that at least one I/O event occurred. */
@@ -448,12 +448,12 @@ Long non_blocking_connect(char *addr, Int port, Int *socket_return)
     /* Convert address to struct in_addr. */
     inaddr.s_addr = inet_addr(addr);
     if (inaddr.s_addr == -1)
-	return address_id;
+        return address_id;
 
     /* Get a socket for the connection. */
     fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd == SOCKET_ERROR)
-	return socket_id;
+        return socket_id;
 
     /* Set the socket non-blocking. */
 #ifdef __Win32__
@@ -477,14 +477,14 @@ Long non_blocking_connect(char *addr, Int port, Int *socket_return)
     saddr.sin_port = htons((unsigned short) port);
     saddr.sin_addr = inaddr;
     do {
-	result = connect(fd, (struct sockaddr *) &saddr, sizeof(saddr));
+        result = connect(fd, (struct sockaddr *) &saddr, sizeof(saddr));
     } while (result == SOCKET_ERROR && GETERR() == ERR_INTR);
 
     *socket_return = fd;
     if (result != SOCKET_ERROR || GETERR() == ERR_INPROGRESS || GETERR() == ERR_AGAIN)
-	return NOT_AN_IDENT;
+        return NOT_AN_IDENT;
     else
-	return translate_connect_error(GETERR());
+        return translate_connect_error(GETERR());
 }
 
 Long udp_connect(char *addr, Int port, Int *socket_return)
@@ -497,12 +497,12 @@ Long udp_connect(char *addr, Int port, Int *socket_return)
     /* Convert address to struct in_addr. */
     inaddr.s_addr = inet_addr(addr);
     if (inaddr.s_addr == -1)
-	return address_id;
+        return address_id;
 
     /* Get a socket for the connection. */
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd == SOCKET_ERROR)
-	return socket_id;
+        return socket_id;
 
     /* Set the socket non-blocking. */
 #ifdef __Win32__
@@ -526,14 +526,14 @@ Long udp_connect(char *addr, Int port, Int *socket_return)
     saddr.sin_port = htons((unsigned short) port);
     saddr.sin_addr = inaddr;
     do {
-	result = connect(fd, (struct sockaddr *) &saddr, sizeof(saddr));
+        result = connect(fd, (struct sockaddr *) &saddr, sizeof(saddr));
     } while (result == SOCKET_ERROR && GETERR() == ERR_INTR);
 
     *socket_return = fd;
     if (result != SOCKET_ERROR || GETERR() == ERR_INPROGRESS || GETERR() == ERR_AGAIN)
-	return NOT_AN_IDENT;
+        return NOT_AN_IDENT;
     else
-	return translate_connect_error(GETERR());
+        return translate_connect_error(GETERR());
 }
 
 static Long translate_connect_error(Int error)
@@ -541,15 +541,15 @@ static Long translate_connect_error(Int error)
     switch (error) {
 
       case ERR_CONNREFUSED:
-	return refused_id;
+        return refused_id;
 
       case ERR_NETUNREACH:
-	return net_id;
+        return net_id;
 
       case ERR_TIMEDOUT:
-	return timeout_id;
+        return timeout_id;
 
       default:
-	return other_id;
+        return other_id;
     }
 }

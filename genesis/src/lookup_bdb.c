@@ -21,16 +21,16 @@ pthread_mutex_t lookup_mutex;
 #ifdef DEBUG_LOOKUP_LOCK
 #define LOCK_LOOKUP(func) \
         write_err("%s: locking db", func); \
-	pthread_mutex_lock(&lookup_mutex); \
-	write_err("%s: locked db", func);
+        pthread_mutex_lock(&lookup_mutex); \
+        write_err("%s: locked db", func);
 #define UNLOCK_LOOKUP(func) \
-	pthread_mutex_unlock(&lookup_mutex); \
-	write_err("%s: unlocked db", func);
+        pthread_mutex_unlock(&lookup_mutex); \
+        write_err("%s: unlocked db", func);
 #else
 #define LOCK_LOOKUP(func) \
-	pthread_mutex_lock(&lookup_mutex);
+        pthread_mutex_lock(&lookup_mutex);
 #define UNLOCK_LOOKUP(func) \
-	pthread_mutex_unlock(&lookup_mutex);
+        pthread_mutex_unlock(&lookup_mutex);
 #endif
 #else
 #define LOCK_LOOKUP(func)
@@ -94,7 +94,7 @@ void lookup_open(char *name, Int cnew) {
         exit(1);
     }
 
-    if ((ret = objnum_dbp->set_cachesize(objnum_dbp, 0, 
+    if ((ret = objnum_dbp->set_cachesize(objnum_dbp, 0,
                                          75*1024*1024, 1)) != 0) {
         objnum_dbp->err(objnum_dbp, ret, "DB->set_cachesize: %s", name);
         exit(1);
@@ -109,22 +109,22 @@ void lookup_open(char *name, Int cnew) {
 
 #if DB_VERSION_MAJOR < 4
     if (cnew)
-	ret = objnum_dbp->open(objnum_dbp, objnum_name, NULL, DB_BTREE, 
+        ret = objnum_dbp->open(objnum_dbp, objnum_name, NULL, DB_BTREE,
                                DB_TRUNCATE | DB_CREATE, 0664);
     else
-	ret = objnum_dbp->open(objnum_dbp, objnum_name, NULL, DB_BTREE,
+        ret = objnum_dbp->open(objnum_dbp, objnum_name, NULL, DB_BTREE,
                                DB_CREATE, 0664);
 #else
     if (cnew)
-	ret = objnum_dbp->open(objnum_dbp, NULL, objnum_name, NULL, DB_BTREE, 
+        ret = objnum_dbp->open(objnum_dbp, NULL, objnum_name, NULL, DB_BTREE,
                                DB_TRUNCATE | DB_CREATE, 0664);
     else
-	ret = objnum_dbp->open(objnum_dbp, NULL, objnum_name, NULL, DB_BTREE,
+        ret = objnum_dbp->open(objnum_dbp, NULL, objnum_name, NULL, DB_BTREE,
                                DB_CREATE, 0664);
 #endif
 
     if (ret != 0)
-	fail_to_start("Cannot open objnum bdb database file.");
+        fail_to_start("Cannot open objnum bdb database file.");
 
     if ((ret = db_create(&name_dbp, NULL, 0)) != 0) {
         fprintf(stderr, "db_create: %s\n", db_strerror(ret));
@@ -164,7 +164,7 @@ void lookup_open(char *name, Int cnew) {
         fail_to_start("Cannot open name bdb database file.");
 
     for (i = 0; i < NAME_CACHE_SIZE; i++)
-	name_cache[i].name = NOT_AN_IDENT;
+        name_cache[i].name = NOT_AN_IDENT;
 
     free(objnum_name);
     free(name_name);
@@ -201,7 +201,7 @@ void lookup_sync(void) {
     UNLOCK_LOOKUP("lookup_sync")
 
     if ((ret1 != 0) || (ret2 != 0))
-	panic("Cannot sync index database file.");
+        panic("Cannot sync index database file.");
 }
 
 Int lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size)
@@ -216,8 +216,8 @@ Int lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size)
     memset(&value, 0, sizeof(value));
     if ((ret = objnum_dbp->get(objnum_dbp, NULL, &key, &value, 0)) != 0)
     {
-	UNLOCK_LOOKUP("lookup_retrieve_objnum")
-	return 0;
+        UNLOCK_LOOKUP("lookup_retrieve_objnum")
+        return 0;
     }
 
     parse_offset_size_value(&value, offset, size);
@@ -235,10 +235,10 @@ Int lookup_store_objnum(cObjnum objnum, off_t offset, Int size)
     objnum_keyvalue(&objnum, &key);
     offset_size_value(offset, size, &os, &value);
     if ((ret =  objnum_dbp->put(objnum_dbp, NULL, &key, &value, 0)) != 0) {
-	write_err("ERROR: Failed to store key %l.", objnum);
+        write_err("ERROR: Failed to store key %l.", objnum);
         objnum_dbp->err(objnum_dbp, ret, "lookup_store_objnum");
         UNLOCK_LOOKUP("lookup_store_objnum")
-	return 0;
+        return 0;
     }
 
     UNLOCK_LOOKUP("lookup_store_objnum")
@@ -254,9 +254,9 @@ Int lookup_remove_objnum(cObjnum objnum)
     /* Remove the key from the database. */
     objnum_keyvalue(&objnum, &key);
     if ((ret = objnum_dbp->del(objnum_dbp, NULL, &key, 0)) != 0) {
-	write_err("ERROR: Failed to delete key %l.", objnum);
+        write_err("ERROR: Failed to delete key %l.", objnum);
         UNLOCK_LOOKUP("lookup_remove_objnum")
-	return 0;
+        return 0;
     }
     UNLOCK_LOOKUP("lookup_remove_objnum")
     return 1;
@@ -274,7 +274,7 @@ cObjnum lookup_first_objnum(void)
     memset(&value, 0, sizeof(value));
     ret = dbc->c_get(dbc, &key, &value, DB_FIRST);
     if (ret != 0)
-	return INV_OBJNUM;
+        return INV_OBJNUM;
 
     return (*(cObjnum*)key.data);
 }
@@ -304,9 +304,9 @@ Int lookup_retrieve_name(Ident name, cObjnum *objnum)
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
         name_cache_hits++;
-	*objnum = name_cache[i].objnum;
+        *objnum = name_cache[i].objnum;
         UNLOCK_LOOKUP("lookup_retrieve_name")
-	return 1;
+        return 1;
     }
 
     name_cache_misses++;
@@ -314,14 +314,14 @@ Int lookup_retrieve_name(Ident name, cObjnum *objnum)
     /* Get it from the database. */
     if (!get_name(name, objnum)) {
         UNLOCK_LOOKUP("lookup_retrieve_name")
-	return 0;
+        return 0;
     }
 
     /* Discard the old cache entry if it exists. */
     if (name_cache[i].name != NOT_AN_IDENT) {
-	if (name_cache[i].dirty)
-	    store_name(name_cache[i].name, name_cache[i].objnum);
-	ident_discard(name_cache[i].name);
+        if (name_cache[i].dirty)
+            store_name(name_cache[i].name, name_cache[i].objnum);
+        ident_discard(name_cache[i].name);
     }
 
     /* Make a new cache entry. */
@@ -342,19 +342,19 @@ Int lookup_store_name(Ident name, cObjnum objnum)
 
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
-	if (name_cache[i].objnum != objnum) {
-	    name_cache[i].objnum = objnum;
-	    name_cache[i].dirty = 1;
-	}
+        if (name_cache[i].objnum != objnum) {
+            name_cache[i].objnum = objnum;
+            name_cache[i].dirty = 1;
+        }
         UNLOCK_LOOKUP("lookup_store_name")
-	return 1;
+        return 1;
     }
 
     /* Discard the old cache entry if it exists. */
     if (name_cache[i].name != NOT_AN_IDENT) {
-	if (name_cache[i].dirty)
-	    store_name(name_cache[i].name, name_cache[i].objnum);
-	ident_discard(name_cache[i].name);
+        if (name_cache[i].dirty)
+            store_name(name_cache[i].name, name_cache[i].objnum);
+        ident_discard(name_cache[i].name);
     }
 
     /* Make a new cache entry. */
@@ -376,21 +376,21 @@ Int lookup_remove_name(Ident name)
     LOCK_LOOKUP("lookup_remove_name")
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
-	/* Delete it from the cache.  If it's not on disk, then we're done. */
-	/*write_err("##lookup_remove_name %d %s", name_cache[i].name, ident_name(name_cache[i].name));*/
-	ident_discard(name_cache[i].name);
-	name_cache[i].name = NOT_AN_IDENT;
-	if (!name_cache[i].on_disk) {
+        /* Delete it from the cache.  If it's not on disk, then we're done. */
+        /*write_err("##lookup_remove_name %d %s", name_cache[i].name, ident_name(name_cache[i].name));*/
+        ident_discard(name_cache[i].name);
+        name_cache[i].name = NOT_AN_IDENT;
+        if (!name_cache[i].on_disk) {
             UNLOCK_LOOKUP("lookup_remove_name")
-	    return 1;
-	}
+            return 1;
+        }
     }
 
     /* Remove the key from the database. */
     name_key(name, &key);
     if ((ret = name_dbp->del(name_dbp, NULL, &key, 0)) != 0) {
         UNLOCK_LOOKUP("lookup_remove_name")
-	return 0;
+        return 0;
     }
 
     UNLOCK_LOOKUP("lookup_remove_name")
@@ -442,11 +442,11 @@ static void sync_name_cache(void)
     write_err ("Syncing lookup name cache...");
 
     for (i = 0; i < NAME_CACHE_SIZE; i++) {
-	if (name_cache[i].name != NOT_AN_IDENT && name_cache[i].dirty) {
-	    store_name(name_cache[i].name, name_cache[i].objnum);
-	    name_cache[i].dirty = 0;
-	    name_cache[i].on_disk = 1;
-	}
+        if (name_cache[i].name != NOT_AN_IDENT && name_cache[i].dirty) {
+            store_name(name_cache[i].name, name_cache[i].objnum);
+            name_cache[i].dirty = 0;
+            name_cache[i].on_disk = 1;
+        }
     }
 }
 
@@ -460,9 +460,9 @@ static Int store_name(Ident name, cObjnum objnum)
 
     name_key(name, &key);
     if ((ret = name_dbp->put(name_dbp, NULL, &key, &value, 0)) != 0) {
-	write_err("ERROR: Failed to store key %s.", name);
+        write_err("ERROR: Failed to store key %s.", name);
         name_dbp->err(name_dbp, ret, "store_name: %s", "");
-	return 0;
+        return 0;
     }
 
     return 1;
@@ -477,7 +477,7 @@ static Int get_name(Ident name, cObjnum *objnum)
     name_key(name, &key);
     memset(&value, 0, sizeof(value));
     if ((ret = name_dbp->get(name_dbp, NULL, &key, &value, 0)) != 0) {
-	return 0;
+        return 0;
     }
 
     memcpy((uChar*)(objnum), (uChar*)value.data, sizeof(cObjnum));

@@ -52,7 +52,7 @@ cStr * strcrypt(cStr * key, cStr * salt) {
     shs_crypt(pp, pl, sp, sl, pwd_buf);
 
     return string_from_chars(pwd_buf, strlen(pwd_buf));
-}   
+}
 
 /*
 // match the encrypted string, use SHS (default for crypt()) if

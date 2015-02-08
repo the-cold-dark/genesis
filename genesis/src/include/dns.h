@@ -13,13 +13,13 @@
 #define INVALID_INADDR INADDR_NONE
 #endif
 
-#define DNS_NOERROR		0
-#define DNS_INVADDR		1
-#define DNS_NORESOLV		2
-#define DNS_OVERFLOW		3
+#define DNS_NOERROR                0
+#define DNS_INVADDR                1
+#define DNS_NORESOLV                2
+#define DNS_OVERFLOW                3
 
 /* RFC 1035 defines the maximum length of a name as 255 octets */
-#define DNS_MAXLEN		255
+#define DNS_MAXLEN                255
 
 #ifndef _dns_c_
 extern int dns_error;

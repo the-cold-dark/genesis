@@ -18,7 +18,7 @@ COLDC_FUNC(strlen) {
 
     /* Accept a string to take the length of. */
     if (!func_init_1(&args, STRING))
-	return;
+        return;
 
     /* Replace the argument with its length. */
     len = string_length(args[0].u.str);
@@ -34,7 +34,7 @@ COLDC_FUNC(substr) {
      * of the substring, and an optional integer specifying the length of the
      * substring. */
     if (!func_init_2_or_3(&args, &num_args, STRING, INTEGER, INTEGER))
-	return;
+        return;
 
     string_len = string_length(args[0].u.str);
     start = args[1].u.val - 1;
@@ -42,13 +42,13 @@ COLDC_FUNC(substr) {
 
     /* Make sure range is in bounds. */
     if (start < 0)
-	THROW((range_id, "Start (%d) is less than one.", start + 1))
+        THROW((range_id, "Start (%d) is less than one.", start + 1))
     else if (len < 0)
-	THROW((range_id, "Length (%d) is less than zero.", len))
+        THROW((range_id, "Length (%d) is less than zero.", len))
     else if (start + len > string_len)
-	THROW((range_id,
-	      "The substring extends to %d, past the end of the string (%d).",
-	      start + len, string_len))
+        THROW((range_id,
+              "The substring extends to %d, past the end of the string (%d).",
+              start + len, string_len))
 
     /* Replace first argument with substring, and pop other arguments. */
     anticipate_assignment();
@@ -66,16 +66,16 @@ COLDC_FUNC(explode) {
     /* Accept a string to explode and an optional string for the word
      * separator. */
     if (!func_init_1_to_3(&args, &argc, STRING, STRING, 0))
-	return;
+        return;
 
     want_blanks = (Bool) ((argc == 3) ? data_true(&args[2]) : NO);
 
     if (argc >= 2) {
-	sep = string_chars(args[1].u.str);
-	sep_len = string_length(args[1].u.str);
+        sep = string_chars(args[1].u.str);
+        sep_len = string_length(args[1].u.str);
     } else {
-	sep = " ";
-	sep_len = 1;
+        sep = " ";
+        sep_len = 1;
     }
 
     if (!*sep) {
@@ -99,7 +99,7 @@ COLDC_FUNC(strsub) {
 
     /* Accept a base string, a search string, and a replacement string. */
     if (!func_init_3_or_4(&args, &argc, STRING, STRING, STRING, STRING))
-	return;
+        return;
 
     if (argc == 4)
         flags = parse_regfunc_args(string_chars(STR4), flags);
@@ -121,20 +121,20 @@ COLDC_FUNC(pad) {
     cStr *padded;
 
     if (!func_init_2_or_3(&args, &num_args, STRING, INTEGER, STRING))
-	return;
+        return;
 
     if (num_args == 3) {
-	filler = string_chars(args[2].u.str);
-	filler_len = string_length(args[2].u.str);
-	if (!filler_len)
-	{   
-	    cthrow(range_id, "Empty string as padding is invalid.");
-	    return;
-	}  
+        filler = string_chars(args[2].u.str);
+        filler_len = string_length(args[2].u.str);
+        if (!filler_len)
+        {
+            cthrow(range_id, "Empty string as padding is invalid.");
+            return;
+        }
 
     } else {
-	filler = " ";
-	filler_len = 1;
+        filler = " ";
+        filler_len = 1;
     }
 
     len = (args[1].u.val > 0) ? args[1].u.val : -args[1].u.val;
@@ -144,19 +144,19 @@ COLDC_FUNC(pad) {
     anticipate_assignment();
     padded = args[0].u.str;
     if (padding == 0) {
-	/* Do nothing.  Easiest case. */
+        /* Do nothing.  Easiest case. */
     } else if (padding < 0) {
-	/* We're shortening the string.  Almost as easy. */
-	padded = string_truncate(padded, len);
+        /* We're shortening the string.  Almost as easy. */
+        padded = string_truncate(padded, len);
     } else if (args[1].u.val > 0) {
-	/* We're lengthening the string on the right. */
-	padded = string_add_padding(padded, filler, filler_len, padding);
+        /* We're lengthening the string on the right. */
+        padded = string_add_padding(padded, filler, filler_len, padding);
     } else {
-	/* We're lengthening the string on the left. */
-	padded = string_new(padding + args[0].u.str->len);
-	padded = string_add_padding(padded, filler, filler_len, padding);
-	padded = string_add(padded, args[0].u.str);
-	string_discard(args[0].u.str);
+        /* We're lengthening the string on the left. */
+        padded = string_new(padding + args[0].u.str->len);
+        padded = string_add_padding(padded, filler, filler_len, padding);
+        padded = string_add(padded, args[0].u.str);
+        string_discard(args[0].u.str);
     }
     args[0].u.str = padded;
 
@@ -172,7 +172,7 @@ COLDC_FUNC(match_begin) {
 
     /* Accept a base string, a search string, and an optional separator. */
     if (!func_init_2_or_3(&args, &num_args, STRING, STRING, STRING))
-	return;
+        return;
 
     s = string_chars(STR1);
 
@@ -200,12 +200,12 @@ COLDC_FUNC(match_begin) {
     }
 
     for (; p; p = strcstr(p + sep_len, sep)) {
-	/* We found a separator; see if it's followed by search. */
-	if (strnccmp(p + sep_len, search, search_len) == 0) {
-	    pop(num_args);
-	    push_int(1);
-	    return;
-	}
+        /* We found a separator; see if it's followed by search. */
+        if (strnccmp(p + sep_len, search, search_len) == 0) {
+            pop(num_args);
+            push_int(1);
+            return;
+        }
     }
 
     pop(num_args);
@@ -220,7 +220,7 @@ COLDC_FUNC(match_template) {
 
     /* Accept a string for the template and a string to match against. */
     if (!func_init_2(&args, STRING, STRING))
-	return;
+        return;
 
     str = string_chars(STR1);
     ctemplate = string_chars(STR2);
@@ -229,10 +229,10 @@ COLDC_FUNC(match_template) {
 
     pop(2);
     if (fields) {
-	push_list(fields);
-	list_discard(fields);
+        push_list(fields);
+        list_discard(fields);
     } else {
-	push_int(0);
+        push_int(0);
     }
 }
 
@@ -244,7 +244,7 @@ COLDC_FUNC(match_pattern) {
 
     /* Accept a string for the pattern and a string to match against. */
     if (!func_init_2(&args, STRING, STRING))
-	return;
+        return;
 
     str = string_chars(STR1);
     pattern = string_chars(STR2);
@@ -253,8 +253,8 @@ COLDC_FUNC(match_pattern) {
 
     pop(2);
     if (!fields) {
-	push_int(0);
-	return;
+        push_int(0);
+        return;
     }
 
     /* fields is backwards.  Reverse it. */
@@ -272,7 +272,7 @@ COLDC_FUNC(match_regexp) {
     Bool    error;
 
     if (!func_init_2_or_3(&args, &argc, STRING, STRING, 0))
-	return;
+        return;
 
     sensitive = (argc == 3) ? data_true(&args[2]) : 0;
 
@@ -366,7 +366,7 @@ COLDC_FUNC(crypt) {
 
     /* Accept a string to encrypt and an optional salt. */
     if (!func_init_1_or_2(&args, &argc, STRING, STRING))
-	return;
+        return;
 
     str = strcrypt(STR1, ((argc == 2) ? (STR2) : ((cStr *) NULL)));
 
@@ -384,7 +384,7 @@ COLDC_FUNC(match_crypted) {
 
     /* Accept a string to encrypt and an optional salt. */
     if (!func_init_2(&args, STRING, STRING))
-	return;
+        return;
 
     /* match_crypted returns F_FAILURE when it throws */
     if ((rval = match_crypted(STR1, STR2)) == F_FAILURE)
@@ -399,7 +399,7 @@ COLDC_FUNC(uppercase) {
 
     /* Accept a string to uppercase. */
     if (!func_init_1(&args, STRING))
-	return;
+        return;
 
     args[0].u.str = string_uppercase(args[0].u.str);
 }
@@ -409,7 +409,7 @@ COLDC_FUNC(lowercase) {
 
     /* Accept a string to uppercase. */
     if (!func_init_1(&args, STRING))
-	return;
+        return;
 
     args[0].u.str = string_lowercase(args[0].u.str);
 }
@@ -420,7 +420,7 @@ COLDC_FUNC(strcmp) {
 
     /* Accept two strings to compare. */
     if (!func_init_2(&args, STRING, STRING))
-	return;
+        return;
 
     /* Compare the strings case-sensitively. */
     val = strcmp(string_chars(args[0].u.str), string_chars(args[1].u.str));
@@ -529,7 +529,7 @@ COLDC_FUNC(stridx) {
         origin = 1;
 
     if (!string_length(STR2))
-        THROW((type_id, "No search string.")) 
+        THROW((type_id, "No search string."))
 
     if (!string_length(STR1)) {
         pop(argc);

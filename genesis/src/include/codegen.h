@@ -5,15 +5,15 @@
 #ifndef cdc_codegen_h
 #define cdc_codegen_h
 
-typedef struct prog		Prog;
-typedef struct arguments	Arguments;
-typedef struct stmt		Stmt;
-typedef struct expr		Expr;
-typedef struct case_entry	Case_entry;
-typedef struct id_list		Id_list;
-typedef struct stmt_list	Stmt_list;
-typedef struct expr_list	Expr_list;
-typedef struct case_list	Case_list;
+typedef struct prog                Prog;
+typedef struct arguments        Arguments;
+typedef struct stmt                Stmt;
+typedef struct expr                Expr;
+typedef struct case_entry        Case_entry;
+typedef struct id_list                Id_list;
+typedef struct stmt_list        Stmt_list;
+typedef struct expr_list        Expr_list;
+typedef struct case_list        Case_list;
 
 extern Pile * compiler_pile;
 
@@ -21,7 +21,7 @@ void init_codegen(void);
 void uninit_codegen(void);
 
 Prog * make_prog(Int overridable, Arguments * args, Id_list * vars,
-		Stmt_list * stmts);
+                Stmt_list * stmts);
 
 Arguments * arguments(Id_list * ids, char * rest);
 

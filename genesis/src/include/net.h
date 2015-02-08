@@ -22,7 +22,7 @@ typedef Int SOCKET;
 #endif
 
 Int io_event_wait(Int sec, Conn *connections, server_t *servers,
-		  pending_t *pendings);
+                  pending_t *pendings);
 Long non_blocking_connect(char *addr, Int port, Int *socket_return);
 void init_net(void);
 void uninit_net(void);

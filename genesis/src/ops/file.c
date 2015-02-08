@@ -54,7 +54,7 @@
 // -----------------------------------------------------------------
 */
 COLDC_FUNC(fopen) {
-    cList  * stat; 
+    cList  * stat;
     filec_t * file;
 
     INIT_1_OR_2_ARGS(STRING, STRING);
@@ -148,7 +148,7 @@ COLDC_FUNC(files) {
     }
     out = list_new(0);
     d.type = STRING;
- 
+
     while ((dent = readdir(dp)) != NULL) {
         if (strncmp(dent->d_name, ".", 1) == F_SUCCESS ||
             strncmp(dent->d_name, "..", 2) == F_SUCCESS)
@@ -360,7 +360,7 @@ COLDC_FUNC(fseek) {
     INIT_2_ARGS(INTEGER, SYMBOL);
 
     GET_FILE_CONTROLLER(file)
- 
+
     if (!file->f.readable || !file->f.writable)
         THROW((file_id,
                "File \"%s\" is not both readable and writable.",
@@ -485,7 +485,7 @@ COLDC_FUNC(fread) {
         }
 
         buf = read_binary_file(file, block);
-   
+
         if (!buf)
             return;
 
@@ -583,7 +583,7 @@ COLDC_FUNC(fstat) {
 
     push_list(stat);
     list_discard(stat);
-}   
+}
 
 
 /*
@@ -697,7 +697,7 @@ COLDC_FUNC(execute) {
         _exit(-1);
     } else if (pid > 0) {
         if (num_args == 3 && args[2].u.val) {
-            /* on at least Solaris, waitpid() won't write 0 
+            /* on at least Solaris, waitpid() won't write 0
              * into &status. only non-zero values
              */
             status = 0;

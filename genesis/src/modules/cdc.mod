@@ -1,4 +1,4 @@
-##     object.method_name            function                 
+##     object.method_name            function
 native $buffer.length()              buflen
 native $buffer.replace()             buf_replace
 native $buffer.subrange()            subbuf

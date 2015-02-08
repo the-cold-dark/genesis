@@ -56,7 +56,7 @@ COLDC_FUNC(listlen) {
 
     /* Accept a list to take the length of. */
     if (!func_init_1(&args, LIST))
-	return;
+        return;
 
     /* Replace the argument with its length. */
     len = list_length(args[0].u.list);
@@ -70,7 +70,7 @@ COLDC_FUNC(sublist) {
 
     /* Accept a list, an integer, and an optional integer. */
     if (!func_init_2_or_3(&args, &num_args, LIST, INTEGER, INTEGER))
-	return;
+        return;
 
     list_len = list_length(args[0].u.list);
     start = args[1].u.val - 1;
@@ -78,17 +78,17 @@ COLDC_FUNC(sublist) {
 
     /* Make sure range is in bounds. */
     if (start < 0) {
-	cthrow(range_id, "Start (%d) less than one", start + 1);
+        cthrow(range_id, "Start (%d) less than one", start + 1);
     } else if (span < 0) {
-	cthrow(range_id, "Sublist length (%d) less than zero", span);
+        cthrow(range_id, "Sublist length (%d) less than zero", span);
     } else if (start + span > list_len) {
-	cthrow(range_id, "Sublist extends to %d, past end of list (length %d)",
-	      start + span, list_len);
+        cthrow(range_id, "Sublist extends to %d, past end of list (length %d)",
+               start + span, list_len);
     } else {
-	/* Replace first argument with sublist, and pop other arguments. */
-	anticipate_assignment();
-	args[0].u.list = list_sublist(args[0].u.list, start, span);
-	pop(num_args - 1);
+        /* Replace first argument with sublist, and pop other arguments. */
+        anticipate_assignment();
+        args[0].u.list = list_sublist(args[0].u.list, start, span);
+        pop(num_args - 1);
     }
 }
 
@@ -98,21 +98,21 @@ COLDC_FUNC(insert) {
 
     /* Accept a list, an integer offset, and a data value of any type. */
     if (!func_init_3(&args, LIST, INTEGER, 0))
-	return;
+        return;
 
     pos = args[1].u.val - 1;
     list_len = list_length(args[0].u.list);
 
     if (pos < 0) {
-	cthrow(range_id, "Position (%d) less than one", pos + 1);
+        cthrow(range_id, "Position (%d) less than one", pos + 1);
     } else if (pos > list_len) {
-	cthrow(range_id, "Position (%d) beyond end of list (length %d)",
-	      pos + 1, list_len);
+        cthrow(range_id, "Position (%d) beyond end of list (length %d)",
+               pos + 1, list_len);
     } else {
-	/* Modify the list and pop the offset and data. */
-	anticipate_assignment();
-	args[0].u.list = list_insert(args[0].u.list, pos, &args[2]);
-	pop(2);
+        /* Modify the list and pop the offset and data. */
+        anticipate_assignment();
+        args[0].u.list = list_insert(args[0].u.list, pos, &args[2]);
+        pop(2);
     }
 }
 
@@ -122,21 +122,21 @@ COLDC_FUNC(replace) {
 
     /* Accept a list, an integer offset, and a data value of any type. */
     if (!func_init_3(&args, LIST, INTEGER, 0))
-	return;
+        return;
 
     list_len = list_length(args[0].u.list);
     pos = args[1].u.val - 1;
 
     if (pos < 0) {
-	cthrow(range_id, "Position (%d) less than one", pos + 1);
+        cthrow(range_id, "Position (%d) less than one", pos + 1);
     } else if (pos > list_len - 1) {
-	cthrow(range_id, "Position (%d) greater than length of list (%d)",
-	      pos + 1, list_len);
+        cthrow(range_id, "Position (%d) greater than length of list (%d)",
+               pos + 1, list_len);
     } else {
-	/* Modify the list and pop the offset and data. */
-	anticipate_assignment();
-	args[0].u.list = list_replace(args[0].u.list, pos, &args[2]);
-	pop(2);
+        /* Modify the list and pop the offset and data. */
+        anticipate_assignment();
+        args[0].u.list = list_replace(args[0].u.list, pos, &args[2]);
+        pop(2);
     }
 }
 
@@ -146,21 +146,21 @@ COLDC_FUNC(delete) {
 
     /* Accept a list and an integer offset. */
     if (!func_init_2(&args, LIST, INTEGER))
-	return;
+        return;
 
     list_len = list_length(args[0].u.list);
     pos = args[1].u.val - 1;
 
     if (pos < 0) {
-	cthrow(range_id, "Position (%d) less than one", pos + 1);
+        cthrow(range_id, "Position (%d) less than one", pos + 1);
     } else if (pos > list_len - 1) {
-	cthrow(range_id, "Position (%d) greater than length of list (%d)",
-	      pos + 1, list_len);
+        cthrow(range_id, "Position (%d) greater than length of list (%d)",
+               pos + 1, list_len);
     } else {
-	/* Modify the list and pop the offset. */
-	anticipate_assignment();
-	args[0].u.list = list_delete(args[0].u.list, pos);
-	pop(1);
+        /* Modify the list and pop the offset. */
+        anticipate_assignment();
+        args[0].u.list = list_delete(args[0].u.list, pos);
+        pop(1);
     }
 }
 
@@ -169,7 +169,7 @@ COLDC_FUNC(setadd) {
 
     /* Accept a list and a data value of any type. */
     if (!func_init_2(&args, LIST, 0))
-	return;
+        return;
 
     /* Add args[1] to args[0] and pop args[1]. */
     anticipate_assignment();
@@ -182,7 +182,7 @@ COLDC_FUNC(setremove) {
 
     /* Accept a list and a data value of any type. */
     if (!func_init_2(&args, LIST, 0))
-	return;
+        return;
 
     /* Remove args[1] from args[0] and pop args[1]. */
     anticipate_assignment();
@@ -195,7 +195,7 @@ COLDC_FUNC(union) {
 
     /* Accept two lists. */
     if (!func_init_2(&args, LIST, LIST))
-	return;
+        return;
 
     /* Union args[1] into args[0] and pop args[1]. */
     anticipate_assignment();
@@ -232,15 +232,15 @@ COLDC_FUNC(join) {
 
 COLDC_FUNC(listidx) {
     int origin;
-    int r; 
-    
+    int r;
+
     INIT_2_OR_3_ARGS(LIST, ANY_TYPE, INTEGER);
 
-    if (argc == 3)  
+    if (argc == 3)
         origin = INT3;
     else
         origin = 1;
-    
+
     if (!LIST1->len) {
         pop(argc);
         push_int(0);
@@ -249,8 +249,8 @@ COLDC_FUNC(listidx) {
 
     if ((r = list_index(LIST1, &args[1], origin)) == F_FAILURE)
         THROW((range_id, "Origin is beyond the range of the list."))
-    
-    pop(argc); 
+
+    pop(argc);
     push_int(r);
-}   
+}
 

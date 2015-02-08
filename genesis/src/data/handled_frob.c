@@ -51,8 +51,8 @@ int compare_handled (cData *d1, cData *d2)
                 *h2 = HANDLED_FROB(d2);
 
     if (h1->cclass != h2->cclass ||
-	h1->handler != h2->handler)
-	return 1;
+        h1->handler != h2->handler)
+        return 1;
 
     return data_cmp(&h1->rep, &h2->rep);
 }
@@ -67,7 +67,7 @@ int hash_handled (cData *d)
 void dup_handled (cData *dest, cData *source)
 {
     HandledFrob *s = HANDLED_FROB(source),
-	        *d = TMALLOC(HandledFrob, 1);
+                *d = TMALLOC(HandledFrob, 1);
 
     d->cclass = s->cclass;
     d->handler = ident_dup(s->handler);

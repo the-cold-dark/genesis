@@ -126,12 +126,12 @@ void catch_signal(int sig) {
             break;
         case SIGUSR1:
 #else
-	case SIGILL:
+        case SIGILL:
 #endif
         {
             cData * d;
             cList * l;
- 
+
             /* First cancel all preempted and suspended tasks */
             l = vm_list();
             for (d=list_first(l); d; d=list_next(l, d)) {

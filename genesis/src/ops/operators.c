@@ -53,17 +53,17 @@ COLDC_OP(set_obj_var) {
     id = object_get_ident(cur_frame->method->object, ind);
     val = &stack[stack_pos - 1];
     result = object_assign_var(cur_frame->object, cur_frame->method->object,
-			       id, val);
+                               id, val);
     if (result == varnf_id)
-	cthrow(varnf_id, "Object variable %I not found.", id);
+        cthrow(varnf_id, "Object variable %I not found.", id);
 }
 
 COLDC_OP(if) {
     /* Jump if the condition is false. */
     if (!data_true(&stack[stack_pos - 1]))
-	cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+        cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
     else
-	cur_frame->pc++;
+        cur_frame->pc++;
     pop(1);
 }
 
@@ -84,28 +84,28 @@ COLDC_OP(map) {
 
     /* Make sure we're iterating over a list.  We know the counter is okay. */
     if (domain->type != LIST && domain->type != DICT) {
-	cthrow(type_id, "Domain (%D) is not a list or dictionary.", domain);
-	return;
+        cthrow(type_id, "Domain (%D) is not a list or dictionary.", domain);
+        return;
     }
 
     len = (domain->type == LIST) ? list_length(domain->u.list)
-				 : dict_size(domain->u.dict);
+                                 : dict_size(domain->u.dict);
 
     /* Prepare the mapping list in the first iteration */
 
     if (list->type == INTEGER) {
         if (op == OP_MAP || op == OP_FILTER) {
-	    list->type = LIST;
-	    list->u.list = list_new (len);
+            list->type = LIST;
+            list->u.list = list_new (len);
         }
-	if (op == OP_MAPHASH) {
-	    list->type = LIST;
-	    list->u.list = list_new (2);
-	    list->u.list->el[0].type = LIST;
-	    list->u.list->el[0].u.list = list_new (len);
-	    list->u.list->el[1].type = LIST;
-	    list->u.list->el[1].u.list = list_new (len);
-	}
+        if (op == OP_MAPHASH) {
+            list->type = LIST;
+            list->u.list = list_new (2);
+            list->u.list->el[0].type = LIST;
+            list->u.list->el[0].u.list = list_new (len);
+            list->u.list->el[1].type = LIST;
+            list->u.list->el[1].u.list = list_new (len);
+        }
     }
 
     cnt = counter->u.val;
@@ -114,37 +114,37 @@ COLDC_OP(map) {
        evaluation on top of the stack */
 
     if (cnt)
-	switch (op) {
-	  case OP_MAP:
-	    list->u.list->len++;
-	    data_dup(list_last(list->u.list), returned);
-	    break;
-	  case OP_FILTER:
-	    if (data_true(returned)) {
-		list->u.list->len++;
-		data_dup(list_last(list->u.list), &stack[var]);
-	    }
-	    break;
-	  case OP_FIND:
-	    if (data_true(returned)) {
-		data_discard(domain);
-		data_dup(domain,counter);
-		pop(3);
-		cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
-		return;
-	    }
-	    break;
-	  case OP_MAPHASH:
+        switch (op) {
+          case OP_MAP:
+            list->u.list->len++;
+            data_dup(list_last(list->u.list), returned);
+            break;
+          case OP_FILTER:
+            if (data_true(returned)) {
+                list->u.list->len++;
+                data_dup(list_last(list->u.list), &stack[var]);
+            }
+            break;
+          case OP_FIND:
+            if (data_true(returned)) {
+                data_discard(domain);
+                data_dup(domain,counter);
+                pop(3);
+                cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+                return;
+            }
+            break;
+          case OP_MAPHASH:
             if (returned->type!=LIST || list_length(returned->u.list) != 2) {
-		cthrow(type_id, "Returned data (%D) is not a pair.", returned);
-		return;
-	    }
-	    list->u.list->el[0].u.list->len++;
-	    data_dup(list_last(list->u.list->el[0].u.list),
-		     list_elem(returned->u.list,0));
-	    list->u.list->el[1].u.list->len++;
-	    data_dup(list_last(list->u.list->el[1].u.list),
-		     list_elem(returned->u.list,1));
+                cthrow(type_id, "Returned data (%D) is not a pair.", returned);
+                return;
+            }
+            list->u.list->el[0].u.list->len++;
+            data_dup(list_last(list->u.list->el[0].u.list),
+                     list_elem(returned->u.list,0));
+            list->u.list->el[1].u.list->len++;
+            data_dup(list_last(list->u.list->el[1].u.list),
+                     list_elem(returned->u.list,1));
         }
 
     /* pop the returned value */
@@ -152,29 +152,29 @@ COLDC_OP(map) {
     pop(1);
 
     if (cnt >= len) {
-	/* We're finished; pop the domain and jump to the end. */
+        /* We're finished; pop the domain and jump to the end. */
 
-	data_discard(domain);
-	switch (op) {
-	  case OP_MAP:
-	  case OP_FILTER:
-	    data_dup(domain,list);
-	    break;
-	  case OP_FIND:
-	    domain->type=INTEGER;
-	    domain->u.val=0;
-	    break;
-	  case OP_MAPHASH:
-	    domain->type=DICT;
-	    domain->u.dict=dict_new(list->u.list->el[0].u.list,
-				    list->u.list->el[1].u.list);
+        data_discard(domain);
+        switch (op) {
+          case OP_MAP:
+          case OP_FILTER:
+            data_dup(domain,list);
+            break;
+          case OP_FIND:
+            domain->type=INTEGER;
+            domain->u.val=0;
+            break;
+          case OP_MAPHASH:
+            domain->type=DICT;
+            domain->u.dict=dict_new(list->u.list->el[0].u.list,
+                                    list->u.list->el[1].u.list);
             list_discard(list->u.list->el[0].u.list);
             list_discard(list->u.list->el[1].u.list);
-	    break;
-	}
-	pop(2);
-	cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
-	return;
+            break;
+        }
+        pop(2);
+        cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+        return;
     }
 
     counter->u.val++;
@@ -182,11 +182,11 @@ COLDC_OP(map) {
     /* Replace the index variable with the next list element */
     data_discard(&stack[var]);
     if (domain->type == LIST) {
-	data_dup(&stack[var], list_elem(domain->u.list, cnt));
+        data_dup(&stack[var], list_elem(domain->u.list, cnt));
     } else {
-	pair = dict_key_value_pair(domain->u.dict, cnt);
-	stack[var].type = LIST;
-	stack[var].u.list = pair;
+        pair = dict_key_value_pair(domain->u.dict, cnt);
+        stack[var].type = LIST;
+        stack[var].u.list = pair;
     }
     cur_frame->pc += 2;
 }
@@ -207,9 +207,9 @@ COLDC_OP(map_range) {
 
     /* Make sure we have an integer range. */
     if (counter->type != INTEGER || top->type != INTEGER) {
-	cthrow(type_id, "Range bounds (%D, %D) are not both integers.",
-	       counter, top);
-	return;
+        cthrow(type_id, "Range bounds (%D, %D) are not both integers.",
+               counter, top);
+        return;
     }
 
     cnt = list->u.val; /* this way we know if we're in the first iteration */
@@ -218,59 +218,59 @@ COLDC_OP(map_range) {
 
     if (!cnt) {
         if (op == OP_MAP_RANGE || op == OP_FILTER_RANGE) {
-	    Int len;
+            Int len;
 
-	    len=top->u.val-counter->u.val+1;
-	    if (len<=0) len=1;
-	    list->type = LIST;
-	    list->u.list = list_new (len);
+            len=top->u.val-counter->u.val+1;
+            if (len<=0) len=1;
+            list->type = LIST;
+            list->u.list = list_new (len);
         }
-	if (op == OP_MAPHASH_RANGE) {
-	    Int len;
+        if (op == OP_MAPHASH_RANGE) {
+            Int len;
 
-	    len=top->u.val-counter->u.val+1;
-	    if (len<=0) len=1;
-	    list->type = LIST;
-	    list->u.list = list_new (2);
-	    list->u.list->el[0].type = LIST;
-	    list->u.list->el[0].u.list = list_new (len);
-	    list->u.list->el[1].type = LIST;
-	    list->u.list->el[1].u.list = list_new (len);
-	}
+            len=top->u.val-counter->u.val+1;
+            if (len<=0) len=1;
+            list->type = LIST;
+            list->u.list = list_new (2);
+            list->u.list->el[0].type = LIST;
+            list->u.list->el[0].u.list = list_new (len);
+            list->u.list->el[1].type = LIST;
+            list->u.list->el[1].u.list = list_new (len);
+        }
 
     }
 
     if (cnt)
-	switch (op) {
-	  case OP_MAP_RANGE:
-	    list->u.list->len++;
-	    data_dup(list_last(list->u.list), returned);
-	    break;
-	  case OP_FILTER_RANGE:
-	    if (data_true(returned)) {
-		list->u.list->len++;
-		data_dup(list_last(list->u.list), &stack[var]);
-	    }
-	    break;
-	  case OP_FIND_RANGE:
-	    if (data_true(returned)) {
-	        counter->u.val--;
-		pop(3);
-		cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
-		return;
-	    }
-	    break;
-	  case OP_MAPHASH_RANGE:
-	    if (returned->type!=LIST || list_length(returned->u.list) != 2) {
-		cthrow(type_id, "Returned data (%D) is not a pair.", returned);
-		return;
-	    }
-	    list->u.list->el[0].u.list->len++;
-	    data_dup(list_last(list->u.list->el[0].u.list),
-		     list_elem(returned->u.list,0));
-	    list->u.list->el[1].u.list->len++;
-	    data_dup(list_last(list->u.list->el[1].u.list),
-		     list_elem(returned->u.list,1));
+        switch (op) {
+          case OP_MAP_RANGE:
+            list->u.list->len++;
+            data_dup(list_last(list->u.list), returned);
+            break;
+          case OP_FILTER_RANGE:
+            if (data_true(returned)) {
+                list->u.list->len++;
+                data_dup(list_last(list->u.list), &stack[var]);
+            }
+            break;
+          case OP_FIND_RANGE:
+            if (data_true(returned)) {
+                counter->u.val--;
+                pop(3);
+                cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+                return;
+            }
+            break;
+          case OP_MAPHASH_RANGE:
+            if (returned->type!=LIST || list_length(returned->u.list) != 2) {
+                cthrow(type_id, "Returned data (%D) is not a pair.", returned);
+                return;
+            }
+            list->u.list->el[0].u.list->len++;
+            data_dup(list_last(list->u.list->el[0].u.list),
+                     list_elem(returned->u.list,0));
+            list->u.list->el[1].u.list->len++;
+            data_dup(list_last(list->u.list->el[1].u.list),
+                     list_elem(returned->u.list,1));
         }
     else if (!list->u.val) list->u.val=1;
 
@@ -279,26 +279,26 @@ COLDC_OP(map_range) {
     pop(1);
 
     if (counter->u.val > top->u.val) {
-	/* We're finished; cleanup and bail. */
-	switch (op) {
-	  case OP_FILTER_RANGE:
-	  case OP_MAP_RANGE:
-	    data_dup(counter,list);
-	    break;
-	  case OP_FIND_RANGE:
-	    counter->u.val=0;
-	    break;
-	  case OP_MAPHASH_RANGE:
-	    counter->type=DICT;
-	    counter->u.dict=dict_new(list->u.list->el[0].u.list,
-				     list->u.list->el[1].u.list);
+        /* We're finished; cleanup and bail. */
+        switch (op) {
+          case OP_FILTER_RANGE:
+          case OP_MAP_RANGE:
+            data_dup(counter,list);
+            break;
+          case OP_FIND_RANGE:
+            counter->u.val=0;
+            break;
+          case OP_MAPHASH_RANGE:
+            counter->type=DICT;
+            counter->u.dict=dict_new(list->u.list->el[0].u.list,
+                                     list->u.list->el[1].u.list);
             list_discard(list->u.list->el[0].u.list);
             list_discard(list->u.list->el[1].u.list);
-	    break;
-	}
-	pop(2);
-	cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
-	return;
+            break;
+        }
+        pop(2);
+        cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+        return;
     }
 
     data_discard(&stack[var]);
@@ -320,22 +320,22 @@ COLDC_OP(for_range) {
 
     /* Make sure we have an integer range. */
     if (range[0].type != INTEGER || range[1].type != INTEGER) {
-	cthrow(type_id, "Range bounds (%D, %D) are not both integers.",
-	      &range[0], &range[1]);
-	return;
+        cthrow(type_id, "Range bounds (%D, %D) are not both integers.",
+              &range[0], &range[1]);
+        return;
     }
 
     if (range[0].u.val > range[1].u.val) {
-	/* We're finished; pop the range and jump to the end. */
-	pop(2);
-	cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+        /* We're finished; pop the range and jump to the end. */
+        pop(2);
+        cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
     } else {
-	/* Replace the index variable with the lower range bound, increment the
-	 * range, and continue. */
-	data_discard(&stack[var]);
-	stack[var] = range[0];
-	range[0].u.val++;
-	cur_frame->pc += 2;
+        /* Replace the index variable with the lower range bound, increment the
+         * range, and continue. */
+        data_discard(&stack[var]);
+        stack[var] = range[0];
+        range[0].u.val++;
+        cur_frame->pc += 2;
     }
 }
 
@@ -351,29 +351,29 @@ COLDC_OP(for_list) {
 
     /* Make sure we're iterating over a list.  We know the counter is okay. */
     if (domain->type != LIST && domain->type != DICT) {
-	cthrow(type_id, "Domain (%D) is not a list or dictionary.", domain);
-	return;
+        cthrow(type_id, "Domain (%D) is not a list or dictionary.", domain);
+        return;
     }
 
     len = (domain->type == LIST) ? list_length(domain->u.list)
-				 : dict_size(domain->u.dict);
+                                 : dict_size(domain->u.dict);
 
     if (counter->u.val >= len) {
-	/* We're finished; pop the list and counter and jump to the end. */
-	pop(2);
-	cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
-	return;
+        /* We're finished; pop the list and counter and jump to the end. */
+        pop(2);
+        cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+        return;
     }
 
     /* Replace the index variable with the next list element and increment
      * the counter. */
     data_discard(&stack[var]);
     if (domain->type == LIST) {
-	data_dup(&stack[var], list_elem(domain->u.list, counter->u.val));
+        data_dup(&stack[var], list_elem(domain->u.list, counter->u.val));
     } else {
-	pair = dict_key_value_pair(domain->u.dict, counter->u.val);
-	stack[var].type = LIST;
-	stack[var].u.list = pair;
+        pair = dict_key_value_pair(domain->u.dict, counter->u.val);
+        stack[var].type = LIST;
+        stack[var].u.list = pair;
     }
     counter->u.val++;
     cur_frame->pc += 2;
@@ -381,11 +381,11 @@ COLDC_OP(for_list) {
 
 COLDC_OP(while) {
     if (!data_true(&stack[stack_pos - 1])) {
-	/* The condition expression is false.  Jump to the end of the loop. */
-	cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+        /* The condition expression is false.  Jump to the end of the loop. */
+        cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
     } else {
-	/* The condition expression is true; continue. */
-	cur_frame->pc += 2;
+        /* The condition expression is true; continue. */
+        cur_frame->pc += 2;
     }
     pop(1);
 }
@@ -402,11 +402,11 @@ COLDC_OP(case_value) {
      * equal, pop them off the stack and jump to the body of this case.
      * Otherwise, just pop the value for this case, and go on. */
     if (data_cmp(&stack[stack_pos - 2], &stack[stack_pos - 1]) == 0) {
-	pop(2);
-	cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+        pop(2);
+        cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
     } else {
-	pop(1);
-	cur_frame->pc++;
+        pop(1);
+        cur_frame->pc++;
     }
 }
 
@@ -419,13 +419,13 @@ COLDC_OP(case_range) {
 
     /* Verify that range[0] and range[1] make a value type. */
     if (range[0].type != range[1].type) {
-	cthrow(type_id, "%D and %D are not of the same type.",
-	      &range[0], &range[1]);
-	return;
+        cthrow(type_id, "%D and %D are not of the same type.",
+              &range[0], &range[1]);
+        return;
     } else if (range[0].type != INTEGER && range[0].type != STRING) {
-	cthrow(type_id, "%D and %D are not integers or strings.", &range[0],
-	      &range[1]);
-	return;
+        cthrow(type_id, "%D and %D are not integers or strings.", &range[0],
+              &range[1]);
+        return;
     }
 
     /* Decide if this is a match.  In order for it to be a match, switch_expr
@@ -439,11 +439,11 @@ COLDC_OP(case_range) {
     /* If it's a match, pop all three expressions and jump to the case body.
      * Otherwise, just pop the range and go on. */
     if (is_match) {
-	pop(3);
-	cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+        pop(3);
+        cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
     } else {
-	pop(2);
-	cur_frame->pc++;
+        pop(2);
+        cur_frame->pc++;
     }
 }
 
@@ -453,11 +453,11 @@ COLDC_OP(last_case_value) {
      * equal, pop them off the stack and go on.  Otherwise, just pop the value
      * for this case, and jump to the next case. */
     if (data_cmp(&stack[stack_pos - 2], &stack[stack_pos - 1]) == 0) {
-	pop(2);
-	cur_frame->pc++;
+        pop(2);
+        cur_frame->pc++;
     } else {
-	pop(1);
-	cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+        pop(1);
+        cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
     }
 }
 
@@ -470,13 +470,13 @@ COLDC_OP(last_case_range) {
 
     /* Verify that range[0] and range[1] make a value type. */
     if (range[0].type != range[1].type) {
-	cthrow(type_id, "%D and %D are not of the same type.",
-	      &range[0], &range[1]);
-	return;
+        cthrow(type_id, "%D and %D are not of the same type.",
+              &range[0], &range[1]);
+        return;
     } else if (range[0].type != INTEGER && range[0].type != STRING) {
-	cthrow(type_id, "%D and %D are not integers or strings.", &range[0],
-	      &range[1]);
-	return;
+        cthrow(type_id, "%D and %D are not integers or strings.", &range[0],
+              &range[1]);
+        return;
     }
 
     /* Decide if this is a match.  In order for it to be a match, switch_expr
@@ -490,11 +490,11 @@ COLDC_OP(last_case_range) {
     /* If it's a match, pop all three expressions and go on.  Otherwise, just
      * pop the range and jump to the next case. */
     if (is_match) {
-	pop(3);
-	cur_frame->pc++;
+        pop(3);
+        cur_frame->pc++;
     } else {
-	pop(2);
-	cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+        pop(2);
+        cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
     }
 }
 
@@ -523,7 +523,7 @@ COLDC_OP(break) {
      * and an index, or two range bounds. */
     op = cur_frame->opcodes[n];
     if (op == FOR_LIST || op == FOR_RANGE)
-	pop(2);
+        pop(2);
 
     /* Jump to the end of the loop. */
     cur_frame->pc = cur_frame->opcodes[n + 1];
@@ -534,7 +534,7 @@ COLDC_OP(continue) {
      * to the beginning of the condition expression. */
     cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
     if (cur_frame->opcodes[cur_frame->pc] == WHILE)
-	cur_frame->pc = cur_frame->opcodes[cur_frame->pc + 2];
+        cur_frame->pc = cur_frame->opcodes[cur_frame->pc + 2];
 }
 
 COLDC_OP(return) {
@@ -543,7 +543,7 @@ COLDC_OP(return) {
     objnum = cur_frame->object->objnum;
     frame_return();
     if (cur_frame)
-	push_objnum(objnum);
+        push_objnum(objnum);
 }
 
 COLDC_OP(return_expr) {
@@ -555,10 +555,10 @@ COLDC_OP(return_expr) {
     val = &stack[--stack_pos];
     frame_return();
     if (cur_frame) {
-	stack[stack_pos] = *val;
-	stack_pos++;
+        stack[stack_pos] = *val;
+        stack_pos++;
     } else {
-	data_discard(val);
+        data_discard(val);
     }
 }
 
@@ -612,7 +612,7 @@ COLDC_OP(float) {
     push_float(fl);
 #else
     push_float(*((cFloat*)(&cur_frame->opcodes[cur_frame->pc++])));
-#endif    
+#endif
 }
 
 COLDC_OP(string) {
@@ -653,9 +653,9 @@ COLDC_OP(objname) {
     ind = cur_frame->opcodes[cur_frame->pc++];
     id = object_get_ident(cur_frame->method->object, ind);
     if (lookup_retrieve_name(id, &objnum))
-	push_objnum(objnum);
+        push_objnum(objnum);
     else
-	cthrow(namenf_id, "Can't find object name %I.", id);
+        cthrow(namenf_id, "Can't find object name %I.", id);
 }
 
 COLDC_OP(get_local) {
@@ -676,21 +676,21 @@ COLDC_OP(get_obj_var) {
     ind = cur_frame->opcodes[cur_frame->pc++];
     id = object_get_ident(cur_frame->method->object, ind);
     result = object_retrieve_var(cur_frame->object, cur_frame->method->object,
-				 id, &val);
+                                 id, &val);
     if (result == varnf_id) {
-	cthrow(varnf_id, "Object variable %I not found.", id);
+        cthrow(varnf_id, "Object variable %I not found.", id);
     } else {
-	check_stack(1);
-	stack[stack_pos] = val;
-	stack_pos++;
+        check_stack(1);
+        stack[stack_pos] = val;
+        stack_pos++;
     }
 }
 
 COLDC_OP(start_args) {
     /* Resize argument stack if necessary. */
     if (arg_pos == arg_size) {
-	arg_size = arg_size * 2 + ARG_STACK_MALLOC_DELTA;
-	arg_starts = EREALLOC(arg_starts, Int, arg_size);
+        arg_size = arg_size * 2 + ARG_STACK_MALLOC_DELTA;
+        arg_starts = EREALLOC(arg_starts, Int, arg_size);
     }
 
     /* Push stack position onto argument start stack. */
@@ -763,7 +763,7 @@ COLDC_OP(message) {
             break;
         case FROB:
             /* Convert the frob to its rep and pass as first argument. */
-	    is_frob=FROB_YES;
+            is_frob=FROB_YES;
             frob = target->u.frob;
             objnum = frob->cclass;
             *target = frob->rep;
@@ -771,35 +771,35 @@ COLDC_OP(message) {
             TFREE(frob, 1);
             break;
         default:
-	    if (target->type == (int)HANDLED_FROB_TYPE) {
-	        HandledFrob *h = HANDLED_FROB(target);
-		Ident m = ident_dup(message);
-		int i;
+            if (target->type == (int)HANDLED_FROB_TYPE) {
+                HandledFrob *h = HANDLED_FROB(target);
+                Ident m = ident_dup(message);
+                int i;
 
-		check_stack(1);
-		target = &stack[arg_start - 1];
-		message = h->handler;
-		objnum = h->cclass;
-		for (i=stack_pos; i>arg_start; i--)
-		    stack[i] = stack[i-1];
-		stack_pos++;
-		*target = h->rep;
-		arg_start -= 1;
-		ident_discard(h->handler);
-		TFREE(h, 1);
-		target[1].type = SYMBOL;
-		target[1].u.symbol = m;
-	    }
-	    else {
-		if (!lookup_retrieve_name(data_type_id(target->type),
-					  &objnum)) {
-		    cthrow(objnf_id, "No object for data type %I.",
-			   data_type_id(target->type));
-		    return;
-		}
-		arg_start--;
-		break;
-	    }
+                check_stack(1);
+                target = &stack[arg_start - 1];
+                message = h->handler;
+                objnum = h->cclass;
+                for (i=stack_pos; i>arg_start; i--)
+                    stack[i] = stack[i-1];
+                stack_pos++;
+                *target = h->rep;
+                arg_start -= 1;
+                ident_discard(h->handler);
+                TFREE(h, 1);
+                target[1].type = SYMBOL;
+                target[1].u.symbol = m;
+            }
+            else {
+                if (!lookup_retrieve_name(data_type_id(target->type),
+                                          &objnum)) {
+                    cthrow(objnf_id, "No object for data type %I.",
+                           data_type_id(target->type));
+                    return;
+                }
+                arg_start--;
+                break;
+            }
     }
 
     /* Attempt to send the message. */
@@ -824,8 +824,8 @@ COLDC_OP(expr_message) {
     message_data = &stack[arg_start - 1];
 
     if (message_data->type != SYMBOL) {
-	cthrow(type_id, "Message (%D) is not a symbol.", message_data);
-	return;
+        cthrow(type_id, "Message (%D) is not a symbol.", message_data);
+        return;
     }
 
     message = ident_dup(message_data->u.symbol);
@@ -836,7 +836,7 @@ COLDC_OP(expr_message) {
             break;
         case FROB:
             objnum = target->u.frob->cclass;
-	    is_frob=FROB_YES;
+            is_frob=FROB_YES;
 
             /* Pass frob rep as first argument (where the method data is now) */
             data_discard(message_data);
@@ -849,39 +849,39 @@ COLDC_OP(expr_message) {
             target->u.val = 0;
             break;
         default:
-	    if (target->type == (int) HANDLED_FROB_TYPE) {
-	        HandledFrob *h = HANDLED_FROB(target);
-		Ident m = message;
+            if (target->type == (int) HANDLED_FROB_TYPE) {
+                HandledFrob *h = HANDLED_FROB(target);
+                Ident m = message;
 
-		message = h->handler;
-		objnum = h->cclass;
-		data_discard(message_data);
-		*target = h->rep;
-		TFREE(h, 1);
-		ident_discard(h->handler);
-		message_data->type = SYMBOL;
-		message_data->u.symbol = m;
-		arg_start -= 2;
-	    }
-	    else {
-		if (!lookup_retrieve_name(data_type_id(target->type), 
-					  &objnum)) {
-		    cthrow(objnf_id,
-			   "No object for data type %I",
-			   data_type_id(target->type));
-		    ident_discard(message);
-		    return;
-		}
-		arg_start--;
-		data_discard(message_data);
-		data_dup(&stack[arg_start], target);
-		break;
-	    }
+                message = h->handler;
+                objnum = h->cclass;
+                data_discard(message_data);
+                *target = h->rep;
+                TFREE(h, 1);
+                ident_discard(h->handler);
+                message_data->type = SYMBOL;
+                message_data->u.symbol = m;
+                arg_start -= 2;
+            }
+            else {
+                if (!lookup_retrieve_name(data_type_id(target->type),
+                                          &objnum)) {
+                    cthrow(objnf_id,
+                           "No object for data type %I",
+                           data_type_id(target->type));
+                    ident_discard(message);
+                    return;
+                }
+                arg_start--;
+                data_discard(message_data);
+                data_dup(&stack[arg_start], target);
+                break;
+            }
     }
 
     /* Attempt to send the message. */
     ident_dup(message);
-    
+
     if (call_method(objnum, message, target - stack, arg_start, is_frob) ==
          CALL_ERROR)
         handle_method_error(objnum, message);
@@ -927,10 +927,10 @@ COLDC_OP(dict) {
     dict = dict_from_slices(list);
     list_discard(list);
     if (!dict) {
-	cthrow(type_id, "Arguments were not all two-element lists.");
+        cthrow(type_id, "Arguments were not all two-element lists.");
     } else {
-	push_dict(dict);
-	dict_discard(dict);
+        push_dict(dict);
+        dict_discard(dict);
     }
 }
 
@@ -941,15 +941,15 @@ COLDC_OP(buffer) {
     start = arg_starts[--arg_pos];
     len = stack_pos - start;
     for (i = 0; i < len; i++) {
-	if (stack[start + i].type != INTEGER) {
-	    cthrow(type_id, "Element %d (%D) is not an integer.", i + 1,
-		  &stack[start + i]);
-	    return;
-	}
+        if (stack[start + i].type != INTEGER) {
+            cthrow(type_id, "Element %d (%D) is not an integer.", i + 1,
+                  &stack[start + i]);
+            return;
+        }
     }
     buf = buffer_new(len);
     for (i = 0; i < len; i++)
-	buf->s[i] = ((uLong) stack[start + i].u.val) % (1 << 8);
+        buf->s[i] = ((uLong) stack[start + i].u.val) % (1 << 8);
     buf->len = len;
     stack_pos = start;
     push_buffer(buf);
@@ -962,9 +962,9 @@ COLDC_OP(frob) {
     cclass = &stack[stack_pos - 2];
     rep = &stack[stack_pos - 1];
     if (cclass->type != OBJNUM) {
-	cthrow(type_id, "Class (%D) is not a objnum.", cclass);
+        cthrow(type_id, "Class (%D) is not a objnum.", cclass);
     } else if (rep->type != LIST && rep->type != DICT) {
-	cthrow(type_id, "Rep (%D) is not a list or dictionary.", rep);
+        cthrow(type_id, "Rep (%D) is not a list or dictionary.", rep);
     } else {
       cObjnum objnum = cclass->u.objnum;
       cclass->type = FROB;
@@ -982,11 +982,11 @@ COLDC_OP(handled_frob) {
     rep = &stack[stack_pos - 2];
     handler = &stack[stack_pos - 1];
     if (cclass->type != OBJNUM) {
-	cthrow(type_id, "Class (%D) is not a objnum.", cclass);
+        cthrow(type_id, "Class (%D) is not a objnum.", cclass);
     } else if (handler->type != SYMBOL) {
-	cthrow(type_id, "Handler (%D) is not a symbol.", handler);
+        cthrow(type_id, "Handler (%D) is not a symbol.", handler);
     } else if (rep->type != LIST && rep->type != DICT) {
-	cthrow(type_id, "Rep (%D) is not a list or dictionary.", rep);
+        cthrow(type_id, "Rep (%D) is not a list or dictionary.", rep);
     } else {
       cObjnum objnum = cclass->u.objnum;
       HandledFrob *h;
@@ -1029,18 +1029,18 @@ COLDC_OP(index) {
         case LIST:
             _CHECK_TYPE
             _CHECK_LENGTH(list_length(d->u.list))
-	    data_dup(&element, list_elem(d->u.list, i));
-	    pop(2);
-	    stack[stack_pos] = element;
-	    stack_pos++;
+            data_dup(&element, list_elem(d->u.list, i));
+            pop(2);
+            stack[stack_pos] = element;
+            stack_pos++;
             return;
         case STRING:
             _CHECK_TYPE
             _CHECK_LENGTH(string_length(d->u.str))
-	    str = string_from_chars(string_chars(d->u.str) + i, 1);
-	    pop(2);
-	    push_string(str);
-	    string_discard(str);
+            str = string_from_chars(string_chars(d->u.str) + i, 1);
+            pop(2);
+            push_string(str);
+            string_discard(str);
             return;
         case DICT:
             /* Get the value corresponding to a key. */
@@ -1068,20 +1068,20 @@ COLDC_OP(index) {
 COLDC_OP(and) {
     /* Short-circuit if left side is false; otherwise discard. */
     if (!data_true(&stack[stack_pos - 1])) {
-	cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+        cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
     } else {
-	cur_frame->pc++;
-	pop(1);
+        cur_frame->pc++;
+        pop(1);
     }
 }
 
 COLDC_OP(or) {
     /* Short-circuit if left side is true; otherwise discard. */
     if (data_true(&stack[stack_pos - 1])) {
-	cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
+        cur_frame->pc = cur_frame->opcodes[cur_frame->pc];
     } else {
-	cur_frame->pc++;
-	pop(1);
+        cur_frame->pc++;
+        pop(1);
     }
 }
 
@@ -1091,15 +1091,15 @@ COLDC_OP(splice) {
     cData *d;
 
     if (stack[stack_pos - 1].type != LIST) {
-	cthrow(type_id, "splice: %D is not a list.", &stack[stack_pos - 1]);
-	return;
+        cthrow(type_id, "splice: %D is not a list.", &stack[stack_pos - 1]);
+        return;
     }
     list = stack[stack_pos - 1].u.list;
 
     /* Splice the list onto the stack, overwriting the list. */
     check_stack(list_length(list) - 1);
     for (d = list_first(list), i=0; d; d = list_next(list, d), i++)
-	data_dup(&stack[stack_pos - 1 + i], d);
+        data_dup(&stack[stack_pos - 1 + i], d);
     stack_pos += list_length(list) - 1;
 
     list_discard(list);
@@ -1164,7 +1164,7 @@ COLDC_OP(not) {
 }
 
 /* Effects: If the top value on the stack is an integer, pops it and pushes its
- *	    its arithmetic inverse. */
+ *            its arithmetic inverse. */
 COLDC_OP(negate) {
     cData *d = &stack[stack_pos - 1];
 
@@ -1174,12 +1174,12 @@ COLDC_OP(negate) {
     } else if (d->type == FLOAT) {
         d->u.fval = -(d->u.fval);
     } else {
-	cthrow(type_id, "Argument (%D) is not an integer or float.", d);
+        cthrow(type_id, "Argument (%D) is not an integer or float.", d);
     }
 }
 
 /* Effects: If the top two values on the stack are integers, pops them and
- *	    pushes their product. */
+ *            pushes their product. */
 
 COLDC_OP(multiply) {
     cData *d1 = &stack[stack_pos - 2];
@@ -1207,24 +1207,24 @@ COLDC_OP(multiply) {
         }
 
         case STRING: {
-	    Int n;
-	    cStr *s;
+            Int n;
+            cStr *s;
 
-	    if (d2->type!=INTEGER)
-		goto error;
-	    n=d2->u.val;
-	    if (n<0) {
-		cthrow(range_id,
+            if (d2->type!=INTEGER)
+                goto error;
+            n=d2->u.val;
+            if (n<0) {
+                cthrow(range_id,
                       "Multiplying string %D with negative number %D.", d1, d2);
-		return;
-	    }
-	    s=string_new(d1->u.str->len*n);
-	    while (n--)
-		s=string_add(s, d1->u.str);
-	    data_discard(d1);
-	    d1->u.str=s;
-	    break;
-	}
+                return;
+            }
+            s=string_new(d1->u.str->len*n);
+            while (n--)
+                s=string_add(s, d1->u.str);
+            data_discard(d1);
+            d1->u.str=s;
+            break;
+        }
 
         case FLOAT:
             switch (d2->type) {
@@ -1236,7 +1236,7 @@ COLDC_OP(multiply) {
                 default:
                     goto error;
             }
-    
+
           float_label:
             d1->u.fval *= d2->u.fval;
             break;
@@ -1281,7 +1281,7 @@ COLDC_OP(doeq_multiply) {
                 default:
                     goto error;
             }
-    
+
           float_label:
             /* put it in arg's place so we only pop once */
             arg->u.fval = var->u.fval * arg->u.fval;
@@ -1315,8 +1315,8 @@ COLDC_OP(doeq_multiply) {
 
 
 /* Effects: If the top two values on the stack are integers and the second is
- *	    not zero, pops them, divides the first by the second, and pushes
- *	    the quotient. */
+ *            not zero, pops them, divides the first by the second, and pushes
+ *            the quotient. */
 COLDC_OP(divide) {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
@@ -1332,7 +1332,7 @@ COLDC_OP(divide) {
                 default:
                     goto error;
             }
-    
+
           float_label:
             if (d2->u.fval == 0.0) {
                 cthrow(div_id, "Attempt to divide %D by zero.", d1);
@@ -1399,7 +1399,7 @@ COLDC_OP(doeq_divide) {
                 default:
                     goto error;
             }
-    
+
           float_label:
             if (arg->u.fval == 0.0) {
                 cthrow(div_id, "Attempt to divide %D by zero.", var);
@@ -1442,27 +1442,27 @@ COLDC_OP(doeq_divide) {
 }
 
 /* Effects: If the top two values on the stack are integers and the second is
- *	    not zero, pops them, divides the first by the second, and pushes
- *	    the remainder. */
+ *            not zero, pops them, divides the first by the second, and pushes
+ *            the remainder. */
 COLDC_OP(modulo) {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
 
     /* Make sure we're multiplying two integers. */
     if (d1->type != INTEGER || d2->type != INTEGER) {
-	cthrow(type_id, "Both sides of the modulo must be integers.");
+        cthrow(type_id, "Both sides of the modulo must be integers.");
     } else if (d2->u.val == 0) {
-	cthrow(div_id, "Attempt to divide %D by zero.", d1);
+        cthrow(div_id, "Attempt to divide %D by zero.", d1);
     } else {
-	/* Replace d1 with d1 % d2, and pop d2. */
-	d1->u.val %= d2->u.val;
-	pop(1);
+        /* Replace d1 with d1 % d2, and pop d2. */
+        d1->u.val %= d2->u.val;
+        pop(1);
     }
 }
 
 /* Effects: If the top two values on the stack are integers, pops them and
- *	    pushes their sum.  If the top two values are strings, pops them,
- *	    concatenates the second onto the first, and pushes the result. */
+ *            pushes their sum.  If the top two values are strings, pops them,
+ *            concatenates the second onto the first, and pushes the result. */
 COLDC_OP(add) {
     cData *d1 = &stack[stack_pos - 2];
     cData *d2 = &stack[stack_pos - 1];
@@ -1529,8 +1529,8 @@ COLDC_OP(add) {
 
       string:                                                  /* string: */
 
-	anticipate_assignment();
-	d1->u.str = string_add(d1->u.str, d2->u.str);
+        anticipate_assignment();
+        d1->u.str = string_add(d1->u.str, d2->u.str);
         break;
 
       }
@@ -1539,8 +1539,8 @@ COLDC_OP(add) {
 
         switch (d2->type) {
             case LIST:
-	        anticipate_assignment();
-        	d1->u.list = list_append(d1->u.list, d2->u.list);
+                anticipate_assignment();
+                d1->u.list = list_append(d1->u.list, d2->u.list);
                 break;
             case STRING: {
                 cStr * str = data_to_literal(d1, TRUE);
@@ -1557,7 +1557,7 @@ COLDC_OP(add) {
       case BUFFER:
 
         if (d2->type == BUFFER) {
-	    anticipate_assignment();
+            anticipate_assignment();
             d1->u.buffer = buffer_append(d1->u.buffer, d2->u.buffer);
             break;
         }
@@ -1584,8 +1584,8 @@ COLDC_OP(add) {
 
       error:
 
-	cthrow(type_id, "Cannot add %D and %D.", d1, d2);
-	return;
+        cthrow(type_id, "Cannot add %D and %D.", d1, d2);
+        return;
     }
 
     pop(1);
@@ -1662,7 +1662,7 @@ COLDC_OP(doeq_add) {
       string:
 
         /* straighten and swap so things are discarded correctly */
-	anticipate_assignment();
+        anticipate_assignment();
         str = var->u.str;
         var->u.str = arg->u.str;
 
@@ -1678,9 +1678,9 @@ COLDC_OP(doeq_add) {
         switch (arg->type) {
             case LIST: {
                 cList * list = var->u.list;
-	        anticipate_assignment();
+                anticipate_assignment();
                 var->u.list = arg->u.list;
-        	arg->u.list = list_append(list, arg->u.list);
+                arg->u.list = list_append(list, arg->u.list);
                 pop(1);
                 return;
             }
@@ -1701,7 +1701,7 @@ COLDC_OP(doeq_add) {
         if (arg->type == BUFFER) {
             cBuf * buf = var->u.buffer;
 
-	    anticipate_assignment();
+            anticipate_assignment();
             var->u.buffer = arg->u.buffer;
             arg->u.buffer = buffer_append(buf, arg->u.buffer);
             pop(1);
@@ -1732,8 +1732,8 @@ COLDC_OP(doeq_add) {
 
       error:
 
-	cthrow(type_id, "Cannot add %D and %D.", var, arg);
-	return;
+        cthrow(type_id, "Cannot add %D and %D.", var, arg);
+        return;
     }
 }
 
@@ -1744,8 +1744,8 @@ COLDC_OP(splice_add) {
 
     /* No need to check if d2 is a list, due to code generation. */
     if (d1->type != LIST) {
-	cthrow(type_id, "splice add: %D is not a list.", d1);
-	return;
+        cthrow(type_id, "splice add: %D is not a list.", d1);
+        return;
     }
 
     anticipate_assignment();
@@ -1754,7 +1754,7 @@ COLDC_OP(splice_add) {
 }
 
 /* Effects: If the top two values on the stack are integers, pops them and
- *	    pushes their difference. */
+ *            pushes their difference. */
 
 COLDC_OP(subtract) {
     cData *d1 = &stack[stack_pos - 2];
@@ -1771,7 +1771,7 @@ COLDC_OP(subtract) {
                 default:
                     goto error;
             }
-    
+
           float_label:
             d1->u.fval -= d2->u.fval;
             break;
@@ -1816,7 +1816,7 @@ COLDC_OP(doeq_subtract) {
                 default:
                     goto error;
             }
-    
+
           float_label:
             arg->u.fval = var->u.fval - arg->u.fval;
             break;
@@ -1855,7 +1855,7 @@ COLDC_OP(increment) {
         cthrow(type_id, "%D is not an integer or float.", sd);
         return;
     }
-    
+
     switch (cur_frame->opcodes[cur_frame->pc]) {
         case SET_LOCAL:
             cur_frame->pc++;
@@ -1884,7 +1884,7 @@ COLDC_OP(increment) {
                                        cur_frame->method->object,
                                        id, &d);
             if (result == varnf_id)
-        	cthrow(varnf_id, "Object variable %I not found.", id);
+                cthrow(varnf_id, "Object variable %I not found.", id);
             break;
         }
     }
@@ -1915,7 +1915,7 @@ COLDC_OP(decrement) {
         cthrow(type_id, "%D is not an integer or float.", sd);
         return;
     }
-    
+
     switch (cur_frame->opcodes[cur_frame->pc]) {
         case SET_LOCAL:
             cur_frame->pc++;
@@ -1944,7 +1944,7 @@ COLDC_OP(decrement) {
                                        cur_frame->method->object,
                                        id, &d);
             if (result == varnf_id)
-        	cthrow(varnf_id, "Object variable %I not found.", id);
+                cthrow(varnf_id, "Object variable %I not found.", id);
             break;
         }
     }
@@ -1977,109 +1977,109 @@ static void scatter_loop (void)
     Long c;
 
     while (1) {
-	switch (opcodes[cur_frame->pc++]) {
-	case SCATTER_END:
-	    pop(2);
+        switch (opcodes[cur_frame->pc++]) {
+        case SCATTER_END:
+            pop(2);
 
-	    if (stack[stack_pos-1].type == LIST) {
-		/* We allow for more arguments than needed. So, 
-		   no extra error check. */
-		list_index = stack[stack_pos - 2].u.val;
-		l = (d = &stack[stack_pos - 1])->u.list;
-		break;
-	    }
-	    else {
-		stack[stack_pos-1].u.val=1;
-		return;
-	    }
+            if (stack[stack_pos-1].type == LIST) {
+                /* We allow for more arguments than needed. So,
+                   no extra error check. */
+                list_index = stack[stack_pos - 2].u.val;
+                l = (d = &stack[stack_pos - 1])->u.list;
+                break;
+            }
+            else {
+                stack[stack_pos-1].u.val=1;
+                return;
+            }
 
-	case SET_LOCAL:
-	case SET_OBJ_VAR:
-	    if (list_index >= list_length(l)) {
-		cthrow (range_id, "Too few arguments in the list (%D)",d);
-		return;
-	    }
-	    check_stack(1);
-	    data_dup(&stack[stack_pos++],list_elem(l, list_index));
-	    c = cur_frame->pc;
-	    (*op_table[opcodes[c-1]].func)();
+        case SET_LOCAL:
+        case SET_OBJ_VAR:
+            if (list_index >= list_length(l)) {
+                cthrow (range_id, "Too few arguments in the list (%D)",d);
+                return;
+            }
+            check_stack(1);
+            data_dup(&stack[stack_pos++],list_elem(l, list_index));
+            c = cur_frame->pc;
+            (*op_table[opcodes[c-1]].func)();
             if (!cur_frame || cur_frame->pc != c+1)
-		return;
-	    pop(1);
-	    break;
+                return;
+            pop(1);
+            break;
 
-	case OPTIONAL_ASSIGN:
-	    if (list_index >= list_length(l)) {
-		/* Setup for expression evaluation and exit. */
-		stack[stack_pos - 2].u.val = list_index;
-		cur_frame->pc++;
-		return;
-	    }
-	    else {
-		/* Do the assignment right away */
-		c = cur_frame->pc = cur_frame->opcodes[cur_frame->pc] - 1;
-		check_stack(1);
-		data_dup(&stack[stack_pos++],list_elem(l, list_index));
-		(*op_table[opcodes[c-1]].func)();
-		if (!cur_frame || cur_frame->pc != c+1)
-		    return;
-		cur_frame->pc++; /* skip OPTIONAL_END */
-		pop(1);
-	    }
-	    break;
+        case OPTIONAL_ASSIGN:
+            if (list_index >= list_length(l)) {
+                /* Setup for expression evaluation and exit. */
+                stack[stack_pos - 2].u.val = list_index;
+                cur_frame->pc++;
+                return;
+            }
+            else {
+                /* Do the assignment right away */
+                c = cur_frame->pc = cur_frame->opcodes[cur_frame->pc] - 1;
+                check_stack(1);
+                data_dup(&stack[stack_pos++],list_elem(l, list_index));
+                (*op_table[opcodes[c-1]].func)();
+                if (!cur_frame || cur_frame->pc != c+1)
+                    return;
+                cur_frame->pc++; /* skip OPTIONAL_END */
+                pop(1);
+            }
+            break;
 
-	case SCATTER_START: {
-	    /* Here's the fun part. Recursive scatter! */
+        case SCATTER_START: {
+            /* Here's the fun part. Recursive scatter! */
 
-	    if (list_index >= list_length(l)) {
-		cthrow (range_id, "Too few arguments in the list (%D)",d);
-		return;
-	    }
-	    d=list_elem(l, list_index);
-	    if (d->type != LIST) {
-		cthrow (type_id, "Attempting to scatter non-list (%D)",d);
-		return;
-	    }
-	    stack[stack_pos-2].u.val = list_index;
-	    check_stack(2);
-	    stack[stack_pos].type = INTEGER;
-	    list_index = stack[stack_pos++].u.val = -1;
-	    data_dup(&stack[stack_pos++],d);
-	    l = d->u.list;
-	    break;
-	}
+            if (list_index >= list_length(l)) {
+                cthrow (range_id, "Too few arguments in the list (%D)",d);
+                return;
+            }
+            d=list_elem(l, list_index);
+            if (d->type != LIST) {
+                cthrow (type_id, "Attempting to scatter non-list (%D)",d);
+                return;
+            }
+            stack[stack_pos-2].u.val = list_index;
+            check_stack(2);
+            stack[stack_pos].type = INTEGER;
+            list_index = stack[stack_pos++].u.val = -1;
+            data_dup(&stack[stack_pos++],d);
+            l = d->u.list;
+            break;
+        }
 
-	case SPLICE: {
-	    Int len=list_length(l);
+        case SPLICE: {
+            Int len=list_length(l);
             cList *sublist;
 
-	    if (list_index >= len)
-		/* Sorry, we're out of data. Empty list. */
-		list_index = len;
-	    /* Don't anticipate if we're not at the top level */
-	    if (stack[stack_pos-3].type == INTEGER)
-		anticipate_assignment();
-	    c = ++cur_frame->pc;
+            if (list_index >= len)
+                /* Sorry, we're out of data. Empty list. */
+                list_index = len;
+            /* Don't anticipate if we're not at the top level */
+            if (stack[stack_pos-3].type == INTEGER)
+                anticipate_assignment();
+            c = ++cur_frame->pc;
             sublist = list_sublist(list_dup(l), list_index, len-list_index);
             push_list(sublist);
             list_discard(sublist);
-	    (*op_table[opcodes[c-1]].func)();
-	    if (!cur_frame || cur_frame->pc != c+1)
-		return;
-	    pop(1);
-	    break;
-	}
-	}
-	list_index++;
+            (*op_table[opcodes[c-1]].func)();
+            if (!cur_frame || cur_frame->pc != c+1)
+                return;
+            pop(1);
+            break;
+        }
+        }
+        list_index++;
     }
 }
 
 COLDC_OP(scatter_start)
 {
     if (stack[stack_pos-1].type != LIST) {
-	cthrow (type_id, "Attempting to scatter non-list (%D)",
-		&stack[stack_pos-1]);
-	return;
+        cthrow (type_id, "Attempting to scatter non-list (%D)",
+                &stack[stack_pos-1]);
+        return;
     }
 
     check_stack(2);
@@ -2108,7 +2108,7 @@ COLDC_OP(optional_end)
 }
 
 /* Effects: Pops the top two values on the stack and pushes 1 if they are
- *	    equal, 0 if not. */
+ *            equal, 0 if not. */
 COLDC_OP(equal)
 {
     cData *d1 = &stack[stack_pos - 2];
@@ -2120,7 +2120,7 @@ COLDC_OP(equal)
 }
 
 /* Effects: Pops the top two values on the stack and returns 1 if they are
- *	    unequal, 0 if they are equal. */   
+ *            unequal, 0 if they are equal. */
 COLDC_OP(not_equal)
 {
     cData *d1 = &stack[stack_pos - 2];
@@ -2132,10 +2132,10 @@ COLDC_OP(not_equal)
 }
 
 /* Definition: Two values are comparable if they are of the same type and that
- * 	       type is integer or string. */
+ *                type is integer or string. */
 
 /* Effects: If the top two values on the stack are comparable, pops them and
- *	    pushes 1 if the first is greater than the second, 0 if not. */
+ *            pushes 1 if the first is greater than the second, 0 if not. */
 COLDC_OP(greater)
 {
     cData *d1 = &stack[stack_pos - 2];
@@ -2151,20 +2151,20 @@ COLDC_OP(greater)
     }
 
     if (d1->type != d2->type) {
-	cthrow(type_id, "%D and %D are not of the same type.", d1, d2);
+        cthrow(type_id, "%D and %D are not of the same type.", d1, d2);
     } else if (t != INTEGER && t != STRING && t != FLOAT) {
-	cthrow(type_id,"%D and %D are not integers, floats or strings.",d1,d2);
+        cthrow(type_id,"%D and %D are not integers, floats or strings.",d1,d2);
     } else {
-	/* Discard d1 and d2 and push the appropriate truth value. */
-	val = (data_cmp(d1, d2) > 0);
-	pop(2);
-	push_int(val);
+        /* Discard d1 and d2 and push the appropriate truth value. */
+        val = (data_cmp(d1, d2) > 0);
+        pop(2);
+        push_int(val);
     }
 }
 
 /* Effects: If the top two values on the stack are comparable, pops them and
- *	    pushes 1 if the first is greater than or equal to the second, 0 if
- *	    not. */
+ *            pushes 1 if the first is greater than or equal to the second, 0 if
+ *            not. */
 COLDC_OP(greater_or_equal)
 {
     cData *d1 = &stack[stack_pos - 2];
@@ -2180,19 +2180,19 @@ COLDC_OP(greater_or_equal)
     }
 
     if (d1->type != d2->type) {
-	cthrow(type_id, "%D and %D are not of the same type.", d1, d2);
+        cthrow(type_id, "%D and %D are not of the same type.", d1, d2);
     } else if (t != INTEGER && t != FLOAT && t != STRING) {
-	cthrow(type_id,"%D and %D are not integers, floats or strings.",d1,d2);
+        cthrow(type_id,"%D and %D are not integers, floats or strings.",d1,d2);
     } else {
-	/* Discard d1 and d2 and push the appropriate truth value. */
-	val = (data_cmp(d1, d2) >= 0);
-	pop(2);
-	push_int(val);
+        /* Discard d1 and d2 and push the appropriate truth value. */
+        val = (data_cmp(d1, d2) >= 0);
+        pop(2);
+        push_int(val);
     }
 }
 
 /* Effects: If the top two values on the stack are comparable, pops them and
- *	    pushes 1 if the first is less than the second, 0 if not. */
+ *            pushes 1 if the first is less than the second, 0 if not. */
 COLDC_OP(less)
 {
     cData *d1 = &stack[stack_pos - 2];
@@ -2208,20 +2208,20 @@ COLDC_OP(less)
     }
 
     if (d1->type != d2->type) {
-	cthrow(type_id, "%D and %D are not of the same type.", d1, d2);
+        cthrow(type_id, "%D and %D are not of the same type.", d1, d2);
     } else if (t != INTEGER && t != FLOAT && t != STRING) {
-	cthrow(type_id,"%D and %D are not integers, floats or strings.",d1,d2);
+        cthrow(type_id,"%D and %D are not integers, floats or strings.",d1,d2);
     } else {
-	/* Discard d1 and d2 and push the appropriate truth value. */
-	val = (data_cmp(d1, d2) < 0);
-	pop(2);
-	push_int(val);
+        /* Discard d1 and d2 and push the appropriate truth value. */
+        val = (data_cmp(d1, d2) < 0);
+        pop(2);
+        push_int(val);
     }
 }
 
 /* Effects: If the top two values on the stack are comparable, pops them and
- *	    pushes 1 if the first is greater than or equal to the second, 0 if
- *	    not. */
+ *            pushes 1 if the first is greater than or equal to the second, 0 if
+ *            not. */
 COLDC_OP(less_or_equal)
 {
     cData *d1 = &stack[stack_pos - 2];
@@ -2237,21 +2237,21 @@ COLDC_OP(less_or_equal)
     }
 
     if (d1->type != d2->type) {
-	cthrow(type_id, "%D and %D are not of the same type.", d1, d2);
+        cthrow(type_id, "%D and %D are not of the same type.", d1, d2);
     } else if (t != INTEGER && t != FLOAT && t != STRING) {
-	cthrow(type_id,"%D and %D are not integers, floats or strings.",d1,d2);
+        cthrow(type_id,"%D and %D are not integers, floats or strings.",d1,d2);
     } else {
-	/* Discard d1 and d2 and push the appropriate truth value. */
-	val = (data_cmp(d1, d2) <= 0);
-	pop(2);
-	push_int(val);
+        /* Discard d1 and d2 and push the appropriate truth value. */
+        val = (data_cmp(d1, d2) <= 0);
+        pop(2);
+        push_int(val);
     }
 }
 
 /* Effects: If the top value on the stack is a string or a list, pops the top
- *	    two values on the stack and pushes the location of the first value
- *	    in the second (where the first element is 1), or 0 if the first
- *	    value does not exist in the second. */
+ *            two values on the stack and pushes the location of the first value
+ *            in the second (where the first element is 1), or 0 if the first
+ *            value does not exist in the second. */
 #define uchar unsigned char
 
 COLDC_OP(in)
@@ -2312,9 +2312,9 @@ COLDC_OP(in)
 */
 
 /*
-// Effects: If the top two values on the stack are integers 
-//	    pops them, bitwise ands them, and pushes
-//	    the result.
+// Effects: If the top two values on the stack are integers
+//            pops them, bitwise ands them, and pushes
+//            the result.
 */
 COLDC_OP(bwand) {
     cData *d1 = &stack[stack_pos - 2];
@@ -2336,7 +2336,7 @@ COLDC_OP(bwand) {
 
 
 /*
-// Effects: If the top two values on the stack are integers 
+// Effects: If the top two values on the stack are integers
 //          pops them, bitwise ors them, and pushes
 //          the result.
 */
@@ -2359,7 +2359,7 @@ COLDC_OP(bwor) {
 }
 
 /*
-// Effects: If the top two values on the stack are integers 
+// Effects: If the top two values on the stack are integers
 //          pops them, shifts the left operand to the right
 //          right-operand times, and pushes the result.
 */
@@ -2382,7 +2382,7 @@ COLDC_OP(bwshr) {
 }
 
 /*
-// Effects: If the top two values on the stack are integers 
+// Effects: If the top two values on the stack are integers
 //          pops them, shifts the left operand to the left
 //          right-operand times, and pushes  the result.
 */

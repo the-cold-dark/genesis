@@ -191,7 +191,6 @@ extern cList  *object_ancestors_breadth(cObjnum objnum);
 extern cList  *object_ancestors_depth(cObjnum objnum);
 extern cList  *object_descendants(cObjnum objnum);
 extern Int     object_has_ancestor(cObjnum objnum, cObjnum ancestor);
-extern void    object_reconstruct_descendent_ancprec(cObjnum objnum);
 extern Int     object_add_string(Obj *object, cStr *string);
 extern void    object_discard_string(Obj *object, Int ind);
 extern cStr   *object_get_string(Obj *object, Int ind);

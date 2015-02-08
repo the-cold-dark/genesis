@@ -747,7 +747,7 @@ static void compile_stmt(Stmt *stmt, Int loop, Int catch_level)
           compile_expr(stmt->u.if_.cond);
 
           /* Code an IF opcode with a jump argument pointing to the end of the
-           * true statmeent. */
+           * true statement. */
           code(IF);
           code(end_dest);
 
@@ -1500,7 +1500,7 @@ static void compile_expr(Expr *expr)
       case AND: {
           Int end_dest = new_jump_dest();
 
-          /* Compile ther left-hand expression. */
+          /* Compile the left-hand expression. */
           compile_expr(expr->u.and.left);
 
           /* Code an AND opcode with a jump argument pointing to the end of the

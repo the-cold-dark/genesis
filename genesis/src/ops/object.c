@@ -771,7 +771,7 @@ COLDC_FUNC(chparents) {
         } else {
             d2.type = OBJNUM;
             d2.u.objnum = cur_frame->object->objnum;
-            cthrow(parent_id, "New parent %D is a descendent of %D.", d, &d2);
+            cthrow(parent_id, "New parent %D is a descendant of %D.", d, &d2);
         }
     } else {
         pop(1);

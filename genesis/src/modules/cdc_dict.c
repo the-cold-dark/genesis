@@ -104,7 +104,7 @@ NATIVE_METHOD(dict_add_elem) {
     /*
     // set the list to zero to remove the reference to the list, then
     // dup the dictionary so we can clear the stack and anticipate the
-    // assignmenent, all to keep references at their most minimal so we
+    // assignment, all to keep references at their most minimal so we
     // do not copy if we do not need to.
     //
     // also dup the key and the value being inserted.
@@ -182,7 +182,7 @@ NATIVE_METHOD(dict_del_elem) {
     }
 
     /*
-    // Temorarily set the dictionary's value for the key to zero, to
+    // Temporarily set the dictionary's value for the key to zero, to
     // remove the reference to the list.
     */
     d.type = INTEGER;

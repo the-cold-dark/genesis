@@ -35,7 +35,7 @@ COLDC_FUNC(dblog) {
 //
 // Modifies: The object cache, identifier table, and binary database
 //           files via cache_sync() and ident_dump().
-// Effects: If called by the sytem object with no arguments,
+// Effects: If called by the system object with no arguments,
 //          performs a binary dump, ensuring that the files db and
 //          db are consistent.  Returns 1 if the binary dump
 //          succeeds, or 0 if it fails.
@@ -265,7 +265,7 @@ COLDC_FUNC(set_heartbeat) {
         if (SYM1 == id) { \
             if (argc == 2) { \
                 if (args[ARG2].type != INTEGER) \
-                    THROW((type_id, "Expeced an integer")) \
+                    THROW((type_id, "Expected an integer")) \
                 var = INT2; \
                 pthread_cond_signal(&cleaner_condition); \
             } \

@@ -1422,10 +1422,10 @@ static cList *unparse_stmt(cList *output, Stmt *stmt, Int indent, Stmt *last)
     }
 }
 
-/* Returns nonzero if the if-else statment stmt is complex--that is, if we
+/* Returns nonzero if the if-else statement stmt is complex--that is, if we
  * should display its true and false clauses in braces.  If the false clause
  * is an IF_ELSE or an IF statement, then we will be displaying the false
- * clause's if statment on the same line as our own else statement, so we must
+ * clause's if statement on the same line as our own else statement, so we must
  * check to see if the false clause itself is complex.  Apart from that, it's
  * just a matter of testing if either the true or false clause is complex. */
 static Int is_complex_if_else_stmt(Stmt *stmt)
@@ -1856,7 +1856,7 @@ static cStr *unparse_args(cStr *str, Expr_list *args)
 /* Unparse an expression, inserting parentheses around it if the caller
  * precedence is greater than the expression's precedence level.  If we
  * should put parentheses around the expression if it is at the same
- * precedence level because of assocation (e.g. a / (b * c)) then assoc
+ * precedence level because of association (e.g. a / (b * c)) then assoc
  * should be 1. */
 static cStr *unparse_expr_prec(cStr *str, Expr *expr, Int caller_type,
                                  Int assoc)

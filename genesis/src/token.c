@@ -50,7 +50,7 @@ static struct {
     { "while",                  WHILE },
     { "with",                   WITH },
 
-    /* these are around for backwards/future compatability */
+    /* these are around for backwards/future compatibility */
 
     /* cryptic reserved 'words' */
     { "(|",                     CRITLEFT },

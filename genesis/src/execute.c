@@ -711,12 +711,12 @@ void uninit_execute(void) {
 // Execute a task, if we are currently executing, preempt the current
 // task, we get priority.
 //
-// No we dont, lets just rewrite the interpreter, this sucks.
+// No we don't, lets just rewrite the interpreter, this sucks.
 */
 void vm_task(cObjnum objnum, Long name, Int num_args, ...) {
     va_list arg;
 
-    /* Don't execute if a shutdown() has occured. */
+    /* Don't execute if a shutdown() has occurred. */
     if (!running) {
         va_end(arg);
         return;
@@ -930,7 +930,7 @@ void frame_return(void) {
 
       if (debug.type == LIST) {
           /* We skip the case when there hasn't been any calls yet,
-             That's to prefent the other routine from getting confused */
+             That's to prevent the other routine from getting confused */
           d.type = INTEGER;
           d.u.val = tick;
           debug.u.list = list_add (debug.u.list, &d);

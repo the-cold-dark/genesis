@@ -174,7 +174,7 @@ Int flush_file(filec_t * file) {
 cBuf * read_binary_file(filec_t * file, Int block) {
     cBuf * buf = buffer_new(block);
 
-    /* Patch #6 -- Bruce Mitchner */
+    /* Patch #6 -- Bruce Mitchener */
     if (feof(file->fp)) {
         cthrow(eof_id, "End of file.");
         buffer_discard(buf);

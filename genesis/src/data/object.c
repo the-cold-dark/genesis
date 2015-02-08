@@ -432,7 +432,7 @@ static void object_extra_cleanup(Obj *object)
 /*
 // -----------------------------------------------------------------
 //
-// Free everything on the object, update parents and descendents, etc.  The
+// Free everything on the object, update parents and descendants, etc.  The
 // object is really going to be gone.  We don't want anything left, except for
 // the structure it came in, which belongs to the cache.
 //
@@ -576,7 +576,7 @@ cList * object_ancestors_depth(cObjnum objnum) {
     cList  * list;
     cData    d;
 
-    /* short circut root */
+    /* short circuit root */
     if (objnum == ROOT_OBJNUM) {
         list = list_new(1);
         d.type = OBJNUM;
@@ -607,7 +607,7 @@ cList * object_ancestors_breadth(cObjnum objnum) {
     this.u.objnum = objnum;
     h = hash_add(h, &this);
 
-    /* short circut root */
+    /* short circuit root */
     if (objnum == ROOT_OBJNUM)
         goto END_LABEL;
 
@@ -1180,10 +1180,10 @@ static Var *object_find_var(Obj *object, cObjnum cclass, Ident name)
 /* object_find_method is now a front end that increments the
    cache_search variable and calls object_find_message_recurse,
    the recursive routine.  This is necessary to make single-
-   inheritance lineage obejct re-entrant.  It fixes a bug in
+   inheritance lineage object re-entrant.  It fixes a bug in
    the circular-definition catching logic that caused it to
    fail when a parent's method sent a message to the child as
-   a result of a message to teh child hanbdled by the parent
+   a result of a message to the child handled by the parent
    (whew.) added 5/7/1995 Jeffrey P. kesselman */
 Method *object_find_method(cObjnum objnum, Ident name, Bool is_frob) {
     Search_params   params;

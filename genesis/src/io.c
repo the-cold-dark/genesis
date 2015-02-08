@@ -135,7 +135,7 @@ void handle_new_and_pending_connections(void) {
         d1.type = STRING;
         d1.u.str = str;
         d2.type = STRING;
-        d2.u.str = serv->addr; /* dont dup, vm_task() will */
+        d2.u.str = serv->addr; /* don't dup, vm_task() will */
         d3.type = INTEGER;
         d3.u.val = serv->client_port;
         d4.type = INTEGER;
@@ -178,7 +178,7 @@ void handle_new_and_pending_connections(void) {
 // connection will not get associated, we need to hack the server to
 // blast old connections when new ones are associated, or to deny new
 // ones.  Either way the db should be paying close attention to what
-// is occuring.
+// is occurring.
 //
 // Once new connections bump old connections, this problem will go
 // away.

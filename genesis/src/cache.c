@@ -352,7 +352,7 @@ Obj * cache_get_holder(Long objnum) {
     _acounter++;
 #endif
 
-    /* Link the object a the head of the active chain. */
+    /* Link the object at the head of the active chain. */
     cache_add_to_list_head(&active[ind], obj);
 
     return obj;

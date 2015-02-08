@@ -1907,7 +1907,7 @@ COLDC_OP(p_increment) {
 }
 
 /* Effects: If the top value on the stack is an integer or float,
- *          it is decrimented by one. */
+ *          it is decremented by one. */
 COLDC_OP(decrement) {
     cData * v, * sd = &stack[stack_pos - 1];
 

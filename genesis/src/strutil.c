@@ -167,7 +167,7 @@ static char *match_coupled_wildcard(char *ctemplate, char *s) {
         }
     }
 
-    /* Find first occurrance of an equal sign. */
+    /* Find first occurrence of an equal sign. */
     p = strchr(s, '=');
     if (!p)
         return NULL;

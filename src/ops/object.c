@@ -30,7 +30,7 @@ COLDC_FUNC(add_var) {
     result = object_add_var(cur_frame->object, args[0].u.symbol);
     if (result == varexists_id)
         THROW((varexists_id,
-              "Object variable %I already exists.", args[0].u.symbol))
+              "Object variable %I already exists.", args[0].u.symbol));
 
     pop(1);
     push_int(1);
@@ -204,12 +204,12 @@ COLDC_FUNC(add_method) {
     if (is_reserved_word(name))
         THROW((parse_id,
               "%I is a reserved word, and cannot be used as a method name",
-              SYM2))
+              SYM2));
 
     method = object_find_method_local(cur_frame->object, args[1].u.symbol, FROB_ANY);
 
     if (method && (method->m_flags & MF_LOCK))
-        THROW((perm_id, "Method is locked, and cannot be changed."))
+        THROW((perm_id, "Method is locked, and cannot be changed."));
 
     /* keep these for later reference, if its already around */
     if (method) {
@@ -325,16 +325,16 @@ COLDC_FUNC(set_method_flags) {
 
     flags = object_get_method_flags(cur_frame->object, args[0].u.symbol);
     if (flags == -1)
-        THROW((methodnf_id, "Method not found."))
+        THROW((methodnf_id, "Method not found."));
     if (flags & MF_LOCK)
-        THROW((perm_id, "Method is locked and cannot be changed."))
+        THROW((perm_id, "Method is locked and cannot be changed."));
     if (flags & MF_NATIVE)
-        THROW((perm_id,"Method is native and cannot be changed."))
+        THROW((perm_id,"Method is native and cannot be changed."));
 
     list = args[1].u.list;
     for (d = list_first(list); d; d = list_next(list, d)) {
         if (d->type != SYMBOL)
-            THROW((type_id, "Invalid method flag (%D).", d))
+            THROW((type_id, "Invalid method flag (%D).", d));
         if (d->u.symbol == noover_id)
             new_flags |= MF_NOOVER;
         else if (d->u.symbol == sync_id)
@@ -344,9 +344,9 @@ COLDC_FUNC(set_method_flags) {
         else if (d->u.symbol == forked_id)
             new_flags |= MF_FORK;
         else if (d->u.symbol == native_id)
-            THROW((perm_id, "Native flag can only be set by the driver."))
+            THROW((perm_id, "Native flag can only be set by the driver."));
         else
-            THROW((perm_id, "Unknown method flag (%D).", d))
+            THROW((perm_id, "Unknown method flag (%D).", d));
     }
 
     object_set_method_flags(cur_frame->object, args[0].u.symbol, new_flags);
@@ -607,7 +607,7 @@ COLDC_FUNC(list_method) {
 
     indent = (argc >= 2) ? INT2 : DEFAULT_INDENT;
     if (indent < 1)
-        THROW((type_id, "Invalid indentation %d, must be one or more.", INT2))
+        THROW((type_id, "Invalid indentation %d, must be one or more.", INT2));
     if (argc == 3) {
         if (INT3 & FMT_FULL_PARENS)
             format_flags |= FMT_FULL_PARENS;
@@ -787,9 +787,9 @@ COLDC_FUNC(destroy) {
 
     obj = cur_frame->object;
     if (obj->objnum == ROOT_OBJNUM)
-        THROW((perm_id, "You can't destroy the root object."))
+        THROW((perm_id, "You can't destroy the root object."));
     else if (obj->objnum == SYSTEM_OBJNUM)
-        THROW((perm_id, "You can't destroy the system object."))
+        THROW((perm_id, "You can't destroy the system object."));
 
     /*
     // Set the object dead, so it will go away when nothing is
@@ -1037,7 +1037,7 @@ COLDC_FUNC(method_bytecode) {
 
     /* keep these for later reference, if its already around */
     if (!method)
-        THROW((methodnf_id, "Method %D not found.", &args[0]))
+        THROW((methodnf_id, "Method %D not found.", &args[0]));
 
     list = list_new(method->num_opcodes);
     d.type = SYMBOL;

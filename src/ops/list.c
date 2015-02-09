@@ -20,7 +20,7 @@ COLDC_FUNC(listgraft) {
 
     if (pos > list_length(l1) || pos < 0)
         THROW((range_id, "Position %D is outside of the range of the list.",
-               &args[1]))
+               &args[1]));
 
     l1 = list_dup(l1);
     l2 = list_dup(l2);
@@ -248,7 +248,7 @@ COLDC_FUNC(listidx) {
     }
 
     if ((r = list_index(LIST1, &args[1], origin)) == F_FAILURE)
-        THROW((range_id, "Origin is beyond the range of the list."))
+        THROW((range_id, "Origin is beyond the range of the list."));
 
     pop(argc);
     push_int(r);

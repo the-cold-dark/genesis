@@ -583,7 +583,7 @@ cStr * strsed(cStr * reg,  /* the regexp string */
 
     /* Compile the regexp, note: it is free'd by string_discard() */
     if ((rx = string_regexp(reg)) == NULL)
-        THROW((regexp_id, "%s", gen_regerror(NULL)))
+        THROW((regexp_id, "%s", gen_regerror(NULL)));
 
     /* initial regexp execution */
     if (!gen_regexec(rx, s, sensitive))
@@ -602,7 +602,7 @@ cStr * strsed(cStr * reg,  /* the regexp string */
             do {
                 if (!--depth) {
                     string_discard(out);
-                    THROW((maxdepth_id, "Max substitution depth exceeded"))
+                    THROW((maxdepth_id, "Max substitution depth exceeded"));
                 }
                 if ((i = rx->startp[0] - p))
                     out = string_add_chars(out, p, i);
@@ -642,7 +642,7 @@ cStr * strsed(cStr * reg,  /* the regexp string */
             do {
                 if (!--depth) {
                     string_discard(out);
-                    THROW((maxdepth_id, "Max substitution depth exceeded"))
+                    THROW((maxdepth_id, "Max substitution depth exceeded"));
                 }
 
                 if ((i = rx->startp[0] - rxs))
@@ -657,7 +657,7 @@ cStr * strsed(cStr * reg,  /* the regexp string */
 
                     if (!x || x > 9) {
                         string_discard(out);
-                        THROW((perm_id, "Subs can only be 1-9"))
+                        THROW((perm_id, "Subs can only be 1-9"));
                     }
 
                     if (rx->startp[x] != NULL && (i=rx->endp[x]-rx->startp[x]))
@@ -693,7 +693,7 @@ cStr * strsed(cStr * reg,  /* the regexp string */
 
                 if (!x || x > 9) {
                     string_discard(out);
-                    THROW((perm_id, "Subs can only be 1-9"))
+                    THROW((perm_id, "Subs can only be 1-9"));
                 }
 
                 if (rx->startp[x] != NULL && (i=rx->endp[x]-rx->startp[x]))
@@ -776,10 +776,10 @@ cStr * strsed(cStr * reg,  /* the regexp string */
             break;\
     }
 
-#define x_THROW(_what_) { \
+#define x_THROW(_what_) do { \
     cthrow _what_; \
     return NULL; \
-}
+} while(0)
 
 cStr * strfmt(cStr * str, cData * args, Int argc) {
     cStr     * out,
@@ -816,20 +816,20 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
 
         if (++cur >= argc) {
             string_discard(out);
-            x_THROW((type_id, "Not enough arguments for format."))
+            x_THROW((type_id, "Not enough arguments for format."));
         }
 
         pad = prec = trunc = 0;
         if (*s == '*') {
             if (args[cur].type != INTEGER) {
                 string_discard(out);
-                x_THROW((type_id, "Argument for '*' is not an integer."))
+                x_THROW((type_id, "Argument for '*' is not an integer."));
             }
             pad = args[cur].u.val;
             s++;
             if (++cur >= argc) {
                 string_discard(out);
-                x_THROW((type_id, "Not enough arguments for format."))
+                x_THROW((type_id, "Not enough arguments for format."));
             }
         } else {
             while (isdigit(*s))
@@ -840,12 +840,12 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
             s++;
             if (*s == '*') {
                 if (args[cur].type != INTEGER)
-                    x_THROW((type_id, "Argument for '*' is not an integer."))
+                    x_THROW((type_id, "Argument for '*' is not an integer."));
                 prec = args[cur].u.val;
                 s++;
                 if (++cur >= argc) {
                     string_discard(out);
-                    x_THROW((type_id, "Not enough arguments for format."))
+                    x_THROW((type_id, "Not enough arguments for format."));
                 }
             } else {
                 while (isdigit(*s))
@@ -873,7 +873,7 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
         /* invalid format, just abort, they need to know when it is wrong */
         if (*s == '\0') {
             string_discard(out);
-            x_THROW((type_id, "Invalid format"))
+            x_THROW((type_id, "Invalid format"));
         }
 
         switch (*s) {
@@ -946,7 +946,7 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
                     if (pad <= 3) {
                         string_discard(out);
                         x_THROW((type_id,
-                           "Elipse pad length must be at least 4 or more."))
+                           "Elipse pad length must be at least 4 or more."));
                     }
                     if (string_length(value) > pad) {
                         value = string_truncate(value, pad - 3);
@@ -962,7 +962,7 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
                 char fmttype[] = {'\0', '\0'};
                 fmttype[0] = *s;
                 string_discard(out);
-                x_THROW((error_id, "Unknown format type '%s'.", fmttype))
+                x_THROW((error_id, "Unknown format type '%s'.", fmttype));
             }
         }
 
@@ -1051,10 +1051,10 @@ cList * strexplodequoted(cStr * str) {
 // we can make a much better implementation with a better regexp compiler
 */
 
-#define x_THROW(_cthrow_) {\
+#define x_THROW(_cthrow_) do {\
         cthrow _cthrow_;\
         return NULL;\
-    }
+    } while(0)
 
 cList * strsplit(cStr * str, cStr * reg, Int flags) {
     register regexp * rx;
@@ -1065,7 +1065,7 @@ cList * strsplit(cStr * str, cStr * reg, Int flags) {
 
     /* Compile the regexp, note: it is free'd by string_discard() */
     if ((rx = string_regexp(reg)) == NULL)
-        x_THROW((regexp_id, "%s", gen_regerror(NULL)))
+        x_THROW((regexp_id, "%s", gen_regerror(NULL)));
 
     /* look at the regexp and see if its a simple one,
        which we can currently handle */
@@ -1076,7 +1076,7 @@ cList * strsplit(cStr * str, cStr * reg, Int flags) {
         /* rrg */
         if (*s == '(')
             x_THROW((regexp_id,
-                "split only supports simple regular expressions right now."))
+                "split only supports simple regular expressions right now."));
     }
 
     /* set initial vars */
@@ -1098,7 +1098,7 @@ cList * strsplit(cStr * str, cStr * reg, Int flags) {
     do {
         if (!--depth) {
             list_discard(list);
-            x_THROW((maxdepth_id, "Max split depth exceeded"))
+            x_THROW((maxdepth_id, "Max split depth exceeded"));
         }
 
         x = rx->startp[0] - p;

@@ -19,18 +19,22 @@
 pthread_mutex_t lookup_mutex;
 
 #ifdef DEBUG_LOOKUP_LOCK
-#define LOCK_LOOKUP(func) \
+#define LOCK_LOOKUP(func) do { \
         write_err("%s: locking db", func); \
         pthread_mutex_lock(&lookup_mutex); \
-        write_err("%s: locked db", func);
-#define UNLOCK_LOOKUP(func) \
+        write_err("%s: locked db", func); \
+    } while(0)
+#define UNLOCK_LOOKUP(func) do {\
         pthread_mutex_unlock(&lookup_mutex); \
-        write_err("%s: unlocked db", func);
+        write_err("%s: unlocked db", func); \
+    } while(0)
 #else
-#define LOCK_LOOKUP(func) \
-        pthread_mutex_lock(&lookup_mutex);
-#define UNLOCK_LOOKUP(func) \
-        pthread_mutex_unlock(&lookup_mutex);
+#define LOCK_LOOKUP(func) do { \
+        pthread_mutex_lock(&lookup_mutex); \
+    } while(0)
+#define UNLOCK_LOOKUP(func) do { \
+        pthread_mutex_unlock(&lookup_mutex); \
+    } while(0)
 #endif
 #else
 #define LOCK_LOOKUP(func)
@@ -99,14 +103,14 @@ void lookup_sync(void) {
 
     sprintf(buf, "%s/index", c_dir_binary);
 
-    LOCK_LOOKUP("lookup_sync")
+    LOCK_LOOKUP("lookup_sync");
 
     /* Only way to do this with ndbm is close and re-open. */
     sync_name_cache();
     dbm_close(dbp);
     dbp = dbm_open(buf, O_RDWR | O_CREAT | O_BINARY, READ_WRITE);
 
-    UNLOCK_LOOKUP("lookup_sync")
+    UNLOCK_LOOKUP("lookup_sync");
 
     if (!dbp)
         panic("Cannot reopen dbm database file.");
@@ -117,19 +121,19 @@ Int lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size)
     datum key, value;
     Number_buf nbuf;
 
-    LOCK_LOOKUP("lookup_retrieve_objnum")
+    LOCK_LOOKUP("lookup_retrieve_objnum");
 
     /* Get the value for objnum from the database. */
     key = objnum_key(objnum, nbuf);
     value = dbm_fetch(dbp, key);
     if (!value.dptr)
     {
-        UNLOCK_LOOKUP("lookup_retrieve_objnum")
+        UNLOCK_LOOKUP("lookup_retrieve_objnum");
         return 0;
     }
 
     parse_offset_size_value(value, offset, size);
-    UNLOCK_LOOKUP("lookup_retrieve_objnum")
+    UNLOCK_LOOKUP("lookup_retrieve_objnum");
     return 1;
 }
 
@@ -138,16 +142,16 @@ Int lookup_store_objnum(cObjnum objnum, off_t offset, Int size)
     datum key, value;
     Number_buf nbuf1, nbuf2;
 
-    LOCK_LOOKUP("lookup_store_objnum")
+    LOCK_LOOKUP("lookup_store_objnum");
     key = objnum_key(objnum, nbuf1);
     value = offset_size_value(offset, size, nbuf2);
     if (dbm_store(dbp, key, value, DBM_REPLACE)) {
         write_err("ERROR: Failed to store key %l.", objnum);
-        UNLOCK_LOOKUP("lookup_store_objnum")
+        UNLOCK_LOOKUP("lookup_store_objnum");
         return 0;
     }
 
-    UNLOCK_LOOKUP("lookup_store_objnum")
+    UNLOCK_LOOKUP("lookup_store_objnum");
     return 1;
 }
 
@@ -156,15 +160,15 @@ Int lookup_remove_objnum(cObjnum objnum)
     datum key;
     Number_buf nbuf;
 
-    LOCK_LOOKUP("lookup_remove_objnum")
+    LOCK_LOOKUP("lookup_remove_objnum");
     /* Remove the key from the database. */
     key = objnum_key(objnum, nbuf);
     if (dbm_delete(dbp, key)) {
         write_err("ERROR: Failed to delete key %l.", objnum);
-        UNLOCK_LOOKUP("lookup_remove_objnum")
+        UNLOCK_LOOKUP("lookup_remove_objnum");
         return 0;
     }
-    UNLOCK_LOOKUP("lookup_remove_objnum")
+    UNLOCK_LOOKUP("lookup_remove_objnum");
     return 1;
 }
 
@@ -198,12 +202,12 @@ Int lookup_retrieve_name(Ident name, cObjnum *objnum)
 {
     Int i = name % NAME_CACHE_SIZE;
 
-    LOCK_LOOKUP("lookup_retrieve_name")
+    LOCK_LOOKUP("lookup_retrieve_name");
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
         name_cache_hits++;
         *objnum = name_cache[i].objnum;
-        UNLOCK_LOOKUP("lookup_retrieve_name")
+        UNLOCK_LOOKUP("lookup_retrieve_name");
         return 1;
     }
 
@@ -211,7 +215,7 @@ Int lookup_retrieve_name(Ident name, cObjnum *objnum)
 
     /* Get it from the database. */
     if (!get_name(name, objnum)) {
-        UNLOCK_LOOKUP("lookup_retrieve_name")
+        UNLOCK_LOOKUP("lookup_retrieve_name");
         return 0;
     }
 
@@ -228,7 +232,7 @@ Int lookup_retrieve_name(Ident name, cObjnum *objnum)
     name_cache[i].dirty = 0;
     name_cache[i].on_disk = 1;
 
-    UNLOCK_LOOKUP("lookup_retrieve_name")
+    UNLOCK_LOOKUP("lookup_retrieve_name");
     return 1;
 }
 
@@ -236,7 +240,7 @@ Int lookup_store_name(Ident name, cObjnum objnum)
 {
     Int i = name % NAME_CACHE_SIZE;
 
-    LOCK_LOOKUP("lookup_store_name")
+    LOCK_LOOKUP("lookup_store_name");
 
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
@@ -244,7 +248,7 @@ Int lookup_store_name(Ident name, cObjnum objnum)
             name_cache[i].objnum = objnum;
             name_cache[i].dirty = 1;
         }
-        UNLOCK_LOOKUP("lookup_store_name")
+        UNLOCK_LOOKUP("lookup_store_name");
         return 1;
     }
 
@@ -261,7 +265,7 @@ Int lookup_store_name(Ident name, cObjnum objnum)
     name_cache[i].dirty = 1;
     name_cache[i].on_disk = 0;
 
-    UNLOCK_LOOKUP("lookup_store_name")
+    UNLOCK_LOOKUP("lookup_store_name");
     return 1;
 }
 
@@ -270,7 +274,7 @@ Int lookup_remove_name(Ident name)
     datum key;
     Int i = name % NAME_CACHE_SIZE;
 
-    LOCK_LOOKUP("lookup_remove_name")
+    LOCK_LOOKUP("lookup_remove_name");
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
         /* Delete it from the cache.  If it's not on disk, then we're done. */
@@ -278,7 +282,7 @@ Int lookup_remove_name(Ident name)
         ident_discard(name_cache[i].name);
         name_cache[i].name = NOT_AN_IDENT;
         if (!name_cache[i].on_disk) {
-            UNLOCK_LOOKUP("lookup_remove_name")
+            UNLOCK_LOOKUP("lookup_remove_name");
             return 1;
         }
     }
@@ -286,11 +290,11 @@ Int lookup_remove_name(Ident name)
     /* Remove the key from the database. */
     key = name_key(name);
     if (dbm_delete(dbp, key)) {
-        UNLOCK_LOOKUP("lookup_remove_name")
+        UNLOCK_LOOKUP("lookup_remove_name");
         return 0;
     }
 
-    UNLOCK_LOOKUP("lookup_remove_name")
+    UNLOCK_LOOKUP("lookup_remove_name");
     return 1;
 }
 

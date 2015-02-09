@@ -42,13 +42,13 @@ COLDC_FUNC(substr) {
 
     /* Make sure range is in bounds. */
     if (start < 0)
-        THROW((range_id, "Start (%d) is less than one.", start + 1))
+        THROW((range_id, "Start (%d) is less than one.", start + 1));
     else if (len < 0)
-        THROW((range_id, "Length (%d) is less than zero.", len))
+        THROW((range_id, "Length (%d) is less than zero.", len));
     else if (start + len > string_len)
         THROW((range_id,
               "The substring extends to %d, past the end of the string (%d).",
-              start + len, string_len))
+              start + len, string_len));
 
     /* Replace first argument with substring, and pop other arguments. */
     anticipate_assignment();
@@ -183,7 +183,7 @@ COLDC_FUNC(match_begin) {
       sep = string_chars(args[2].u.str);
       sep_len = string_length(args[2].u.str);
       if (!sep_len)
-          THROW((range_id, "Zero length separator."))
+          THROW((range_id, "Zero length separator."));
     } else {
       sep = " ";
       sep_len = 1;
@@ -329,21 +329,21 @@ COLDC_FUNC(strsed) {
 
     switch (argc) {
         case 5: if (args[4].type != INTEGER)
-                    THROW_TYPE_ERROR(INTEGER, "fifth", 4)
+                    THROW_TYPE_ERROR(INTEGER, "fifth", 4);
                 mult = args[4].u.val;
                 if (mult < 0)
                     mult = 2;
                 if (mult > 10)
-                    THROW((perm_id, "You can only specify a size multiplier of 1-10, sorry!"))
+                    THROW((perm_id, "You can only specify a size multiplier of 1-10, sorry!"));
         case 4: if (args[3].type != STRING)
-                    THROW_TYPE_ERROR(STRING, "fourth", 3)
+                    THROW_TYPE_ERROR(STRING, "fourth", 3);
                 flags = parse_regfunc_args(string_chars(STR4), flags);
         case 3: if (args[0].type != STRING)
-                    THROW_TYPE_ERROR(STRING, "first", 0)
+                    THROW_TYPE_ERROR(STRING, "first", 0);
                 else if (args[1].type != STRING)
-                    THROW_TYPE_ERROR(STRING, "second", 1)
+                    THROW_TYPE_ERROR(STRING, "second", 1);
                 else if (args[2].type != STRING)
-                    THROW_TYPE_ERROR(STRING, "third", 2)
+                    THROW_TYPE_ERROR(STRING, "third", 2);
                 break;
         default:
                 func_num_error(argc, "three to five");
@@ -480,10 +480,10 @@ COLDC_FUNC(strfmt) {
     argc = stack_pos - arg_start;
 
     if (!argc)
-        THROW((numargs_id, "Called with no arguments, requires at least one."))
+        THROW((numargs_id, "Called with no arguments, requires at least one."));
 
     if (stack[arg_start].type != STRING)
-        THROW((type_id, "First argument (%D) not a string.", &stack[arg_start]))
+        THROW((type_id, "First argument (%D) not a string.", &stack[arg_start]));
 
     /* leave the format on the stack, it is all they sent */
     if (argc == 1)
@@ -529,7 +529,7 @@ COLDC_FUNC(stridx) {
         origin = 1;
 
     if (!string_length(STR2))
-        THROW((type_id, "No search string."))
+        THROW((type_id, "No search string."));
 
     if (!string_length(STR1)) {
         pop(argc);
@@ -538,7 +538,7 @@ COLDC_FUNC(stridx) {
     }
 
     if ((r = string_index(STR1, STR2, origin)) == F_FAILURE)
-        THROW((range_id, "Origin is beyond the range of the string."))
+        THROW((range_id, "Origin is beyond the range of the string."));
 
     pop(argc);
     push_int(r);

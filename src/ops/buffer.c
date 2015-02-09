@@ -20,7 +20,7 @@ COLDC_FUNC(bufgraft) {
 
     if (pos > buffer_len(b1) || pos < 0)
         THROW((range_id, "Position %D is outside of the range of the buffer.",
-               &args[1]))
+               &args[1]));
 
     b1  = buffer_dup(b1);
     b2  = buffer_dup(b2);
@@ -68,10 +68,10 @@ COLDC_FUNC(buf_replace) {
 
     pos = _INT(ARG2) - 1;
     if (pos < 0)
-        THROW((range_id, "Position (%d) is less than one.", pos + 1))
+        THROW((range_id, "Position (%d) is less than one.", pos + 1));
     else if (pos >= buffer_len(_BUF(ARG1)))
         THROW((range_id, "Position (%d) is greater than buffer length (%d).",
-              pos + 1, buffer_len(_BUF(ARG1))))
+              pos + 1, buffer_len(_BUF(ARG1))));
 
     _BUF(ARG1) = buffer_replace(_BUF(ARG1), pos, _INT(ARG3));
 
@@ -90,13 +90,13 @@ COLDC_FUNC(subbuf) {
     len = (nargs == 3) ? args[2].u.val : blen - start;
 
     if (start < 0)
-        THROW((range_id, "Start (%d) is less than one.", start + 1))
+        THROW((range_id, "Start (%d) is less than one.", start + 1));
     else if (len < 0)
-        THROW((range_id, "Length (%d) is less than zero.", len))
+        THROW((range_id, "Length (%d) is less than zero.", len));
     else if (start + len > blen)
         THROW((range_id,
               "The subrange extends to %d, past the end of the buffer (%d).",
-              start + len, blen))
+              start + len, blen));
 
     anticipate_assignment();
     args[0].u.buffer = buffer_subrange(args[0].u.buffer, start, len);
@@ -115,7 +115,7 @@ COLDC_FUNC(bufsub) {
     new = buffer_dup(BUF3);
 
     if (old->len == 0)
-            THROW((type_id, "Can't replace empty buffer"))
+            THROW((type_id, "Can't replace empty buffer"));
 
     anticipate_assignment();
     buf = buffer_bufsub(buf, old, new);
@@ -183,7 +183,7 @@ COLDC_FUNC(strings_to_buf) {
 
     for (d = list_first(list), i=0; d; d = list_next(list, d),i++) {
         if (d->type != STRING)
-            THROW((type_id, "List element %d (%D) not a string.", i + 1, d))
+            THROW((type_id, "List element %d (%D) not a string.", i + 1, d));
     }
 
     buf = buffer_from_strings(list, sep);
@@ -215,7 +215,7 @@ COLDC_FUNC(bufidx) {
         cp = BUF2->s;
         clen = BUF2->len;
     } else
-        THROW((type_id, "Second argument must be a buffer or integer."))
+        THROW((type_id, "Second argument must be a buffer or integer."));
 
     if (!buffer_len(BUF1)) {
         pop(argc);
@@ -224,7 +224,7 @@ COLDC_FUNC(bufidx) {
     }
 
     if ((r = buffer_index(BUF1, cp, clen, origin)) == F_FAILURE)
-        THROW((range_id, "Origin is beyond the range of the buffer."))
+        THROW((range_id, "Origin is beyond the range of the buffer."));
 
     pop(argc);
     push_int(r);

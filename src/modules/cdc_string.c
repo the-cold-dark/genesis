@@ -14,7 +14,7 @@
 
 NATIVE_METHOD(strlen) {
     Int len;
-    INIT_1_ARG(STRING)
+    INIT_1_ARG(STRING);
 
     len = string_length(STR1);
     CLEAN_RETURN_INTEGER(len);
@@ -26,7 +26,7 @@ NATIVE_METHOD(substr) {
                slen;
     cStr * str;
 
-    INIT_2_OR_3_ARGS(STRING, INTEGER, INTEGER)
+    INIT_2_OR_3_ARGS(STRING, INTEGER, INTEGER);
 
     slen = string_length(STR1);
     start = INT2 - 1;
@@ -34,13 +34,13 @@ NATIVE_METHOD(substr) {
 
     /* Make sure range is in bounds. */
     if (start < 0)
-        THROW((range_id, "Start (%d) is less than one.", start + 1))
+        THROW((range_id, "Start (%d) is less than one.", start + 1));
     else if (len < 0)
-        THROW((range_id, "Length (%d) is less than zero.", len))
+        THROW((range_id, "Length (%d) is less than zero.", len));
     else if (start + len > slen)
         THROW((range_id,
               "The substring extends to %d, past the end of the string (%d).",
-              start + len, slen))
+              start + len, slen));
 
     str = string_dup(STR1);
 
@@ -59,16 +59,16 @@ NATIVE_METHOD(explode) {
 
     switch(ARG_COUNT) {
         case 3:  want_blanks = (Bool) data_true(&args[2]);
-        case 2:  INIT_ARG2(STRING)
+        case 2:  INIT_ARG2(STRING);
                  sep = string_chars(STR2);
                  sep_len = string_length(STR2);
-        case 1:  INIT_ARG1(STRING)
+        case 1:  INIT_ARG1(STRING);
                  break;
-        default: THROW_NUM_ERROR(ARG_COUNT, "one to three")
+        default: THROW_NUM_ERROR(ARG_COUNT, "one to three");
     }
 
     if (!*sep)
-      THROW((range_id, "Null string as separator."))
+      THROW((range_id, "Null string as separator."));
 
     exploded = strexplode(STR1, sep, sep_len, want_blanks);
 
@@ -101,14 +101,14 @@ NATIVE_METHOD(pad) {
     DEF_args;
 
     switch (ARG_COUNT) {
-        case 3:    INIT_ARG3(STRING)
+        case 3:    INIT_ARG3(STRING);
                    sfill = string_dup(STR3);
                    filler = string_chars(sfill);
                    filler_len = string_length(sfill);
-        case 2:    INIT_ARG2(INTEGER)
-                   INIT_ARG1(STRING)
+        case 2:    INIT_ARG2(INTEGER);
+                   INIT_ARG1(STRING);
                    break;
-        default:   THROW_NUM_ERROR(ARG_COUNT, "two or three")
+        default:   THROW_NUM_ERROR(ARG_COUNT, "two or three");
     }
 
     str = string_dup(STR1);
@@ -153,15 +153,15 @@ NATIVE_METHOD(match_begin) {
     DEF_args;
 
     switch (ARG_COUNT) {
-        case 3:    INIT_ARG3(STRING)
+        case 3:    INIT_ARG3(STRING);
                    sep     = string_chars(STR3);
                    sep_len = string_length(STR3);
                    if (!sep_len)
-                       THROW((range_id, "Zero length separator."))
-        case 2:    INIT_ARG2(STRING)
-                   INIT_ARG1(STRING)
+                       THROW((range_id, "Zero length separator."));
+        case 2:    INIT_ARG2(STRING);
+                   INIT_ARG1(STRING);
                    break;
-        default:   THROW_NUM_ERROR(ARG_COUNT, "two or three")
+        default:   THROW_NUM_ERROR(ARG_COUNT, "two or three");
     }
 
     s = string_chars(STR1);
@@ -203,7 +203,7 @@ NATIVE_METHOD(match_pattern) {
     char   * pattern,
            * str;
 
-    INIT_2_ARGS(STRING, STRING)
+    INIT_2_ARGS(STRING, STRING);
 
     str = string_chars(STR1);
     pattern = string_chars(STR2);
@@ -222,10 +222,10 @@ NATIVE_METHOD(match_regexp) {
 
     switch (ARG_COUNT) {
         case 3:  sensitive = (Bool) data_true(&args[2]);
-        case 2:  INIT_ARG2(STRING)
-                 INIT_ARG1(STRING)
+        case 2:  INIT_ARG2(STRING);
+                 INIT_ARG1(STRING);
                  break;
-        default: THROW_NUM_ERROR(ARG_COUNT, "two or three")
+        default: THROW_NUM_ERROR(ARG_COUNT, "two or three");
     }
 
     fields = match_regexp(STR2, string_chars(STR1), sensitive, &error);
@@ -246,10 +246,10 @@ NATIVE_METHOD(regexp) {
 
     switch (ARG_COUNT) {
         case 3:  sensitive = (Bool) data_true(&args[2]);
-        case 2:  INIT_ARG2(STRING)
-                 INIT_ARG1(STRING)
+        case 2:  INIT_ARG2(STRING);
+                 INIT_ARG1(STRING);
                  break;
-        default: THROW_NUM_ERROR(ARG_COUNT, "two or three")
+        default: THROW_NUM_ERROR(ARG_COUNT, "two or three");
     }
 
     fields = regexp_matches(STR2, string_chars(STR1), sensitive, &error);
@@ -270,19 +270,19 @@ NATIVE_METHOD(strsed) {
     DEF_args;
 
     switch (ARG_COUNT) {
-        case 5:  CHECK_TYPE(4, INTEGER, "fifth")
+        case 5:  CHECK_TYPE(4, INTEGER, "fifth");
                  mult = INT5;
                  if (mult < 0)
                      mult = 2;
                 if (mult > 10)
-                    THROW((perm_id, "You can only specify a size multiplier of 1-10, sorry!"))
-        case 4:  INIT_ARG4(STRING)
+                    THROW((perm_id, "You can only specify a size multiplier of 1-10, sorry!"));
+        case 4:  INIT_ARG4(STRING);
                  flags = parse_regfunc_args(string_chars(STR4), flags);
         case 3:  INIT_ARG3(STRING);
                  INIT_ARG2(STRING);
                  INIT_ARG1(STRING);
                  break;
-        default: THROW_NUM_ERROR(ARG_COUNT, "three to five")
+        default: THROW_NUM_ERROR(ARG_COUNT, "three to five");
     }
 
     if (!(out = strsed(STR2, STR1, STR3, flags, mult)))
@@ -295,7 +295,7 @@ NATIVE_METHOD(strsed) {
 NATIVE_METHOD(crypt) {
     cStr * str;
 
-    INIT_1_OR_2_ARGS(STRING, STRING)
+    INIT_1_OR_2_ARGS(STRING, STRING);
 
     str = strcrypt(STR1, ((argc == 2) ? (STR2) : ((cStr *) NULL)));
 
@@ -305,7 +305,7 @@ NATIVE_METHOD(crypt) {
 NATIVE_METHOD(uppercase) {
     cStr * str;
 
-    INIT_1_ARG(STRING)
+    INIT_1_ARG(STRING);
 
     str = string_dup(STR1);
 
@@ -318,7 +318,7 @@ NATIVE_METHOD(uppercase) {
 NATIVE_METHOD(lowercase) {
     cStr * str;
 
-    INIT_1_ARG(STRING)
+    INIT_1_ARG(STRING);
 
     str = string_dup(STR1);
 
@@ -349,7 +349,7 @@ NATIVE_METHOD(capitalize) {
 NATIVE_METHOD(strcmp) {
     Int lex;
 
-    INIT_2_ARGS(STRING, STRING)
+    INIT_2_ARGS(STRING, STRING);
 
     lex = strcmp(string_chars(STR1), string_chars(STR2));
 
@@ -363,10 +363,10 @@ NATIVE_METHOD(strfmt) {
     DEF_args;
 
     if (!argc)
-        THROW((numargs_id, "Called with no arguments, requires at least one."))
+        THROW((numargs_id, "Called with no arguments, requires at least one."));
 
     if (stack[arg_start].type != STRING)
-        THROW((type_id, "First argument (%D) not a string.", &stack[arg_start]))
+        THROW((type_id, "First argument (%D) not a string.", &stack[arg_start]));
 
     fmt = stack[arg_start].u.str;
     args = &stack[arg_start + 1];
@@ -459,7 +459,7 @@ NATIVE_METHOD(word) {
     want_word = INT2;
 
     if (want_word < 1)
-        THROW((type_id, "You cannot index a negative amount."))
+        THROW((type_id, "You cannot index a negative amount."));
 
     s = p = string_chars(STR1);
     word = 0;
@@ -478,7 +478,7 @@ NATIVE_METHOD(word) {
         if (word+1 == want_word)
             sword = string_from_chars(p, string_length(STR1) - (p - s));
         else
-            THROW((type_id,"There are not %d words in this string.", want_word))
+            THROW((type_id,"There are not %d words in this string.", want_word));
     }
 
     CLEAN_RETURN_STRING(sword);
@@ -520,7 +520,7 @@ NATIVE_METHOD(dbquote_explode) {
 
     if (argc == 2) {
        if (string_length(STR2) > 1)
-           THROW((type_id, "The second argument must be a single character."))
+           THROW((type_id, "The second argument must be a single character."));
        quote = string_chars(STR2)[0];
     }
     s = sorig = string_chars(STR1);

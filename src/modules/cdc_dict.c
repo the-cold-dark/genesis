@@ -143,7 +143,7 @@ NATIVE_METHOD(dict_del_elem) {
     INIT_ARG1(DICT);
 
     if (dict_find(DICT1, &args[1], &dlist) == keynf_id)
-        THROW((keynf_id, "Key (%D) is not in the dictionary.", &args[1]))
+        THROW((keynf_id, "Key (%D) is not in the dictionary.", &args[1]));
     else if (dlist.type != LIST) {
         cthrow(type_id, "Value for %D (%D) is not a list.", &args[0], &dlist);
         data_discard(&dlist);
@@ -205,7 +205,7 @@ NATIVE_METHOD(dict_del_elem) {
 NATIVE_METHOD(dict_union) {
     cDict * dict1, * dict2;
 
-    INIT_2_ARGS(DICT, DICT)
+    INIT_2_ARGS(DICT, DICT);
 
     dict1 = dict_dup(DICT1);
     dict2 = dict_dup(DICT2);

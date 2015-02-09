@@ -19,18 +19,22 @@
 pthread_mutex_t lookup_mutex;
 
 #ifdef DEBUG_LOOKUP_LOCK
-#define LOCK_LOOKUP(func) \
+#define LOCK_LOOKUP(func) do { \
         write_err("%s: locking db", func); \
         pthread_mutex_lock(&lookup_mutex); \
-        write_err("%s: locked db", func);
-#define UNLOCK_LOOKUP(func) \
+        write_err("%s: locked db", func); \
+    } while(0)
+#define UNLOCK_LOOKUP(func) do { \
         pthread_mutex_unlock(&lookup_mutex); \
-        write_err("%s: unlocked db", func);
+        write_err("%s: unlocked db", func); \
+    } while(0)
 #else
-#define LOCK_LOOKUP(func) \
-        pthread_mutex_lock(&lookup_mutex);
-#define UNLOCK_LOOKUP(func) \
-        pthread_mutex_unlock(&lookup_mutex);
+#define LOCK_LOOKUP(func) do { \
+        pthread_mutex_lock(&lookup_mutex); \
+    } while(0)
+#define UNLOCK_LOOKUP(func) do { \
+        pthread_mutex_unlock(&lookup_mutex); \
+    } while(0)
 #endif
 #else
 #define LOCK_LOOKUP(func)
@@ -192,13 +196,13 @@ void lookup_sync(void) {
 
     sprintf(buf, "%s/index", c_dir_binary);
 
-    LOCK_LOOKUP("lookup_sync")
+    LOCK_LOOKUP("lookup_sync");
 
     sync_name_cache();
     ret1 = objnum_dbp->sync(objnum_dbp, 0);
     ret2 = name_dbp->sync(name_dbp, 0);
 
-    UNLOCK_LOOKUP("lookup_sync")
+    UNLOCK_LOOKUP("lookup_sync");
 
     if ((ret1 != 0) || (ret2 != 0))
         panic("Cannot sync index database file.");
@@ -209,19 +213,19 @@ Int lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size)
     DBT key, value;
     int ret;
 
-    LOCK_LOOKUP("lookup_retrieve_objnum")
+    LOCK_LOOKUP("lookup_retrieve_objnum");
 
     /* Get the value for objnum from the database. */
     objnum_keyvalue(&objnum, &key);
     memset(&value, 0, sizeof(value));
     if ((ret = objnum_dbp->get(objnum_dbp, NULL, &key, &value, 0)) != 0)
     {
-        UNLOCK_LOOKUP("lookup_retrieve_objnum")
+        UNLOCK_LOOKUP("lookup_retrieve_objnum");
         return 0;
     }
 
     parse_offset_size_value(&value, offset, size);
-    UNLOCK_LOOKUP("lookup_retrieve_objnum")
+    UNLOCK_LOOKUP("lookup_retrieve_objnum");
     return 1;
 }
 
@@ -231,17 +235,17 @@ Int lookup_store_objnum(cObjnum objnum, off_t offset, Int size)
     _offset_size os;
     int ret;
 
-    LOCK_LOOKUP("lookup_store_objnum")
+    LOCK_LOOKUP("lookup_store_objnum");
     objnum_keyvalue(&objnum, &key);
     offset_size_value(offset, size, &os, &value);
     if ((ret =  objnum_dbp->put(objnum_dbp, NULL, &key, &value, 0)) != 0) {
         write_err("ERROR: Failed to store key %l.", objnum);
         objnum_dbp->err(objnum_dbp, ret, "lookup_store_objnum");
-        UNLOCK_LOOKUP("lookup_store_objnum")
+        UNLOCK_LOOKUP("lookup_store_objnum");
         return 0;
     }
 
-    UNLOCK_LOOKUP("lookup_store_objnum")
+    UNLOCK_LOOKUP("lookup_store_objnum");
     return 1;
 }
 
@@ -250,15 +254,15 @@ Int lookup_remove_objnum(cObjnum objnum)
     DBT key;
     int ret;
 
-    LOCK_LOOKUP("lookup_remove_objnum")
+    LOCK_LOOKUP("lookup_remove_objnum");
     /* Remove the key from the database. */
     objnum_keyvalue(&objnum, &key);
     if ((ret = objnum_dbp->del(objnum_dbp, NULL, &key, 0)) != 0) {
         write_err("ERROR: Failed to delete key %l.", objnum);
-        UNLOCK_LOOKUP("lookup_remove_objnum")
+        UNLOCK_LOOKUP("lookup_remove_objnum");
         return 0;
     }
-    UNLOCK_LOOKUP("lookup_remove_objnum")
+    UNLOCK_LOOKUP("lookup_remove_objnum");
     return 1;
 }
 
@@ -300,12 +304,12 @@ Int lookup_retrieve_name(Ident name, cObjnum *objnum)
 {
     Int i = name % NAME_CACHE_SIZE;
 
-    LOCK_LOOKUP("lookup_retrieve_name")
+    LOCK_LOOKUP("lookup_retrieve_name");
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
         name_cache_hits++;
         *objnum = name_cache[i].objnum;
-        UNLOCK_LOOKUP("lookup_retrieve_name")
+        UNLOCK_LOOKUP("lookup_retrieve_name");
         return 1;
     }
 
@@ -313,7 +317,7 @@ Int lookup_retrieve_name(Ident name, cObjnum *objnum)
 
     /* Get it from the database. */
     if (!get_name(name, objnum)) {
-        UNLOCK_LOOKUP("lookup_retrieve_name")
+        UNLOCK_LOOKUP("lookup_retrieve_name");
         return 0;
     }
 
@@ -330,7 +334,7 @@ Int lookup_retrieve_name(Ident name, cObjnum *objnum)
     name_cache[i].dirty = 0;
     name_cache[i].on_disk = 1;
 
-    UNLOCK_LOOKUP("lookup_retrieve_name")
+    UNLOCK_LOOKUP("lookup_retrieve_name");
     return 1;
 }
 
@@ -338,7 +342,7 @@ Int lookup_store_name(Ident name, cObjnum objnum)
 {
     Int i = name % NAME_CACHE_SIZE;
 
-    LOCK_LOOKUP("lookup_store_name")
+    LOCK_LOOKUP("lookup_store_name");
 
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
@@ -346,7 +350,7 @@ Int lookup_store_name(Ident name, cObjnum objnum)
             name_cache[i].objnum = objnum;
             name_cache[i].dirty = 1;
         }
-        UNLOCK_LOOKUP("lookup_store_name")
+        UNLOCK_LOOKUP("lookup_store_name");
         return 1;
     }
 
@@ -363,7 +367,7 @@ Int lookup_store_name(Ident name, cObjnum objnum)
     name_cache[i].dirty = 1;
     name_cache[i].on_disk = 0;
 
-    UNLOCK_LOOKUP("lookup_store_name")
+    UNLOCK_LOOKUP("lookup_store_name");
     return 1;
 }
 
@@ -373,7 +377,7 @@ Int lookup_remove_name(Ident name)
     Int i = name % NAME_CACHE_SIZE;
     int ret;
 
-    LOCK_LOOKUP("lookup_remove_name")
+    LOCK_LOOKUP("lookup_remove_name");
     /* See if it's in the cache. */
     if (name_cache[i].name == name) {
         /* Delete it from the cache.  If it's not on disk, then we're done. */
@@ -381,7 +385,7 @@ Int lookup_remove_name(Ident name)
         ident_discard(name_cache[i].name);
         name_cache[i].name = NOT_AN_IDENT;
         if (!name_cache[i].on_disk) {
-            UNLOCK_LOOKUP("lookup_remove_name")
+            UNLOCK_LOOKUP("lookup_remove_name");
             return 1;
         }
     }
@@ -389,11 +393,11 @@ Int lookup_remove_name(Ident name)
     /* Remove the key from the database. */
     name_key(name, &key);
     if ((ret = name_dbp->del(name_dbp, NULL, &key, 0)) != 0) {
-        UNLOCK_LOOKUP("lookup_remove_name")
+        UNLOCK_LOOKUP("lookup_remove_name");
         return 0;
     }
 
-    UNLOCK_LOOKUP("lookup_remove_name")
+    UNLOCK_LOOKUP("lookup_remove_name");
     return 1;
 }
 

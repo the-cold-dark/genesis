@@ -33,7 +33,7 @@ NATIVE_METHOD(strftime) {
     if (argc == 2) {
         if (INT2 < 18000) {
             THROW((type_id,
-         "Borland's time util is broken, and requires time values above 18000"))
+                  "Borland's time util is broken, and requires time values above 18000"));
         }
         tt = (time_t) INT2;
     } else {
@@ -52,7 +52,7 @@ NATIVE_METHOD(strftime) {
         fmt[strlen(fmt)] = '\0';
 
     if (strftime(s, LINE, fmt, t) == (size_t) 0)
-       THROW((range_id,"Format results in a string longer than 80 characters."))
+       THROW((range_id, "Format results in a string longer than 80 characters."));
 
     CLEAN_RETURN_STRING(string_from_chars(s, strlen(s)));
 }
@@ -156,11 +156,11 @@ NATIVE_METHOD(hostname) {
     } else {
         switch (lookup_name_by_ip(string_chars(STR1), buf)) {
             case DNS_INVADDR:
-                THROW((address_id, "Invalid IP Address: %S", STR1))
+                THROW((address_id, "Invalid IP Address: %S", STR1));
             case DNS_NORESOLV:
-                THROW((failed_id, "No name for IP Address %S", STR1))
+                THROW((failed_id, "No name for IP Address %S", STR1));
             case DNS_OVERFLOW:
-                THROW((range_id, "DNS Response overflows DNS_MAXLEN!"))
+                THROW((range_id, "DNS Response overflows DNS_MAXLEN!"));
         }
         name = string_from_chars(buf, strlen(buf));
     }
@@ -185,9 +185,9 @@ NATIVE_METHOD(ip) {
 
     switch (lookup_ip_by_name(p, buf)) {
         case DNS_NORESOLV:
-            THROW((failed_id, "Address %s does not resolv", p))
+            THROW((failed_id, "Address %s does not resolv", p));
         case DNS_OVERFLOW:
-            THROW((range_id, "DNS Response overflows DNS_MAXLEN!"))
+            THROW((range_id, "DNS Response overflows DNS_MAXLEN!"));
     }
     sip = string_from_chars(buf, strlen(buf));
 

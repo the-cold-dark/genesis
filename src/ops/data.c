@@ -191,7 +191,7 @@ COLDC_FUNC(fromliteral) {
     data_from_literal(&d, string_chars(STR1));
 
     if (d.type == -1)
-        THROW((type_id, "Unable to parse data \"%s\"", string_chars(STR1)))
+        THROW((type_id, "Unable to parse data \"%s\"", string_chars(STR1)));
 
     string_discard(STR1);
     args[0] = d;
@@ -214,13 +214,13 @@ COLDC_FUNC(tosym) {
 
     /* no NULL symbols */
     if (string_length(STR1) < 1)
-        THROW((symbol_id, "Symbols must be one or more characters."))
+        THROW((symbol_id, "Symbols must be one or more characters."));
 
     /* this is wrong, we should check this everywhere, not just here,
        but at the moment everywhere assumes 'ident_get' returns a valid
        ident irregardless */
     if (!string_is_valid_ident(STR1))
-        THROW((symbol_id, "Symbol contains non-alphanumeric characters."))
+        THROW((symbol_id, "Symbol contains non-alphanumeric characters."));
 
     sym = ident_get_string(STR1);
 

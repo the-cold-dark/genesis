@@ -39,20 +39,20 @@
 // -----------------------------------------------------------------------
 */
 
-#define THROW_NUM_ERROR(_num_, _str_) { \
+#define THROW_NUM_ERROR(_num_, _str_) do { \
         func_num_error(_num_, _str_); \
         RETURN_FALSE; \
-    }
+    } while(0)
 
-#define THROW_TYPE_ERROR(_type_, _name_, _pos_) { \
+#define THROW_TYPE_ERROR(_type_, _name_, _pos_) do { \
         func_type_error(_name_, &stack[arg_start+_pos_],english_type(_type_)); \
         RETURN_FALSE; \
-    }
+    } while(0)
 
-#define THROW(_args_) { \
+#define THROW(_args_) do { \
         cthrow _args_ ; \
         RETURN_FALSE; \
-    }
+    } while(0)
 
 #ifdef NATIVE_MODULE
 #define CHECK_BINDING
@@ -75,17 +75,20 @@
 #define DEF_args     cData * args = &stack[arg_start]
 
 /* this macro is mainly handy when you want to parse the args yourself */
-#define INIT_ARGC(_argc_, _expected_, _str_) \
+#define INIT_ARGC(_argc_, _expected_, _str_) do {\
         if (_argc_ != _expected_) \
-            THROW_NUM_ERROR(_argc_, _str_)
+            THROW_NUM_ERROR(_argc_, _str_); \
+    } while (0)
 
-#define CHECK_TYPE(_pos_, _type_, _str_) \
+#define CHECK_TYPE(_pos_, _type_, _str_) do {\
         if (args[_pos_].type != _type_) \
-            THROW_TYPE_ERROR(_type_, _str_, _pos_)
+            THROW_TYPE_ERROR(_type_, _str_, _pos_); \
+    } while (0)
 
-#define CHECK_OPT_TYPE(_pos_, _type_, _str_) \
+#define CHECK_OPT_TYPE(_pos_, _type_, _str_) do {\
         if (argc > _pos_ && args[_pos_].type != _type_) \
-            THROW_TYPE_ERROR(_type_, _str_, _pos_)
+            THROW_TYPE_ERROR(_type_, _str_, _pos_); \
+    } while (0)
 
 /* arg specific tests */
 #define INIT_ARG1(_type_)      CHECK_TYPE(0, _type_, "first")
@@ -104,7 +107,7 @@
 #define INIT_1_ARG(_type_) \
         DEF_args; \
         CHECK_BINDING \
-        INIT_ARGC(ARG_COUNT, 1, "one") \
+        INIT_ARGC(ARG_COUNT, 1, "one"); \
         INIT_ARG1(_type_) \
 
 #define INIT_0_OR_1_ARGS(_type_) \
@@ -117,8 +120,8 @@
 #define INIT_2_ARGS(_type1_, _type2_) \
         DEF_args; \
         CHECK_BINDING \
-        INIT_ARGC(ARG_COUNT, 2, "two") \
-        INIT_ARG1(_type1_) \
+        INIT_ARGC(ARG_COUNT, 2, "two"); \
+        INIT_ARG1(_type1_); \
         INIT_ARG2(_type2_)
 
 #define INIT_1_OR_2_ARGS(_type1_, _type2_) \
@@ -126,10 +129,10 @@
         DEF_argc; \
         CHECK_BINDING \
         switch (argc) { \
-            case 2:   INIT_ARG2(_type2_) \
-            case 1:   INIT_ARG1(_type1_) \
+            case 2:   INIT_ARG2(_type2_); \
+            case 1:   INIT_ARG1(_type1_); \
                       break; \
-            default:  THROW_NUM_ERROR(argc, "one or two") \
+            default:  THROW_NUM_ERROR(argc, "one or two"); \
         }
 
 #define INIT_2_OR_3_ARGS(_type1_, _type2_, _type3_) \
@@ -137,19 +140,19 @@
         DEF_argc; \
         CHECK_BINDING \
         switch (argc) { \
-            case 3:    INIT_ARG3(_type3_) \
-            case 2:    INIT_ARG2(_type2_) \
-                       INIT_ARG1(_type1_) \
+            case 3:    INIT_ARG3(_type3_); \
+            case 2:    INIT_ARG2(_type2_); \
+                       INIT_ARG1(_type1_); \
                        break; \
-            default:   THROW_NUM_ERROR(argc, "two or three") \
+            default:   THROW_NUM_ERROR(argc, "two or three"); \
         }
 
 #define INIT_3_ARGS(_type1_, _type2_, _type3_) \
         DEF_args; \
         CHECK_BINDING \
-        INIT_ARGC(ARG_COUNT, 3, "three") \
-        INIT_ARG1(_type1_) \
-        INIT_ARG2(_type2_) \
+        INIT_ARGC(ARG_COUNT, 3, "three"); \
+        INIT_ARG1(_type1_); \
+        INIT_ARG2(_type2_); \
         INIT_ARG3(_type3_)
 
 #define INIT_3_OR_4_ARGS(_type1_, _type2_, _type3_, _type4_) \
@@ -157,12 +160,12 @@
         DEF_argc; \
         CHECK_BINDING \
         switch (argc) { \
-            case 4:    INIT_ARG4(_type4_) \
-            case 3:    INIT_ARG3(_type3_) \
-                       INIT_ARG2(_type2_) \
-                       INIT_ARG1(_type1_) \
+            case 4:    INIT_ARG4(_type4_); \
+            case 3:    INIT_ARG3(_type3_); \
+                       INIT_ARG2(_type2_); \
+                       INIT_ARG1(_type1_); \
                        break; \
-            default:   THROW_NUM_ERROR(argc, "three or four") \
+            default:   THROW_NUM_ERROR(argc, "three or four"); \
         }
 
 #define INIT_1_TO_3_ARGS(_type1_, _type2_, _type3_) \
@@ -170,11 +173,11 @@
         DEF_argc; \
         CHECK_BINDING \
         switch (argc) { \
-            case 3:    INIT_ARG3(_type3_) \
-            case 2:    INIT_ARG2(_type2_) \
-            case 1:    INIT_ARG1(_type1_) \
+            case 3:    INIT_ARG3(_type3_); \
+            case 2:    INIT_ARG2(_type2_); \
+            case 1:    INIT_ARG1(_type1_); \
                        break; \
-            default:   THROW_NUM_ERROR(argc, "one to three") \
+            default:   THROW_NUM_ERROR(argc, "one to three"); \
         }
 #else
 /*

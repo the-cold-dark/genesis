@@ -25,10 +25,10 @@ NATIVE_METHOD(buf_replace) {
     pos = INT2 - 1;
 
     if (pos < 0)
-        THROW((range_id, "Position (%d) is less than one.", pos + 1))
+        THROW((range_id, "Position (%d) is less than one.", pos + 1));
     else if (pos >= buffer_len(BUF1))
         THROW((range_id, "Position (%d) is greater than buffer length (%d).",
-              pos + 1, buffer_len(BUF1)))
+              pos + 1, buffer_len(BUF1)));
 
     ch = INT3;
     buf = buffer_dup(BUF1);
@@ -52,13 +52,13 @@ NATIVE_METHOD(subbuf) {
     len = (argc == 3) ? INT3 : blen - start;
 
     if (start < 0)
-        THROW((range_id, "Start (%d) is less than one.", start + 1))
+        THROW((range_id, "Start (%d) is less than one.", start + 1));
     else if (len < 0)
-        THROW((range_id, "Length (%d) is less than zero.", len))
+        THROW((range_id, "Length (%d) is less than zero.", len));
     else if (start + len > blen)
         THROW((range_id,
               "The subrange extends to %d, past the end of the buffer (%d).",
-              start + len, blen))
+              start + len, blen));
 
     buf = buffer_dup(BUF1);
 
@@ -77,7 +77,7 @@ NATIVE_METHOD(bufsub) {
     new = buffer_dup(BUF3);
 
     if (old->len == 0)
-        THROW((type_id, ""))
+        THROW((type_id, ""));
 
     anticipate_assignment();
 
@@ -132,7 +132,7 @@ NATIVE_METHOD(strings_to_buf) {
 
     for (d = list_first(list), i=0; d; d = list_next(list, d),i++) {
         if (d->type != STRING)
-            THROW((type_id, "List element %d (%D) not a string.", i + 1, d))
+            THROW((type_id, "List element %d (%D) not a string.", i + 1, d));
     }
 
     buf = buffer_from_strings(list, sep);

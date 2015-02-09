@@ -42,13 +42,13 @@
 #include "util.h"      /* some file functions */
 #include "file.h"
 
-#define GET_FILE_CONTROLLER(__f) { \
+#define GET_FILE_CONTROLLER(__f) do { \
         __f = find_file_controller(cur_frame->object); \
         if (__f == NULL) { \
             cthrow(file_id, "No file is bound to this object."); \
             return; \
         } \
-    } \
+    } while(0)
 
 /*
 // -----------------------------------------------------------------
@@ -91,7 +91,7 @@ COLDC_FUNC(file) {
 
     INIT_NO_ARGS();
 
-    GET_FILE_CONTROLLER(file)
+    GET_FILE_CONTROLLER(file);
 
     info = list_new(5);
     list = list_empty_spaces(info, 5);
@@ -240,7 +240,7 @@ COLDC_FUNC(fchmod) {
 #endif
 
     if (argc == 1) {
-        GET_FILE_CONTROLLER(file)
+        GET_FILE_CONTROLLER(file);
         path = string_dup(file->path);
     } else {
         struct stat sbuf;
@@ -344,7 +344,7 @@ COLDC_FUNC(fremove) {
     string_discard(path);
 
     if (err != F_SUCCESS)
-        THROW((file_id, strerror(GETERR())))
+        THROW((file_id, strerror(GETERR())));
 
     pop(1);
     push_int(1);
@@ -359,12 +359,12 @@ COLDC_FUNC(fseek) {
 
     INIT_2_ARGS(INTEGER, SYMBOL);
 
-    GET_FILE_CONTROLLER(file)
+    GET_FILE_CONTROLLER(file);
 
     if (!file->f.readable || !file->f.writable)
         THROW((file_id,
                "File \"%s\" is not both readable and writable.",
-               file->path->s))
+               file->path->s));
 
     if (SYM2 == SEEK_SET_id)
         whence = SEEK_SET;
@@ -373,10 +373,10 @@ COLDC_FUNC(fseek) {
     else if (SYM2 == SEEK_END_id)
         whence = SEEK_END;
     else
-        THROW((type_id,"Whence is not one of 'SEEK_SET 'SEEK_CUR or 'SEEK_END"))
+        THROW((type_id,"Whence is not one of 'SEEK_SET 'SEEK_CUR or 'SEEK_END"));
 
     if (fseek(file->fp, (long) INT1, whence) != F_SUCCESS)
-        THROW((file_id, strerror(GETERR())))
+        THROW((file_id, strerror(GETERR())));
 
     pop(2);
     push_int(1);
@@ -395,7 +395,7 @@ COLDC_FUNC(frename) {
     INIT_2_ARGS(ANY_TYPE, STRING);
 
     if (args[0].type != STRING || !string_length(STR1)) {
-        GET_FILE_CONTROLLER(file)
+        GET_FILE_CONTROLLER(file);
         from = string_dup(file->path);
     } else if (!(from = build_path(args[0].u.str->s, &sbuf, ALLOW_DIR)))
         return;
@@ -434,7 +434,7 @@ COLDC_FUNC(fflush) {
 
     INIT_NO_ARGS();
 
-    GET_FILE_CONTROLLER(file)
+    GET_FILE_CONTROLLER(file);
 
     if (fflush(file->fp) == EOF) {
         cthrow(file_id, strerror(GETERR()));
@@ -468,7 +468,7 @@ COLDC_FUNC(fread) {
 
     INIT_0_OR_1_ARGS(INTEGER);
 
-    GET_FILE_CONTROLLER(file)
+    GET_FILE_CONTROLLER(file);
 
     if (!file->f.readable) {
         cthrow(file_id, "File is not readable.");
@@ -515,7 +515,7 @@ COLDC_FUNC(fwrite) {
 
     INIT_1_ARG(ANY_TYPE);
 
-    GET_FILE_CONTROLLER(file)
+    GET_FILE_CONTROLLER(file);
 
     if (!file->f.writable) {
         cthrow(perm_id, "File is not writable.");
@@ -563,7 +563,7 @@ COLDC_FUNC(fstat) {
     INIT_0_OR_1_ARGS(STRING);
 
     if (!argc) {
-        GET_FILE_CONTROLLER(file)
+        GET_FILE_CONTROLLER(file);
         stat_file(file, &sbuf);
     } else {
         cStr * path = build_path(STR1->s, &sbuf, ALLOW_DIR);

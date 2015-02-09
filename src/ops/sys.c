@@ -46,10 +46,10 @@ COLDC_FUNC(dblog) {
 #define MAXBSIZE 16384
 #endif
 
-#define x_THROW(_file_) { \
+#define x_THROW(_file_) do { \
         cthrow(file_id, "%s: %s", _file_, strerror(GETERR())); \
         return 0; \
-    }
+    } while(0)
 
 static Bool backup_file(char * file) {
     static char buf[MAXBSIZE];
@@ -66,7 +66,7 @@ static Bool backup_file(char * file) {
 
     from_fd = open(source, O_RDONLY | O_BINARY, 0);
     if (from_fd == F_FAILURE)
-        x_THROW(source)
+        x_THROW(source);
 
 #ifdef __MSVC__
     to_fd = open(dest, (O_WRONLY|O_TRUNC|O_CREAT|O_BINARY), (_S_IREAD|_S_IWRITE));
@@ -74,7 +74,7 @@ static Bool backup_file(char * file) {
     to_fd = open(dest, (O_WRONLY|O_TRUNC|O_CREAT|O_BINARY), (S_IRUSR|S_IWUSR));
 #endif
     if (to_fd == F_FAILURE)
-        x_THROW(dest)
+        x_THROW(dest);
 
     while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
         wcount = write(to_fd, buf, rcount);
@@ -126,7 +126,7 @@ COLDC_FUNC(backup) {
         return;
 
     if (dump_db_file)
-        THROW((perm_id, "A dump is already in progress!"))
+        THROW((perm_id, "A dump is already in progress!"));
 
     /* get binary.bak, make sure its ours */
     strcpy(buf, c_dir_binary);
@@ -137,16 +137,16 @@ COLDC_FUNC(backup) {
 #else
         if (mkdir(buf, READ_WRITE_EXECUTE) == F_FAILURE)
 #endif
-            THROW((file_id, "Cannot create directory \"%s\": %s", buf, strerror(GETERR())))
+            THROW((file_id, "Cannot create directory \"%s\": %s", buf, strerror(GETERR())));
     } else if (!S_ISDIR(statbuf.st_mode)) {
         if (unlink(buf) == F_FAILURE)
-            THROW((file_id, "Cannot delete file \"%s\": %s", buf, strerror(GETERR())))
+            THROW((file_id, "Cannot delete file \"%s\": %s", buf, strerror(GETERR())));
 #ifdef __MSVC__
         if (mkdir(buf) == F_FAILURE)
 #else
         if (mkdir(buf, READ_WRITE_EXECUTE) == F_FAILURE)
 #endif
-            THROW((file_id, "Cannot create directory \"%s\": %s", buf, strerror(GETERR())))
+            THROW((file_id, "Cannot create directory \"%s\": %s", buf, strerror(GETERR())));
     }
 
     /* sync the db */
@@ -181,7 +181,7 @@ COLDC_FUNC(backup) {
     /* start asynchronous backup of the object db file */
     strcat(buf, "/objects");
     if (simble_dump_start(buf))
-        THROW((file_id, "Unable to open dump db file \"%s\"", buf))
+        THROW((file_id, "Unable to open dump db file \"%s\"", buf));
 
 #ifdef USE_CLEANER_THREAD
     pthread_mutex_unlock(&cleaner_lock);
@@ -253,7 +253,7 @@ COLDC_FUNC(set_heartbeat) {
         if (SYM1 == id) { \
             if (argc == 2) { \
                 if (args[ARG2].type != INTEGER) \
-                    THROW((type_id, "Expected an integer")) \
+                    THROW((type_id, "Expected an integer")); \
                 var = INT2; \
             } \
             pop(argc); \
@@ -265,7 +265,7 @@ COLDC_FUNC(set_heartbeat) {
         if (SYM1 == id) { \
             if (argc == 2) { \
                 if (args[ARG2].type != INTEGER) \
-                    THROW((type_id, "Expected an integer")) \
+                    THROW((type_id, "Expected an integer")); \
                 var = INT2; \
                 pthread_cond_signal(&cleaner_condition); \
             } \
@@ -278,7 +278,7 @@ COLDC_FUNC(set_heartbeat) {
         if (SYM1 == id) { \
             if (argc == 2) { \
                 if (args[ARG2].type != OBJNUM) \
-                    THROW((type_id, "Expected an $object")) \
+                    THROW((type_id, "Expected an $object")); \
                 var = OBJNUM2; \
             } \
             pop(argc); \
@@ -290,7 +290,7 @@ COLDC_FUNC(set_heartbeat) {
         if (SYM1 == id) { \
             if (argc == 2) { \
                 if (args[ARG2].type != DICT) \
-                    THROW((type_id, "Expected a dict")) \
+                    THROW((type_id, "Expected a dict")); \
                 dict_discard(var); \
                 var = dict_dup(DICT2); \
             } \
@@ -325,7 +325,7 @@ COLDC_FUNC(config) {
 #ifdef USE_CACHE_HISTORY
     _CONFIG_INT(cache_history_size_id,         cache_history_size)
 #endif
-    THROW((type_id, "Invalid configuration name."))
+    THROW((type_id, "Invalid configuration name."));
 }
 
 COLDC_FUNC(cache_info) {
@@ -381,9 +381,9 @@ COLDC_FUNC(cache_stats) {
         val[1].type = INTEGER;
         val[1].u.val = name_cache_misses;
     } else if (SYM1 == object_cache_id) {
-        THROW((type_id, "Object cache stats not yet supported."))
+        THROW((type_id, "Object cache stats not yet supported."));
     } else {
-        THROW((type_id, "Invalid cache type."))
+        THROW((type_id, "Invalid cache type."));
     }
 
     pop(1);

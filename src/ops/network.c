@@ -33,7 +33,7 @@ COLDC_FUNC(reassign_connection) {
     if (c) {
         obj = cache_retrieve(args[0].u.objnum);
         if (!obj)
-            THROW((objnf_id, "Object #%l does not exist.", args[0].u.objnum))
+            THROW((objnf_id, "Object #%l does not exist.", args[0].u.objnum));
         else if (find_connection(obj)) {
             cthrow(perm_id, "Object %O already has a connection.", obj->objnum);
             cache_discard(obj);
@@ -71,24 +71,24 @@ COLDC_FUNC(bind_port) {
         pop(argc);
         push_int(1);
     } else if (server_failure_reason == address_id)
-        THROW((address_id, "Invalid bind address: %s", addr))
+        THROW((address_id, "Invalid bind address: %s", addr));
     else if (server_failure_reason == socket_id)
-        THROW((socket_id, "Couldn't create server socket."))
+        THROW((socket_id, "Couldn't create server socket."));
     else if (server_failure_reason == preaddr_id)
         THROW((preaddr_id,
-               "Couldn't bind to port %d: prebound address conflict", INT1))
+               "Couldn't bind to port %d: prebound address conflict", INT1));
     else if (server_failure_reason == pretype_id) {
         if (port > 0)
             THROW((pretype_id,
-               "Couldn't bind to TCP port %d: already prebound as UDP", INT1))
+               "Couldn't bind to TCP port %d: already prebound as UDP", INT1));
         else
             THROW((pretype_id,
-               "Couldn't bind to UDP port %d: already prebound as TCP", INT1))
+               "Couldn't bind to UDP port %d: already prebound as TCP", INT1));
     } else if (addr)
         THROW((server_failure_reason,
-               "Couldn't bind to port %d on address %s", INT1, addr))
+               "Couldn't bind to port %d on address %s", INT1, addr));
     else
-        THROW((server_failure_reason, "Couldn't bind to port %d.", INT1))
+        THROW((server_failure_reason, "Couldn't bind to port %d.", INT1));
 }
 
 /*
@@ -102,7 +102,7 @@ COLDC_FUNC(unbind_port) {
         return;
 
     if (!remove_server(args[0].u.val))
-        THROW((servnf_id, "No server socket on port %d.", args[0].u.val))
+        THROW((servnf_id, "No server socket on port %d.", args[0].u.val));
     else {
         pop(1);
         push_int(1);
@@ -129,9 +129,9 @@ COLDC_FUNC(open_connection) {
     else
         r = make_udp_connection(address, port, cur_frame->object->objnum);
     if (r == address_id)
-        THROW((address_id, "Invalid address"))
+        THROW((address_id, "Invalid address"));
     else if (r == socket_id)
-        THROW((socket_id, "Couldn't create socket for connection"))
+        THROW((socket_id, "Couldn't create socket for connection"));
     pop(argc);
     push_int(1);
 }
@@ -192,7 +192,7 @@ COLDC_FUNC(cwritef) {
     /* Open the file for reading. */
     fp = open_scratch_file(str->s, "rb");
     if (!fp)
-        THROW((file_id, "Cannot open file \"%s\" for reading.", str->s))
+        THROW((file_id, "Cannot open file \"%s\" for reading.", str->s));
 
     /* how big of a chunk do we read at a time? */
     if (nargs == 2) {
@@ -245,7 +245,7 @@ COLDC_FUNC(connection) {
 
     c = find_connection(cur_frame->object);
     if (!c)
-        THROW((net_id, "No connection established."))
+        THROW((net_id, "No connection established."));
 
     info = list_new(4);
     list = list_empty_spaces(info, 4);

@@ -18,10 +18,10 @@
 #include "cache.h"
 #include "util.h"
 
-#define THROWN(_args_) { \
+#define THROWN(_args_) do { \
         cthrow _args_ ; \
         return NULL; \
-    }
+    } while(0)
 
 /* it's safe to only initialize object_extra_file in file_new since
  * before then, no obj->extra's will contain a file, and a extra type
@@ -193,12 +193,12 @@ cStr * read_file(filec_t * file) {
     cStr * str;
 
     if (feof(file->fp))
-        THROWN((eof_id, "End of file."))
+        THROWN((eof_id, "End of file."));
 
     str = fgetstring(file->fp);
 
     if (!str)
-        THROWN((eof_id, "End of file."))
+        THROWN((eof_id, "End of file."));
 
     /* ok, munch meta-characters */
     p = s = string_chars(str);
@@ -254,11 +254,11 @@ cStr * build_path(char * fname, struct stat * sbuf, Int nodir) {
     cStr  * str = NULL;
 
     if (len == 0)
-        THROWN((file_id, "No file specified."))
+        THROWN((file_id, "No file specified."));
 
 #ifdef RESTRICTIVE_FILES
     if (strstr(fname, "../") || strstr(fname, "/..") || !strcmp(fname, ".."))
-        THROWN((perm_id, "Filename \"%s\" is not legal.", fname))
+        THROWN((perm_id, "Filename \"%s\" is not legal.", fname));
 
     str = string_from_chars(c_dir_root, strlen(c_dir_root));
     str = string_addc(str, '/');

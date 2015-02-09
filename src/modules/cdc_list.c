@@ -22,7 +22,7 @@ NATIVE_METHOD(sublist) {
              len;
     cList * list;
 
-    INIT_2_OR_3_ARGS(LIST, INTEGER, INTEGER)
+    INIT_2_OR_3_ARGS(LIST, INTEGER, INTEGER);
 
     len = list_length(LIST1);
     start = INT2 - 1;
@@ -30,12 +30,12 @@ NATIVE_METHOD(sublist) {
 
     /* Make sure range is in bounds. */
     if (start < 0)
-        THROW((range_id, "Start (%d) less than one", start + 1))
+        THROW((range_id, "Start (%d) less than one", start + 1));
     else if (span < 0)
-        THROW((range_id, "Sublist length (%d) less than zero", span))
+        THROW((range_id, "Sublist length (%d) less than zero", span));
     else if (start + span > len)
         THROW((range_id, "Sublist extends to %d, past end of list (length %d)",
-              start + span, len))
+              start + span, len));
 
     list = list_dup(LIST1);
 
@@ -55,17 +55,17 @@ NATIVE_METHOD(insert) {
     DEF_args;
 
     INIT_ARGC(ARG_COUNT, 3, "three");
-    INIT_ARG1(LIST)
-    INIT_ARG2(INTEGER)
+    INIT_ARG1(LIST);
+    INIT_ARG2(INTEGER);
 
     pos = INT2 - 1;
     len = list_length(LIST1);
 
     if (pos < 0)
-        THROW((range_id, "Position (%d) less than one", pos + 1))
+        THROW((range_id, "Position (%d) less than one", pos + 1));
     else if (pos > len)
         THROW((range_id, "Position (%d) beyond end of list (length %d)",
-              pos + 1, len))
+              pos + 1, len));
 
     data_dup(&data, &args[2]);
     list = list_dup(LIST1);
@@ -87,17 +87,17 @@ NATIVE_METHOD(replace) {
     DEF_args;
 
     INIT_ARGC(ARG_COUNT, 3, "three");
-    INIT_ARG1(LIST)
-    INIT_ARG2(INTEGER)
+    INIT_ARG1(LIST);
+    INIT_ARG2(INTEGER);
 
     len = list_length(LIST1);
     pos = INT2 - 1;
 
     if (pos < 0)
-        THROW((range_id, "Position (%d) less than one", pos + 1))
+        THROW((range_id, "Position (%d) less than one", pos + 1));
     else if (pos > len - 1)
         THROW((range_id, "Position (%d) greater than length of list (%d)",
-              pos + 1, len))
+              pos + 1, len));
 
     data_dup(&data, &args[2]);
     list = list_dup(LIST1);
@@ -115,16 +115,16 @@ NATIVE_METHOD(delete) {
              len;
     cList * list;
 
-    INIT_2_ARGS(LIST, INTEGER)
+    INIT_2_ARGS(LIST, INTEGER);
 
     len = list_length(LIST1);
     pos = INT2 - 1;
 
     if (pos < 0)
-        THROW((range_id, "Position (%d) less than one", pos + 1))
+        THROW((range_id, "Position (%d) less than one", pos + 1));
     else if (pos > len - 1)
         THROW((range_id, "Position (%d) greater than length of list (%d)",
-              pos + 1, len))
+              pos + 1, len));
 
     list = list_dup(LIST1);
 
@@ -139,8 +139,8 @@ NATIVE_METHOD(setadd) {
     cData   data;
     DEF_args;
 
-    INIT_ARGC(ARG_COUNT, 2, "two")
-    INIT_ARG1(LIST)
+    INIT_ARGC(ARG_COUNT, 2, "two");
+    INIT_ARG1(LIST);
 
     data_dup(&data, &args[1]);
     list = list_dup(LIST1);
@@ -159,8 +159,8 @@ NATIVE_METHOD(setremove) {
     cData   data;
     DEF_args;
 
-    INIT_ARGC(ARG_COUNT, 2, "two")
-    INIT_ARG1(LIST)
+    INIT_ARGC(ARG_COUNT, 2, "two");
+    INIT_ARG1(LIST);
 
     data_dup(&data, &args[1]);
     list = list_dup(LIST1);
@@ -177,7 +177,7 @@ NATIVE_METHOD(setremove) {
 NATIVE_METHOD(union) {
     cList * list, * list2;
 
-    INIT_2_ARGS(LIST, LIST)
+    INIT_2_ARGS(LIST, LIST);
 
     list = list_dup(LIST1);
     list2 = list_dup(LIST2);
@@ -196,7 +196,7 @@ NATIVE_METHOD(join) {
     Int      discard_sep=NO;
     cStr    * str, * sep;
 
-    INIT_1_OR_2_ARGS(LIST, STRING)
+    INIT_1_OR_2_ARGS(LIST, STRING);
 
     if (!LIST1->len) {
         str = string_new(0);
@@ -310,7 +310,7 @@ static Int validate_dict_args(cList * list, cData * key) {
     for (elem = list_first(list); elem; elem = list_next(list, elem)) {
         if ((elem->type != DICT) || !dict_contains(elem->u.dict, key)) {
             THROW((type_id,
-                  "Values in list must be dicts and contain the right key."))
+                  "Values in list must be dicts and contain the right key."));
         }
     }
 
@@ -323,7 +323,7 @@ static Int validate_list_args(cList * list, Int offset) {
     for (elem = list_first(list); elem; elem = list_next(list, elem)) {
         if ((elem->type != LIST) || (offset > list_length(elem->u.list))) {
             THROW((type_id,
-                   "Values in list must be lists of the right length."))
+                   "Values in list must be lists of the right length."));
         }
     }
 
@@ -335,37 +335,37 @@ static Int validate_sorted_args(Int stack_start, Int arg_start) {
     DEF_args;
     DEF_argc;
     CHECK_BINDING
-    INIT_ARG1(LIST)
+    INIT_ARG1(LIST);
     if (argc == 2) {
         if (args[ARG2].type == LIST) {
-            THROW((methoderr_id, "Inserting list data requires an index value"))
+            THROW((methoderr_id, "Inserting list data requires an index value"));
         } else if (args[ARG2].type == DICT) {
-            THROW((methoderr_id, "Inserting dict data requires a key value"))
+            THROW((methoderr_id, "Inserting dict data requires a key value"));
         }
     } else if (argc == 3) {
         if ((args[ARG2].type != LIST) && (args[ARG2].type != DICT)) {
-            THROW((type_id, "Second arg must be a list or dict."))
+            THROW((type_id, "Second arg must be a list or dict."));
         }
     } else if ((argc != 2) && (argc != 3)) {
-        THROW_NUM_ERROR(argc, "two or three")
+        THROW_NUM_ERROR(argc, "two or three");
     }
 
     if (args[ARG2].type == LIST) {
         if (args[ARG3].type != INTEGER) {
-            THROW((type_id, "List data requires an integral index value"))
+            THROW((type_id, "List data requires an integral index value"));
         }
 
         offset = INT3 - 1;
 
         if ((offset < 0) || (offset > list_length(LIST1))) {
-            THROW((type_id, "Third arg must be an offset into the data."))
+            THROW((type_id, "Third arg must be an offset into the data."));
         }
 
         if (!validate_list_args(LIST1, offset))
             return 0;
     } else if (args[ARG2].type == DICT) {
         if (!dict_contains(DICT2, &args[ARG3])) {
-            THROW((type_id, "Third arg must be a key into the data."))
+            THROW((type_id, "Third arg must be a key into the data."));
         }
 
         if (!validate_dict_args(LIST1, &args[ARG3]))
@@ -460,7 +460,7 @@ NATIVE_METHOD(sorted_delete) {
 
     if (result == NULL) {
         list_discard(list);
-        THROW((range_id, "Value must be within the list"))
+        THROW((range_id, "Value must be within the list"));
     }
 
     CLEAN_RETURN_LIST(result);

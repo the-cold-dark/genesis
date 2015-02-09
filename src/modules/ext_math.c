@@ -13,7 +13,7 @@ static int check_one_vector(cList *l1, Int *len_ret)
     len=list_length(l1);
     for (i=0; i<len; i++) {
         if (list_elem(l1,i)->type != FLOAT)
-            THROW((type_id, "Arguments must be lists of floats."))
+            THROW((type_id, "Arguments must be lists of floats."));
     }
     *len_ret=len;
     RETURN_TRUE;
@@ -25,12 +25,12 @@ static int check_vectors(cList *l1, cList *l2, Int *len_ret)
 
     len=list_length(l1);
     if (list_length(l2)!=len)
-        THROW((range_id, "Arguments are not of the same length."))
+        THROW((range_id, "Arguments are not of the same length."));
     for (i=0; i<len; i++) {
         if (list_elem(l1,i)->type != FLOAT)
-            THROW((type_id, "Arguments must be lists of floats."))
+            THROW((type_id, "Arguments must be lists of floats."));
         if (list_elem(l2,i)->type != FLOAT)
-            THROW((type_id, "Arguments must be lists of floats."))
+            THROW((type_id, "Arguments must be lists of floats."));
     }
     *len_ret=len;
     RETURN_TRUE;
@@ -177,7 +177,7 @@ NATIVE_METHOD(cross) {
     if (!check_vectors (l1,l2,&len))
         RETURN_FALSE;
     if (len!=3)
-        THROW((range_id,"The vectors are not of length 3."))
+        THROW((range_id,"The vectors are not of length 3."));
     l=list_new(len);
     l->len=len;
     f=list_elem(l,0);
@@ -248,7 +248,7 @@ NATIVE_METHOD(transpose) {
     e=list_elem(l1,0);
     for (i=0; i<len; i++) {
         if (e[i].type!=LIST)
-            THROW((type_id,"The argument must be a list of lists."))
+            THROW((type_id,"The argument must be a list of lists."));
     }
     len1=list_length(e[0].u.list);
     if (!len1) {
@@ -257,7 +257,7 @@ NATIVE_METHOD(transpose) {
     }
     for (i=1; i<len; i++) {
         if (list_length(e[i].u.list)!=len1)
-            THROW((range_id,"All sublists must be of the same length"))
+            THROW((range_id,"All sublists must be of the same length"));
     }
     l=list_new(len1);
     l->len=len1;

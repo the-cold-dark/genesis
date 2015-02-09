@@ -18,7 +18,7 @@ COLDC_FUNC(task_info) {
     list = vm_info(INT1);
 
     if (!list)
-        THROW((type_id, "No task %d.", INT1))
+        THROW((type_id, "No task %d.", INT1));
     pop(1);
     push_list(list);
     list_discard(list);

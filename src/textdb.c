@@ -68,7 +68,7 @@ extern Bool print_warn;
 #define DIE(__s) do { \
         printf("\rLine %ld: ERROR: %s\n", (long) line_count, __s); \
         fflush(stdout); \
-        shutdown_coldcc(); \
+        shutdown_coldcc(EXIT_FAILURE); \
     } while (0)
 
 #define DIEf(__fmt, __arg) do { \
@@ -76,7 +76,7 @@ extern Bool print_warn;
         printf(__fmt, __arg); \
         fputc('\n', stdout); \
         fflush(stdout); \
-        shutdown_coldcc(); \
+        shutdown_coldcc(EXIT_FAILURE); \
     } while (0)
 
 /* Dancer: This is more portable than the pointer arithmetic
@@ -262,7 +262,7 @@ static void remember_native(Method * method) {
         fformat(stdout,
             "\rLine %l: ERROR: %O.%s() overrides existing native definition.\n",
             line_count, nh->objnum, ident_name(nh->native));
-        shutdown_coldcc();
+        shutdown_coldcc(EXIT_FAILURE);
     }
 
     nh = (nh_t *) malloc(sizeof(nh_t));
@@ -1526,7 +1526,7 @@ void compile_cdc_file(FILE * fp) {
         if (!handled) {
             WARN(("parse error, unknown directive."));
             ERRf("\"%s\"\n", s);
-            shutdown_coldcc();
+            shutdown_coldcc(EXIT_FAILURE);
         }
 
         string_discard(str);

@@ -45,7 +45,7 @@ static void   usage(char * name);
 static FILE * find_text_db(void);
 static void   compile_db(Int type);
 
-void shutdown_coldcc(void) {
+void shutdown_coldcc(int exit_status) {
     running = NO;
     write_err("Syncing binarydb...");
     cache_sync();
@@ -65,7 +65,7 @@ void shutdown_coldcc(void) {
 
     uninit_emalloc();
     write_err("Done");
-    exit(0);
+    exit(exit_status);
 }
 
 /*
@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
     }
 
     write_err ("Closing binary database...");
-    shutdown_coldcc();
+    shutdown_coldcc(EXIT_SUCCESS);
 
     /* make compilers happy; we never reach this */
     return 0;

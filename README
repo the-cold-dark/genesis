@@ -5,7 +5,7 @@ Genesis is the compiler and run-time interpreter/daemon for ColdC, and
 is produced by the Cold Project.  You can learn more about helping to
 support the Cold Project at:
 
-    http://web.cold.org/
+    http://the-cold-dark.github.io/
 
 Release information can be found in doc/CHANGES.
 
@@ -28,20 +28,13 @@ can be used instead of make.
 ------------------------------------------------------------------------
 INSTALL/COMPILATION IN WIN32
 
-You will need an ndbm implementation in Win32.  You can get GNU's ndbm
-implementation (gdbm) to cover this role.  You must first have access
-to a unix system, with either bison or yacc.  Read doc/Win32-INSTALL
-for full instructions.
-
-A copy of GDBM for Win32 can be found at:
-
-      ftp://ftp.cold.org/cold/contrib/gdbm173s.zip
-
-It is suggested that you try to find more current versions before using
-this copy.
+You will need an ndbm implementation in Win32. You will then have to
+figure out the remaining details and let us know. :)
 
 ------------------------------------------------------------------------
 FURTHER INFORMATION
+
+*** The mailing lists are long dead. ***
 
 The following email lists are available:
 
@@ -50,11 +43,11 @@ The following email lists are available:
 Further information, Archives and Subscription mechanisms for the lists are
 available at:
 
-    http://web.cold.org/contact.html
+    http://the-cold-dark.github.io/contact.html
 
 Documentation:
 
-    for Genesis:     http://web.cold.org/genesis/
+    for Genesis:     http://the-cold-dark.github.io/genesis/
     for ColdC:       http://ice.cold.org:1180/bin/help?node=coldc
 
 ------------------------------------------------------------------------
@@ -62,8 +55,8 @@ NOTES
 
 Verified to compile and run on:
 
-    * FreeBSD (Any version after 2.0)
-    * Sun Solaris 2.5
-    * Linux (although problems will arise 1.2.x versions)
-    * MacOS X (only tested on 10.1)
+    * Linux
+    * Mac OS X
 
+This code has, in the past, compiled on Solaris, FreeBSD and Windows
+as well.

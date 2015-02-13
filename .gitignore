@@ -1,3 +1,4 @@
+build
 src/modules/modbuild.last
 src/modules/moddef.h
 test/error.log

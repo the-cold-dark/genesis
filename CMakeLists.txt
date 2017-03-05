@@ -42,18 +42,29 @@ IF(LINK_LIBM)
 ENDIF()
 # Try to sort out the DB stuff.
 CHECK_INCLUDE_FILE(ndbm.h HAVE_NDBM_H)
-CHECK_INCLUDE_FILE(gdbm-ndbm.h HAVE_GDBM_NDBM_H)
+CHECK_INCLUDE_FILE(gdbm-ndbm.h HAVE_GDBM_NDBM_H) # where is this a thing? -BJG
 IF(HAVE_NDBM_H)
   SET(DBM_H_FILE "<ndbm.h>")
   # On Mac OS X, we don't have to link against anything else.
   CHECK_FUNCTION_EXISTS(dbm_open HAVE_DBM_OPEN)
   IF(NOT HAVE_DBM_OPEN)
     CHECK_LIBRARY_EXISTS(ndbm dbm_open "" LINK_NDBM)
+    CHECK_LIBRARY_EXISTS(gdbm_compat dbm_open "" LINK_GDBM_COMPAT)
     IF(LINK_NDBM)
       SET(COLD_LIBRARIES
           ${COLD_LIBRARIES}
           -lndbm)
     ENDIF()
+    IF(LINK_GDBM_COMPAT)
+      SET(COLD_LIBRARIES
+          ${COLD_LIBRARIES}
+          -lgdbm_compat)
+    ENDIF()
+  ENDIF()
+  IF(LINK_NDBM)
+    SET(COLD_LIBRARIES
+        ${COLD_LIBRARIES}
+        -lndbm)
   ENDIF()
 ELSEIF(HAVE_GDBM_NDBM_H)
   SET(DBM_H_FILE "<gdbm-ndbm.h>")

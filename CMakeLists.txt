@@ -28,6 +28,16 @@ INCLUDE(${CMAKE_ROOT}/Modules/CheckIncludeFile.cmake)
 INCLUDE(${CMAKE_ROOT}/Modules/CheckLibraryExists.cmake)
 INCLUDE(${CMAKE_ROOT}/Modules/CheckTypeSize.cmake)
 
+INCLUDE(${CMAKE_SOURCE_DIR}/Modules/AddCCompilerFlag.cmake)
+ADD_C_COMPILER_FLAG(-Wall)
+
+# clang doesn't print colored diagnostics when invoked from Ninja
+IF (UNIX AND
+    CMAKE_C_COMPILER_ID STREQUAL "Clang" AND
+    CMAKE_GENERATOR STREQUAL "Ninja")
+  SET(CMAKE_C_FLAGS "-fcolor-diagnostics ${CMAKE_C_FLAGS}")
+ENDIF()
+
 CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
 
 SET(COLD_LIBRARIES)

@@ -193,12 +193,6 @@
 #define SYSTEM_OBJNUM     0
 #define ROOT_OBJNUM       1
 
-#ifdef USE_VFORK
-#define FORK_PROCESS vfork
-#else
-#define FORK_PROCESS fork
-#endif
-
 #ifndef HAVE_STRERROR
 extern char *sys_errlist[];
 #define strerror(n) (sys_errlist[n])

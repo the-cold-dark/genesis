@@ -478,7 +478,7 @@ static void initialize(Int argc, char **argv) {
     */
 #ifdef __UNIX__
     if (dofork) {
-        pid = FORK_PROCESS();
+        pid = fork();
         if (pid != 0) {
             int ignore;
             if (pid == -1)

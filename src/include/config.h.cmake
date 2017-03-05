@@ -18,7 +18,6 @@
 
 #cmakedefine SYSTEM_TYPE "@SYSTEM_TYPE@"
 
-#cmakedefine HAVE_VFORK_H
 #cmakedefine HAVE_UNISTD_H
 
 #cmakedefine DBM_H_FILE @DBM_H_FILE@

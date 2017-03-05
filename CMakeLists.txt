@@ -28,7 +28,6 @@ INCLUDE(${CMAKE_ROOT}/Modules/CheckIncludeFile.cmake)
 INCLUDE(${CMAKE_ROOT}/Modules/CheckLibraryExists.cmake)
 INCLUDE(${CMAKE_ROOT}/Modules/CheckTypeSize.cmake)
 
-CHECK_INCLUDE_FILE(vfork.h HAVE_VFORK_H)
 CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
 
 SET(COLD_LIBRARIES)

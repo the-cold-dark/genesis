@@ -682,7 +682,7 @@ COLDC_FUNC(execute) {
 #else
 
     /* Fork off a process. */
-    pid = FORK_PROCESS();
+    pid = fork();
     if (pid == 0) {
         /* Pipe stdin and stdout to /dev/null, keep stderr. */
         fd = open("/dev/null", O_RDWR);

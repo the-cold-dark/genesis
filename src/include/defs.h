@@ -233,7 +233,7 @@ extern char *sys_errlist[];
 //   uLong    =>  large integer unsigned value
 //   Float    =>  common float signed value
 //
-// Defining USE_LARGE_FLOATS and USE_LARGE_NUMBERS will change Long and
+// Defining USE_BIG_FLOATS and USE_BIG_NUMBERS will change Long and
 // Float to be larger, although this is not recommended unless you know
 // your OS and system can handle larger 64 bit + words.
 //

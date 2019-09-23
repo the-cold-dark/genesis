@@ -198,24 +198,7 @@ extern char *sys_errlist[];
 #define strerror(n) (sys_errlist[n])
 #endif
 
-/*
-// bool defs pulled from the Perl5 Source, Copyright 1991-1994, Larry Wall
-*/
-#ifdef _G_HAVE_BOOL
-#  if _G_HAVE_BOOL
-#    ifndef HAS_BOOL
-#      define HAS_BOOL 1
-#    endif
-#  endif
-#endif
-
-#ifndef HAS_BOOL
-#  ifdef UTS      /* what is UTS, need documentation -- BJG */
-#    define bool int
-#  else
-#    define bool char
-#  endif
-#endif
+typedef char bool;
 
 /*
 // these are C type defines, the following should be true:

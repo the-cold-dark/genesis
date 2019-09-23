@@ -13,6 +13,21 @@
 
 #include "config.h"
 
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#ifdef sys_linux
+#undef NULL
+#define NULL 0
+#endif
+
+#include <setjmp.h>
+
 /*
 // ---------------------------------------------------------------------
 // If running in BUILDING_COLDCC mode, turn off some options that slow
@@ -198,8 +213,6 @@ extern char *sys_errlist[];
 #define strerror(n) (sys_errlist[n])
 #endif
 
-typedef char bool;
-
 /*
 // these are C type defines, the following should be true:
 //
@@ -377,23 +390,10 @@ typedef bool              Bool;
 // --------------------------------------------------------------------
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-#ifdef sys_linux
-#undef NULL
-#define NULL 0
-#endif
-
 #ifdef USE_CLEANER_THREAD
 #include <pthread.h>
 #endif
 
-#include <setjmp.h>
 #include "cdc_errs.h"
 #include "cdc_types.h"
 #include "cdc_memory.h"

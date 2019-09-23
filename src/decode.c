@@ -1075,21 +1075,21 @@ static Expr_list *decompile_expressions_bounded(Int *pos_ptr, Int expr_end)
           }
 
           case CONDITIONAL: {
-              Expr_list *true, *false;
+              Expr_list *true_branch, *false_branch;
 
               /* The end stored in opcodes[pos + 1] is after the ELSE
                * instruction. */
-              /* Get true expression. */
+              /* Get true_branch expression. */
               end = the_opcodes[pos + 1];
               pos += 2;
-              true = decompile_expressions_bounded(&pos, end - 2);
+              true_branch = decompile_expressions_bounded(&pos, end - 2);
 
-              /* Get false expression. */
+              /* Get false_branch expression. */
               pos = end;
               end = the_opcodes[pos - 1];
-              false = decompile_expressions_bounded(&pos, end);
+              false_branch = decompile_expressions_bounded(&pos, end);
 
-              stack->expr = cond_expr(stack->expr, true->expr, false->expr);
+              stack->expr = cond_expr(stack->expr, true_branch->expr, false_branch->expr);
               pos = end;
               break;
           }
@@ -1226,13 +1226,13 @@ static cList *unparse_stmt(cList *output, Stmt *stmt, Int indent, Stmt *last)
         str = string_add_chars(str, "if (", 4);
         str = unparse_expr(str, stmt->u.if_.cond, PAREN_ASSIGN);
         str = string_addc(str, ')');
-        return unparse_body(output, stmt->u.if_.true, str, indent);
+        return unparse_body(output, stmt->u.if_.true_branch, str, indent);
 
       case IF_ELSE: {
           Int complex;
 
           /* This is the most complicated unparsing job, because we need to
-           * decide to format both the if-true and if-false statements, and we
+           * decide to format both the if-true_branch and if-false_branch statements, and we
            * also want to correctly format chains of "if ... else if ... ". */
 
           /* Determine if either of the statements is complex (will take more
@@ -1255,29 +1255,29 @@ static cList *unparse_stmt(cList *output, Stmt *stmt, Int indent, Stmt *last)
               } else if (complex) {
                   str = string_add_chars(str, " {", 2);
                   output = add_and_discard_string(output, str);
-                  output = unparse_stmt(output, stmt->u.if_.true,
+                  output = unparse_stmt(output, stmt->u.if_.true_branch,
                                         indent + the_increment, NULL);
                   str = string_of_char(' ', indent);
                   str = string_add_chars(str, "} ", 2);
               } else {
                   output = add_and_discard_string(output, str);
-                  output = unparse_stmt(output, stmt->u.if_.true,
+                  output = unparse_stmt(output, stmt->u.if_.true_branch,
                                         indent + the_increment, NULL);
                   str = string_of_char(' ', indent);
               }
 
               str = string_add_chars(str, "else ", 5);
 
-              /* Set stmt to stmt->u.if_.false, so that we will continue the
-               * loop if the false statement is an if statement. */
-              stmt = stmt->u.if_.false;
+              /* Set stmt to stmt->u.if_.false_branch, so that we will continue the
+               * loop if the false_branch statement is an if statement. */
+              stmt = stmt->u.if_.false_branch;
           }
 
           if (stmt->type == IF) {
               str = string_add_chars(str, "if (", 4);
               str = unparse_expr(str, stmt->u.if_.cond, PAREN_ASSIGN);
               str = string_add_chars(str, ") ", 2);
-              stmt = stmt->u.if_.true;
+              stmt = stmt->u.if_.true_branch;
           }
 
           /* Now unparse the final statement, which is in stmt. */
@@ -1423,21 +1423,21 @@ static cList *unparse_stmt(cList *output, Stmt *stmt, Int indent, Stmt *last)
 }
 
 /* Returns nonzero if the if-else statement stmt is complex--that is, if we
- * should display its true and false clauses in braces.  If the false clause
- * is an IF_ELSE or an IF statement, then we will be displaying the false
+ * should display its true_branch and false_branch clauses in braces.  If the false_branch clause
+ * is an IF_ELSE or an IF statement, then we will be displaying the false_branch
  * clause's if statement on the same line as our own else statement, so we must
- * check to see if the false clause itself is complex.  Apart from that, it's
- * just a matter of testing if either the true or false clause is complex. */
+ * check to see if the false_branch clause itself is complex.  Apart from that, it's
+ * just a matter of testing if either the true_branch or false_branch clause is complex. */
 static Int is_complex_if_else_stmt(Stmt *stmt)
 {
-    if (is_complex_type(stmt->u.if_.true->type))
+    if (is_complex_type(stmt->u.if_.true_branch->type))
         return 1;
-    else if (stmt->u.if_.false->type == IF_ELSE)
-        return is_complex_if_else_stmt(stmt->u.if_.false);
-    else if (stmt->u.if_.false->type == IF)
-        return is_complex_type(stmt->u.if_.false->u.if_.true->type);
+    else if (stmt->u.if_.false_branch->type == IF_ELSE)
+        return is_complex_if_else_stmt(stmt->u.if_.false_branch);
+    else if (stmt->u.if_.false_branch->type == IF)
+        return is_complex_type(stmt->u.if_.false_branch->u.if_.true_branch->type);
     else
-        return is_complex_type(stmt->u.if_.false->type);
+        return is_complex_type(stmt->u.if_.false_branch->type);
 }
 
 static Int is_complex_type(Int type)
@@ -1797,9 +1797,9 @@ static cStr *unparse_expr(cStr *str, Expr *expr, Int paren) {
       case CONDITIONAL:
         str = unparse_expr_prec(str, expr->u.cond.cond, CONDITIONAL, 1);
         str = string_add_chars(str, " ? ", 3);
-        str = unparse_expr_prec(str, expr->u.cond.true, CONDITIONAL, 1);
+        str = unparse_expr_prec(str, expr->u.cond.true_branch, CONDITIONAL, 1);
         str = string_add_chars(str, " : ", 3);
-        str = unparse_expr_prec(str, expr->u.cond.false, CONDITIONAL, 1);
+        str = unparse_expr_prec(str, expr->u.cond.false_branch, CONDITIONAL, 1);
         return str;
 
       case CRITICAL:

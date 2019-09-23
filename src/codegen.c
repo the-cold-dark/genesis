@@ -157,15 +157,15 @@ Stmt *if_stmt(Expr *cond, Stmt *body)
     cnew->type = IF;
     cnew->lineno = cur_lineno();
     cnew->u.if_.cond = cond;
-    cnew->u.if_.true = body;
+    cnew->u.if_.true_branch = body;
     return cnew;
 }
 
 /* Modifies: if_, to produce the if-else statement. */
-Stmt *if_else_stmt(Stmt *if_, Stmt *false)
+Stmt *if_else_stmt(Stmt *if_, Stmt *false_branch)
 {
     if_->type = IF_ELSE;
-    if_->u.if_.false = false;
+    if_->u.if_.false_branch = false_branch;
     return if_;
 }
 
@@ -535,15 +535,15 @@ Expr *or_expr(Expr *left, Expr *right)
     return cnew;
 }
 
-Expr *cond_expr(Expr *cond, Expr *true, Expr *false)
+Expr *cond_expr(Expr *cond, Expr *true_branch, Expr *false_branch)
 {
     Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
 
     cnew->type = CONDITIONAL;
     cnew->lineno = cur_lineno();
     cnew->u.cond.cond = cond;
-    cnew->u.cond.true = true;
-    cnew->u.cond.false = false;
+    cnew->u.cond.true_branch = true_branch;
+    cnew->u.cond.false_branch = false_branch;
     return cnew;
 }
 
@@ -747,13 +747,13 @@ static void compile_stmt(Stmt *stmt, Int loop, Int catch_level)
           compile_expr(stmt->u.if_.cond);
 
           /* Code an IF opcode with a jump argument pointing to the end of the
-           * true statement. */
+           * true_branch statement. */
           code(IF);
           code(end_dest);
 
-          /* Compile the true statement and set end_dest to the end of the
-           * false statement. */
-          compile_stmt(stmt->u.if_.true, loop, catch_level);
+          /* Compile the true_branch statement and set end_dest to the end of the
+           * false_branch statement. */
+          compile_stmt(stmt->u.if_.true_branch, loop, catch_level);
           set_jump_dest_here(end_dest);
           break;
       }
@@ -764,24 +764,24 @@ static void compile_stmt(Stmt *stmt, Int loop, Int catch_level)
           /* Compile the condition expression. */
           compile_expr(stmt->u.if_.cond);
 
-          /* Code an IF_ELSE opcode with a jump argument pointing to the false
+          /* Code an IF_ELSE opcode with a jump argument pointing to the false_branch
            * statement. */
           code(IF_ELSE);
           code(false_stmt_dest);
 
-          /* Compile the true statement. */
-          compile_stmt(stmt->u.if_.true, loop, catch_level);
+          /* Compile the true_branch statement. */
+          compile_stmt(stmt->u.if_.true_branch, loop, catch_level);
 
           /* Code an ELSE opcode with a jump argument pointing to the end of
-           * the false statement. */
+           * the false_branch statement. */
           code(ELSE);
           code(end_dest);
 
           /* Set false_stmt_dest to here, and compile the false statement. */
           set_jump_dest_here(false_stmt_dest);
-          compile_stmt(stmt->u.if_.false, loop, catch_level);
+          compile_stmt(stmt->u.if_.false_branch, loop, catch_level);
 
-          /* Set end_dest to the end of the false statement. */
+          /* Set end_dest to the end of the false_branch statement. */
           set_jump_dest_here(end_dest);
 
           break;
@@ -1534,27 +1534,27 @@ static void compile_expr(Expr *expr)
       }
 
       case CONDITIONAL: {
-          Int false_dest = new_jump_dest(), end_dest = new_jump_dest();
+          Int false_branch_dest = new_jump_dest(), end_dest = new_jump_dest();
 
           /* Compile the condition expression. */
           compile_expr(expr->u.cond.cond);
 
           /* Code a CONDITIONAL opcode with a jump argument pointing to the
-           * false expression. */
+           * false_branch expression. */
           code(CONDITIONAL);
-          code(false_dest);
+          code(false_branch_dest);
 
-          /* Compile the true expression. */
-          compile_expr(expr->u.cond.true);
+          /* Compile the true_branch expression. */
+          compile_expr(expr->u.cond.true_branch);
 
           /* Code an ELSE opcode with a jump argument pointing to the end of
            * the expression. */
           code(ELSE);
           code(end_dest);
 
-          /* Set false_dest to here and compile the false expression. */
-          set_jump_dest_here(false_dest);
-          compile_expr(expr->u.cond.false);
+          /* Set false_branch_dest to here and compile the false expression. */
+          set_jump_dest_here(false_branch_dest);
+          compile_expr(expr->u.cond.false_branch);
 
           /* Set end_dest to here. */
           set_jump_dest_here(end_dest);

@@ -42,8 +42,8 @@ struct stmt {
 
         struct {
             Expr *cond;
-            Stmt *true;
-            Stmt *false;
+            Stmt *true_branch;
+            Stmt *false_branch;
         } if_;
 
         struct {
@@ -173,8 +173,8 @@ struct expr {
 
         struct {
             Expr *cond;
-            Expr *true;
-            Expr *false;
+            Expr *true_branch;
+            Expr *false_branch;
         } cond;
 
         struct {

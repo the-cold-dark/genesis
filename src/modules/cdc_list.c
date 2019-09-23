@@ -193,7 +193,7 @@ NATIVE_METHOD(union) {
 }
 
 NATIVE_METHOD(join) {
-    Int      discard_sep=NO;
+    bool      discard_sep=false;
     cStr    * str, * sep;
 
     INIT_1_OR_2_ARGS(LIST, STRING);
@@ -203,7 +203,7 @@ NATIVE_METHOD(join) {
     } else {
         if (argc == 1) {
             sep = string_from_chars(" ", 1);
-            discard_sep=YES;
+            discard_sep=true;
         } else {
             sep = STR2;
         }

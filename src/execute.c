@@ -110,7 +110,7 @@ VMState * vm_current(void) {
         vm = EMALLOC(VMState, 1);
     }
 
-    vm->preempted = NO;
+    vm->preempted = false;
     vm->cur_frame = cur_frame;
     vm->stack = stack;
     vm->stack_pos = stack_pos;
@@ -475,7 +475,7 @@ void vm_cancel(Long tid) {
 void vm_pause(void) {
     VMState * vm = vm_current();
 
-    vm->preempted = YES;
+    vm->preempted = true;
     ADD_VM_TASK(preempted, vm);
     init_execute();
     cur_frame = NULL;
@@ -1637,8 +1637,8 @@ static Bool is_critical (void) {
     if (cur_frame
         && cur_frame->specifiers
         && cur_frame->specifiers->type==CRITICAL)
-        return TRUE;
-    return FALSE;
+        return true;
+    return false;
 }
 
 void cthrow(Ident error, char *fmt, ...)

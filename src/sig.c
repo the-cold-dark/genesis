@@ -100,7 +100,7 @@ void catch_signal(int sig) {
     char *sptr;
     cStr *sigstr;
     cData arg1;
-    Bool  do_shutdown = NO;
+    Bool  do_shutdown = false;
 
     signal(sig, catch_signal);
 
@@ -116,7 +116,7 @@ void catch_signal(int sig) {
     switch(sig) {
 #ifdef __UNIX__
         case SIGHUP:
-            atomic = NO;
+            atomic = false;
             handle_connection_output();
             flush_files();
 #endif
@@ -160,7 +160,7 @@ void catch_signal(int sig) {
         case SIGTERM:
             if (running) {
                 write_err("*** Attempting normal shutdown ***");
-                running = NO;
+                running = false;
 
                 /* jump back to the main loop, ignore any current tasks;
                    *drip*, *drip*, leaky */
@@ -170,7 +170,7 @@ void catch_signal(int sig) {
             }
             break;
         default:
-            do_shutdown = YES;
+            do_shutdown = true;
             break;
     }
 
@@ -184,6 +184,6 @@ void catch_signal(int sig) {
     vm_task(SYSTEM_OBJNUM, signal_id, 1, &arg1);
 
     if (do_shutdown)
-        running = NO;
+        running = false;
 }
 

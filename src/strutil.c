@@ -94,7 +94,7 @@ cList * match_template(char *ctemplate, char *s) {
             p = match_word_pattern(ctemplate, s);
             if (!p)
                 return NULL;
-            add_field(s, p, FALSE);
+            add_field(s, p, false);
             s = p;
         }
 
@@ -160,7 +160,7 @@ static char *match_coupled_wildcard(char *ctemplate, char *s) {
         /* Move on if next character is an equals sign. */
         if (*q == '=') {
             for (q++; *q && *q == ' '; q++);
-            add_field(s + 1, p, TRUE);
+            add_field(s + 1, p, true);
             return match_wildcard(ctemplate, q);
         } else {
             return NULL;
@@ -176,7 +176,7 @@ static char *match_coupled_wildcard(char *ctemplate, char *s) {
      * starting from the first nonspace character after it. */
     for (q = p - 1; *q == ' '; q--);
     for (p++; *p == ' '; p++);
-    add_field(s, q + 1, FALSE);
+    add_field(s, q + 1, false);
     return match_wildcard(ctemplate, p);
 }
 
@@ -188,7 +188,7 @@ static char * match_wildcard(char *ctemplate, char *s) {
     /* If no token follows the wildcard, then the match succeeds. */
     if (!*ctemplate) {
         p = s + strlen(s);
-        add_field(s, p, FALSE);
+        add_field(s, p, false);
         return p;
     }
 
@@ -208,8 +208,8 @@ static char * match_wildcard(char *ctemplate, char *s) {
         /* Next token must match here. */
         r = match_word_pattern(ctemplate, q);
         if (r) {
-            add_field(s + 1, p, TRUE);
-            add_field(q, r, FALSE);
+            add_field(s + 1, p, true);
+            add_field(q, r, false);
             return r;
         } else {
             return NULL;
@@ -223,8 +223,8 @@ static char * match_wildcard(char *ctemplate, char *s) {
     /* There is an unquoted wildcard match.  Start by looking here. */
     p = match_word_pattern(ctemplate, s);
     if (p) {
-        add_field(s, s, FALSE);
-        add_field(s, p, FALSE);
+        add_field(s, s, false);
+        add_field(s, p, false);
         return p;
     }
 
@@ -239,8 +239,8 @@ static char * match_wildcard(char *ctemplate, char *s) {
             r = match_word_pattern(ctemplate, q);
             if (r) {
                 /* It matches; add wildcard field and word field. */
-                add_field(s, p, FALSE);
-                add_field(q, r, FALSE);
+                add_field(s, p, false);
+                add_field(q, r, false);
                 return r;
             }
             /* No match; continue looking at q. */
@@ -385,11 +385,11 @@ cList * match_regexp(cStr * reg, char * s, Bool sensitive, Bool *error) {
 
     if ((rx = string_regexp(reg)) == NULL) {
         cthrow(regexp_id, "%s", gen_regerror(NULL));
-        *error = YES;
+        *error = true;
         return NULL;
     }
 
-    *error = NO;
+    *error = false;
     if (gen_regexec(rx, s, sensitive)) {
         fields = list_new(NSUBEXP);
         for (i = 0; i < NSUBEXP; i++) {
@@ -432,10 +432,10 @@ cList * regexp_matches(cStr * reg, char * s, Bool sensitive, Bool * error) {
 
     if ((rx = string_regexp(reg)) == (regexp *) NULL) {
         cthrow(regexp_id, "%s", gen_regerror(NULL));
-        *error = YES;
+        *error = true;
         return NULL;
     }
-    *error = NO;
+    *error = false;
 
     if (!gen_regexec(rx, s, sensitive))
         return NULL;

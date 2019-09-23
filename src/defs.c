@@ -19,9 +19,9 @@ void init_defs(void) {
     struct tm * tms;
     time_t t;
 #endif
-    coldcc = NO;
-    running = YES;
-    atomic = NO;
+    coldcc = false;
+    running = true;
+    atomic = false;
     heartbeat_freq = 5;
     cache_search = START_SEARCH_AT;
 

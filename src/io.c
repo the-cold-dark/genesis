@@ -249,14 +249,14 @@ Int tcp_server(Int port, char * ipaddr, Long objnum) {
                 continue;
             cnew->objnum = objnum;
             cnew->dead = 0;
-            return TRUE;
+            return true;
         }
     }
 
     /* Get a server socket for the port. */
     server_socket = get_tcp_socket(port, ipaddr);
     if (server_socket == SOCKET_ERROR)
-        return FALSE;
+        return false;
 
     cnew = EMALLOC(server_t, 1);
     cnew->server_socket = server_socket;
@@ -271,7 +271,7 @@ Int tcp_server(Int port, char * ipaddr, Long objnum) {
     cnew->next = servers;
     servers = cnew;
 
-    return TRUE;
+    return true;
 }
 
 Int udp_server(Int port, char * ipaddr, Long objnum) {
@@ -280,10 +280,10 @@ Int udp_server(Int port, char * ipaddr, Long objnum) {
     /* Get a server socket for the port. */
     server_socket = get_udp_socket(port, ipaddr);
     if (server_socket == SOCKET_ERROR)
-        return FALSE;
+        return false;
 
     connection_add(server_socket, objnum);
-    return TRUE;
+    return true;
 }
 
 /*

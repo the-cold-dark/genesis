@@ -105,7 +105,7 @@ COLDC_FUNC(atomic) {
         return;
 
     if (!coldcc)
-        atomic = (Bool) (args[0].u.val ? YES : NO);
+        atomic = (Bool) (args[0].u.val ? true : false);
 
     pop(1);
     push_int(atomic ? 1 : 0);
@@ -154,7 +154,7 @@ COLDC_FUNC(stack) {
     Frame   * frame = NULL;
     cData   * args;
     Int       nargs;
-    Bool      want_lineno = TRUE;
+    Bool      want_lineno = true;
 
     if (!func_init_0_to_2(&args, &nargs, INTEGER, INTEGER))
         return;
@@ -168,7 +168,7 @@ COLDC_FUNC(stack) {
     }
 
     if ((nargs == 2) && (args[1].u.val == 0))
-        want_lineno = FALSE;
+        want_lineno = false;
 
     if (frame) {
         cList * list;

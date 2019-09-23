@@ -1521,7 +1521,7 @@ COLDC_OP(add) {
                 d2->u.str = str;
                 break;
             default:
-                str = data_to_literal(d2, TRUE);
+                str = data_to_literal(d2, true);
                 data_discard(d2);
                 d2->type = STRING;
                 d2->u.str = str;
@@ -1543,7 +1543,7 @@ COLDC_OP(add) {
                 d1->u.list = list_append(d1->u.list, d2->u.list);
                 break;
             case STRING: {
-                cStr * str = data_to_literal(d1, TRUE);
+                cStr * str = data_to_literal(d1, true);
                 data_discard(d1);
                 d1->type = STRING;
                 d1->u.str = str;
@@ -1573,7 +1573,7 @@ COLDC_OP(add) {
                 d1->type = STRING;
                 d1->u.str = str;
             } else {
-                str = data_to_literal(d1, TRUE);
+                str = data_to_literal(d1, true);
                 data_discard(d1);
                 d1->type = STRING;
                 d1->u.str = str;
@@ -1653,7 +1653,7 @@ COLDC_OP(doeq_add) {
                 arg->u.str = str;
                 break;
             default:
-                str = data_to_literal(arg, TRUE);
+                str = data_to_literal(arg, true);
                 data_discard(arg);
                 arg->type = STRING;
                 arg->u.str = str;
@@ -1685,7 +1685,7 @@ COLDC_OP(doeq_add) {
                 return;
             }
             case STRING: {
-                cStr * str = data_to_literal(var, TRUE);
+                cStr * str = data_to_literal(var, true);
                 data_discard(var);
                 var->type = STRING;
                 var->u.str = str;
@@ -1721,7 +1721,7 @@ COLDC_OP(doeq_add) {
                 var->type = STRING;
                 var->u.str = str;
             } else {
-                str = data_to_literal(var, TRUE);
+                str = data_to_literal(var, true);
                 data_discard(var);
                 var->type = STRING;
                 var->u.str = str;

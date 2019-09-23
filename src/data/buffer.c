@@ -392,13 +392,13 @@ int buffer_index(cBuf * buf, uChar * ss, int slen, int origin) {
     int     len;
     uChar * s,
           * p;
-    Bool    reverse = NO;
+    Bool    reverse = false;
 
     s = buf->s;
     len = buf->len;
 
     if (origin < 0) {
-        reverse = YES;
+        reverse = true;
         origin = -origin;
     }
 

@@ -745,7 +745,7 @@ static Expr *decompile_scatter (Int *pos_ptr)
     Int pos=*pos_ptr, end;
     Expr_list *args = NULL;
     char *s;
-    Int is_splice=FALSE;
+    Int is_splice=false;
 
     while (1) {
         switch (the_opcodes[pos]) {
@@ -780,7 +780,7 @@ static Expr *decompile_scatter (Int *pos_ptr)
 
         case SPLICE:
             pos++;
-            is_splice=TRUE;
+            is_splice=true;
             break;
 
         case SCATTER_END:

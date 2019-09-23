@@ -150,7 +150,7 @@ Bool prebind_port(int port, char * addr, int tcp) {
 
     /* address too long? */
     if (addr && (strlen(addr) > BUF))
-        return NO;
+        return false;
 
     sock = grab_port(port, addr, tcp ? SOCK_STREAM : SOCK_DGRAM);
     if (sock != SOCKET_ERROR) {
@@ -175,7 +175,7 @@ Bool prebind_port(int port, char * addr, int tcp) {
         exit(1);
     }
 
-    return YES;
+    return true;
 }
 
 static int use_prebound(SOCKET * sock, int port, char * addr, int socktype) {
@@ -203,13 +203,13 @@ static int use_prebound(SOCKET * sock, int port, char * addr, int socktype) {
             *sock = pb->sock;
             *pbp = pb->next;
             free(pb);
-            return TRUE;
+            return 1;
         } else {
             pbp = &pb->next;
         }
     }
 
-    return FALSE;
+    return 0;
 }
 
 static SOCKET grab_port(Int port, char * addr, int socktype) {
@@ -221,7 +221,7 @@ static SOCKET grab_port(Int port, char * addr, int socktype) {
     switch (use_prebound(&sock, port, addr, socktype)) {
         case F_FAILURE:
             return SOCKET_ERROR;
-        case TRUE:
+        case 1:
             return sock;
     }
 

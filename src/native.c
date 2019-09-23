@@ -15,7 +15,7 @@ Int init_modules(Int argc, char ** argv) {
     Int m;
 
     for (m=0; m < NUM_MODULES; m++) {
-        if (cold_modules[m]->init == YES)
+        if (cold_modules[m]->init == true)
             cold_modules[m]->init_func(argc, argv);
     }
 
@@ -26,7 +26,7 @@ Int uninit_modules(void) {
     Int m;
 
     for (m=0; m < NUM_MODULES; m++) {
-        if (cold_modules[m]->uninit == YES)
+        if (cold_modules[m]->uninit == true)
             cold_modules[m]->uninit_func();
     }
 

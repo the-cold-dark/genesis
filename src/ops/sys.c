@@ -53,7 +53,7 @@ COLDC_FUNC(dblog) {
 
 static Bool backup_file(char * file) {
     static char buf[MAXBSIZE];
-    Bool rval = TRUE;
+    Bool rval = true;
     int from_fd, rcount, to_fd, wcount;
     char source[BUF], dest[BUF];
 
@@ -80,24 +80,24 @@ static Bool backup_file(char * file) {
         wcount = write(to_fd, buf, rcount);
         if (rcount != wcount) {
             cthrow(file_id, "Error on copying %s to %s", source, dest);
-            rval = FALSE;
+            rval = false;
             break;
         } else if (wcount == F_FAILURE) {
             cthrow(file_id, "%s", strerror(GETERR()));
-            rval = FALSE;
+            rval = false;
             break;
         }
     }
 
     if (rcount == F_FAILURE && rval) {
         cthrow(file_id, "%s", strerror(GETERR()));
-        rval = FALSE;
+        rval = false;
     }
 
     (void)close(from_fd);
     if (close(to_fd) && rval) {
         cthrow(file_id, "%s", strerror(GETERR()));
-        rval = FALSE;
+        rval = false;
     }
 
     return rval;
@@ -211,7 +211,7 @@ COLDC_FUNC(shutdown) {
     if (!func_init_0())
         return;
 
-    running = NO;
+    running = false;
     push_int(1);
 }
 

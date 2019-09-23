@@ -351,25 +351,6 @@ typedef bool              Bool;
 #define F_FAILURE -1 /* function failure */
 #define B_SUCCESS 1  /* boolean success */
 #define B_FAILURE 0  /* boolean failure */
-#ifdef TRUE
-#undef TRUE
-#endif
-#define TRUE 1
-
-#ifdef FALSE
-#undef FALSE
-#endif
-#define FALSE 0
-
-#ifdef NO
-#undef NO
-#endif
-#define NO FALSE
-
-#ifdef YES
-#undef YES
-#endif
-#define YES TRUE
 
 #define ANY_TYPE 0
 

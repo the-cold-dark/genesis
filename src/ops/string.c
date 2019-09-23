@@ -68,7 +68,7 @@ COLDC_FUNC(explode) {
     if (!func_init_1_to_3(&args, &argc, STRING, STRING, 0))
         return;
 
-    want_blanks = (Bool) ((argc == 3) ? data_true(&args[2]) : NO);
+    want_blanks = (Bool) ((argc == 3) ? data_true(&args[2]) : false);
 
     if (argc >= 2) {
         sep = string_chars(args[1].u.str);
@@ -283,7 +283,7 @@ COLDC_FUNC(match_regexp) {
         push_list(fields);
         list_discard(fields);
     } else {
-        if (error == YES) /* we actually threw an error */
+        if (error) /* we actually threw an error */
             return;
         pop(argc);
         push_int(0);
@@ -309,7 +309,7 @@ COLDC_FUNC(regexp) {
         push_list(fields);
         list_discard(fields);
     } else {
-        if (error == YES)
+        if (error)
             return;
         pop(argc);
         push_int(0);

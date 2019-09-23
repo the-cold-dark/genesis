@@ -154,10 +154,10 @@ Bool is_reserved_word(char *s) {
             if (isalpha(*s) && j < len && (isalnum(s[j]) || s[j] == '_'))
                 continue;
 
-            return TRUE;
+            return true;
         }
     }
-    return FALSE;
+    return false;
 }
 
 Int yylex(void)
@@ -322,10 +322,10 @@ Int yylex(void)
     if (*s == '#') {
         s++; len--; cur_pos++;
         if (len && *s == '-') {
-            negative = YES;
+            negative = true;
             s++; len--; cur_pos++;
         } else {
-            negative = NO;
+            negative = false;
         }
         if (len && isdigit(*s)) {
             yylval.num = 0;

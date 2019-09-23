@@ -29,7 +29,7 @@
 
 /* valid ascii: 48-57 (0-9) 65-90 (A-Z) 97-122 (a-z) */
 
-module_t web_module = {YES, init_web, YES, uninit_web};
+module_t web_module = {true, init_web, true, uninit_web};
 
 #define DONT_ESCAPE        "$-_.+!*'(),:@&=~"
 #define DONT_ESCAPE_LEN        16

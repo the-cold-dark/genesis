@@ -205,7 +205,8 @@ COLDC_FUNC(union) {
 
 COLDC_FUNC(join) {
     cData * args;
-    Int      argc, discard_sep=NO;
+    Int      argc;
+    bool      discard_sep = false;
     cStr    * str, * sep;
 
     if (!func_init_1_or_2(&args, &argc, LIST, STRING))
@@ -216,7 +217,7 @@ COLDC_FUNC(join) {
     } else {
         if (argc == 1) {
             sep = string_from_chars(" ", 1);
-            discard_sep=YES;
+            discard_sep=true;
         } else {
             sep = STR2;
         }

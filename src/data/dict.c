@@ -343,9 +343,9 @@ cDict *dict_union (cDict *d1, cDict *d2) {
     if (d2->keys->len > d1->keys->len) {
         cDict *t;
         t=d2; d2=d1; d1=t;
-        swap = NO;
+        swap = false;
     } else {
-        swap = YES;
+        swap = true;
     }
 
     d1=dict_prep(d1);

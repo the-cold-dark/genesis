@@ -52,7 +52,7 @@ NATIVE_METHOD(substr) {
 
 NATIVE_METHOD(explode) {
     Int        sep_len=1;
-    Bool       want_blanks=NO;
+    Bool       want_blanks=false;
     cList   * exploded;
     char     * sep = " ";
     DEF_args;
@@ -217,7 +217,7 @@ NATIVE_METHOD(match_pattern) {
 
 NATIVE_METHOD(match_regexp) {
     cList * fields;
-    Bool     sensitive=NO, error;
+    Bool     sensitive=false, error;
     DEF_args;
 
     switch (ARG_COUNT) {
@@ -233,7 +233,7 @@ NATIVE_METHOD(match_regexp) {
     if (fields) {
         CLEAN_RETURN_LIST(fields);
     } else {
-        if (error == YES) /* we threw an error */
+        if (error) /* we threw an error */
             RETURN_FALSE;
         CLEAN_RETURN_INTEGER(0);
     }
@@ -241,7 +241,7 @@ NATIVE_METHOD(match_regexp) {
 
 NATIVE_METHOD(regexp) {
     cList * fields;
-    Bool     sensitive=NO, error;
+    Bool     sensitive=false, error;
     DEF_args;
 
     switch (ARG_COUNT) {
@@ -257,7 +257,7 @@ NATIVE_METHOD(regexp) {
     if (fields) {
         CLEAN_RETURN_LIST(fields);
     } else {
-        if (error == YES)
+        if (error)
             RETURN_FALSE;
         CLEAN_RETURN_INTEGER(0);
     }

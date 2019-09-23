@@ -164,8 +164,8 @@ Int close_file(filec_t * file) {
 Int flush_file(filec_t * file) {
     if (file->f.writable) {
         if (fflush(file->fp) == EOF)
-            return NO;
-        return YES;
+            return 0;
+        return 1;
     }
 
     return -1;

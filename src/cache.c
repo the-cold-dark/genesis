@@ -156,7 +156,7 @@ inline void cache_dirty_object(Obj *obj)
         !(obj->dirty % cache_watch_count))
     {
         write_err("Object %s dirtied at:", obj->objname != -1 ? ident_name(obj->objname) : "not named");
-        log_current_task_stack(FALSE, write_err);
+        log_current_task_stack(false, write_err);
     }
 
     if (obj->dirty == 1)

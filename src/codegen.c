@@ -1162,7 +1162,7 @@ static enum scatter_modes compile_assign (Expr *e, enum scatter_modes mode,
             lvalues=ptr;
         }
         while (lvalues) {
-            if ((mode=compile_assign(lvalues->expr, mode, TRUE))
+            if ((mode=compile_assign(lvalues->expr, mode, true))
                 == SM_ERROR)
                 return SM_ERROR;
             lvalues=lvalues->next;
@@ -1299,11 +1299,11 @@ static void compile_expr(Expr *expr)
       case ASSIGN:
           /* Use the ready-made function */
           compile_expr(expr->u.assign.value);
-          compile_assign(expr->u.assign.lval, SM_STANDARD, FALSE);
+          compile_assign(expr->u.assign.lval, SM_STANDARD, false);
           break;
 
       case OPTIONAL_ASSIGN:
-          compile_assign(expr, SM_STANDARD, FALSE);
+          compile_assign(expr, SM_STANDARD, false);
           break;
 
       case FUNCTION_CALL: {

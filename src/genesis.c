@@ -70,7 +70,7 @@ static void unlink_runningfile(void) {
 static void prebind_port_with(char * str, char * name) {
     int port;
     char * addr = NULL, * s = str;
-    Bool tcp = YES;
+    Bool tcp = true;
 
     if (isdigit(*s)) {
         addr = s;
@@ -93,7 +93,7 @@ static void prebind_port_with(char * str, char * name) {
     port = atoi(s);
 
     if (port < 0) {
-        tcp = NO;
+        tcp = false;
         port = -port;
     } else if (port == 0) {
         usage(name);
@@ -209,7 +209,7 @@ static void initialize(Int argc, char **argv) {
              * basedir = NULL,
              * buf = NULL;
     FILE     * fp;
-    Bool       dofork = YES;
+    Bool       dofork = true;
     pid_t      pid;
 
     name = *argv;
@@ -294,7 +294,7 @@ static void initialize(Int argc, char **argv) {
                 }
                 break;
             case 'f':
-                dofork = NO;
+                dofork = false;
                 break;
             case 'p':
                 argv += getarg(name,&buf,opt,argv,&argc,usage);
@@ -511,7 +511,7 @@ static void initialize(Int argc, char **argv) {
 
     /* Initialize database and network modules. */
     init_scratch_file();
-    init_cache(TRUE);
+    init_cache(true);
     init_binary_db();
     init_core_objects();
 
@@ -519,7 +519,7 @@ static void initialize(Int argc, char **argv) {
     { /* reduce the scope */
         cData   * d;
         cStr     * str;
-        Bool       first = YES;
+        Bool       first = true;
 
         fprintf(errfile, "[%s] Calling $sys.startup([", timestamp(NULL));
         for (d=list_first(args); d; d=list_next(args, d)) {
@@ -528,7 +528,7 @@ static void initialize(Int argc, char **argv) {
                 fputc(',', errfile);
                 fputc(' ', errfile);
             } else {
-                first = NO;
+                first = false;
             }
             fputs(string_chars(str), errfile);
             string_discard(str);

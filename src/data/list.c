@@ -437,7 +437,7 @@ cStr * list_join(cList * list, cStr * sep) {
 
 int list_index(cList * list, cData * search, int origin) {
     int     len;
-    Bool    reverse = NO;
+    Bool    reverse = false;
     cData * d,
           * start,
           * end;
@@ -445,7 +445,7 @@ int list_index(cList * list, cData * search, int origin) {
     len = list_length(list);
 
     if (origin < 0) {
-        reverse = YES;
+        reverse = true;
         origin = -origin;
     }
 

@@ -653,11 +653,11 @@ static Bool ancestor_cache_check(cObjnum objnum, cObjnum ancestor,
     {
         *is_ancestor = ancestor_cache[i].is_ancestor;
         ancestor_cache_hits++;
-        return TRUE;
+        return true;
     }
 
     ancestor_cache_misses++;
-    return FALSE;
+    return false;
 }
 
 static void ancestor_cache_set(cObjnum objnum, cObjnum ancestor,
@@ -733,13 +733,13 @@ static Int object_has_ancestor_aux(cObjnum objnum, cObjnum ancestor)
 
     for (d = list_first(parents); d; d = list_next(parents, d)) {
         if (object_has_ancestor_aux(d->u.objnum, ancestor)) {
-            ancestor_cache_set(d->u.objnum, ancestor, TRUE);
+            ancestor_cache_set(d->u.objnum, ancestor, true);
             list_discard(parents);
             return 1;
         }
     }
 
-    ancestor_cache_set(objnum, ancestor, FALSE);
+    ancestor_cache_set(objnum, ancestor, false);
     list_discard(parents);
     return 0;
 }
@@ -1081,7 +1081,7 @@ Bool object_put_var(Obj *object, cObjnum cclass, Ident name, cData *val)
         var = object_create_var(object, cclass, name);
     data_discard(&var->val);
     data_dup(&var->val, val);
-    return TRUE;
+    return true;
 }
 
 /* Add a variable to an object. */
@@ -1145,16 +1145,16 @@ Bool object_has_methods(Obj *object)
     Int i = 0;
 
     if (!object->methods)
-        return FALSE;
+        return false;
 
     while (i < object->methods->size) {
         if (object->methods->tab[i].m) {
-            return TRUE;
+            return true;
         }
         i++;
     }
 
-    return FALSE;
+    return false;
 }
 
 /* Look for a variable on an object. */
@@ -1238,7 +1238,7 @@ Method *object_find_method(cObjnum objnum, Ident name, IsFrob is_frob) {
         }
     }
 
-    method_cache_set(objnum, name, -1, (method ? method->object->objnum : -2), is_frob, (method ? FALSE : TRUE));
+    method_cache_set(objnum, name, -1, (method ? method->object->objnum : -2), is_frob, (method ? false : true));
     return method;
 }
 
@@ -1286,7 +1286,7 @@ Method *object_find_next_method(cObjnum objnum, Ident name,
         END_SEARCH();
     }
 
-    method_cache_set(objnum, name, after, (method ? method->object->objnum : -2), is_frob, (method ? FALSE : TRUE));
+    method_cache_set(objnum, name, after, (method ? method->object->objnum : -2), is_frob, (method ? false : true));
     return method;
 }
 
@@ -1395,15 +1395,15 @@ static Bool method_cache_check(cObjnum objnum, Ident name,
         if (!method_cache[i].failed) {
             object = cache_retrieve(method_cache[i].loc);
             *method = object_find_method_local(object, name, is_frob);
-            return TRUE;
+            return true;
         } else {
             *method = NULL;
-            return TRUE;
+            return true;
         }
     } else {
         method_cache_misses++;
         *method = NULL;
-        return FALSE;
+        return false;
     }
 }
 
@@ -1490,7 +1490,7 @@ static void method_cache_invalidate(cObjnum objnum) {
 
     if (log_method_cache == 2) {
         write_err("Method cache partially invalidated for obj #%l", objnum);
-        log_current_task_stack(FALSE, write_err);
+        log_current_task_stack(false, write_err);
     }
 #endif
 }
@@ -1523,7 +1523,7 @@ static void method_cache_invalidate_all(void) {
 
     if (log_method_cache) {
         write_err("Method cache entirely invalidated:");
-        log_current_task_stack(FALSE, write_err);
+        log_current_task_stack(false, write_err);
     }
 
     method_cache_invalidates++;
@@ -1547,7 +1547,7 @@ Int object_rename_method(Obj * object, Ident oname, Ident nname) {
         return 0;
 
     method = method_dup(method);
-    object_del_method(object, oname, FALSE);
+    object_del_method(object, oname, false);
     object_add_method(object, nname, method);
     method_discard(method);
 
@@ -1565,7 +1565,7 @@ void object_add_method(Obj *object, Ident name, Method *method) {
     /* Delete the method if it previous existed, calling this on a
        locked method WILL CAUSE PROBLEMS, make sure you check before
        calling this. */
-    if (object_del_method(object, name, TRUE) != 1) {
+    if (object_del_method(object, name, true) != 1) {
         /* Invalidate the method cache. */
         if (object->children && list_length(object->children) != 0) {
             method_cache_invalidate_all();
@@ -1653,7 +1653,7 @@ Int object_del_method(Obj *object, Ident name, Bool replacing) {
             object->methods->tab[ind].next = object->methods->blanks;
             object->methods->blanks = ind;
 
-            if (replacing == FALSE) {
+            if (replacing == false) {
                 /* Invalidate the method cache. */
                 if (object->children && list_length(object->children) != 0) {
                     method_cache_invalidate_all();

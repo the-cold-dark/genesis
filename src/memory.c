@@ -64,7 +64,7 @@ struct pile {
 static Tblocks *tray_blocks;
 static Tlist *trays[NUM_TRAYS];
 
-static Bool inside_emalloc_logger = FALSE;
+static Bool inside_emalloc_logger = false;
 
 void init_emalloc(void) {
     int i;
@@ -102,10 +102,10 @@ void * emalloc(size_t size) {
         (log_malloc_size <= size) &&
         !inside_emalloc_logger)
     {
-        inside_emalloc_logger = TRUE;
+        inside_emalloc_logger = true;
         write_err("Allocation of size %l at:", size);
-        log_current_task_stack(FALSE, write_err);
-        inside_emalloc_logger = FALSE;
+        log_current_task_stack(false, write_err);
+        inside_emalloc_logger = false;
     }
 
     return ptr;
@@ -123,10 +123,10 @@ void *erealloc(void *ptr, size_t size)
         (log_malloc_size <= size) &&
         !inside_emalloc_logger)
     {
-        inside_emalloc_logger = TRUE;
+        inside_emalloc_logger = true;
         write_err("Allocation of size %l at:", size);
-        log_current_task_stack(FALSE, write_err);
-        inside_emalloc_logger = FALSE;
+        log_current_task_stack(false, write_err);
+        inside_emalloc_logger = false;
     }
 
     return newptr;

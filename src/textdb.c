@@ -184,7 +184,7 @@ cObjnum get_object_name(Ident id) {
 
     if (!lookup_retrieve_name(id, &num)) {
         num = db_top++;
-        add_objname(id, num, TRUE);
+        add_objname(id, num, true);
     }
 
     return num;
@@ -588,9 +588,8 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
         idref_t parent;
         char     par_str[BUF];
         Int      len,
-                 more = TRUE,
                  slen;
-
+        Bool     more = true;
         /* step past ':' and skip whitespace */
         s++;
         NEXT_WORD(s);
@@ -606,7 +605,7 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
                 s[slen - 1] = '\0';
                 strcpy(par_str, s);
                 len = strlen(par_str);
-                more = FALSE;
+                more = false;
             } else {
                 strncpy(par_str, s, p - s);
                 par_str[p - s] = '\0';
@@ -841,7 +840,7 @@ static void handle_namecmd(char * line, char * s, Int new) {
         num = db_top++;
     }
 
-    add_objname(id, num, TRUE);
+    add_objname(id, num, true);
     ident_discard(id);
 #endif
 }
@@ -940,10 +939,10 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
             if (d.type == -1) {
                 if (print_warn) {
                     printf("\rLine %ld: WARNING: invalid data for variable ", (long) line_count);
-                    print_dbref(cur_obj, cur_obj->objnum, stdout, TRUE);
+                    print_dbref(cur_obj, cur_obj->objnum, stdout, true);
                     if (cur_obj->objnum!=definer && (def=cache_retrieve(definer))) {
                         fputc('<', stdout);
-                        print_dbref(def, def->objnum, stdout, TRUE);
+                        print_dbref(def, def->objnum, stdout, true);
                         fputc('>', stdout);
                         cache_discard(def);
                     }
@@ -975,10 +974,10 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
             var_name = ident_name(var);
             if (print_warn) {
                 printf("\rLine %ld: WARNING: Variable ", (long) line_count);
-                print_dbref(cur_obj, cur_obj->objnum, stdout, TRUE);
+                print_dbref(cur_obj, cur_obj->objnum, stdout, true);
                 if (cur_obj->objnum != definer && (def = cache_retrieve(definer))) {
                     fputc('<', stdout);
-                    print_dbref(def, definer, stdout, TRUE);
+                    print_dbref(def, definer, stdout, true);
                     fputc('>', stdout);
                     cache_discard(def);
                 }
@@ -1566,12 +1565,12 @@ static char * method_definition(Method * m);
     }
 
 static void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames) {
-    Bool cachepull = FALSE;
+    Bool cachepull = false;
 
     if (objnames) {
         if (!obj) {
             obj = cache_retrieve(objnum);
-            cachepull = TRUE;
+            cachepull = true;
         }
         if (!obj || obj->objname == -1)
             PRINT_OBJNUM(objnum, fp)

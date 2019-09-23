@@ -176,7 +176,7 @@ COLDC_FUNC(toliteral) {
 
     INIT_1_ARG(ANY_TYPE);
 
-    str = data_to_literal(&args[0], TRUE);
+    str = data_to_literal(&args[0], true);
 
     pop(1);
     push_string(str);
@@ -251,7 +251,7 @@ COLDC_FUNC(valid) {
     else if (type == HANDLED_FROB_TYPE)
         is_valid = VALID_OBJECT(HANDLED_FROB(&args[ARG1])->cclass);
     else
-        is_valid = NO;
+        is_valid = 0;
 
     pop(1);
     push_int(is_valid);

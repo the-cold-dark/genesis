@@ -164,17 +164,17 @@ extern Long num_objects;
 #ifndef __Win32__
 static Bool good_perms(struct stat * sb) {
     if (!geteuid())
-        return YES;
+        return true;
     if (sb->st_uid == geteuid() && (sb->st_mode & S_IRWXU))
-        return YES;
+        return true;
     else if (sb->st_gid == getegid() && (sb->st_mode & S_IRWXG))
-        return YES;
-    return NO;
+        return true;
+    return false;
 }
 #endif
 
 static void simble_verify_clean(void) {
-    Bool isdirty = YES;
+    Bool isdirty = true;
     char system[LINE],
          v_major[LINE],
          v_minor[LINE],
@@ -208,7 +208,7 @@ static void simble_verify_clean(void) {
                 if (atoi(v_patch) == VERSION_PATCH) {
                     if (atol(magicmod) == MAGIC_MODNUMBER) {
                         if (strcmp(system, SYSTEM_TYPE) == 0) {
-                            isdirty = NO; /* yay */
+                            isdirty = false; /* yay */
                         }
                     }
                 }

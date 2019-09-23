@@ -31,10 +31,10 @@ extern pthread_t cleaner;
 
 Int    c_nowrite = 1;
 Int    c_opt = OPT_COMP;
-Bool   print_objs = YES;
-Bool   print_names = NO;
-Bool   print_invalid = YES;
-Bool   print_warn = YES;
+Bool   print_objs = true;
+Bool   print_names = false;
+Bool   print_invalid = true;
+Bool   print_warn = true;
 
 #define NEW_DB       1
 #define EXISTING_DB  0
@@ -46,7 +46,7 @@ static FILE * find_text_db(void);
 static void   compile_db(Int type);
 
 void shutdown_coldcc(int exit_status) {
-    running = NO;
+    running = false;
     write_err("Syncing binarydb...");
     cache_sync();
     simble_close();
@@ -222,7 +222,7 @@ static void print_natives(void) {
     }
 
 static void initialize(Int argc, char **argv) {
-    Bool   opt_bool = NO;
+    Bool   opt_bool = false;
     char * name = NULL,
          * opt = NULL,
          * buf;
@@ -296,7 +296,7 @@ static void initialize(Int argc, char **argv) {
                     break;
                 }
                 case 'W':
-                    print_warn = NO;
+                    print_warn = false;
                     break;
                 case 'w':
                     write_err("\n** Unsupported option: -w");
@@ -336,11 +336,11 @@ static void initialize(Int argc, char **argv) {
     init_token();
     init_modules(argc, argv);
     init_instances();
-    init_cache(FALSE);
+    init_cache(false);
 
     /* force coldcc to be atomic, specify that we are not running online */
-    atomic = YES;
-    coldcc = YES;
+    atomic = true;
+    coldcc = true;
 }
 
 /*

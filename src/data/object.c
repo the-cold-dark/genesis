@@ -73,7 +73,7 @@ struct search_params {
     uLong name;
     Long stop_at;
     Int done;
-    Bool is_frob;
+    IsFrob is_frob;
     Method * last_method_found;
 };
 
@@ -81,7 +81,7 @@ struct {
     Long stamp;
     cObjnum objnum;
     Ident name;
-    Bool is_frob;
+    IsFrob is_frob;
     Bool failed;
     cObjnum after;
     cObjnum loc;
@@ -105,9 +105,9 @@ static Int     object_has_ancestor_aux(cObjnum objnum, cObjnum ancestor);
 static Var    *object_create_var(Obj *object, cObjnum cclass, Ident name);
 static Var    *object_find_var(Obj *object, cObjnum cclass, Ident name);
 static Bool    method_cache_check(cObjnum objnum, Ident name, cObjnum after,
-                                  Bool is_frob, Method **method);
+                                  IsFrob is_frob, Method **method);
 static void    method_cache_set(cObjnum objnum, Ident name, cObjnum after,
-                                Long loc, Bool is_frob, Bool failed);
+                                Long loc, IsFrob is_frob, Bool failed);
 static void    method_cache_invalidate(cObjnum objnum);
 static void    method_cache_invalidate_all(void);
 static void    search_object(cObjnum objnum, Search_params *params);
@@ -1185,7 +1185,7 @@ static Var *object_find_var(Obj *object, cObjnum cclass, Ident name)
    fail when a parent's method sent a message to the child as
    a result of a message to the child handled by the parent
    (whew.) added 5/7/1995 Jeffrey P. kesselman */
-Method *object_find_method(cObjnum objnum, Ident name, Bool is_frob) {
+Method *object_find_method(cObjnum objnum, Ident name, IsFrob is_frob) {
     Search_params   params;
     Obj           * object;
     Method        * method, *local_method;
@@ -1245,7 +1245,7 @@ Method *object_find_method(cObjnum objnum, Ident name, Bool is_frob) {
 /* Reference-counting kludge: on return, the method's object field has an extra
  * reference count, in order to keep it in cache.  objnum must be valid. */
 Method *object_find_next_method(cObjnum objnum, Ident name,
-                                cObjnum after, Bool is_frob)
+                                cObjnum after, IsFrob is_frob)
 {
     Search_params params;
     Obj *object;
@@ -1345,7 +1345,7 @@ static void search_object(cObjnum objnum, Search_params *params)
 }
 
 /* Look for a method on an object. */
-Method *object_find_method_local(Obj *object, Ident name, Bool is_frob)
+Method *object_find_method_local(Obj *object, Ident name, IsFrob is_frob)
 {
     Int ind, method;
     Method *meth;
@@ -1382,7 +1382,7 @@ Method *object_find_method_local(Obj *object, Ident name, Bool is_frob)
 }
 
 static Bool method_cache_check(cObjnum objnum, Ident name,
-                               cObjnum after, Bool is_frob, Method **method)
+                               cObjnum after, IsFrob is_frob, Method **method)
 {
     Obj *object;
     Int i;
@@ -1408,7 +1408,7 @@ static Bool method_cache_check(cObjnum objnum, Ident name,
 }
 
 static void method_cache_set(cObjnum objnum, Ident name, cObjnum after,
-                             Long loc, Bool is_frob, Bool failed)
+                             Long loc, IsFrob is_frob, Bool failed)
 {
     uLong i;
 

@@ -170,10 +170,12 @@ struct Method {
 #define MF_UNDF3     64   /* undefined */
 #define MF_UNDF4     128  /* undefined */
 
-#define FROB_YES 1
-#define FROB_NO  0
-#define FROB_ANY 2
-#define FROB_RETRY -1
+typedef enum is_frob {
+    FROB_RETRY = -1,
+    FROB_NO  = 0,
+    FROB_YES = 1,
+    FROB_ANY = 2,
+} IsFrob;
 
 /* Needed here for defs.c and cache.c */
 #define START_SEARCH_AT 0 /* zero is the 'unsearched' number */
@@ -211,10 +213,10 @@ extern Ident   object_inherited_var(Obj *object, Obj *cclass, Ident name,
                                     cData *ret);
 extern Bool    object_put_var(Obj *object, cObjnum cclass, Ident name,
                               cData *val);
-extern Method *object_find_method(cObjnum objnum, Ident name, Bool is_frob);
-extern Method *object_find_method_local(Obj * obj, Ident name, Bool is_frob);
+extern Method *object_find_method(cObjnum objnum, Ident name, IsFrob is_frob);
+extern Method *object_find_method_local(Obj * obj, Ident name, IsFrob is_frob);
 extern Method *object_find_next_method(cObjnum objnum, Ident name,
-                                       cObjnum after, Bool is_frob);
+                                       cObjnum after, IsFrob is_frob);
 extern Int     object_rename_method(Obj * object, Ident oname, Ident nname);
 extern void    object_add_method(Obj *object, Ident name, Method *method);
 extern Int     object_del_method(Obj *object, Ident name, Bool replacing);

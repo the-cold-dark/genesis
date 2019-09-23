@@ -71,7 +71,7 @@ struct frame {
     Int ticks;
     Int stack_start;
     Int var_start;
-    Bool is_frob;
+    IsFrob is_frob;
     Error_action_specifier *specifiers;
     Handler_info *handler_info;
     Frame *caller_frame;
@@ -171,12 +171,12 @@ Int  frame_start(Obj *obj,
                  cObjnum user,
                  Int stack_start,
                  Int arg_start,
-                 Bool is_frob);
+                 IsFrob is_frob);
 void pop_native_stack(Int start);
 void frame_return(void);
 void anticipate_assignment(void);
 Int pass_method(Int stack_start, Int arg_start);
-Int call_method(cObjnum objnum, Ident message, Int stack_start, Int arg_start, Bool is_frob);
+Int call_method(cObjnum objnum, Ident message, Int stack_start, Int arg_start, IsFrob is_frob);
 void pop(Int n);
 void check_stack(Int n);
 Traceback_info *traceback_info_dup(Traceback_info *info);

@@ -323,7 +323,7 @@ static Int fork_method(Obj * obj,
                 cObjnum    user,
                 Int      stack_start,
                 Int      arg_start,
-                Bool     is_frob)
+                IsFrob   is_frob)
 {
     VMState * current = vm_current();
     Int       count, spos, result;
@@ -782,7 +782,7 @@ Int frame_start(Obj    * obj,
                 cObjnum  user,
                 Int      stack_start,
                 Int      arg_start,
-                Bool     is_frob)
+                IsFrob   is_frob)
 {
     Frame      * frame;
     Int          i,
@@ -1264,7 +1264,7 @@ Int call_method(cObjnum objnum,     /* the object */
                 Ident name,         /* the method name */
                 Int stack_start,    /* start of the stack .. */
                 Int arg_start,      /* start of the args */
-                Bool is_frob)       /* how to look it up */
+                IsFrob is_frob)     /* how to look it up */
 {
     Obj * obj;
     Method * method;

@@ -743,7 +743,7 @@ COLDC_OP(pass) {
 
 COLDC_OP(message) {
     Int arg_start, ind;
-    Bool is_frob=FROB_NO;
+    IsFrob is_frob=FROB_NO;
     cData *target;
     Long message, objnum;
     cFrob *frob;
@@ -814,7 +814,7 @@ COLDC_OP(message) {
 
 COLDC_OP(expr_message) {
     Int arg_start;
-    Bool is_frob=FROB_NO;
+    IsFrob is_frob=FROB_NO;
     cData *target, *message_data;
     Long objnum, message;
 

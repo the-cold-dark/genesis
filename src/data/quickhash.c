@@ -27,8 +27,8 @@ Hash * hash_new_with(cList *keys) {
     /* Initialize chain entries and hash table. */
     cnew->links   = EMALLOC(Int, cnew->hashtab_size);
     cnew->hashtab = EMALLOC(Int, cnew->hashtab_size);
-    memset(cnew->links,   -1, sizeof(Long)*cnew->hashtab_size);
-    memset(cnew->hashtab, -1, sizeof(Long)*cnew->hashtab_size);
+    memset(cnew->links,   -1, sizeof(Int)*cnew->hashtab_size);
+    memset(cnew->hashtab, -1, sizeof(Int)*cnew->hashtab_size);
 
     /* Insert the keys into the hash table, eliminating duplicates. */
     i = j = 0;
@@ -126,8 +126,8 @@ static void quickhash_increase_hashtab_size(Hash * hash)
 
     hash->links = EREALLOC(hash->links, Int, hash->hashtab_size);
     hash->hashtab = EREALLOC(hash->hashtab, Int, hash->hashtab_size);
-    memset(hash->links,   -1, sizeof(Long)*hash->hashtab_size);
-    memset(hash->hashtab, -1, sizeof(Long)*hash->hashtab_size);
+    memset(hash->links,   -1, sizeof(Int)*hash->hashtab_size);
+    memset(hash->hashtab, -1, sizeof(Int)*hash->hashtab_size);
     printf ("rehashing... ");
     fflush (stdout);
     for (i = 0; i < hash->keys->len; i++)

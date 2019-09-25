@@ -14,6 +14,7 @@
 #include "config.h"
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -238,99 +239,36 @@ extern char *sys_errlist[];
 */
 
 typedef bool              Bool;
-
-#if SIZEOF_CHAR == 1
-  typedef char               Byte;
-  typedef unsigned char      uByte;
-  typedef char               Char;
-  typedef unsigned char      uChar;
-#elif SIZEOF_SHORT == 1
-  typedef short int          Byte;
-  typedef unsigned short int uByte;
-  typedef char               Char;
-  typedef unsigned char      uChar;
-#else
-# error "Unable to specify size for Byte and Char type (8 bits)"
-#endif
-
-#if SIZEOF_SHORT == 2
-  typedef short int          Short;
-  typedef unsigned short int uShort;
-#elif SIZEOF_CHAR == 2   /* unlikely */
-  typedef char               Short;
-  typedef unsigned char      uShort;
-#elif SIZEOF_INT == 2
-  typedef int                Short;
-  typedef unsigned int       uShort;
-#else
-# error "Unable to specify size for Short type (16 bits)"
-#endif
-
- /* when monkeys fly */
-#if SIZEOF_SHORT == 4
-  typedef short int          Int;
-  typedef unsigned short int uInt;
-#elif SIZEOF_INT == 4
-  typedef int               Int;
-  typedef unsigned int      uInt;
-# define MAX_INT  2147483647
-# define MIN_INT  (- MAX_INT -1)
-# define MAX_UINT 4294967295U
-#elif SIZEOF_LONG == 4
-  typedef long              Int;
-  typedef unsigned long     uInt;
-# define MAX_INT  2147483647L
-# define MIN_INT  (- MAX_INT - 1)
-# define MAX_UINT 4294967295UL
-#else
-# error "Unable to specify size for Int type (32 bits)"
-#endif
+typedef char              Byte;
+typedef unsigned char     uByte;
+typedef char              Char;
+typedef unsigned char     uChar;
+typedef int16_t           Short;
+typedef uint16_t          uShort;
+typedef int32_t           Int;
+typedef uint32_t          uInt;
+#define MAX_INT  2147483647
+#define MIN_INT  (- MAX_INT -1)
+#define MAX_UINT 4294967295U
 
 #ifdef USE_BIG_NUMBERS
-
-#  if SIZEOF_LONG == 8
-     typedef long              Long;
-     typedef unsigned long     uLong;
-#    define MAX_LONG  9223372036854775807L
-#    define MIN_LONG  (- MAX_LONG - 1)
-#    define MAX_ULONG 18446744073709551615UL
-#  elif SIZEOF_LLONG == 8
-     typedef long long         Long;
-     typedef unsigned long long uLong;
-#    define MAX_LONG  9223372036854775807LL
-#    define MIN_LONG  (- MAX_LONG - 1)
-#    define MAX_ULONG 18446744073709551615ULL
-#  else
-#    error "Unable to specify size for BIG Long type (64 bits)"
-#  endif
+    typedef int64_t       Long;
+    typedef uint64_t      uLong;
+#   define MAX_LONG  9223372036854775807L
+#   define MIN_LONG  (- MAX_LONG - 1)
+#   define MAX_ULONG 18446744073709551615UL
 #else
-
-  typedef Int               Long;
-  typedef uInt              uLong;
-
-# define MAX_LONG  MAX_INT
-# define MIN_LONG  (- MAX_INT - 1);
-# define MAX_ULONG MAX_UINT
+    typedef Int           Long;
+    typedef uInt          uLong;
+#   define MAX_LONG  MAX_INT
+#   define MIN_LONG  (- MAX_INT - 1);
+#   define MAX_ULONG MAX_UINT
 #endif
 
 #ifdef USE_BIG_FLOATS
-#  if SIZEOF_FLOAT == 8     /* hah, not likely */
-     typedef float           Float;
-#  elif SIZEOF_DOUBLE == 8
      typedef double          Float;
-#  elif SIZEOF_LDOUBLE == 8
-     typedef double          Float;
-#  else
-#    error "Unable to specify size for BIG Float type (64 bits)"
-#  endif
 #else
-#  if SIZEOF_FLOAT == 4
      typedef float           Float;
-#  elif SIZEOF_DOUBLE == 4   /* will this ever occur !? */
-     typedef double          Float;
-#  else
-#    error "Unable to specify size for Float type (32 bits)"
-#  endif
 #endif
 
 /* basic sizes */

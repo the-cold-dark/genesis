@@ -22,14 +22,8 @@
 
 #cmakedefine DBM_H_FILE @DBM_H_FILE@
 
-#cmakedefine SIZEOF_CHAR @SIZEOF_CHAR@
-#cmakedefine SIZEOF_SHORT @SIZEOF_SHORT@
-#cmakedefine SIZEOF_INT @SIZEOF_INT@
 #cmakedefine SIZEOF_LONG @SIZEOF_LONG@
-#cmakedefine SIZEOF_LLONG @SIZEOF_LLONG@
 #cmakedefine SIZEOF_FLOAT @SIZEOF_FLOAT@
-#cmakedefine SIZEOF_DOUBLE @SIZEOF_DOUBLE@
-#cmakedefine SIZEOF_LDOUBLE @SIZEOF_LDOUBLE@
 
 #cmakedefine HAVE_GETRUSAGE
 #cmakedefine HAVE_GETTIMEOFDAY

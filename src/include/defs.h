@@ -22,11 +22,6 @@
 #include <unistd.h>
 #endif
 
-#ifdef sys_linux
-#undef NULL
-#define NULL 0
-#endif
-
 #include <setjmp.h>
 
 /*

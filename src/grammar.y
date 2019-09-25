@@ -10,9 +10,6 @@
 */
 
 %{
-
-#define _grammar_y_
-
 #include "defs.h"
 
 #include <stdarg.h>
@@ -428,5 +425,3 @@ Int no_errors(void) {
 static void yyerror(char * s) {
     compiler_error(cur_lineno(), s);
 }
-
-#undef _grammar_y_

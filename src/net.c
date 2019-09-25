@@ -5,7 +5,6 @@
 */
 
 #define _BSD 44 /* For RS6000s. */
-#define _NET_C_
 #include "defs.h"
 
 #include <sys/types.h>
@@ -22,6 +21,8 @@
 #include <fcntl.h>
 #include "net.h"
 #include "util.h"
+
+cBuf * socket_buffer;
 
 static SOCKET grab_port(Int port, char * addr, int socktype);
 static Long translate_connect_error(Int error);

@@ -34,11 +34,7 @@ Int    simble_dump_some_blocks (Int maxblocks);
 void   simble_dump_finish(void);
 
 /* global primarily so we can know if we are dumping */
-#ifdef _binarydb_
-FILE *dump_db_file = NULL;
-#else
 extern FILE *dump_db_file;
-#endif
 
 #endif
 

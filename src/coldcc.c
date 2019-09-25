@@ -2,8 +2,6 @@
 // Full copyright information is available in the file ../doc/CREDITS
 */
 
-#define _coldcc_
-
 #include "defs.h"
 
 #include <sys/types.h>
@@ -377,6 +375,3 @@ void usage (char * name) {
              CACHE_WIDTH, CACHE_DEPTH);
     fflush(stderr);
 }
-
-#undef _coldcc_
-

@@ -7,8 +7,6 @@
 // io.c modifies and uses 'files'.
 */
 
-#define _file_
-
 #include "defs.h"
 
 #include <ctype.h>
@@ -403,5 +401,3 @@ cList * open_file(cStr * name, cStr * smode, Obj * obj) {
 
     return statbuf_to_list(&sbuf);
 }
-
-#undef _file_

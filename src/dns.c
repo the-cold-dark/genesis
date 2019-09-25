@@ -6,8 +6,6 @@
 
 #define _BSD 44 /* For RS6000s. */
 
-#define _dns_c_
-
 #include "defs.h"
 
 #ifdef __UNIX__

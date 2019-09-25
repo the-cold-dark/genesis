@@ -7,7 +7,6 @@
 // in YACC
 */
 
-#define TEXTDB_C
 #define DEBUG_TEXTDB 0
 
 #include "defs.h"

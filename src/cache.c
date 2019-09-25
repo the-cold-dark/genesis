@@ -8,8 +8,6 @@
 // all rights reserved.
 */
 
-#define _cache_
-
 #include "defs.h"
 
 #include "cdc_db.h"
@@ -857,4 +855,3 @@ cList * cache_info(int level) {
 
     return out;
 }
-#undef _cache_

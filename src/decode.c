@@ -6,11 +6,14 @@
 // Routines to decompile a method.
 */
 
-#define _DECODE_C_
 #include "defs.h"
 
 #include "cdc_pcode.h"
 #include "util.h"
+
+static int format_flags;
+#define FULL_PARENS() (format_flags & FMT_FULL_PARENS)
+#define FULL_BRACES() (format_flags & FMT_FULL_BRACES)
 
 #define TOKEN_SIZE (sizeof(binary_tokens) / sizeof(*binary_tokens))
 #define PREC_SIZE (sizeof(precedences) / sizeof(*precedences))

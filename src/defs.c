@@ -2,11 +2,60 @@
 // Full copyright information is available in the file ../doc/CREDITS
 */
 
-#define DEFS_C
-
 #include <sys/types.h>
 #include <time.h>
 #include "defs.h"
+
+jmp_buf main_jmp;
+
+char * c_dir_binary;
+char * c_dir_textdump;
+char * c_dir_bin;
+char * c_dir_root;
+char * c_logfile;
+char * c_errfile;
+char * c_runfile;
+
+FILE * logfile;
+FILE * errfile;
+cStr * str_tzname;
+cStr * str_hostname;
+cStr * str_release;
+cStr * str_system;
+
+Bool coldcc;
+Bool running;
+Bool atomic;
+Int  heartbeat_freq;
+
+Int cache_width;
+Int cache_depth;
+#ifdef USE_CLEANER_THREAD
+Int  cleaner_wait;
+cDict * cleaner_ignore_dict;
+#endif
+
+void init_defs(void);
+void uninit_defs(void);
+
+/* limits configurable with 'config()' */
+Int  limit_datasize;
+Int  limit_fork;
+Int  limit_calldepth;
+Int  limit_recursion;
+Int  limit_objswap;
+
+/* driver config parameters accessible through config() */
+Int  cache_log_flag;
+Int  cache_watch_count;
+cObjnum cache_watch_object;
+Int  log_malloc_size;
+Int  log_method_cache;
+
+#ifdef USE_CACHE_HISTORY
+/* cache stats stuff */
+Int cache_history_size;
+#endif
 
 #define INIT_VAR(var, name, len) { \
         var = EMALLOC(char, len + 1); \
@@ -85,5 +134,3 @@ void uninit_defs(void) {
     list_discard(method_cache_history);
 #endif
 }
-
-#undef _defs_

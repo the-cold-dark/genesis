@@ -6,8 +6,6 @@
 // The block allocation algorithm in this code is due to Marcus J. Ranum.
 */
 
-#define _binarydb_
-
 #include "defs.h"
 
 #ifdef __UNIX__
@@ -53,6 +51,8 @@ pthread_mutex_t db_mutex;
 #ifdef __MSVC__
 #include <direct.h>
 #endif
+
+FILE *dump_db_file = NULL;
 
 /* suggested by xmath as possibly faster
 #define NEEDED(n, b)    (((n) + ((b) - 1)) / (b))
@@ -884,5 +884,3 @@ void init_core_objects(void) {
 Float simble_fragmentation(void) {
     return 1.0 - ((float)allocated_blocks/(float)bitmap_blocks);
 }
-
-#undef _binarydb_

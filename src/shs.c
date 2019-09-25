@@ -25,7 +25,6 @@
 // I'm leaving the lint in --Brandon Gillespie
 */
 
-#define _SHS_include_
 #include "defs.h"
 #include "crypt.h"
 

@@ -4,8 +4,6 @@
 // Main file for 'genesis' executable
 */
 
-#define _main_
-
 #include "defs.h"
 
 #include <sys/types.h>

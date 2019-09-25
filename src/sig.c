@@ -2,8 +2,6 @@
 // Full copyright information is available in the file ../doc/CREDITS
 */
 
-#define SIG_C
-
 #include "defs.h"
 
 #include <signal.h>
@@ -13,6 +11,8 @@
 #endif
 #include "execute.h"      /* vm_task() */
 #include "sig.h"
+
+short caught_fpe;
 
 void catch_SIGFPE(int sig);
 #ifdef __UNIX__

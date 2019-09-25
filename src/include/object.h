@@ -253,5 +253,5 @@ extern Long    db_top;
 extern Long    num_objects;
 extern uLong   cache_search;
 
-#endif /* _object_h_ */
+#endif /* cdc_object_h_ */
 

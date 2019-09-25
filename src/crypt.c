@@ -1,6 +1,3 @@
-
-#define _SHS_include_
-
 #include "defs.h"
 
 #include <ctype.h>
@@ -209,5 +206,3 @@ char * shs_crypt(const unsigned char * pw,
 
     return passwd;
 }
-
-#undef _crypt_c_

@@ -2,8 +2,6 @@
 // Full copyright information is available in the file ../doc/CREDITS
 */
 
-#define _io_
-
 #include "defs.h"
 
 #include <ctype.h>
@@ -512,5 +510,3 @@ void flush_output(void) {
         }
     }
 }
-
-#undef _io_

@@ -7,11 +7,7 @@
 
 void init_sig(void);
 
-#ifdef SIG_C
-short caught_fpe;   /* if we catch SIGFPE */
-#else
-extern short caught_fpe;
-#endif
+extern short caught_fpe;   /* if we catch SIGFPE */
 
 /* void catch_signal(int sig, int code, struct sigcontext *scp); */
 void catch_signal(int sig);

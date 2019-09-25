@@ -13,11 +13,9 @@
 #include "codegen.h"
 #include "code_prv.h"
 
-#ifndef _grammar_y_
 #include "execute.h"
 #include "native.h"
 #include "opcodes.h"
 #include "decode.h"
-#endif
 
 #endif

@@ -2,8 +2,6 @@
 // Full copyright information is available in the file ../doc/CREDITS
 */
 
-#define _object_
-
 #include "defs.h"
 #include "object.h"
 
@@ -1876,5 +1874,3 @@ void object_load_parent_objs(Obj * obj)
     }
 }
 #endif
-
-#undef _object_

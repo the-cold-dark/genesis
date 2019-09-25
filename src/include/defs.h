@@ -304,7 +304,6 @@ typedef uint32_t          uInt;
 #include "cdc_memory.h"
 #include "log.h"
 
-#ifndef _grammar_y_
 #include "parse.h"
 
 extern cInstance class_registry[];
@@ -317,70 +316,12 @@ typedef enum instance_id {
 
 void register_instance (InstanceID instance, Ident id);
 
-#endif
-
 
 /*
 // --------------------------------------------------------------------
 // globals, aiee
 // --------------------------------------------------------------------
 */
-
-#ifdef DEFS_C
-jmp_buf main_jmp;
-
-char * c_dir_binary;
-char * c_dir_textdump;
-char * c_dir_bin;
-char * c_dir_root;
-char * c_logfile;
-char * c_errfile;
-char * c_runfile;
-
-FILE * logfile;
-FILE * errfile;
-cStr * str_tzname;
-cStr * str_hostname;
-cStr * str_release;
-cStr * str_system;
-
-Bool coldcc;
-Bool running;
-Bool atomic;
-Int  heartbeat_freq;
-
-Int cache_width;
-Int cache_depth;
-#ifdef USE_CLEANER_THREAD
-Int  cleaner_wait;
-cDict * cleaner_ignore_dict;
-#endif
-
-void init_defs(void);
-void uninit_defs(void);
-
-/* limits configurable with 'config()' */
-Int  limit_datasize;
-Int  limit_fork;
-Int  limit_calldepth;
-Int  limit_recursion;
-Int  limit_objswap;
-
-/* driver config parameters accessible through config() */
-Int  cache_log_flag;
-Int  cache_watch_count;
-cObjnum cache_watch_object;
-Int  log_malloc_size;
-Int  log_method_cache;
-
-#ifdef USE_CACHE_HISTORY
-/* cache stats stuff */
-extern cList * ancestor_cache_history;
-extern cList * method_cache_history;
-Int cache_history_size;
-#endif
-
-#else
 extern jmp_buf main_jmp;
 
 extern char * c_dir_binary;
@@ -438,7 +379,6 @@ extern Int cache_history_size;
 
 extern Int name_cache_hits;
 extern Int name_cache_misses;
-#endif
 
 #endif
 

@@ -4,6 +4,7 @@
 
 #include "defs.h"
 
+#include <limits.h>
 #include <string.h>
 #include "functions.h"
 #include "execute.h"
@@ -66,8 +67,12 @@ COLDC_FUNC(bind_port) {
     addr = (argc==2 ? string_chars(STR2) : (char *) NULL);
     port=INT1;
 
-    if (((port >= 0) ? tcp_server(port, addr, cur_frame->object->objnum)
-                     : udp_server(-port, addr, cur_frame->object->objnum))) {
+    if ((port > USHRT_MAX) || (-port > USHRT_MAX)) {
+        THROW((address_id, "Invalid port number: %d", port));
+    }
+
+    if (((port >= 0) ? tcp_server((unsigned short)port, addr, cur_frame->object->objnum)
+                     : udp_server((unsigned short)(-port), addr, cur_frame->object->objnum))) {
         pop(argc);
         push_int(1);
     } else if (server_failure_reason == address_id)
@@ -101,7 +106,9 @@ COLDC_FUNC(unbind_port) {
     if (!func_init_1(&args, INTEGER))
         return;
 
-    if (!remove_server(args[0].u.val))
+    // TODO: Validate port # here.
+
+    if (!remove_server((unsigned short)args[0].u.val))
         THROW((servnf_id, "No server socket on port %d.", args[0].u.val));
     else {
         pop(1);
@@ -124,10 +131,12 @@ COLDC_FUNC(open_connection) {
     address = string_chars(args[0].u.str);
     port = args[1].u.val;
 
+    // TODO: Validate port # here.
+
     if (argc==2)
-        r = make_connection(address, port, cur_frame->object->objnum);
+        r = make_connection(address, (unsigned short)port, cur_frame->object->objnum);
     else
-        r = make_udp_connection(address, port, cur_frame->object->objnum);
+        r = make_udp_connection(address, (unsigned short)port, cur_frame->object->objnum);
     if (r == address_id)
         THROW((address_id, "Invalid address"));
     else if (r == socket_id)

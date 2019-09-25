@@ -23,14 +23,14 @@ typedef Int SOCKET;
 
 Int io_event_wait(Int sec, Conn *connections, server_t *servers,
                   pending_t *pendings);
-Long non_blocking_connect(char *addr, Int port, Int *socket_return);
+Long non_blocking_connect(char *addr, unsigned short port, Int *socket_return);
 void init_net(void);
 void uninit_net(void);
 
-SOCKET get_tcp_socket(Int port, char * addr);
-SOCKET get_udp_socket(Int port, char * addr);
+SOCKET get_tcp_socket(unsigned short port, char * addr);
+SOCKET get_udp_socket(unsigned short port, char * addr);
 
-Bool prebind_port(int port, char * addr, int tcp);
+Bool prebind_port(unsigned short port, char * addr, int tcp);
 
 extern cBuf * socket_buffer;
 extern Long server_failure_reason;

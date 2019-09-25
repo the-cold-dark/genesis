@@ -24,7 +24,7 @@
 
 cBuf * socket_buffer;
 
-static SOCKET grab_port(Int port, char * addr, int socktype);
+static SOCKET grab_port(unsigned short port, char * addr, int socktype);
 static Long translate_connect_error(Int error);
 
 static struct sockaddr_in sockin;        /* An internet address. */
@@ -132,11 +132,11 @@ int inet_aton (const char * cp, struct in_addr * addr) {
 
 typedef struct Prebind Prebind;
 struct Prebind {
-    SOCKET    sock;
-    uShort    port;
-    Bool      tcp;
-    char      addr[BUF];
-    Prebind * next;
+    SOCKET          sock;
+    unsigned short  port;
+    Bool            tcp;
+    char            addr[BUF];
+    Prebind       * next;
 };
 Prebind * prebound = NULL;
 
@@ -145,7 +145,7 @@ Prebind * prebound = NULL;
         exit(1); \
     }
 
-Bool prebind_port(int port, char * addr, int tcp) {
+Bool prebind_port(unsigned short port, char * addr, int tcp) {
     SOCKET    sock;
     Prebind * pb;
 
@@ -179,7 +179,7 @@ Bool prebind_port(int port, char * addr, int tcp) {
     return true;
 }
 
-static int use_prebound(SOCKET * sock, int port, char * addr, int socktype) {
+static int use_prebound(SOCKET * sock, unsigned short port, char * addr, int socktype) {
     Prebind  * pb,
             ** pbp = &prebound;
 
@@ -213,7 +213,7 @@ static int use_prebound(SOCKET * sock, int port, char * addr, int socktype) {
     return 0;
 }
 
-static SOCKET grab_port(Int port, char * addr, int socktype) {
+static SOCKET grab_port(unsigned short port, char * addr, int socktype) {
     int    one = 1;
     Int flags;
     SOCKET sock;
@@ -227,9 +227,9 @@ static SOCKET grab_port(Int port, char * addr, int socktype) {
     }
 
     /* verify the address first */
-    memset(&sockin, 0, sizeof(sockin));               /* zero it */
-    sockin.sin_family = AF_INET;                      /* set inet */
-    sockin.sin_port = htons((unsigned short) port);   /* set port */
+    memset(&sockin, 0, sizeof(sockin)); /* zero it */
+    sockin.sin_family = AF_INET;        /* set inet */
+    sockin.sin_port = htons(port);      /* set port */
 
     if (addr && !inet_aton(addr, &sockin.sin_addr)) {
         server_failure_reason = address_id;
@@ -264,7 +264,7 @@ static SOCKET grab_port(Int port, char * addr, int socktype) {
     return sock;
 }
 
-SOCKET get_tcp_socket(Int port, char * addr) {
+SOCKET get_tcp_socket(unsigned short port, char * addr) {
     SOCKET sock;
 
     sock = grab_port(port, addr, SOCK_STREAM);
@@ -277,7 +277,7 @@ SOCKET get_tcp_socket(Int port, char * addr) {
     return sock;
 }
 
-SOCKET get_udp_socket(Int port, char * addr) {
+SOCKET get_udp_socket(unsigned short port, char * addr) {
     SOCKET sock;
 
     sock = grab_port(port, addr, SOCK_DGRAM);
@@ -439,7 +439,7 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
     return 1;
 }
 
-Long non_blocking_connect(char *addr, Int port, Int *socket_return)
+Long non_blocking_connect(char *addr, unsigned short port, Int *socket_return)
 {
     SOCKET fd;
     Int    result, flags;
@@ -475,7 +475,7 @@ Long non_blocking_connect(char *addr, Int port, Int *socket_return)
     /* Make the connection. */
     memset(&saddr, 0, sizeof(saddr));
     saddr.sin_family = AF_INET;
-    saddr.sin_port = htons((unsigned short) port);
+    saddr.sin_port = htons(port);
     saddr.sin_addr = inaddr;
     do {
         result = connect(fd, (struct sockaddr *) &saddr, sizeof(saddr));
@@ -488,7 +488,7 @@ Long non_blocking_connect(char *addr, Int port, Int *socket_return)
         return translate_connect_error(GETERR());
 }
 
-Long udp_connect(char *addr, Int port, Int *socket_return)
+Long udp_connect(char *addr, unsigned short port, Int *socket_return)
 {
     SOCKET fd;
     Int    result, flags;
@@ -524,7 +524,7 @@ Long udp_connect(char *addr, Int port, Int *socket_return)
     /* Make the connection. */
     memset(&saddr, 0, sizeof(saddr));
     saddr.sin_family = AF_INET;
-    saddr.sin_port = htons((unsigned short) port);
+    saddr.sin_port = htons(port);
     saddr.sin_addr = inaddr;
     do {
         result = connect(fd, (struct sockaddr *) &saddr, sizeof(saddr));

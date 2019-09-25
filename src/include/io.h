@@ -52,13 +52,13 @@ void handle_connection_output(void);
 Conn * find_connection(Obj * obj);
 Conn * ctell(Obj * obj, cBuf *buf);
 Int  boot(Obj * obj, void * ptr);
-Int  tcp_server(Int port, char * addr, Long objnum);
-Int  udp_server(Int port, char * addr, Long objnum);
-Int  remove_server(Int port);
-Long make_connection(char *addr, Int port, cObjnum receiver);
-Long make_udp_connection(char *addr, Int port, cObjnum receiver);
+Int  tcp_server(unsigned short port, char * addr, Long objnum);
+Int  udp_server(unsigned short port, char * addr, Long objnum);
+Int  remove_server(unsigned short port);
+Long make_connection(char *addr, unsigned short port, cObjnum receiver);
+Long make_udp_connection(char *addr, unsigned short port, cObjnum receiver);
 void flush_output(void);
-Long udp_connect(char *addr, Int port, Int *socket_return);
+Long udp_connect(char *addr, unsigned short port, Int *socket_return);
 
 extern int object_extra_connection;
 

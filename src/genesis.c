@@ -17,6 +17,7 @@
 #endif
 #include <ctype.h>
 #include <time.h>
+#include <limits.h>
 
 #ifdef USE_CLEANER_THREAD
 extern pthread_t cleaner;
@@ -66,7 +67,6 @@ static void unlink_runningfile(void) {
 */
 
 static void prebind_port_with(char * str, char * name) {
-    int port;
     char * addr = NULL, * s = str;
     Bool tcp = true;
 
@@ -88,7 +88,7 @@ static void prebind_port_with(char * str, char * name) {
     *s = '\0';
     s++;
 
-    port = atoi(s);
+    int port = atoi(s);
 
     if (port < 0) {
         tcp = false;
@@ -99,8 +99,14 @@ static void prebind_port_with(char * str, char * name) {
         exit(1);
     }
 
+    if (port > USHRT_MAX) {
+        usage(name);
+        fprintf(stderr, "** Invalid port: %d (greater than %d)\n", port, USHRT_MAX);
+        exit(1);
+    }
+
     /* now prebind it */
-    if (prebind_port(port, addr, tcp)) {
+    if (prebind_port((unsigned short)port, addr, tcp)) {
         if (addr)
             fprintf(stderr, "prebound %s:%d\n", addr, tcp ? port : -port);
         else

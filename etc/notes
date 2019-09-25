@@ -119,7 +119,7 @@ RELEASE INFORMATION:
       * Add extra argument for local port to callback for new incoming
         connections. [COMPAT] (Bruce)
       * Port to Mac OS X. (Bruce)
-      * Remove regsub references (not implementd/used). (Bruce)
+      * Remove regsub references (not implemented/used). (Bruce)
       * Fixed README. (Bruce)
       * Add memory_size() builtin to complement size() which deals with the
         on disk size of objects and data. (Brad)

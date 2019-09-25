@@ -247,22 +247,13 @@ typedef int16_t           Short;
 typedef uint16_t          uShort;
 typedef int32_t           Int;
 typedef uint32_t          uInt;
-#define MAX_INT  2147483647
-#define MIN_INT  (- MAX_INT -1)
-#define MAX_UINT 4294967295U
 
 #ifdef USE_BIG_NUMBERS
     typedef int64_t       Long;
     typedef uint64_t      uLong;
-#   define MAX_LONG  9223372036854775807L
-#   define MIN_LONG  (- MAX_LONG - 1)
-#   define MAX_ULONG 18446744073709551615UL
 #else
     typedef Int           Long;
     typedef uInt          uLong;
-#   define MAX_LONG  MAX_INT
-#   define MIN_LONG  (- MAX_INT - 1);
-#   define MAX_ULONG MAX_UINT
 #endif
 
 #ifdef USE_BIG_FLOATS

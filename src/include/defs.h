@@ -217,8 +217,6 @@ extern char *sys_errlist[];
 //   uByte    =>  tiny integer unsigned value
 //   Char     =>  character signed value
 //   uChar    =>  character unsigned value
-//   Short    =>  small integer signed value
-//   uShort   =>  small integer unsigned value
 //   Int      =>  common integer signed value
 //   uInt     =>  common integer unsigned value
 //   Long     =>  large integer signed value
@@ -238,8 +236,6 @@ typedef char              Byte;
 typedef unsigned char     uByte;
 typedef char              Char;
 typedef unsigned char     uChar;
-typedef int16_t           Short;
-typedef uint16_t          uShort;
 typedef int32_t           Int;
 typedef uint32_t          uInt;
 

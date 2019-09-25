@@ -28,14 +28,6 @@ static int format_flags;
 #define PAREN_ASSIGN 1
 #define NOPAREN_ASSIGN 0
 
-typedef struct context Context;
-
-struct context {
-    Short type;
-    Int end;
-    Context *enclosure;
-};
-
 static Int count_lines(Int start, Int end, unsigned *flags);
 static Stmt_list *decompile_stmt_list(Int start, Int end);
 static Stmt *decompile_stmt(Int *pos_ptr);

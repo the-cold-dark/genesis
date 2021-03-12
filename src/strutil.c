@@ -731,9 +731,9 @@ cStr * strsed(cStr * reg,  /* the regexp string */
 //     s,S,l,L   any data, align left
 //     r,R       any data, align right
 //     c,C       any data, align centered
-//     e         any data, align left with an elipse
+//     e         any data, align left with an ellipsis
 //
-// Caplitalized types will crop the string if/when it reaches the 'pad'
+// Capitalized types will crop the string if/when it reaches the 'pad'
 // length, otherwise the string will overflow past the pad length.
 //
 // Examples:
@@ -946,7 +946,7 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
                     if (pad <= 3) {
                         string_discard(out);
                         x_THROW((type_id,
-                           "Elipse pad length must be at least 4 or more."));
+                           "Ellipsis pad length must be at least 4 or more."));
                     }
                     if (string_length(value) > pad) {
                         value = string_truncate(value, pad - 3);

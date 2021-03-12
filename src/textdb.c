@@ -1892,7 +1892,7 @@ char * strchop(char * str, Int len) {
         if (str[x] == '\0')
             return str;
     }
-    /* null terminate it and put an elipse in */
+    /* null terminate it and put an ellipsis in */
     str[x] = '\0';
     str[x-1] = str[x-2] = str[x-3] = '.';
 

@@ -59,7 +59,7 @@ Int cache_history_size;
 
 #define INIT_VAR(var, name, len) { \
         var = EMALLOC(char, len + 1); \
-        strncpy(var, name, len); \
+        memcpy(var, name, len); \
         var[len] = '\0'; \
     }
 

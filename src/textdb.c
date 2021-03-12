@@ -586,8 +586,7 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
     if (*s == ':') {
         idref_t parent;
         char     par_str[BUF];
-        Int      len,
-                 slen;
+        Int      slen;
         Bool     more = true;
         /* step past ':' and skip whitespace */
         s++;
@@ -603,12 +602,10 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
                     DIE("Parse Error, unterminated directive.");
                 s[slen - 1] = '\0';
                 strcpy(par_str, s);
-                len = strlen(par_str);
                 more = false;
             } else {
                 strncpy(par_str, s, p - s);
                 par_str[p - s] = '\0';
-                len = p - s;
             }
             get_idref(par_str, &parent, ISOBJ);
 #ifndef ONLY_PARSE_TEXTDB

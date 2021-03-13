@@ -44,7 +44,7 @@ pthread_mutex_t lookup_mutex;
 #include "cdc_db.h"
 #include "util.h"
 
-#include DBM_H_FILE
+#include <ndbm.h>
 
 #ifdef S_IRUSR
 #define READ_WRITE                (S_IRUSR | S_IWUSR)

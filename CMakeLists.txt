@@ -49,36 +49,26 @@ IF(LINK_LIBM)
       ${COLD_LIBRARIES}
       -lm)
 ENDIF()
-# Try to sort out the DB stuff.
+
+# Look for ndbm.h. This will either come from ndbm or gdbm-compat.
+# Then, figure out which library, if any, needs to be linked.
 CHECK_INCLUDE_FILE(ndbm.h HAVE_NDBM_H)
-CHECK_INCLUDE_FILE(gdbm-ndbm.h HAVE_GDBM_NDBM_H)
 IF(HAVE_NDBM_H)
-  SET(DBM_H_FILE "<ndbm.h>")
-  # On Mac OS X, we don't have to link against anything else.
+  # On macOS, we don't have to link against anything else.
   CHECK_FUNCTION_EXISTS(dbm_open HAVE_DBM_OPEN)
   IF(NOT HAVE_DBM_OPEN)
     CHECK_LIBRARY_EXISTS(ndbm dbm_open "" LINK_NDBM)
     IF(LINK_NDBM)
-      SET(COLD_LIBRARIES
-          ${COLD_LIBRARIES}
-          -lndbm)
+      SET(COLD_LIBRARIES ${COLD_LIBRARIES} -lndbm)
+    ELSE()
+      CHECK_LIBRARY_EXISTS(gdbm_compat dbm_open "" LINK_GDBM_COMPAT)
+      IF(LINK_GDBM_COMPAT)
+        SET(COLD_LIBRARIES ${COLD_LIBRARIES} -lgdbm_compat)
+      ENDIF()
     ENDIF()
   ENDIF()
-ELSEIF(HAVE_GDBM_NDBM_H)
-  SET(DBM_H_FILE "<gdbm-ndbm.h>")
-  CHECK_LIBRARY_EXISTS(gdbm dbm_open "" LINK_GDBM)
-  CHECK_LIBRARY_EXISTS(gdbm_compat dbm_open "" LINK_GDBM_COMPAT)
-  IF(LINK_GDBM)
-    SET(COLD_LIBRARIES
-        ${COLD_LIBRARIES}
-        -lgdbm)
-  ELSEIF(LINK_GDBM_COMPAT)
-    SET(COLD_LIBRARIES
-        ${COLD_LIBRARIES}
-        -lgdbm_compat)
-  ENDIF()
 ELSE()
-  MESSAGE(FATAL_ERROR "You must have ndbm or gdbm's ndbm emulation installed.")
+  MESSAGE(FATAL_ERROR "You must have ndbm or gdbm's ndbm emulation (gdbm-compat) installed.")
 ENDIF()
 
 IF(UNIX)

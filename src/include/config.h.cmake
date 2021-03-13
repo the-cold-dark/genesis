@@ -20,8 +20,6 @@
 
 #cmakedefine HAVE_UNISTD_H
 
-#cmakedefine DBM_H_FILE @DBM_H_FILE@
-
 #cmakedefine SIZEOF_LONG @SIZEOF_LONG@
 #cmakedefine SIZEOF_FLOAT @SIZEOF_FLOAT@
 

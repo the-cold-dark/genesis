@@ -42,7 +42,7 @@ available at http://the-cold-dark.github.io/contact.html
 Documentation:
 
 * Genesis:     http://the-cold-dark.github.io/genesis/
-* ColdC:       http://ice.cold.org:1180/bin/help?node=coldc
+* ColdC:       http://ice.cold.org/bin/help?node=coldc
 
 ## NOTES
 

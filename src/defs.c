@@ -76,7 +76,7 @@ void init_defs(void) {
 
     INIT_VAR(c_dir_binary, "binary", 6);
     INIT_VAR(c_dir_textdump, "textdump", 8);
-    INIT_VAR(c_dir_bin, "dbbin", 8);
+    INIT_VAR(c_dir_bin, "dbbin", 5);
     INIT_VAR(c_dir_root, "root", 4);
     INIT_VAR(c_logfile, "logs/db.log", 11);
     INIT_VAR(c_errfile, "logs/driver.log", 15);

@@ -6,34 +6,42 @@
 
 module_t ext_math_module = {false, NULL, false, NULL};
 
-static int check_one_vector(cList *l1, Int *len_ret)
+static bool check_one_vector(cList *l1, Int *len_ret)
 {
     Int i,len;
 
     len=list_length(l1);
     for (i=0; i<len; i++) {
-        if (list_elem(l1,i)->type != FLOAT)
-            THROW((type_id, "Arguments must be lists of floats."));
+        if (list_elem(l1,i)->type != FLOAT) {
+            cthrow(type_id, "Arguments must be lists of floats.");
+            return false;
+        }
     }
     *len_ret=len;
-    RETURN_TRUE;
+    return true;
 }
 
-static int check_vectors(cList *l1, cList *l2, Int *len_ret)
+static bool check_vectors(cList *l1, cList *l2, Int *len_ret)
 {
     Int i,len;
 
     len=list_length(l1);
-    if (list_length(l2)!=len)
-        THROW((range_id, "Arguments are not of the same length."));
+    if (list_length(l2)!=len) {
+        cthrow(range_id, "Arguments are not of the same length.");
+        return false;
+    }
     for (i=0; i<len; i++) {
-        if (list_elem(l1,i)->type != FLOAT)
-            THROW((type_id, "Arguments must be lists of floats."));
-        if (list_elem(l2,i)->type != FLOAT)
-            THROW((type_id, "Arguments must be lists of floats."));
+        if (list_elem(l1,i)->type != FLOAT) {
+            cthrow(type_id, "Arguments must be lists of floats.");
+            return false;
+        }
+        if (list_elem(l2,i)->type != FLOAT) {
+            cthrow(type_id, "Arguments must be lists of floats.");
+            return false;
+        }
     }
     *len_ret=len;
-    RETURN_TRUE;
+    return false;
 }
 
 

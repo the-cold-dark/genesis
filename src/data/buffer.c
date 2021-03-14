@@ -106,8 +106,6 @@ cBuf *buffer_resize(cBuf *buf, Int len) {
 #define SEPCHAR '\n'
 #define SEPLEN 1
 
-#define VERIFY_SIZE(_STR_) \
-
 cStr * buf_to_string(cBuf * buf) {
     cStr * str, * out;
     unsigned char * string_start, *p, *q;

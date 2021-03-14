@@ -102,23 +102,18 @@ cBuf *buffer_resize(cBuf *buf, Int len) {
 
 
 /* REQUIRES char *s and unsigned char *q are defined */
-
-#define SEPCHAR '\n'
-#define SEPLEN 1
-
 cStr * buf_to_string(cBuf * buf) {
     cStr * str, * out;
     unsigned char * string_start, *p, *q;
     char * s;
     size_t len;
-
-#define SEPCHAR '\n'
-#define SEPLEN 1
+    const char sepchar = '\n';
+    const int seplen = 1;
 
     out = string_new(buf->len);
     string_start = p = buf->s;
-    while (p + SEPLEN <= buf->s + buf->len) {
-        p = (unsigned char *) memchr(p, SEPCHAR, (buf->s + buf->len) - p);
+    while (p + seplen <= buf->s + buf->len) {
+        p = (unsigned char *) memchr(p, sepchar, (buf->s + buf->len) - p);
         if (!p)
             break;
         str = string_new(p - string_start);
@@ -134,7 +129,7 @@ cStr * buf_to_string(cBuf * buf) {
         out = string_add(out, str);
         out = string_add_chars(out, "\\n", 2);
         string_discard(str);
-        string_start = p = p + SEPLEN;
+        string_start = p = p + seplen;
     }
 
     if ((len = (buf->s + buf->len) - string_start)) {
@@ -153,14 +148,8 @@ cStr * buf_to_string(cBuf * buf) {
 
     }
 
-#undef SEPCHAR
-#undef SEPLEN
-
     return out;
 }
-
-#undef SEPCHAR
-#undef SEPLEN
 
 /* If sep (separator buffer) is NULL, separate by newlines. */
 cList *buf_to_strings(cBuf *buf, cBuf *sep)

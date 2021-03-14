@@ -11,7 +11,7 @@
 extern Int use_natives;
 
 void compile_cdc_file(FILE * fp);
-Int text_dump(Bool objnames);
+Int text_dump(bool objnames);
 
 #endif
 

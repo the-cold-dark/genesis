@@ -212,7 +212,6 @@ extern char *sys_errlist[];
 /*
 // these are C type defines, the following should be true:
 //
-//   Bool     =>  true or false value
 //   Byte     =>  tiny integer signed value
 //   uByte    =>  tiny integer unsigned value
 //   Char     =>  character signed value
@@ -231,7 +230,6 @@ extern char *sys_errlist[];
 // than 64 bits, for now they assume 64bits is the heavenly bit in the sky.
 */
 
-typedef bool              Bool;
 typedef char              Byte;
 typedef unsigned char     uByte;
 typedef char              Char;
@@ -335,9 +333,9 @@ extern cStr * str_hostname;
 extern cStr * str_release;
 extern cStr * str_system;
 
-extern Bool coldcc;
-extern Bool running;
-extern Bool atomic;
+extern bool coldcc;
+extern bool running;
+extern bool atomic;
 extern Int  heartbeat_freq;
 
 extern Int cache_width;

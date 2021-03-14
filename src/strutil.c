@@ -20,13 +20,13 @@
 typedef struct {
     char *start;
     char *end;
-    Bool strip;                        /* Strip backslashes? */
+    bool strip;                        /* Strip backslashes? */
 } Field;
 
 static char *match_coupled_wildcard(char *ctemplate, char *s);
 static char *match_wildcard(char *ctemplate, char *s);
 static char *match_word_pattern(char *ctemplate, char *s);
-static void add_field(char *start, char *end, Bool strip);
+static void add_field(char *start, char *end, bool strip);
 
 static Field * fields;
 static Int field_pos, field_size;
@@ -307,7 +307,7 @@ static char * match_word_pattern(char *ctemplate, char *s) {
 
 /* Add a field.  strip should be true if this is a field for a wildcard not at
  * the end of the template. */
-static void add_field(char *start, char *end, Bool strip) {
+static void add_field(char *start, char *end, bool strip) {
     if (field_pos >= field_size) {
         field_size = field_size * 2 + MALLOC_DELTA;
         fields = EREALLOC(fields, Field, field_size);
@@ -376,7 +376,7 @@ cList * match_pattern(char *pattern, char *s) {
     return NULL;
 }
 
-cList * match_regexp(cStr * reg, char * s, Bool sensitive, Bool *error) {
+cList * match_regexp(cStr * reg, char * s, bool sensitive, bool *error) {
     cList  * fields = (cList *) NULL,
            * elemlist;
     regexp * rx;
@@ -423,7 +423,7 @@ cList * match_regexp(cStr * reg, char * s, Bool sensitive, Bool *error) {
 #define REGSTR(rx, pos) (string_from_chars(rx->startp[pos], \
                                     rx->endp[pos] - rx->startp[pos]))
 
-cList * regexp_matches(cStr * reg, char * s, Bool sensitive, Bool * error) {
+cList * regexp_matches(cStr * reg, char * s, bool sensitive, bool * error) {
     cList * fields;
     regexp * rx;
     cData   d;
@@ -572,7 +572,7 @@ cStr * strsed(cStr * reg,  /* the regexp string */
     Int      size=1,
              slen = string_length(ss),
              rlen = string_length(rs);
-    Bool     sensitive = flags & RF_SENSITIVE;
+    bool     sensitive = flags & RF_SENSITIVE;
 
     /*
     // make sure 's' is NULL terminated, this shouldn't be a
@@ -985,7 +985,7 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
     list = list_add(list, &d); \
     string_discard(word)
 
-cList * strexplode(cStr * str, char * sep, Int sep_len, Bool blanks) {
+cList * strexplode(cStr * str, char * sep, Int sep_len, bool blanks) {
     char     * s = string_chars(str),
              * p = s,
              * q;

@@ -16,7 +16,7 @@
 #define STACK_STARTING_SIZE                (256 - STACK_MALLOC_DELTA)
 #define ARG_STACK_STARTING_SIZE            (32 - ARG_STACK_MALLOC_DELTA)
 
-extern Bool running;
+extern bool running;
 
 static void execute(void);
 static void out_of_ticks_error(void);
@@ -538,7 +538,7 @@ cList * vm_list(void) {
 /*
 // ---------------------------------------------------------------
 */
-cList * vm_stack(Frame * frame_to_trace, Bool want_line_numbers) {
+cList * vm_stack(Frame * frame_to_trace, bool want_line_numbers) {
     cList * r;
     cData   d,
            * list;
@@ -1633,7 +1633,7 @@ void func_type_error(char *which, cData *wrong, char *required)
     cthrow(type_id, "The %s argument (%D) is not %s.", which, wrong, required);
 }
 
-static Bool is_critical (void) {
+static bool is_critical (void) {
     if (cur_frame
         && cur_frame->specifiers
         && cur_frame->specifiers->type==CRITICAL)

@@ -64,7 +64,7 @@ struct pile {
 static Tblocks *tray_blocks;
 static Tlist *trays[NUM_TRAYS];
 
-static Bool inside_emalloc_logger = false;
+static bool inside_emalloc_logger = false;
 
 void init_emalloc(void) {
     int i;

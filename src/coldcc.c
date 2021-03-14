@@ -29,10 +29,10 @@ extern pthread_t cleaner;
 
 Int    c_nowrite = 1;
 Int    c_opt = OPT_COMP;
-Bool   print_objs = true;
-Bool   print_names = false;
-Bool   print_invalid = true;
-Bool   print_warn = true;
+bool   print_objs = true;
+bool   print_names = false;
+bool   print_invalid = true;
+bool   print_warn = true;
 
 #define NEW_DB       1
 #define EXISTING_DB  0
@@ -220,7 +220,7 @@ static void print_natives(void) {
     }
 
 static void initialize(Int argc, char **argv) {
-    Bool   opt_bool = false;
+    bool   opt_bool = false;
     char * name = NULL,
          * opt = NULL,
          * buf;

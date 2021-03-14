@@ -15,7 +15,7 @@
 
 void panic(char * s, ...) {
     va_list vargs;
-    static Bool panic_state = false;
+    static bool panic_state = false;
 
     va_start(vargs,s);
     fprintf(errfile, "[%s] %s: ", timestamp(NULL),
@@ -73,7 +73,7 @@ void write_err(char *fmt, ...) {
     string_discard(str);
 }
 
-void log_current_task_stack(Bool want_lineno, void (logroutine)(char*,...))
+void log_current_task_stack(bool want_lineno, void (logroutine)(char*,...))
 {
     cList * stack;
 
@@ -82,7 +82,7 @@ void log_current_task_stack(Bool want_lineno, void (logroutine)(char*,...))
     list_discard(stack);
 }
 
-void log_all_task_stacks(Bool want_lineno, void (logroutine)(char*,...))
+void log_all_task_stacks(bool want_lineno, void (logroutine)(char*,...))
 {
     VMState * vm;
     cList   * stack;

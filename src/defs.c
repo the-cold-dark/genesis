@@ -23,9 +23,9 @@ cStr * str_hostname;
 cStr * str_release;
 cStr * str_system;
 
-Bool coldcc;
-Bool running;
-Bool atomic;
+bool coldcc;
+bool running;
+bool atomic;
 Int  heartbeat_freq;
 
 Int cache_width;

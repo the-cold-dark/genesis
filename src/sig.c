@@ -100,7 +100,7 @@ void catch_signal(int sig) {
     char *sptr;
     cStr *sigstr;
     cData arg1;
-    Bool  do_shutdown = false;
+    bool  do_shutdown = false;
 
     signal(sig, catch_signal);
 

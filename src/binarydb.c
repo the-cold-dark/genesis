@@ -162,7 +162,7 @@ extern Long num_objects;
     }
 
 #ifndef __Win32__
-static Bool good_perms(struct stat * sb) {
+static bool good_perms(struct stat * sb) {
     if (!geteuid())
         return true;
     if (sb->st_uid == geteuid() && (sb->st_mode & S_IRWXU))
@@ -174,7 +174,7 @@ static Bool good_perms(struct stat * sb) {
 #endif
 
 static void simble_verify_clean(void) {
-    Bool isdirty = true;
+    bool isdirty = true;
     char system[LINE],
          v_major[LINE],
          v_minor[LINE],

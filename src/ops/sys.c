@@ -51,9 +51,9 @@ COLDC_FUNC(dblog) {
         return 0; \
     } while(0)
 
-static Bool backup_file(char * file) {
+static bool backup_file(char * file) {
     static char buf[MAXBSIZE];
-    Bool rval = true;
+    bool rval = true;
     int from_fd, rcount, to_fd, wcount;
     char source[BUF], dest[BUF];
 

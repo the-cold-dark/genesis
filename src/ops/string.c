@@ -58,7 +58,7 @@ COLDC_FUNC(substr) {
 
 COLDC_FUNC(explode) {
     Int      argc, sep_len;
-    Bool     want_blanks;
+    bool     want_blanks;
     cData * args;
     cList * exploded;
     char   * sep;
@@ -68,7 +68,7 @@ COLDC_FUNC(explode) {
     if (!func_init_1_to_3(&args, &argc, STRING, STRING, 0))
         return;
 
-    want_blanks = (Bool) ((argc == 3) ? data_true(&args[2]) : false);
+    want_blanks = (bool) ((argc == 3) ? data_true(&args[2]) : false);
 
     if (argc >= 2) {
         sep = string_chars(args[1].u.str);
@@ -269,7 +269,7 @@ COLDC_FUNC(match_regexp) {
     cList * fields;
     Int     argc,
             sensitive;
-    Bool    error;
+    bool    error;
 
     if (!func_init_2_or_3(&args, &argc, STRING, STRING, 0))
         return;
@@ -295,7 +295,7 @@ COLDC_FUNC(regexp) {
     cList * fields;
     Int      argc,
              sensitive;
-    Bool     error;
+    bool     error;
 
     if (!func_init_2_or_3(&args, &argc, STRING, STRING, 0))
         return;

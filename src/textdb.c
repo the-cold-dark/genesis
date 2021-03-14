@@ -42,9 +42,9 @@ Long       line_count;
 Long       method_start;
 Obj * cur_obj;
 static Hash * dump_hash;
-extern Bool print_objs;
-extern Bool print_invalid;
-extern Bool print_warn;
+extern bool print_objs;
+extern bool print_invalid;
+extern bool print_warn;
 
 #define ERR(__s)  printf("\rLine %ld: %s\n", (long) line_count, __s)
 
@@ -116,7 +116,7 @@ extern Bool print_warn;
 */
 static Method * get_method(FILE * fp, Obj * obj, char * name);
 char * strchop(char * str, Int len);
-static void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames);
+static void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, bool objnames);
 void blank_and_print_obj(char * what, Float percent_done, Obj * obj);
 
 typedef struct holder_s holder_t;
@@ -587,7 +587,7 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
         idref_t parent;
         char     par_str[BUF];
         Int      slen;
-        Bool     more = true;
+        bool     more = true;
         /* step past ':' and skip whitespace */
         s++;
         NEXT_WORD(s);
@@ -851,7 +851,7 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
 
     Long       definer, var;
     Obj      * def;
-    Bool       result;
+    bool       result;
     char     * var_name;
 #endif
     cData      d;
@@ -1549,7 +1549,7 @@ void compile_cdc_file(FILE * fp) {
 // decompile the binary db to a text file
 */
 Int last_length; /* used in doing fancy formatting */
-void dump_object(Long objnum, FILE *fp, Bool objnames);
+void dump_object(Long objnum, FILE *fp, bool objnames);
 static char * method_definition(Method * m);
 
 #define PRINT_OBJNAME(__obj, __fp) { \
@@ -1560,8 +1560,8 @@ static char * method_definition(Method * m);
         fprintf(__fp, "#%li", (long) __num); \
     }
 
-static void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames) {
-    Bool cachepull = false;
+static void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, bool objnames) {
+    bool cachepull = false;
 
     if (objnames) {
         if (!obj) {
@@ -1582,7 +1582,7 @@ static void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, Bool objnames) {
 /*
 // ------------------------------------------------------------------------
 */
-Int text_dump(Bool objnames) {
+Int text_dump(bool objnames) {
     FILE      * fp;
     char        buf[BUF];
 #ifdef __Win32__
@@ -1623,7 +1623,7 @@ Int text_dump(Bool objnames) {
     return 1;
 }
 
-static inline void dump_object_variables (Obj *obj, FILE *fp, Bool objnames) {
+static inline void dump_object_variables (Obj *obj, FILE *fp, bool objnames) {
     Int    i;
     Var  * var;
     cStr * str;
@@ -1695,7 +1695,7 @@ static inline void dump_object_methods(Obj *obj, FILE *fp) {
 }
 
 #define is_system(__n) (__n == ROOT_OBJNUM || __n == SYSTEM_OBJNUM)
-void dump_object(Long objnum, FILE *fp, Bool objnames) {
+void dump_object(Long objnum, FILE *fp, bool objnames) {
     Obj    * obj;
     cList  * objs;
     cData  * d,

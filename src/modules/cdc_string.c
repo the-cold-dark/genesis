@@ -52,13 +52,13 @@ NATIVE_METHOD(substr) {
 
 NATIVE_METHOD(explode) {
     Int        sep_len=1;
-    Bool       want_blanks=false;
+    bool       want_blanks=false;
     cList   * exploded;
     char     * sep = " ";
     DEF_args;
 
     switch(ARG_COUNT) {
-        case 3:  want_blanks = (Bool) data_true(&args[2]);
+        case 3:  want_blanks = (bool) data_true(&args[2]);
         case 2:  INIT_ARG2(STRING);
                  sep = string_chars(STR2);
                  sep_len = string_length(STR2);
@@ -217,11 +217,11 @@ NATIVE_METHOD(match_pattern) {
 
 NATIVE_METHOD(match_regexp) {
     cList * fields;
-    Bool     sensitive=false, error;
+    bool     sensitive=false, error;
     DEF_args;
 
     switch (ARG_COUNT) {
-        case 3:  sensitive = (Bool) data_true(&args[2]);
+        case 3:  sensitive = (bool) data_true(&args[2]);
         case 2:  INIT_ARG2(STRING);
                  INIT_ARG1(STRING);
                  break;
@@ -241,11 +241,11 @@ NATIVE_METHOD(match_regexp) {
 
 NATIVE_METHOD(regexp) {
     cList * fields;
-    Bool     sensitive=false, error;
+    bool     sensitive=false, error;
     DEF_args;
 
     switch (ARG_COUNT) {
-        case 3:  sensitive = (Bool) data_true(&args[2]);
+        case 3:  sensitive = (bool) data_true(&args[2]);
         case 2:  INIT_ARG2(STRING);
                  INIT_ARG1(STRING);
                  break;

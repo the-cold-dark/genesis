@@ -30,7 +30,7 @@ void uninit_net(void);
 SOCKET get_tcp_socket(unsigned short port, char * addr);
 SOCKET get_udp_socket(unsigned short port, char * addr);
 
-Bool prebind_port(unsigned short port, char * addr, int tcp);
+bool prebind_port(unsigned short port, char * addr, int tcp);
 
 extern cBuf * socket_buffer;
 extern Long server_failure_reason;

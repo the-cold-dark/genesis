@@ -392,7 +392,7 @@ int buffer_index(cBuf * buf, uChar * ss, int slen, int origin) {
     int     len;
     uChar * s,
           * p;
-    Bool    reverse = false;
+    bool    reverse = false;
 
     s = buf->s;
     len = buf->len;

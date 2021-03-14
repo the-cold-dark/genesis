@@ -35,7 +35,7 @@ static void compile_expr_list(Expr_list *expr_list);
 static void compile_variable_assign (char *var);
 static void compile_optional_assign (char *var, Expr *e);
 static enum scatter_modes compile_assign (Expr *e, enum scatter_modes mode,
-                                          Bool in_scatter);
+                                          bool in_scatter);
 static void compile_expr(Expr *expr);
 static Int find_local_var(char *id);
 static void check_instr_buf(Int pos);
@@ -1113,7 +1113,7 @@ static void compile_optional_assign (char *var, Expr *e)
 }
 
 static enum scatter_modes compile_assign (Expr *e, enum scatter_modes mode,
-                                          Bool in_scatter)
+                                          bool in_scatter)
 {
     Expr_list *lvalues;
 

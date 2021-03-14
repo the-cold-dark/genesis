@@ -187,7 +187,7 @@ static inline void cache_remove_from_dirty(DirtyBuckets *bucket, Obj *obj)
 //
 */
 
-void init_cache(Bool spawn_cleaner)
+void init_cache(bool spawn_cleaner)
 {
     Obj *obj;
     Int        i, j;

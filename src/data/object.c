@@ -80,7 +80,7 @@ struct {
     cObjnum objnum;
     Ident name;
     IsFrob is_frob;
-    Bool failed;
+    bool failed;
     cObjnum after;
     cObjnum loc;
 } method_cache[METHOD_CACHE_SIZE];
@@ -89,7 +89,7 @@ struct {
     Long stamp;
     cObjnum objnum;
     cObjnum ancestor;
-    Bool is_ancestor;
+    bool is_ancestor;
 } ancestor_cache[ANCESTOR_CACHE_SIZE];
 
 static ObjExtrasTable *object_extras = NULL;
@@ -102,18 +102,18 @@ static void    object_update_parents(Obj *object,
 static Int     object_has_ancestor_aux(cObjnum objnum, cObjnum ancestor);
 static Var    *object_create_var(Obj *object, cObjnum cclass, Ident name);
 static Var    *object_find_var(Obj *object, cObjnum cclass, Ident name);
-static Bool    method_cache_check(cObjnum objnum, Ident name, cObjnum after,
+static bool    method_cache_check(cObjnum objnum, Ident name, cObjnum after,
                                   IsFrob is_frob, Method **method);
 static void    method_cache_set(cObjnum objnum, Ident name, cObjnum after,
-                                Long loc, IsFrob is_frob, Bool failed);
+                                Long loc, IsFrob is_frob, bool failed);
 static void    method_cache_invalidate(cObjnum objnum);
 static void    method_cache_invalidate_all(void);
 static void    search_object(cObjnum objnum, Search_params *params);
 static void    method_delete_code_refs(Method * method);
-static Bool    ancestor_cache_check(cObjnum objnum, cObjnum ancestor,
-                                    Bool *is_ancestor);
+static bool    ancestor_cache_check(cObjnum objnum, cObjnum ancestor,
+                                    bool *is_ancestor);
 static void    ancestor_cache_set(cObjnum objnum, cObjnum ancestor,
-                                  Bool is_ancestor);
+                                  bool is_ancestor);
 
 /* ..................................................................... */
 /* global variables */
@@ -638,8 +638,8 @@ cList * object_ancestors_breadth(cObjnum objnum) {
     return list;
 }
 
-static Bool ancestor_cache_check(cObjnum objnum, cObjnum ancestor,
-                                 Bool *is_ancestor)
+static bool ancestor_cache_check(cObjnum objnum, cObjnum ancestor,
+                                 bool *is_ancestor)
 {
     uLong i;
 
@@ -659,7 +659,7 @@ static Bool ancestor_cache_check(cObjnum objnum, cObjnum ancestor,
 }
 
 static void ancestor_cache_set(cObjnum objnum, cObjnum ancestor,
-                               Bool is_ancestor)
+                               bool is_ancestor)
 {
     uLong i;
 
@@ -679,7 +679,7 @@ static void ancestor_cache_set(cObjnum objnum, cObjnum ancestor,
 Int object_has_ancestor(cObjnum objnum, cObjnum ancestor)
 {
     Int retv;
-    Bool anc_cache_check;
+    bool anc_cache_check;
 
     if (objnum == ancestor)
         return 1;
@@ -699,7 +699,7 @@ static Int object_has_ancestor_aux(cObjnum objnum, cObjnum ancestor)
     Obj *object;
     cList *parents;
     cData *d;
-    Bool anc_cache_check;
+    bool anc_cache_check;
 
     /* Don't search an object twice. */
     object = cache_retrieve(objnum);
@@ -1070,7 +1070,7 @@ Ident object_inherited_var(Obj *object, Obj *cclass, Ident name, cData *ret)
 
 /* Only the text dump reader calls this function; it assigns or creates a
  * variable as needed, and always succeeds. */
-Bool object_put_var(Obj *object, cObjnum cclass, Ident name, cData *val)
+bool object_put_var(Obj *object, cObjnum cclass, Ident name, cData *val)
 {
     Var *var;
 
@@ -1138,7 +1138,7 @@ static Var *object_create_var(Obj *object, cObjnum cclass, Ident name)
     return cnew;
 }
 
-Bool object_has_methods(Obj *object)
+bool object_has_methods(Obj *object)
 {
     Int i = 0;
 
@@ -1189,7 +1189,7 @@ Method *object_find_method(cObjnum objnum, Ident name, IsFrob is_frob) {
     Method        * method, *local_method;
     cList         * parents;
     cData         * d;
-    Bool            method_cache_hit;
+    bool            method_cache_hit;
 
     /* Look for cached value. */
     method_cache_hit = method_cache_check(objnum, name, -1, is_frob, &method);
@@ -1251,7 +1251,7 @@ Method *object_find_next_method(cObjnum objnum, Ident name,
     cList *parents;
     cData *d;
     cObjnum parent;
-    Bool method_cache_hit;
+    bool method_cache_hit;
 
     /* Check cache. */
     method_cache_hit = method_cache_check(objnum, name, after, is_frob, &method);
@@ -1379,7 +1379,7 @@ Method *object_find_method_local(Obj *object, Ident name, IsFrob is_frob)
     return NULL;
 }
 
-static Bool method_cache_check(cObjnum objnum, Ident name,
+static bool method_cache_check(cObjnum objnum, Ident name,
                                cObjnum after, IsFrob is_frob, Method **method)
 {
     Obj *object;
@@ -1406,7 +1406,7 @@ static Bool method_cache_check(cObjnum objnum, Ident name,
 }
 
 static void method_cache_set(cObjnum objnum, Ident name, cObjnum after,
-                             Long loc, IsFrob is_frob, Bool failed)
+                             Long loc, IsFrob is_frob, bool failed)
 {
     uLong i;
 
@@ -1619,7 +1619,7 @@ void object_add_method(Obj *object, Ident name, Method *method) {
 
 }
 
-Int object_del_method(Obj *object, Ident name, Bool replacing) {
+Int object_del_method(Obj *object, Ident name, bool replacing) {
     Int *indp, ind;
 
     if (!object->methods)

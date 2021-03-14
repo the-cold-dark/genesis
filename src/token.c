@@ -110,7 +110,7 @@ void lex_start(cList * code_list) {
 }
 
 /* Returns if s can be parsed as an identifier. */
-Bool is_valid_ident(char *s) {
+bool is_valid_ident(char *s) {
     for (; *s; s++) {
         if (!isalnum(*s) && *s != '_')
             return 0;
@@ -118,7 +118,7 @@ Bool is_valid_ident(char *s) {
     return 1;
 }
 
-Bool string_is_valid_ident(cStr * str) {
+bool string_is_valid_ident(cStr * str) {
     char * s =   string_chars(str);
     int    len = string_length(str);
 
@@ -129,7 +129,7 @@ Bool string_is_valid_ident(cStr * str) {
     return 1;
 }
 
-Bool is_reserved_word(char *s) {
+bool is_reserved_word(char *s) {
     int start, i, j, len;
     char * word;
 
@@ -166,7 +166,7 @@ Int yylex(void)
     cStr *line, *float_buf;
     char *s = NULL, *word;
     Int len = 0, i, j, start, type;
-    Bool negative;
+    bool negative;
 
     /* Find the beginning of the next token. */
     while (cur_line < list_length(code)) {

@@ -22,9 +22,9 @@ typedef struct native_s {
 
  /* ANSI doesn't want us to us NULL pointers to functions */
 typedef struct module_s {
-    Bool   init;
+    bool   init;
     void (*init_func)(Int argc, char ** argv);
-    Bool   uninit;
+    bool   uninit;
     void (*uninit_func)(void);
 } module_t;
 

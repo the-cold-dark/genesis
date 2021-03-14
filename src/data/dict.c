@@ -338,7 +338,7 @@ static void increase_hashtab_size(cDict *dict)
 /* WARNING: This will discard both arguments! */
 cDict *dict_union (cDict *d1, cDict *d2) {
     int i, pos;
-    Bool swap;
+    bool swap;
 
     if (d2->keys->len > d1->keys->len) {
         cDict *t;

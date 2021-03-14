@@ -357,7 +357,7 @@ int string_index(cStr * str, cStr * sub, int origin) {
     char * s,
          * p,
          * ss;
-    Bool   reverse = false;
+    bool   reverse = false;
 
     s = string_chars(str);
     len = string_length(str);

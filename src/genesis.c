@@ -68,7 +68,7 @@ static void unlink_runningfile(void) {
 
 static void prebind_port_with(char * str, char * name) {
     char * addr = NULL, * s = str;
-    Bool tcp = true;
+    bool tcp = true;
 
     if (isdigit(*s)) {
         addr = s;
@@ -213,7 +213,7 @@ static void initialize(Int argc, char **argv) {
              * basedir = NULL,
              * buf = NULL;
     FILE     * fp;
-    Bool       dofork = true;
+    bool       dofork = true;
     pid_t      pid;
 
     name = *argv;
@@ -523,7 +523,7 @@ static void initialize(Int argc, char **argv) {
     { /* reduce the scope */
         cData   * d;
         cStr     * str;
-        Bool       first = true;
+        bool       first = true;
 
         fprintf(errfile, "[%s] Calling $sys.startup([", timestamp(NULL));
         for (d=list_first(args); d; d=list_next(args, d)) {

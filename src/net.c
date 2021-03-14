@@ -134,7 +134,7 @@ typedef struct Prebind Prebind;
 struct Prebind {
     SOCKET          sock;
     unsigned short  port;
-    Bool            tcp;
+    bool            tcp;
     char            addr[BUF];
     Prebind       * next;
 };
@@ -145,7 +145,7 @@ Prebind * prebound = NULL;
         exit(1); \
     }
 
-Bool prebind_port(unsigned short port, char * addr, int tcp) {
+bool prebind_port(unsigned short port, char * addr, int tcp) {
     SOCKET    sock;
     Prebind * pb;
 

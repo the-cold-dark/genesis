@@ -179,21 +179,22 @@ static void simble_verify_clean(void) {
          v_major[LINE],
          v_minor[LINE],
          v_patch[LINE],
-         magicmod[LINE],
-         search[LINE];
+         magicmod[LINE];
     char * s;
     FILE * fp;
 
     v_major[0] = v_minor[0] = v_patch[0] = magicmod[0] =
-        system[0] = search[0] = '\0';
+        system[0] = '\0';
 
     if ((fp = fopen(c_clean_file, "rb"))) {
-        fgets(system, LINE, fp);
-        fgets(v_major, LINE, fp);
-        fgets(v_minor, LINE, fp);
-        fgets(v_patch, LINE, fp);
-        fgets(magicmod, LINE, fp);
-        fgets(search, LINE, fp);
+        if ((fgets(system, LINE, fp) == NULL) ||
+            (fgets(v_major, LINE, fp) == NULL) ||
+            (fgets(v_minor, LINE, fp) == NULL) ||
+            (fgets(v_patch, LINE, fp) == NULL) ||
+            (fgets(magicmod, LINE, fp) == NULL))
+        {
+            FAIL("Binary database (\"%s\") is corrupted, invalid .clean file...\n");
+        }
 
         /* cleanup anything after the system name */
         s = &system[strlen(system)-1];

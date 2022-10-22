@@ -350,9 +350,13 @@ static datum name_key(Ident name)
 {
     datum key;
 
+    int size;
+    char* name_str = ident_name_size(name, &size);
+
     /* Set up a key for the name.  Include the 0 byte at the end. */
-    key.dptr = ident_name(name);
-    key.dsize = strlen(key.dptr) + 1;
+    key.dptr = name_str;
+    key.dsize = size + 1;
+
     return key;
 }
 

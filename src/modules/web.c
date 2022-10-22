@@ -84,7 +84,7 @@ static cStr * decode(cStr * str) {
          * n = s,
            h,
            l;
-    register Int len = string_length(str);
+    Int len = string_length(str);
 
     for (; len > 0; len--, s++, n++) {
         switch (*s) {
@@ -110,8 +110,8 @@ static cStr * decode(cStr * str) {
 }
 
 static cStr * encode_full(cStr * in) {
-    register char * s = string_chars(in);
-    cStr          * str = string_new(string_length(in));
+    char * s = string_chars(in);
+    cStr * str = string_new(string_length(in));
 
     for (;*s != '\0'; s++) {
         if (*s == ' ')
@@ -130,8 +130,8 @@ static cStr * encode_full(cStr * in) {
 }
 
 static cStr * encode_partial(cStr * in) {
-    register char * s = string_chars(in);
-    cStr          * str = string_new(string_length(in));
+    char * s = string_chars(in);
+    cStr * str = string_new(string_length(in));
 
     for (;*s != '\0'; s++) {
         if (*s == ' ')
@@ -151,9 +151,9 @@ static cStr * encode_partial(cStr * in) {
 }
 
 static cStr * html_escape(cStr * in) {
-    register char * s;
-    register  int   len;
-    cStr          * out;
+    char * s;
+    int    len;
+    cStr * out;
 
     s = string_chars(in);
     len = string_length(in);

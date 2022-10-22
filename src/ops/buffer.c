@@ -8,7 +8,7 @@
 
 COLDC_FUNC(bufgraft) {
     cData * args;
-    register cBuf * new, * b1, * b2;
+    cBuf * new, * b1, * b2;
     Int pos;
 
     if (!func_init_3(&args, BUFFER, INTEGER, BUFFER))

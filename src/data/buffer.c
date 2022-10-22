@@ -158,8 +158,8 @@ cList *buf_to_strings(cBuf *buf, cBuf *sep)
     cStr *str;
     cList *result;
     unsigned char sepchar, *string_start;
-    register unsigned char *p, *q;
-    register char *s;
+    unsigned char *p, *q;
+    char *s;
     Int seplen;
     cBuf *end;
 
@@ -329,7 +329,7 @@ cBuf *buffer_prep(cBuf *buf, Int new_size) {
 
 static
 int buf_rindexs(const unsigned char * buf, int len, const unsigned char * sub, int slen, int origin){
-    register const unsigned char * s;
+    const unsigned char * s;
 
     if (origin < slen)
         origin = slen;
@@ -353,7 +353,7 @@ int buf_rindexs(const unsigned char * buf, int len, const unsigned char * sub, i
 }
 
 static int buf_rindexc(const unsigned char * buf, int len, unsigned char sub, int origin) {
-    register const unsigned char * s;
+    const unsigned char * s;
 
     len -= origin;
 

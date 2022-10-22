@@ -22,7 +22,7 @@
 int lookup_name_by_ip(char * ip, char * out)
 {
    unsigned long addr;
-   register struct hostent * hp;
+   struct hostent * hp;
 
    addr = inet_addr(ip);
    if (addr == (unsigned long)INVALID_INADDR)
@@ -44,7 +44,7 @@ int lookup_name_by_ip(char * ip, char * out)
 /* out must be a DNS_MAXLEN character buffer */
 int lookup_ip_by_name(char * name, char * out)
 {
-   register struct hostent *hp;
+   struct hostent *hp;
    char * p;
 
    if (!(hp = gethostbyname(name)))

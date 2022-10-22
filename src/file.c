@@ -186,8 +186,8 @@ cBuf * read_binary_file(filec_t * file, Int block) {
 
 /* slower, but we get clean output */
 cStr * read_file(filec_t * file) {
-    register char * p, * s;
-    register int len;
+    char * p, * s;
+    int len;
     cStr * str;
 
     if (feof(file->fp))
@@ -290,10 +290,10 @@ cStr * build_path(char * fname, struct stat * sbuf, Int nodir) {
 }
 
 cList * statbuf_to_list(struct stat * sbuf) {
-    cList        * list;
-    cData        * d;
-    char           buf[LINE];
-    register Int   x;
+    cList * list;
+    cData * d;
+    char    buf[LINE];
+    Int     x;
 
     list = list_new(5);
     d = list_empty_spaces(list, 5);

@@ -327,7 +327,7 @@ static void verify_native_methods(void) {
     cList    * errors;
     cList    * code = list_new(0);
     native_t * native;
-    register   Int x;
+    Int        x;
     nh_t     * nh = (nh_t *) NULL;
 
     /* check the methods we know about */
@@ -1849,7 +1849,7 @@ static char * method_definition(Method * m) {
 }
 
 void blank_and_print_obj(char * what, Float percent_done, Obj * obj) {
-    register int x;
+    int x;
     static Int len = 0;
     Number_buf nbuf;
     char * sn;
@@ -1884,7 +1884,7 @@ void blank_and_print_obj(char * what, Float percent_done, Obj * obj) {
 /* the idea is to do this on strings that may be VERY large */
 /* len MUST be more than 4 */
 char * strchop(char * str, Int len) {
-    register int x;
+    int x;
     for (x=0; x < len; x++) {
         if (str[x] == '\0')
             return str;

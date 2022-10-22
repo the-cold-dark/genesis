@@ -140,7 +140,7 @@ void shsBlock(const unsigned char *dataIn, Int len, unsigned char hashOut[20]) {
  */
 static void shsCompress(SHS_CTX *ctx) {
   Int t;
-  register uInt A,B,C,D,E;
+  uInt A,B,C,D,E;
 
   /*
    *  This can be moved into the main code block below, but doing

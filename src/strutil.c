@@ -556,13 +556,13 @@ cStr * strsed(cStr * reg,  /* the regexp string */
               Int    flags,
               Int    mult)
 {
-    register regexp * rx;
-    cStr * out;
-    char     * s = string_chars(ss),/* start */
-             * p,                   /* pointer */
-             * q,                   /* couldn't think of anything better */
-             * r;                   /* replace */
-    register Int i, x;
+    regexp * rx;
+    cStr   * out;
+    char   * s = string_chars(ss),/* start */
+           * p,                   /* pointer */
+           * q,                   /* couldn't think of anything better */
+           * r;                   /* replace */
+    Int      i, x;
     Int      size=1,
              slen = string_length(ss),
              rlen = string_length(rs);
@@ -774,12 +774,12 @@ cStr * strsed(cStr * reg,  /* the regexp string */
 cStr * strfmt(cStr * str, cData * args, Int argc) {
     cStr     * out,
              * value;
-    register char * s;
+    char     * s;
     char     * fmt,
              * tmp,
              * numbuf,
                fill[LINE];
-    register Int pad, prec, trunc;
+    Int        pad, prec, trunc;
     Int        cur = -1;
 
     fmt = string_chars(str);
@@ -1049,11 +1049,11 @@ cList * strexplodequoted(cStr * str) {
 */
 
 cList * strsplit(cStr * str, cStr * reg, Int flags) {
-    register regexp * rx;
-    register char * s, * p;
-    register Int x, len, depth;
-    cList   * list;
-    cData     d;
+    regexp * rx;
+    char   * s, * p;
+    Int      x, len, depth;
+    cList  * list;
+    cData    d;
 
     /* Compile the regexp, note: it is free'd by string_discard() */
     if ((rx = string_regexp(reg)) == NULL) {

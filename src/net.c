@@ -57,11 +57,11 @@ void uninit_net(void) {
 #ifndef HAVE_INET_ATON
 int inet_aton (const char * cp, struct in_addr * addr) {
     unsigned long parts[4];
-    register unsigned long val;
-    register unsigned long part0;
-    register unsigned long part1;
-    register unsigned long part2;
-    register unsigned long part3;
+    unsigned long val;
+    unsigned long part0;
+    unsigned long part1;
+    unsigned long part2;
+    unsigned long part3;
     int part;
     char *next;
 

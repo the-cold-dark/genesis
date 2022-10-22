@@ -305,7 +305,7 @@ char *gen_regerror(char *msg) {
 */
 
 static int str_rindexs(const char * str, int len, const char * sub, int slen, int origin){
-    register const char * s;
+    const char * s;
 
     if (origin < slen)
         origin = slen;
@@ -329,7 +329,7 @@ static int str_rindexs(const char * str, int len, const char * sub, int slen, in
 }
 
 static int str_rindexc(const char * str, int len, char sub, int origin) {
-    register const char * s;
+    const char * s;
 
     len -= origin;
 

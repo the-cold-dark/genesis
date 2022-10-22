@@ -1020,13 +1020,13 @@ static cList * add_op_arg(cList * out, Int type, Long op, Method * method) {
 }
 
 COLDC_FUNC(method_bytecode) {
-    cData       * args, d;
-    Method     * method;
-    cList       * list;
-    register Int   x;
-    Long         * ops;
-    Op_info      * info;
-    Long opcode;
+    cData   * args, d;
+    Method  * method;
+    cList   * list;
+    Int       x;
+    Long    * ops;
+    Op_info * info;
+    Long      opcode;
 
     /* Accept a list of lines of code and a symbol for the name. */
     if (!func_init_1(&args, SYMBOL))

@@ -379,12 +379,12 @@ NATIVE_METHOD(strfmt) {
 }
 
 NATIVE_METHOD(trim) {
-    register char * s;
-    char          * ss;
-    cStr          * str;
-    Int             start;
-    Int             len;
-    Ident           how;
+    char  * s;
+    char  * ss;
+    cStr  * str;
+    Int     start;
+    Int     len;
+    Ident   how;
 
     INIT_1_OR_2_ARGS(STRING, SYMBOL);
 
@@ -507,14 +507,14 @@ NATIVE_METHOD(word) {
 }
 
 NATIVE_METHOD(dbquote_explode) {
-    Int             len, sublen;
-    cData           d;
-    cList         * out;
-    char            quote = '"',
-                  * sorig;
-    register char * s,
-                  * p,
-                  * t;
+    Int     len, sublen;
+    cData   d;
+    cList * out;
+    char    quote = '"',
+          * sorig;
+    char * s,
+          * p,
+          * t;
 
     INIT_1_OR_2_ARGS(STRING, STRING);
 

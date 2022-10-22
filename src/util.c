@@ -509,8 +509,8 @@ void uninit_scratch_file(void) {
 #define add_char(__s, __c) { *__s = __c; __s++; }
 
 Int parse_strcpy(char * b1, char * b2, Int slen) {
-    register Int l = slen, len = slen;
-    register char * s = b2, * b = b1;
+    Int l = slen, len = slen;
+    char * s = b2, * b = b1;
 
     while (l > 0) {
         if (*s == '\\') {

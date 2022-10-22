@@ -990,7 +990,7 @@ struct meth_prof_s {
 Long prof_ops[LAST_TOKEN];
 
 void update_execute_opcode(Int opcode) {
-    register Int x;
+    Int x;
     static short init = 1;
 
     if (init) {
@@ -1003,9 +1003,9 @@ void update_execute_opcode(Int opcode) {
 }
 
 void update_execute_method(Method * method) {
-    register Int x;
-    register char * name, * c;
-    register cObjnum obj;
+    Int x;
+    char * name, * c;
+    cObjnum obj;
 
     if (method->name == NOT_AN_IDENT)
         return;
@@ -1036,7 +1036,7 @@ void update_execute_method(Method * method) {
 }
 
 void dump_execute_profile(void) {
-    register Int x;
+    Int x;
     cStr * str;
     cData d;
 
@@ -1162,7 +1162,7 @@ call_native_method(Method * method,
                    cObjnum   objnum)
 {
     cData rval;
-    register Int i;
+    Int i;
 
     if ((*natives[method->native].func)(arg_start, &rval)) {
         /* push ALL of the old stack off, including the target and name */
@@ -1188,7 +1188,7 @@ call_native_method(Method * method,
 */
 
 void pop_native_stack(Int start) {
-    register Int i;
+    Int i;
 
     for (i = start; i < stack_pos; i++)
         data_discard(&stack[i]);

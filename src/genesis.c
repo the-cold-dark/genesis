@@ -557,8 +557,8 @@ static void initialize(Int argc, char **argv) {
 */
 
 static void main_loop(void) {
-    register Int     seconds;
-    register time_t  next, last;
+    Int     seconds;
+    time_t  next, last;
 
 #ifdef __Win32__
     time_t           tm;

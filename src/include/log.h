@@ -5,12 +5,12 @@
 #ifndef cdc_log_h
 #define cdc_log_h
 
-void panic(char *s, ...);
-void fail_to_start(char *s);
-void write_log(char *s, ...);
-void write_err(char *s, ...);
-void log_current_task_stack(bool want_lineno, void (logroutine)(char*,...));
-void log_all_task_stacks(bool want_lineno, void (logroutine)(char*,...));
+void panic(const char *s, ...);
+void fail_to_start(const char *s);
+void write_log(const char *s, ...);
+void write_err(const char *s, ...);
+void log_current_task_stack(bool want_lineno, void (logroutine)(const char*,...));
+void log_all_task_stacks(bool want_lineno, void (logroutine)(const char*,...));
 
 #endif
 

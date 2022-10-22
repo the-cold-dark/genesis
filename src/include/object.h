@@ -196,7 +196,7 @@ extern Int     object_has_ancestor(cObjnum objnum, cObjnum ancestor);
 extern Int     object_add_string(Obj *object, cStr *string);
 extern void    object_discard_string(Obj *object, Int ind);
 extern cStr   *object_get_string(Obj *object, Int ind);
-extern Int     object_add_ident(Obj *object, char *ident);
+extern Int     object_add_ident(Obj *object, const char *ident);
 extern void    object_discard_ident(Obj *object, Int ind);
 extern Ident   object_get_ident(Obj *object, Int ind);
 extern bool    object_defines_var(cObjnum object, Ident name);

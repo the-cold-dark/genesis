@@ -24,7 +24,7 @@
 
 cBuf * socket_buffer;
 
-static SOCKET grab_port(unsigned short port, char * addr, int socktype);
+static SOCKET grab_port(unsigned short port, const char * addr, int socktype);
 static Long translate_connect_error(Int error);
 
 static struct sockaddr_in sockin;        /* An internet address. */
@@ -69,7 +69,7 @@ Prebind * prebound = NULL;
         exit(1); \
     }
 
-bool prebind_port(unsigned short port, char * addr, int tcp) {
+bool prebind_port(unsigned short port, const char * addr, int tcp) {
     SOCKET    sock;
     Prebind * pb;
 
@@ -103,7 +103,7 @@ bool prebind_port(unsigned short port, char * addr, int tcp) {
     return true;
 }
 
-static int use_prebound(SOCKET * sock, unsigned short port, char * addr, int socktype) {
+static int use_prebound(SOCKET * sock, unsigned short port, const char * addr, int socktype) {
     Prebind  * pb,
             ** pbp = &prebound;
 
@@ -137,7 +137,7 @@ static int use_prebound(SOCKET * sock, unsigned short port, char * addr, int soc
     return 0;
 }
 
-static SOCKET grab_port(unsigned short port, char * addr, int socktype) {
+static SOCKET grab_port(unsigned short port, const char * addr, int socktype) {
     int    one = 1;
     Int flags;
     SOCKET sock;
@@ -188,7 +188,7 @@ static SOCKET grab_port(unsigned short port, char * addr, int socktype) {
     return sock;
 }
 
-SOCKET get_tcp_socket(unsigned short port, char * addr) {
+SOCKET get_tcp_socket(unsigned short port, const char * addr) {
     SOCKET sock;
 
     sock = grab_port(port, addr, SOCK_STREAM);
@@ -201,7 +201,7 @@ SOCKET get_tcp_socket(unsigned short port, char * addr) {
     return sock;
 }
 
-SOCKET get_udp_socket(unsigned short port, char * addr) {
+SOCKET get_udp_socket(unsigned short port, const char * addr) {
     SOCKET sock;
 
     sock = grab_port(port, addr, SOCK_DGRAM);
@@ -363,7 +363,7 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
     return 1;
 }
 
-Long non_blocking_connect(char *addr, unsigned short port, Int *socket_return)
+Long non_blocking_connect(const char *addr, unsigned short port, Int *socket_return)
 {
     SOCKET fd;
     Int    result, flags;
@@ -412,7 +412,7 @@ Long non_blocking_connect(char *addr, unsigned short port, Int *socket_return)
         return translate_connect_error(GETERR());
 }
 
-Long udp_connect(char *addr, unsigned short port, Int *socket_return)
+Long udp_connect(const char *addr, unsigned short port, Int *socket_return)
 {
     SOCKET fd;
     Int    result, flags;

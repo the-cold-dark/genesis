@@ -394,7 +394,7 @@ Method * compile(Obj * object, cList * code, cList ** error_ret) {
     return method;
 }
 
-void compiler_error(Int lineno, char *fmt, ...)
+void compiler_error(Int lineno, const char *fmt, ...)
 {
     va_list arg;
     cStr * errstr, * line;

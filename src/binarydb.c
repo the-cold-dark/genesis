@@ -426,7 +426,7 @@ static void dump_copy (off_t start, Int blocks)
 /* open the dump database. return -1 on failure (can't open the file),
    -2 -> we are already dumping */
 
-Int simble_dump_start(char *dump_objects_filename) {
+Int simble_dump_start(const char *dump_objects_filename) {
     if (dump_db_file)
         return -2;
     dump_db_file = fopen(dump_objects_filename, "wb+");

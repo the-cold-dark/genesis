@@ -236,7 +236,7 @@ Int boot(Obj * obj, void * ptr) {
 // --------------------------------------------------------------------
 */
 
-Int tcp_server(unsigned short port, char * ipaddr, Long objnum) {
+Int tcp_server(unsigned short port, const char * ipaddr, Long objnum) {
     server_t * cnew;
     SOCKET server_socket;
 
@@ -272,7 +272,7 @@ Int tcp_server(unsigned short port, char * ipaddr, Long objnum) {
     return true;
 }
 
-Int udp_server(unsigned short port, char * ipaddr, Long objnum) {
+Int udp_server(unsigned short port, const char * ipaddr, Long objnum) {
     SOCKET server_socket;
 
     /* Get a server socket for the port. */
@@ -442,7 +442,7 @@ static void server_discard(server_t *serv) {
 /*
 // --------------------------------------------------------------------
 */
-Long make_connection(char *addr, unsigned short port, cObjnum receiver) {
+Long make_connection(const char *addr, unsigned short port, cObjnum receiver) {
     pending_t *cnew;
     SOCKET socket;
     Long result;
@@ -461,7 +461,7 @@ Long make_connection(char *addr, unsigned short port, cObjnum receiver) {
     return NOT_AN_IDENT;
 }
 
-Long make_udp_connection(char *addr, unsigned short port, cObjnum receiver) {
+Long make_udp_connection(const char *addr, unsigned short port, cObjnum receiver) {
     pending_t *cnew;
     SOCKET socket;
     Long result;

@@ -222,9 +222,9 @@ Int func_init_3_or_4(cData **args, Int *num_args, Int type1, Int type2,
                      Int type3, Int type4);
 Int func_init_1_to_3(cData **args, Int *num_args, Int type1, Int type2,
                      Int type3);
-void func_num_error(Int num_args, char *required);
-void func_type_error(char *which, cData *wrong, char *required);
-void cthrow(Long id, char *fmt, ...);
+void func_num_error(Int num_args, const char *required);
+void func_type_error(const char *which, cData *wrong, const char *required);
+void cthrow(Long id, const char *fmt, ...);
 void unignorable_error(Ident id, cStr *str);
 void interp_error(Ident error, cStr *str);
 void user_error(Ident error, cStr *str, cData *arg);
@@ -243,7 +243,7 @@ VMState * vm_lookup(Long tid);
 cList   * vm_list(void);
 cList   * vm_stack(Frame * frame_to_trace, bool calculate_line_numbers);
 void      log_task_stack(Long taskid, cList * stack,
-                         void (logroutine)(char*,...));
+                         void (logroutine)(const char*,...));
 void      run_paused_tasks(void);
 void      bind_opcode(Int opcode, cObjnum objnum);
 VMState * vm_current(void);

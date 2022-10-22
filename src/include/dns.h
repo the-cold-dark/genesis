@@ -21,8 +21,8 @@
 /* RFC 1035 defines the maximum length of a name as 255 octets */
 #define DNS_MAXLEN                255
 
-int lookup_name_by_ip(char * ip, char * out);
-int lookup_ip_by_name(char * name, char * out);
+int lookup_name_by_ip(const char * ip, char * out);
+int lookup_ip_by_name(const char * name, char * out);
 
 #endif
 

@@ -19,7 +19,7 @@
 #include "dns.h"
 
 /* out must be a DNS_MAXLEN character buffer */
-int lookup_name_by_ip(char * ip, char * out)
+int lookup_name_by_ip(const char * ip, char * out)
 {
    unsigned long addr;
    struct hostent * hp;
@@ -42,7 +42,7 @@ int lookup_name_by_ip(char * ip, char * out)
 }
 
 /* out must be a DNS_MAXLEN character buffer */
-int lookup_ip_by_name(char * name, char * out)
+int lookup_ip_by_name(const char * name, char * out)
 {
    struct hostent *hp;
    char * p;

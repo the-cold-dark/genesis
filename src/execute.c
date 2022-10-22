@@ -572,7 +572,7 @@ cList * vm_stack(Frame * frame_to_trace, bool want_line_numbers) {
     return r;
 }
 
-void log_task_stack(Long taskid, cList * stack, void (logroutine)(char*,...))
+void log_task_stack(Long taskid, cList * stack, void (logroutine)(const char*,...))
 {
     cData * frame,
           * sender,
@@ -1619,7 +1619,7 @@ Int func_init_1_to_3(cData **args, Int *num_args, Int type1, Int type2,
     return 0;
 }
 
-void func_num_error(Int num_args, char *required)
+void func_num_error(Int num_args, const char *required)
 {
     Number_buf nbuf;
 
@@ -1628,7 +1628,7 @@ void func_num_error(Int num_args, char *required)
           (num_args == 1) ? "" : "s", required);
 }
 
-void func_type_error(char *which, cData *wrong, char *required)
+void func_type_error(const char *which, cData *wrong, const char *required)
 {
     cthrow(type_id, "The %s argument (%D) is not %s.", which, wrong, required);
 }
@@ -1641,7 +1641,7 @@ static bool is_critical (void) {
     return false;
 }
 
-void cthrow(Ident error, char *fmt, ...)
+void cthrow(Ident error, const char *fmt, ...)
 {
     cStr    * str;
     va_list   arg;

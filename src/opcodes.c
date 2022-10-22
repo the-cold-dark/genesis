@@ -327,7 +327,7 @@ void uninit_op_table(void) {
     }
 }
 
-Int find_function(char *name) {
+Int find_function(const char *name) {
     uInt start = first_function;
     uInt end   = NUM_OPERATORS-1;
     uInt middle = (end+start)/2;

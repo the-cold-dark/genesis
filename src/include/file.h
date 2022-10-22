@@ -36,7 +36,7 @@ cBuf * read_binary_file(filec_t * file, Int block);
 cStr * read_file(filec_t * file);
 Int abort_file(Obj * object, void * ptr);
 Int stat_file(filec_t * file, struct stat * sbuf);
-cStr * build_path(char * fname, struct stat * sbuf, Int nodir);
+cStr * build_path(const char * fname, struct stat * sbuf, Int nodir);
 cList * statbuf_to_list(struct stat * sbuf);
 cList * open_file(cStr * name, cStr * smode, Obj * obj);
 void flush_files(void);

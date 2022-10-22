@@ -209,7 +209,7 @@ void *trealloc(void *ptr, size_t oldsize, size_t newsize)
 }
 
 /* Duplicate a string, using tray memory. */
-char *tstrdup(char *s) {
+char *tstrdup(const char *s) {
     Int len = strlen(s);
     char *cnew;
 
@@ -222,7 +222,7 @@ char *tstrdup(char *s) {
     return cnew;
 }
 
-char *tstrndup(char *s, Int len) {
+char *tstrndup(const char *s, Int len) {
     char *cnew;
 
     cnew = TMALLOC(char, len + 1);

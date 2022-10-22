@@ -29,7 +29,7 @@ Int    simble_del(cObjnum objnum);
 void   simble_close(void);
 void   simble_flush(void);
 Float  simble_fragmentation(void);
-Int    simble_dump_start(char *dump_objects_filename);
+Int    simble_dump_start(const char *dump_objects_filename);
 Int    simble_dump_some_blocks (Int maxblocks);
 void   simble_dump_finish(void);
 

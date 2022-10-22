@@ -247,7 +247,7 @@ Int stat_file(filec_t * file, struct stat * sbuf) {
 // --------------------------------------------------------------------
 */
 
-cStr * build_path(char * fname, struct stat * sbuf, Int nodir) {
+cStr * build_path(const char * fname, struct stat * sbuf, Int nodir) {
     Int         len = strlen(fname);
     cStr  * str = NULL;
 

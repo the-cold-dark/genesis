@@ -13,7 +13,7 @@
 #include "sig.h"
 #include "execute.h"
 
-void panic(char * s, ...) {
+void panic(const char * s, ...) {
     va_list vargs;
     static bool panic_state = false;
 
@@ -36,13 +36,13 @@ void panic(char * s, ...) {
     dump_core_and_exit();
 }
 
-void fail_to_start(char *s) {
+void fail_to_start(const char *s) {
     fprintf(errfile, "[%s] FAILED TO START: %s\n", timestamp(NULL), s);
 
     exit(1);
 }
 
-void write_log(char *fmt, ...) {
+void write_log(const char *fmt, ...) {
     va_list arg;
     cStr *str;
 
@@ -59,7 +59,7 @@ void write_log(char *fmt, ...) {
     va_end(arg);
 }
 
-void write_err(char *fmt, ...) {
+void write_err(const char *fmt, ...) {
     va_list arg;
     cStr *str;
 
@@ -73,7 +73,7 @@ void write_err(char *fmt, ...) {
     string_discard(str);
 }
 
-void log_current_task_stack(bool want_lineno, void (logroutine)(char*,...))
+void log_current_task_stack(bool want_lineno, void (logroutine)(const char*,...))
 {
     cList * stack;
 
@@ -82,7 +82,7 @@ void log_current_task_stack(bool want_lineno, void (logroutine)(char*,...))
     list_discard(stack);
 }
 
-void log_all_task_stacks(bool want_lineno, void (logroutine)(char*,...))
+void log_all_task_stacks(bool want_lineno, void (logroutine)(const char*,...))
 {
     VMState * vm;
     cList   * stack;

@@ -21,7 +21,7 @@ extern Op_info op_table[LAST_TOKEN];
 
 void init_op_table(void);
 void uninit_op_table(void);
-Int find_function(char *name);
+Int find_function(const char *name);
 
 #endif
 

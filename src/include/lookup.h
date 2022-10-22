@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #endif
 
-void    lookup_open(char *name, Int cnew);
+void    lookup_open(const char *name, Int cnew);
 void    lookup_close(void);
 void    lookup_sync(void);
 Int     lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size);

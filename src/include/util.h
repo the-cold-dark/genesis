@@ -25,7 +25,7 @@ extern int uppercase[NUM_CHARS];
 /* many system implementations of isprint() are EXTREMELY slow */
 #define ISPRINT(_c_) ((Int) _c_ > 31 && (Int) _c_ < 127)
 
-uLong hash_nullchar(char *s);
+uLong hash_nullchar(const char *s);
 uLong hash_string(cStr * str);
 uLong hash_string_nocase(cStr * str);
 
@@ -37,17 +37,17 @@ char     * float_to_ascii(Float num, Number_buf nbuf);
 Int        strccmp(const char *s1, const char *s2);
 Int        strnccmp(const char *s1, const char *s2, Int n);
 char     * strcchr(char *s, Int c);
-char     * strcstr(char *s, char *search);
+char     * strcstr(char *s, const char *search);
 Long       random_number(Long n);
 cStr     * vformat(const char * fmt, va_list arg);
 cStr     * format(const char * fmt, ...);
 char     * timestamp(char * str);
-void       fformat(FILE *fp, char *fmt, ...);
+void       fformat(FILE *fp, const char *fmt, ...);
 cStr     * fgetstring(FILE *fp);
 char     * english_type(Int type);
 const char * english_integer(Int n, Number_buf nbuf);
 Ident      parse_ident(char **sptr);
-FILE     * open_scratch_file(char *name, char *type);
+FILE     * open_scratch_file(const char *name, const char *type);
 void       close_scratch_file(FILE *fp);
 void       uninit_scratch_file(void);
 void       init_scratch_file(void);

@@ -19,7 +19,7 @@ cStr * strsed(cStr * reg,      /* the regexp string */
                   Int flags,   /* flags */
                   Int mult);   /* multiplier */
 cStr * strfmt(cStr * str, cData * args, Int argc);
-cList   * strexplode(cStr * str, char * sep, Int sep_len, bool blanks);
+cList   * strexplode(cStr * str, const char * sep, Int sep_len, bool blanks);
 cList   * strsplit(cStr * str, cStr * regexp, Int flags);
 cList   * strexplodequoted(cStr * str);
 

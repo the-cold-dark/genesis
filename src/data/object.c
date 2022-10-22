@@ -827,7 +827,7 @@ cStr *object_get_string(Obj *object, Int ind)
     return string_tab_name_str(object->methods->strings, ind);
 }
 
-Int object_add_ident(Obj *object, char *ident)
+Int object_add_ident(Obj *object, const char *ident)
 {
     Int i, blank = -1;
     Ident id;

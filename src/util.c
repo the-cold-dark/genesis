@@ -42,7 +42,7 @@ void init_util(void) {
     srand(time(NULL) + getpid());
 }
 
-uLong hash_nullchar(char * s) {
+uLong hash_nullchar(const char * s) {
     uLong hashval = 0, g;
 
     /* Algorithm by Peter J. Weinberger. */
@@ -178,7 +178,7 @@ char *strcchr(char *s, Int c) {
     return (c) ? NULL : s;
 }
 
-char *strcstr(char *s, char *search) {
+char *strcstr(char *s, const char *search) {
     char *p;
     Int search_len = strlen(search);
 
@@ -341,7 +341,7 @@ char * timestamp (char * str) {
     return s;
 }
 
-void fformat(FILE *fp, char *fmt, ...) {
+void fformat(FILE *fp, const char *fmt, ...) {
     va_list arg;
     cStr *str;
 
@@ -458,7 +458,7 @@ Ident parse_ident(char **sptr) {
     return id;
 }
 
-FILE *open_scratch_file(char *name, char *type) {
+FILE *open_scratch_file(const char *name, const char *type) {
     FILE *fp;
 
     if (fds_used == MAX_SCRATCH)

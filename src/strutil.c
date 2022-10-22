@@ -984,7 +984,7 @@ cStr * strfmt(cStr * str, cData * args, Int argc) {
     list = list_add(list, &d); \
     string_discard(word)
 
-cList * strexplode(cStr * str, char * sep, Int sep_len, bool blanks) {
+cList * strexplode(cStr * str, const char * sep, Int sep_len, bool blanks) {
     char     * s = string_chars(str),
              * p = s,
              * q;

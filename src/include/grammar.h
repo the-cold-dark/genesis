@@ -8,7 +8,7 @@
 #include <stdarg.h>
 
 Method * compile(Obj *object, cList * code, cList ** error_ret);
-void       compiler_error(Int lineno, char * fmt, ...);
+void       compiler_error(Int lineno, const char * fmt, ...);
 Int        no_errors(void);
 
 #if DISABLED

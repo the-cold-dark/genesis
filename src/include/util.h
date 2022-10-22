@@ -45,7 +45,7 @@ char     * timestamp(char * str);
 void       fformat(FILE *fp, char *fmt, ...);
 cStr     * fgetstring(FILE *fp);
 char     * english_type(Int type);
-char     * english_integer(Int n, Number_buf nbuf);
+const char * english_integer(Int n, Number_buf nbuf);
 Ident      parse_ident(char **sptr);
 FILE     * open_scratch_file(char *name, char *type);
 void       close_scratch_file(FILE *fp);

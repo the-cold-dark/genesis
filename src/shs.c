@@ -84,7 +84,7 @@ void shsUpdate(SHS_CTX *ctx, const unsigned char * dataIn, Int len) {
  *  SHS: Generate hash value from context
  */
 void shsFinal(SHS_CTX * ctx, unsigned char hashOut[20]) {
-  static unsigned char bulk_pad[64] = { 0x80,0,0,0,0,0,0,0,0,0,
+  static const unsigned char bulk_pad[64] = { 0x80,0,0,0,0,0,0,0,0,0,
           0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
           0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0  };
   unsigned char length_pad[8];

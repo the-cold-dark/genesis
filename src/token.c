@@ -19,8 +19,8 @@ static cList *code;
 static Int cur_line, cur_pos;
 
 /* Words with same first letters must be together. */
-static struct {
-    char *word;
+static const struct {
+    const char * const word;
     Int token;
 } reserved_words[] = {
     { "any",                    ANY },
@@ -131,7 +131,7 @@ bool string_is_valid_ident(cStr * str) {
 
 bool is_reserved_word(const char *s) {
     int start, i, j, len;
-    char * word;
+    const char * word;
 
     len = strlen(s);
 
@@ -164,7 +164,8 @@ Int yylex(void)
 {
     cData *d = (cData *)0;
     cStr *line, *float_buf;
-    char *s = NULL, *word;
+    char *s = NULL;
+    const char *word;
     Int len = 0, i, j, start, type;
     bool negative;
 

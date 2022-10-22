@@ -55,7 +55,7 @@ static cStr *unparse_expr_prec(cStr *str, Expr *expr, Int caller_type,
 static cStr *unparse_complex_expr(cStr *str, Expr *expr, Int caller_type,
                                   Int assoc);
 static Int prec_level(Int opcode);
-static char *binary_token(Int opcode);
+static const char *binary_token(Int opcode);
 static cList *add_and_discard_string(cList *output, cStr *str);
 static char *varname(Int ind);
 
@@ -65,9 +65,9 @@ static Method *the_method;
 static Long *the_opcodes;
 static Int the_increment;
 
-static struct {
+static const struct {
     Int opcode;
-    char *token;
+    const char * const token;
 } binary_tokens[] = {
     { OP_IN,     "in" },
     { EQ,        "==" },
@@ -83,7 +83,7 @@ static struct {
     { '%',       "%" },
 };
 
-static struct {
+static const struct {
     Int opcode;
     Int level;
 } precedences[] = {
@@ -1484,7 +1484,7 @@ static cList *unparse_case(cList *output, Case_entry *case_entry, Int indent)
 }
 
 static cStr *unparse_expr(cStr *str, Expr *expr, Int paren) {
-    char *s;
+    const char *s;
 
     switch (expr->type) {
 
@@ -1898,7 +1898,7 @@ static Int prec_level(Int opcode)
     return -1;
 }
 
-static char *binary_token(Int opcode)
+static const char *binary_token(Int opcode)
 {
     Int i;
 

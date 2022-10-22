@@ -5,7 +5,7 @@
 #include "util.h"
 #include "crypt.h"
 
-static unsigned char ascii64[] = /* 0 ... 63 => ascii - 64 */
+static const unsigned char ascii64[] = /* 0 ... 63 => ascii - 64 */
         "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 /*

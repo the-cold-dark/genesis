@@ -35,7 +35,7 @@ module_t web_module = {true, init_web, true, uninit_web};
 #define DONT_ESCAPE_LEN        16
 
 /* we pre-define this for speed */
-char * dec_2_hex[] = {
+static const char * const dec_2_hex[] = {
    "\0", "\0", "\0", "\0", "\0",
    "\0", "\0", "\0", "\0", "\0",
    "\0", "\0", "\0", "\0", "\0",

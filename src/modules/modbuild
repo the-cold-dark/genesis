@@ -88,7 +88,7 @@ print DEF<<END;
 #define NUM_MODULES $nmods
 
 #ifdef _native_
-module_t * cold_modules[] = {
+static const module_t * cold_modules[] = {
 END
 
 foreach $mod (@mods) {
@@ -155,7 +155,7 @@ if ($write) {
 #define MAGIC_MODNUMBER $magic\n
 
 #ifdef _native_
-native_t natives[NATIVE_LAST] = {
+const native_t natives[NATIVE_LAST] = {
 $struct};
 #else
 extern native_t natives[NATIVE_LAST];

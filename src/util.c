@@ -427,8 +427,8 @@ char * english_type(Int type) {
     }
 }
 
-char *english_integer(Int n, Number_buf nbuf) {
-    static char *first_eleven[] = {
+const char *english_integer(Int n, Number_buf nbuf) {
+    static const char * const first_eleven[] = {
         "no", "one", "two", "three", "four", "five", "six", "seven",
         "eight", "nine", "ten" };
 

@@ -100,7 +100,7 @@ uLong hash_string_nocase(cStr * str) {
 }
 
 
-Long atoln(char *s, Int n) {
+Long atoln(const char *s, Int n) {
     Long val = 0;
 
     while (n-- && isdigit(*s))
@@ -154,14 +154,14 @@ char * float_to_ascii(Float num, Number_buf nbuf) {
 }
 
 /* Compare two strings, ignoring case. */
-Int strccmp(char *s1, char *s2) {
+Int strccmp(const char *s1, const char *s2) {
     while (*s1 && LCASE(*s1) == LCASE(*s2))
         s1++, s2++;
     return LCASE(*s1) - LCASE(*s2);
 }
 
 /* Compare two strings up to n characters, ignoring case. */
-Int strnccmp(char *s1, char *s2, Int n) {
+Int strnccmp(const char *s1, const char *s2, Int n) {
     while (n-- && *s1 && LCASE(*s1) == LCASE(*s2))
         s1++, s2++;
     return (n >= 0) ? LCASE(*s1) - LCASE(*s2) : 0;
@@ -215,10 +215,10 @@ Long random_number(Long n) {
 }
 
 /* Result must be copied before it can be re-used.  Non-reentrant. */
-cStr * vformat(char * fmt, va_list arg) {
+cStr * vformat(const char * fmt, va_list arg) {
     cStr   * buf,
                * str;
-    char       * p,
+    const char * p,
                * s;
     Number_buf   nbuf;
 
@@ -300,7 +300,7 @@ cStr * vformat(char * fmt, va_list arg) {
     return buf;
 }
 
-cStr * format(char *fmt, ...) {
+cStr * format(const char *fmt, ...) {
     va_list arg;
     cStr *str;
 
@@ -591,7 +591,7 @@ Int getarg(char * n,
     return 1;
 }
 
-Int is_valid_id(char * str, Int len) {
+Int is_valid_id(const char * str, Int len) {
     while (len--) {
         if (!isalnum(*str) && *str != '_')
             return 0;

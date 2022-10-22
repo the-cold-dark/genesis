@@ -30,17 +30,17 @@ uLong hash_string(cStr * str);
 uLong hash_string_nocase(cStr * str);
 
 void       init_util(void);
-Long       atoln(char *s, Int n);
+Long       atoln(const char *s, Int n);
 char     * long_to_ascii(Long num, Number_buf nbuf);
 char     * long_long_to_ascii(long long num, Number_buf nbuf);
 char     * float_to_ascii(Float num, Number_buf nbuf);
-Int        strccmp(char *s1, char *s2);
-Int        strnccmp(char *s1, char *s2, Int n);
+Int        strccmp(const char *s1, const char *s2);
+Int        strnccmp(const char *s1, const char *s2, Int n);
 char     * strcchr(char *s, Int c);
 char     * strcstr(char *s, char *search);
 Long       random_number(Long n);
-cStr     * vformat(char * fmt, va_list arg);
-cStr     * format(char * fmt, ...);
+cStr     * vformat(const char * fmt, va_list arg);
+cStr     * format(const char * fmt, ...);
 char     * timestamp(char * str);
 void       fformat(FILE *fp, char *fmt, ...);
 cStr     * fgetstring(FILE *fp);
@@ -52,7 +52,7 @@ void       close_scratch_file(FILE *fp);
 void       uninit_scratch_file(void);
 void       init_scratch_file(void);
 Int        parse_strcpy(char * s1, char * s2, Int len);
-Int        is_valid_id(char * str, Int len);
+Int        is_valid_id(const char * str, Int len);
 Int        getarg(char * n,
                   char ** buf,
                   char * opt,

@@ -43,7 +43,7 @@ cBuf *buffer_append(cBuf *buf1, cBuf *buf2) {
     return buf1;
 }
 
-cBuf * buffer_append_uchars_single_ref(cBuf * buf, uChar * new, Int new_len) {
+cBuf * buffer_append_uchars_single_ref(cBuf * buf, const uChar * new, Int new_len) {
     Int new_size = buf->len + new_len;
 
     if (buf->size < new_size) {
@@ -58,7 +58,7 @@ cBuf * buffer_append_uchars_single_ref(cBuf * buf, uChar * new, Int new_len) {
     return buf;
 }
 
-cBuf * buffer_append_uchars(cBuf * buf1, uChar * new, Int new_len) {
+cBuf * buffer_append_uchars(cBuf * buf1, const uChar * new, Int new_len) {
     if (!new_len)
         return buf1;
     buf1 = buffer_prep(buf1, buf1->len + new_len);
@@ -328,8 +328,8 @@ cBuf *buffer_prep(cBuf *buf, Int new_size) {
 }
 
 static
-int buf_rindexs(uChar * buf, int len, uChar * sub, int slen, int origin){
-    register uChar * s;
+int buf_rindexs(const uChar * buf, int len, const uChar * sub, int slen, int origin){
+    register const uChar * s;
 
     if (origin < slen)
         origin = slen;
@@ -352,8 +352,8 @@ int buf_rindexs(uChar * buf, int len, uChar * sub, int slen, int origin){
     return 0;
 }
 
-static int buf_rindexc(uChar * buf, int len, uChar sub, int origin) {
-    register uChar * s;
+static int buf_rindexc(const uChar * buf, int len, uChar sub, int origin) {
+    register const uChar * s;
 
     len -= origin;
 
@@ -375,10 +375,10 @@ static int buf_rindexc(uChar * buf, int len, uChar sub, int origin) {
 // returns 1..$ if item is found, 0 if it is not or -1 if an error is thrown
 */
 
-int buffer_index(cBuf * buf, uChar * ss, int slen, int origin) {
+int buffer_index(cBuf * buf, const uChar * ss, int slen, int origin) {
     int     len;
-    uChar * s,
-          * p;
+    const uChar * s,
+                * p;
     bool    reverse = false;
 
     s = buf->s;

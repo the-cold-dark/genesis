@@ -41,7 +41,7 @@ cStr *string_new(Int size_needed) {
     return cnew;
 }
 
-cStr *string_from_chars(char *s, Int len) {
+cStr *string_from_chars(const char *s, Int len) {
     cStr *cnew = string_new(len);
 
     MEMCPY(cnew->s, s, len);
@@ -134,7 +134,7 @@ cStr *string_add(cStr *str1, cStr *str2) {
 }
 
 /* calling this with len == 0 can be a problem */
-cStr *string_add_chars(cStr *str, char *s, Int len) {
+cStr *string_add_chars(cStr *str, const char *s, Int len) {
     str = string_prep(str, str->start, str->len + len);
     MEMCPY(str->s + str->start + str->len - len, s, len);
     str->s[str->start + str->len] = 0;
@@ -148,7 +148,7 @@ cStr *string_addc(cStr *str, Int c) {
     return str;
 }
 
-cStr *string_add_padding(cStr *str, char *filler, Int len, Int padding) {
+cStr *string_add_padding(cStr *str, const char *filler, Int len, Int padding) {
     str = string_prep(str, str->start, str->len + padding);
 
     if (len == 1) {
@@ -265,7 +265,7 @@ cStr * string_parse(char **sptr) {
     return str;
 }
 
-cStr *string_add_unparsed(cStr *str, char *s, Int len) {
+cStr *string_add_unparsed(cStr *str, const char *s, Int len) {
     Int i;
 
     str = string_addc(str, '"');
@@ -304,8 +304,8 @@ char *gen_regerror(char *msg) {
 // index() and company
 */
 
-static int str_rindexs(char * str, int len, char * sub, int slen, int origin){
-    register char * s;
+static int str_rindexs(const char * str, int len, const char * sub, int slen, int origin){
+    register const char * s;
 
     if (origin < slen)
         origin = slen;
@@ -328,8 +328,8 @@ static int str_rindexs(char * str, int len, char * sub, int slen, int origin){
     return 0;
 }
 
-static int str_rindexc(char * str, int len, char sub, int origin) {
-    register char * s;
+static int str_rindexc(const char * str, int len, char sub, int origin) {
+    register const char * s;
 
     len -= origin;
 

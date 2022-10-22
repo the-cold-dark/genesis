@@ -123,11 +123,11 @@ static Ident string_tab_from_hash(StringTab *tab, uLong hval, cStr * str) {
     return ind;
 }
 
-Ident string_tab_get(StringTab *tab, char *s) {
+Ident string_tab_get(StringTab *tab, const char *s) {
     return string_tab_get_length(tab, s, strlen(s));
 }
 
-Ident string_tab_get_length(StringTab *tab, char *s, Int len)
+Ident string_tab_get_length(StringTab *tab, const char *s, Int len)
 {
     uLong hval;
     Int ind;

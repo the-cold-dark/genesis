@@ -110,7 +110,7 @@ void lex_start(cList * code_list) {
 }
 
 /* Returns if s can be parsed as an identifier. */
-bool is_valid_ident(char *s) {
+bool is_valid_ident(const char *s) {
     for (; *s; s++) {
         if (!isalnum(*s) && *s != '_')
             return 0;
@@ -129,7 +129,7 @@ bool string_is_valid_ident(cStr * str) {
     return 1;
 }
 
-bool is_reserved_word(char *s) {
+bool is_reserved_word(const char *s) {
     int start, i, j, len;
     char * word;
 

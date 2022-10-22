@@ -196,9 +196,9 @@ COLDC_FUNC(strings_to_buf) {
 COLDC_FUNC(bufidx) {
     int     origin;
     int     r;
-    uChar   c;
+    unsigned char   c;
     int     clen;
-    uChar * cp;
+    unsigned char * cp;
 
     INIT_2_OR_3_ARGS(BUFFER, ANY_TYPE, INTEGER);
 
@@ -208,7 +208,7 @@ COLDC_FUNC(bufidx) {
         origin = 1;
 
     if (args[1].type == INTEGER) {
-        c = (uChar) args[1].u.val;
+        c = (unsigned char) args[1].u.val;
         cp = &c;
         clen = 1;
     } else if (args[1].type == BUFFER) {

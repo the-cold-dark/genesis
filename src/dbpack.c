@@ -13,7 +13,7 @@
 /* Write a Float to the output buffer */
 cBuf * write_float(cBuf *buf, Float f)
 {
-    buf = buffer_append_uchars_single_ref(buf, (uChar*)(&f), SIZEOF_FLOAT);
+    buf = buffer_append_uchars_single_ref(buf, (unsigned char*)(&f), SIZEOF_FLOAT);
     return buf;
 }
 
@@ -22,7 +22,7 @@ Float read_float(cBuf *buf, Long *buf_pos)
 {
     Float f;
 
-    memcpy((uChar*)(&f), &(buf->s[*buf_pos]), SIZEOF_FLOAT);
+    memcpy((unsigned char*)(&f), &(buf->s[*buf_pos]), SIZEOF_FLOAT);
     (*buf_pos) += SIZEOF_FLOAT;
     return f;
 }
@@ -42,7 +42,7 @@ cBuf * write_long(cBuf *buf, Long n)
 {
     uLong i = (uLong)n;
     uLong i2 = i ^ (uLong)(-1);
-    uChar *long_buf;
+    unsigned char *long_buf;
     Int   bit_flip = 0;
     uInt  num_bytes = 0;
 
@@ -121,7 +121,7 @@ Int size_long(Long n, int memory_size)
 
 cBuf * write_ident(cBuf *buf, Ident id)
 {
-    Char *s;
+    char *s;
     Int len;
 
     if (id == NOT_AN_IDENT) {
@@ -130,7 +130,7 @@ cBuf * write_ident(cBuf *buf, Ident id)
     }
     s = ident_name_size(id, &len);
     buf = write_long(buf, len);
-    buf = buffer_append_uchars_single_ref(buf, (uChar *)s, len);
+    buf = buffer_append_uchars_single_ref(buf, (unsigned char *)s, len);
 
     return buf;
 }
@@ -138,7 +138,7 @@ cBuf * write_ident(cBuf *buf, Ident id)
 Ident read_ident(cBuf *buf, Long *buf_pos)
 {
     Int   len;
-    Char *s;
+    char *s;
     Ident id;
 
     /* Read the length of the identifier. */
@@ -150,7 +150,7 @@ Ident read_ident(cBuf *buf, Long *buf_pos)
         return NOT_AN_IDENT;
 
     /* Otherwise, it's an identifier.  Read it into temporary storage. */
-    s = TMALLOC(Char, len + 1);
+    s = TMALLOC(char, len + 1);
     MEMCPY(s, &(buf->s[*buf_pos]), len);
     (*buf_pos) += len;
     s[len] = 0;
@@ -174,7 +174,7 @@ Int size_ident(Ident id, int memory_size)
 
     ident_name_size(id, &len);
 
-    return size_long(len, 0) + (len * sizeof(Char));
+    return size_long(len, 0) + (len * sizeof(char));
 }
 
 static cBuf * pack_list(cBuf *buf, cList *list)

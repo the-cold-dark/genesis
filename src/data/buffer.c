@@ -43,7 +43,7 @@ cBuf *buffer_append(cBuf *buf1, cBuf *buf2) {
     return buf1;
 }
 
-cBuf * buffer_append_uchars_single_ref(cBuf * buf, const uChar * new, Int new_len) {
+cBuf * buffer_append_uchars_single_ref(cBuf * buf, const unsigned char * new, Int new_len) {
     Int new_size = buf->len + new_len;
 
     if (buf->size < new_size) {
@@ -58,7 +58,7 @@ cBuf * buffer_append_uchars_single_ref(cBuf * buf, const uChar * new, Int new_le
     return buf;
 }
 
-cBuf * buffer_append_uchars(cBuf * buf1, const uChar * new, Int new_len) {
+cBuf * buffer_append_uchars(cBuf * buf1, const unsigned char * new, Int new_len) {
     if (!new_len)
         return buf1;
     buf1 = buffer_prep(buf1, buf1->len + new_len);
@@ -328,8 +328,8 @@ cBuf *buffer_prep(cBuf *buf, Int new_size) {
 }
 
 static
-int buf_rindexs(const uChar * buf, int len, const uChar * sub, int slen, int origin){
-    register const uChar * s;
+int buf_rindexs(const unsigned char * buf, int len, const unsigned char * sub, int slen, int origin){
+    register const unsigned char * s;
 
     if (origin < slen)
         origin = slen;
@@ -352,8 +352,8 @@ int buf_rindexs(const uChar * buf, int len, const uChar * sub, int slen, int ori
     return 0;
 }
 
-static int buf_rindexc(const uChar * buf, int len, uChar sub, int origin) {
-    register const uChar * s;
+static int buf_rindexc(const unsigned char * buf, int len, unsigned char sub, int origin) {
+    register const unsigned char * s;
 
     len -= origin;
 
@@ -375,9 +375,9 @@ static int buf_rindexc(const uChar * buf, int len, uChar sub, int origin) {
 // returns 1..$ if item is found, 0 if it is not or -1 if an error is thrown
 */
 
-int buffer_index(cBuf * buf, const uChar * ss, int slen, int origin) {
+int buffer_index(cBuf * buf, const unsigned char * ss, int slen, int origin) {
     int     len;
-    const uChar * s,
+    const unsigned char * s,
                 * p;
     bool    reverse = false;
 
@@ -407,7 +407,7 @@ int buffer_index(cBuf * buf, const uChar * ss, int slen, int origin) {
 
         p = s + origin;
 
-        p = (uChar *) memchr(p, *ss, xlen);
+        p = (unsigned char *) memchr(p, *ss, xlen);
 
         if (slen == 1)
             return p ? ((p - s) + 1) : 0;
@@ -416,7 +416,7 @@ int buffer_index(cBuf * buf, const uChar * ss, int slen, int origin) {
             if (MEMCMP(p, ss, slen) == 0)
                 return (p - s) + 1;
             xlen = len - ((p - s) + 1);
-            p = (uChar *) memchr(p+1, *ss, xlen);
+            p = (unsigned char *) memchr(p+1, *ss, xlen);
         }
     }
     return 0;

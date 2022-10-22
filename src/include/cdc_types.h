@@ -37,14 +37,14 @@ struct cStr {
     Int size;
     Int refs;
     regexp * reg;
-    Char s[1];
+    char s[1];
 };
 
 struct cBuf {
     Int len;
     Int size;
     Int refs;
-    uChar s[1];
+    unsigned char s[1];
 };
 
 struct cData {

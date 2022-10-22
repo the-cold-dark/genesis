@@ -26,10 +26,10 @@ typedef struct {
 } SHS_CTX;
 
 extern void shsInit(SHS_CTX *ctx);
-extern void shsUpdate(SHS_CTX *ctx, const uChar *dataIn, Int len);
-extern void shsFinal(SHS_CTX *ctx, uChar hashOut[20]);
+extern void shsUpdate(SHS_CTX *ctx, const unsigned char *dataIn, Int len);
+extern void shsFinal(SHS_CTX *ctx, unsigned char hashOut[20]);
 #ifdef LINT
-extern void shsBlock(const uChar *dataIn, Int len, uChar hashOut[20]);
+extern void shsBlock(const unsigned char *dataIn, Int len, unsigned char hashOut[20]);
 #endif
 
 #endif

@@ -212,8 +212,6 @@ extern char *sys_errlist[];
 /*
 // these are C type defines, the following should be true:
 //
-//   Char     =>  character signed value
-//   uChar    =>  character unsigned value
 //   Int      =>  common integer signed value
 //   uInt     =>  common integer unsigned value
 //   Long     =>  large integer signed value
@@ -228,8 +226,6 @@ extern char *sys_errlist[];
 // than 64 bits, for now they assume 64bits is the heavenly bit in the sky.
 */
 
-typedef char              Char;
-typedef unsigned char     uChar;
 typedef int32_t           Int;
 typedef uint32_t          uInt;
 

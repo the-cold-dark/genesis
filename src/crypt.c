@@ -5,7 +5,7 @@
 #include "util.h"
 #include "crypt.h"
 
-static uChar ascii64[] =        /* 0 ... 63 => ascii - 64 */
+static unsigned char ascii64[] = /* 0 ... 63 => ascii - 64 */
         "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 /*
@@ -14,7 +14,7 @@ static uChar ascii64[] =        /* 0 ... 63 => ascii - 64 */
 */
 cStr * strcrypt(cStr * key, cStr * salt) {
     char   pwd_buf[SHS_OUTPUT_SIZE];  /* output buffer for the password */
-    uChar * pp, * sp, rsalt[9];         /* 8 chars of salt, one NULL */
+    unsigned char * pp, * sp, rsalt[9]; /* 8 chars of salt, one NULL */
     Int    x,
            pl,
            sl;
@@ -28,7 +28,7 @@ cStr * strcrypt(cStr * key, cStr * salt) {
         sp = rsalt;
         sl = 8;
     } else {
-        sp = (uChar *) string_chars(salt);
+        sp = (unsigned char *) string_chars(salt);
         if (sp[0] == '$' && sp[1] == '2' && sp[2] == '$') {
             sp += 3;
             for (x=0; x < 8 && sp[x] != '$'; x++)
@@ -43,7 +43,7 @@ cStr * strcrypt(cStr * key, cStr * salt) {
         }
     }
 
-    pp = (uChar *) string_chars(key);
+    pp = (unsigned char *) string_chars(key);
     pl = string_length(key);
 
     shs_crypt(pp, pl, sp, sl, pwd_buf);
@@ -57,16 +57,16 @@ cStr * strcrypt(cStr * key, cStr * salt) {
 // pass back to the OS crypt()
 */
 Int match_crypted(cStr * encrypted, cStr * possible) {
-    uChar * ep, * pp, *sp, salt[9];
+    unsigned char * ep, * pp, *sp, salt[9];
     char   p_buf[SHS_OUTPUT_SIZE];
     Int    sl,
            el,
            pl,
            x;
 
-    ep = (uChar *) string_chars(encrypted);
+    ep = (unsigned char *) string_chars(encrypted);
     el = string_length(encrypted);
-    pp = (uChar *) string_chars(possible);
+    pp = (unsigned char *) string_chars(possible);
     pl = string_length(possible);
 
     if (el < 3) {
@@ -82,7 +82,7 @@ Int match_crypted(cStr * encrypted, cStr * possible) {
         sp = salt;
         sl = strlen((char *) sp);
 
-        shs_crypt((uChar *) pp, pl, sp, sl, p_buf);
+        shs_crypt((unsigned char *) pp, pl, sp, sl, p_buf);
 
         return (!strcmp((char *) ep, p_buf));
     } else {
@@ -108,7 +108,7 @@ Int match_crypted(cStr * encrypted, cStr * possible) {
  *
  */
 
-void to64(uChar *s, uInt v, Int n) {
+void to64(unsigned char *s, uInt v, Int n) {
         while (--n >= 0) {
                 *s++ = ascii64[v&0x3f];
                 v >>= 6;
@@ -121,8 +121,8 @@ char * shs_crypt(const unsigned char * pw,
                  const Int sl,
                  char * passwd)
 {
-    uChar *p;
-    uChar    final[SHS_DIGEST_SIZE];
+    unsigned char *p;
+    unsigned char    final[SHS_DIGEST_SIZE];
     Int i,j;
     SHS_CTX    ctx,ctx1;
     uInt l;
@@ -133,7 +133,7 @@ char * shs_crypt(const unsigned char * pw,
     shsUpdate(&ctx,pw,pl);
 
     /* Then our magic string */
-    shsUpdate(&ctx,(uChar *)"$2$",3);
+    shsUpdate(&ctx,(unsigned char *)"$2$",3);
 
     /* Then the raw salt */
     shsUpdate(&ctx,sp,sl);
@@ -189,7 +189,7 @@ char * shs_crypt(const unsigned char * pw,
         shsFinal(&ctx1,final);
     }
 
-    p = (uChar *) passwd + strlen(passwd);
+    p = (unsigned char *) passwd + strlen(passwd);
 
     l = (final[ 0]<<16) | (final[ 6]<<8) | final[12]; to64(p,l,4); p += 4;
     l = (final[ 1]<<16) | (final[ 7]<<8) | final[13]; to64(p,l,4); p += 4;

@@ -67,7 +67,7 @@ cStr *string_dup(cStr *str) {
 cBuf *string_pack(cBuf *buf, cStr *str) {
     if (str) {
         buf = write_long(buf, str->len);
-        buf = buffer_append_uchars_single_ref(buf, (uChar *)(str->s + str->start), str->len);
+        buf = buffer_append_uchars_single_ref(buf, (unsigned char *)(str->s + str->start), str->len);
     } else {
         buf = write_long(buf, -1);
     }

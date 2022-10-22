@@ -58,7 +58,7 @@ void shsInit(SHS_CTX *ctx) {
 /*
  *  SHS: Add data to context.
  */
-void shsUpdate(SHS_CTX *ctx, const uChar * dataIn, Int len) {
+void shsUpdate(SHS_CTX *ctx, const unsigned char * dataIn, Int len) {
   /*
    *  Read the data into W and process blocks as they get full
    *
@@ -83,24 +83,24 @@ void shsUpdate(SHS_CTX *ctx, const uChar * dataIn, Int len) {
 /*
  *  SHS: Generate hash value from context
  */
-void shsFinal(SHS_CTX * ctx, uChar hashOut[20]) {
-  static uChar bulk_pad[64] = { 0x80,0,0,0,0,0,0,0,0,0,
+void shsFinal(SHS_CTX * ctx, unsigned char hashOut[20]) {
+  static unsigned char bulk_pad[64] = { 0x80,0,0,0,0,0,0,0,0,0,
           0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
           0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0  };
-  uChar length_pad[8];
+  unsigned char length_pad[8];
   Int i;
 
   /*
    *  Pad with a binary 1 (e.g. 0x80), then zeroes, then length
    */
-  length_pad[0] = (uChar)((ctx->sizeHi >> 24) & 255);
-  length_pad[1] = (uChar)((ctx->sizeHi >> 16) & 255);
-  length_pad[2] = (uChar)((ctx->sizeHi >> 8) & 255);
-  length_pad[3] = (uChar)((ctx->sizeHi >> 0) & 255);
-  length_pad[4] = (uChar)((ctx->sizeLo >> 24) & 255);
-  length_pad[5] = (uChar)((ctx->sizeLo >> 16) & 255);
-  length_pad[6] = (uChar)((ctx->sizeLo >> 8) & 255);
-  length_pad[7] = (uChar)((ctx->sizeLo >> 0) & 255);
+  length_pad[0] = (unsigned char)((ctx->sizeHi >> 24) & 255);
+  length_pad[1] = (unsigned char)((ctx->sizeHi >> 16) & 255);
+  length_pad[2] = (unsigned char)((ctx->sizeHi >> 8) & 255);
+  length_pad[3] = (unsigned char)((ctx->sizeHi >> 0) & 255);
+  length_pad[4] = (unsigned char)((ctx->sizeLo >> 24) & 255);
+  length_pad[5] = (unsigned char)((ctx->sizeLo >> 16) & 255);
+  length_pad[6] = (unsigned char)((ctx->sizeLo >> 8) & 255);
+  length_pad[7] = (unsigned char)((ctx->sizeLo >> 0) & 255);
   shsUpdate(ctx, bulk_pad, ((56+64) - ctx->lenW) & 63);
   shsUpdate(ctx, length_pad, 8);
 
@@ -108,10 +108,10 @@ void shsFinal(SHS_CTX * ctx, uChar hashOut[20]) {
    *  Output hash
    */
   for (i = 0; i < 5; i++) {
-    *(hashOut++) = ((uChar)(ctx->H[i] >> 24)) & 255;
-    *(hashOut++) = ((uChar)(ctx->H[i] >> 16)) & 255;
-    *(hashOut++) = ((uChar)(ctx->H[i] >>  8)) & 255;
-    *(hashOut++) = ((uChar)(ctx->H[i]      )) & 255;
+    *(hashOut++) = ((unsigned char)(ctx->H[i] >> 24)) & 255;
+    *(hashOut++) = ((unsigned char)(ctx->H[i] >> 16)) & 255;
+    *(hashOut++) = ((unsigned char)(ctx->H[i] >>  8)) & 255;
+    *(hashOut++) = ((unsigned char)(ctx->H[i]      )) & 255;
   }
 
   /*
@@ -125,7 +125,7 @@ void shsFinal(SHS_CTX * ctx, uChar hashOut[20]) {
 /*
  *  SHS: Hash a block in memory
  */
-void shsBlock(const uChar *dataIn, Int len, uChar hashOut[20]) {
+void shsBlock(const unsigned char *dataIn, Int len, unsigned char hashOut[20]) {
   SHS_CTX ctx;
 
   shsInit(&ctx);

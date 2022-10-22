@@ -607,7 +607,7 @@ Int simble_get(Obj *object, cObjnum objnum, Long *sizeread)
         *sizeread = size;
     buf = buffer_new(size);
     buf->len = size;
-    buf_pos = fread(buf->s, sizeof(uChar), size, database_file);
+    buf_pos = fread(buf->s, sizeof(unsigned char), size, database_file);
     UNLOCK_DB("simble_get")
     if (buf_pos != size)
         panic("simble_get: only read %d of %d bytes.", buf_pos, size);
@@ -646,7 +646,7 @@ Int simble_put(Obj *obj, cObjnum objnum, Long *sizewritten)
         buf = buffer_new(old_size);
         buf = pack_object(buf, obj);
         if (buf->len % BLOCK_SIZE)
-            buf = buffer_append_uchars_single_ref(buf, (uChar*)pad_string->s, 256 - (buf->len % BLOCK_SIZE));
+            buf = buffer_append_uchars_single_ref(buf, (unsigned char*)pad_string->s, 256 - (buf->len % BLOCK_SIZE));
         new_size = buf->len;
 
         LOCK_DB("simble_put")
@@ -679,7 +679,7 @@ Int simble_put(Obj *obj, cObjnum objnum, Long *sizewritten)
         buf = buffer_new(0);
         buf = pack_object(buf, obj);
         if (buf->len % BLOCK_SIZE)
-            buf = buffer_append_uchars_single_ref(buf, (uChar*)pad_string->s, 256 - (buf->len % BLOCK_SIZE));
+            buf = buffer_append_uchars_single_ref(buf, (unsigned char*)pad_string->s, 256 - (buf->len % BLOCK_SIZE));
         new_size = buf->len;
 
         LOCK_DB("simble_put")
@@ -707,7 +707,7 @@ Int simble_put(Obj *obj, cObjnum objnum, Long *sizewritten)
         return 0;
     }
 
-    old_size = fwrite(buf->s, sizeof(uChar), new_size, database_file);
+    old_size = fwrite(buf->s, sizeof(unsigned char), new_size, database_file);
     buffer_discard(buf);
     fflush(database_file);
     UNLOCK_DB("simble_put")
@@ -761,7 +761,7 @@ Int simble_del(cObjnum objnum)
     buf = buffer_new(size);
     buf->len = size;
     memset(buf->s, 0, size);
-    fwrite(buf->s, sizeof(uChar), size, database_file);
+    fwrite(buf->s, sizeof(unsigned char), size, database_file);
     buffer_discard(buf);
     fflush(database_file);
 

@@ -5,9 +5,6 @@
 #include "defs.h"
 #include "cdc_pcode.h"
 
-void init_ext_math(Int argc, char ** argv);
-void uninit_ext_math(void);
-
 #ifndef _ext_math_
 extern module_t ext_math_module;
 #endif

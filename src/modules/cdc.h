@@ -4,9 +4,6 @@
 #include "defs.h"
 #include "cdc_pcode.h"
 
-void init_cdc(int argc, char ** argv);
-void uninit_cdc(void);
-
 #ifndef _cdc_
 extern module_t cdc_module;
 #endif

@@ -83,9 +83,9 @@ void lookup_open(const char *name, Int cnew) {
 #endif
 
     if (cnew)
-        dbp = dbm_open(name, O_TRUNC | O_RDWR | O_CREAT | O_BINARY, READ_WRITE);
+        dbp = dbm_open((char *)name, O_TRUNC | O_RDWR | O_CREAT | O_BINARY, READ_WRITE);
     else
-        dbp = dbm_open(name, O_RDWR | O_BINARY, READ_WRITE);
+        dbp = dbm_open((char *)name, O_RDWR | O_BINARY, READ_WRITE);
     if (!dbp)
         fail_to_start("Cannot open dbm database file.");
 
@@ -108,7 +108,7 @@ void lookup_sync(void) {
     /* Only way to do this with ndbm is close and re-open. */
     sync_name_cache();
     dbm_close(dbp);
-    dbp = dbm_open(buf, O_RDWR | O_CREAT | O_BINARY, READ_WRITE);
+    dbp = dbm_open((char *)buf, O_RDWR | O_CREAT | O_BINARY, READ_WRITE);
 
     UNLOCK_LOOKUP("lookup_sync");
 

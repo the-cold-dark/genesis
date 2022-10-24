@@ -50,7 +50,7 @@ int lookup_ip_by_name(const char * name, char * out)
    if (!(hp = gethostbyname(name)))
        return DNS_NORESOLV;
 
-   p = inet_ntoa(*(struct in_addr *)hp->h_addr);
+   p = inet_ntoa(*(struct in_addr *)hp->h_addr_list[0]);
    strncpy(out, p, DNS_MAXLEN);
    if (strlen(p) > DNS_MAXLEN) {
        write_err("Hostname longer than DNS_MAXLEN?!?: '%s'\n", hp->h_name);

@@ -2942,6 +2942,29 @@ eval {
     dblog("  1 - " + toliteral((| log(0.0) |)));
 };
 
+	// Numeric test 6
+	//
+	// testing round
+	// Output
+
+		Numeric test 5
+		  -1.1 - -1
+		  -1.5 - -2
+		  -1.7 - -2
+		  1.1 - 1
+		  1.5 - 2
+		  1.7 - 2
+
+eval {
+    dblog("Numeric test 5");
+    dblog("  -1.1 - " + toliteral((| round(-1.1) |)));
+    dblog("  -1.5 - " + toliteral((| round(-1.5) |)));
+    dblog("  -1.7 - " + toliteral((| round(-1.7) |)));
+    dblog("  1.1 - " + toliteral((| round(1.1) |)));
+    dblog("  1.5 - " + toliteral((| round(1.5) |)));
+    dblog("  1.7 - " + toliteral((| round(1.7) |)));
+};
+
 	// create() test with no parents
 	//
 	// testing create() with a zero-length parent list

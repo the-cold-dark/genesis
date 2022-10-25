@@ -238,18 +238,6 @@ COLDC_FUNC(atan2) {
     push_float((cFloat) r);
 }
 
-#ifndef HAVE_RINT
-/* not the best replacement, but it works -- Brandon */
-double rint (double num) {
-    double whole = floor(num);
-
-    if ((num - whole) >= 0.5)
-        return ceil(num);
-    else
-        return whole;
-}
-#endif
-
 COLDC_FUNC(round) {
     double   r;
     cData  * args;
@@ -257,7 +245,7 @@ COLDC_FUNC(round) {
     if (!func_init_1(&args, FLOAT))
         return;
 
-    r = rint((double) FLOAT1);
+    r = round((double) FLOAT1);
 
     pop(1);
 

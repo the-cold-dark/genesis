@@ -25,7 +25,6 @@
 
 #cmakedefine HAVE_GETRUSAGE
 #cmakedefine HAVE_GETTIMEOFDAY
-#cmakedefine HAVE_RINT
 #cmakedefine HAVE_STRCSPN
 #cmakedefine HAVE_STRERROR
 #cmakedefine HAVE_STRFTIME

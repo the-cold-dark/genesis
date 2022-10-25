@@ -259,8 +259,6 @@ typedef uint32_t          uInt;
 
 #define F_SUCCESS 0  /* function absolute success */
 #define F_FAILURE -1 /* function failure */
-#define B_SUCCESS 1  /* boolean success */
-#define B_FAILURE 0  /* boolean failure */
 
 #define ANY_TYPE 0
 

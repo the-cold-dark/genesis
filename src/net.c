@@ -4,7 +4,6 @@
 // RFC references: inverse name resolution--1293, 903 1035 - domain name system
 */
 
-#define _BSD 44 /* For RS6000s. */
 #include "defs.h"
 
 #include <sys/types.h>

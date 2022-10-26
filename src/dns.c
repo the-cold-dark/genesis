@@ -4,8 +4,6 @@
 // RFC references: 1293, 903, 1035
 */
 
-#define _BSD 44 /* For RS6000s. */
-
 #include "defs.h"
 
 #ifdef __UNIX__

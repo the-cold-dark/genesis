@@ -204,11 +204,6 @@
 #define SYSTEM_OBJNUM     0
 #define ROOT_OBJNUM       1
 
-#ifndef HAVE_STRERROR
-extern char *sys_errlist[];
-#define strerror(n) (sys_errlist[n])
-#endif
-
 /*
 // these are C type defines, the following should be true:
 //

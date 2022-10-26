@@ -25,7 +25,6 @@
 
 #cmakedefine HAVE_GETRUSAGE
 #cmakedefine HAVE_GETTIMEOFDAY
-#cmakedefine HAVE_STRCSPN
 
 #cmakedefine __UNIX__
 #cmakedefine __Win32__

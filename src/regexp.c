@@ -186,10 +186,6 @@ static void reginsert(char , char *);
 static void regtail(char *, char *);
 static void regoptail(char *, char *);
 
-#ifdef STRCSPN
-static int strcspn(char *s1, char *s2);
-#endif
-
 /*
  - gen_regcomp - compile a regular expression into internal code
  *
@@ -1143,33 +1139,5 @@ static char * regprop(char *op) {
     if (p != NULL)
         (void) strcat(buf, p);
     return(buf);
-}
-#endif
-
-/*
- * The following is provided for those people who do not have strcspn() in
- * their C libraries.  They should get off their butts and do something
- * about it; at least one public-domain implementation of those (highly
- * useful) string routines has been published on Usenet.
- */
-#ifndef HAVE_STRCSPN
-/*
- * strcspn - find length of initial segment of s1 consisting entirely
- * of characters not from s2
- */
-
-static int strcspn(char *s1, char *s2) {
-    char *scan1;
-    char *scan2;
-    int count;
-
-    count = 0;
-    for (scan1 = s1; *scan1 != '\0'; scan1++) {
-        for (scan2 = s2; *scan2 != '\0';)    /* ++ moved down. */
-            if (*scan1 == *scan2++)
-                return(count);
-        count++;
-    }
-    return(count);
 }
 #endif

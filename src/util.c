@@ -508,9 +508,10 @@ void uninit_scratch_file(void) {
 
 #define add_char(__s, __c) { *__s = __c; __s++; }
 
-Int parse_strcpy(char * b1, char * b2, Int slen) {
+Int parse_strcpy(char * b1, const char * b2, Int slen) {
     Int l = slen, len = slen;
-    char * s = b2, * b = b1;
+    const char * s = b2;
+    char * b = b1;
 
     while (l > 0) {
         if (*s == '\\') {
@@ -554,7 +555,7 @@ Int getarg(char * n,
            char * opt,
            char **argv,
            Int  * argc,
-           void (*usage)(char *))
+           void (*usage)(const char *))
 {
     char * p = opt;
 

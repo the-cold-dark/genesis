@@ -7,11 +7,11 @@
 
 void    init_match(void);
 void    uninit_match(void);
-cList * match_template(char * ctemplate, char * s);
+cList * match_template(const char * ctemplate, char * s);
 cList * match_pattern(char * pattern, char * s);
 cList * match_regexp(cStr * reg, char * s, bool sensitive, bool * error);
 cList * regexp_matches(cStr * reg, char * s, bool sensitive, bool * error);
-Int parse_regfunc_args(char * args, Int flags);
+Int parse_regfunc_args(const char * args, Int flags);
 cStr * strsub(cStr * sstr, cStr * ssearch, cStr * sreplace, Int flags);
 cStr * strsed(cStr * reg,      /* the regexp string */
                   cStr * ss,   /* the string to match against */

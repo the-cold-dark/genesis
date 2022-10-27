@@ -51,14 +51,14 @@ FILE     * open_scratch_file(const char *name, const char *type);
 void       close_scratch_file(FILE *fp);
 void       uninit_scratch_file(void);
 void       init_scratch_file(void);
-Int        parse_strcpy(char * s1, char * s2, Int len);
+Int        parse_strcpy(char * s1, const char * s2, Int len);
 Int        is_valid_id(const char * str, Int len);
 Int        getarg(char * n,
                   char ** buf,
                   char * opt,
                   char **argv,
                   Int * argc,
-                  void (*usage)(char *));
+                  void (*usage)(const char *));
 
 #endif
 

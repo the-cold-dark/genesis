@@ -31,7 +31,7 @@
 
 typedef struct idref_s {
     Long objnum;            /* objnum if its an objnum */
-    char *str;              /* string name */
+    const char *str;        /* string name */
     Int  len;
     Int  err;
 } idref_t;
@@ -114,10 +114,10 @@ extern bool print_warn;
 /*
 // ------------------------------------------------------------------------
 */
-static Method * get_method(FILE * fp, Obj * obj, char * name);
+static Method * get_method(FILE * fp, Obj * obj, const char * name);
 char * strchop(char * str, Int len);
 static void print_dbref(Obj * obj, cObjnum objnum, FILE * fp, bool objnames);
-void blank_and_print_obj(char * what, Float percent_done, Obj * obj);
+static void blank_and_print_obj(const char * what, Float percent_done, Obj * obj);
 
 typedef struct holder_s holder_t;
 
@@ -274,7 +274,7 @@ static void remember_native(Method * method) {
     nh->method = NOT_AN_IDENT;
 }
 
-static void frob_n_print_errstr(char * err, char * name, cObjnum objnum);
+static void frob_n_print_errstr(const char * err, const char * name, cObjnum objnum);
 
 static Int find_native_method(Long object, Long method_name) {
     Ident      oname;
@@ -480,7 +480,7 @@ static void verify_native_methods(void) {
 #define NOOBJ 0
 #define ISOBJ 1
 
-static Int get_idref(char * sp, idref_t * id, Int isobj) {
+static Int get_idref(const char * sp, idref_t * id, Int isobj) {
     Int    x;
     char * end;
 
@@ -555,7 +555,7 @@ static Long parse_to_objnum(idref_t *ref) {
 // ------------------------------------------------------------------------
 */
 
-static Obj * handle_objcmd(char * line, char * s, Int new) {
+static Obj * handle_objcmd(const char * line, char * s, Int new) {
     idref_t   obj;
     char    * p = NULL,
               obj_str[BUF];
@@ -728,7 +728,7 @@ static Obj * handle_objcmd(char * line, char * s, Int new) {
 /*
 // ------------------------------------------------------------------------
 */
-static void handle_parcmd(char * s, Int new) {
+static void handle_parcmd(const char * s, Int new) {
 #ifndef ONLY_PARSE_TEXTDB
     cData      d;
     char       obj_str[BUF];
@@ -987,7 +987,7 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
 /*
 // ------------------------------------------------------------------------
 */
-static void handle_evalcmd(FILE * fp, char * s, Int new, Int access) {
+static void handle_evalcmd(FILE * fp, const char * s, Int new, Int access) {
     Method * method;
 
 #ifndef ONLY_PARSE_TEXTDB
@@ -1019,9 +1019,9 @@ static void handle_evalcmd(FILE * fp, char * s, Int new, Int access) {
 /*
 // ------------------------------------------------------------------------
 */
-static Int get_method_name(char * s, idref_t * id) {
+static Int get_method_name(const char * s, idref_t * id) {
     Int    count = 0, x;
-    char * p;
+    const char * p;
 
     if (*s == '.')
         s++, count++;
@@ -1039,7 +1039,7 @@ static Int get_method_name(char * s, idref_t * id) {
     return count;
 }
 
-static void handle_bind_nativecmd(FILE * fp, char * s) {
+static void handle_bind_nativecmd(FILE * fp, const char * s) {
     idref_t    nat;
     idref_t    meth;
 #ifndef ONLY_PARSE_TEXTDB
@@ -1223,7 +1223,7 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
 /*
 // ------------------------------------------------------------------------
 */
-static void frob_n_print_errstr(char * err, char * name, cObjnum objnum) {
+static void frob_n_print_errstr(const char * err, const char * name, cObjnum objnum) {
     Int    line = 0;
     cStr * str;
 
@@ -1247,7 +1247,7 @@ static void frob_n_print_errstr(char * err, char * name, cObjnum objnum) {
 }
 #endif
 
-static Method * get_method(FILE * fp, Obj * obj, char * name) {
+static Method * get_method(FILE * fp, Obj * obj, const char * name) {
     Method * method;
     cStr   * line;
 #ifndef ONLY_PARSE_TEXTDB
@@ -1550,7 +1550,7 @@ void compile_cdc_file(FILE * fp) {
 */
 Int last_length; /* used in doing fancy formatting */
 void dump_object(Long objnum, FILE *fp, bool objnames);
-static char * method_definition(Method * m);
+static const char * method_definition(Method * m);
 
 #define PRINT_OBJNAME(__obj, __fp) { \
         fputc('$', __fp); \
@@ -1803,7 +1803,7 @@ void dump_object(Long objnum, FILE *fp, bool objnames) {
         } \
     }
 
-static char * method_definition(Method * m) {
+static const char * method_definition(Method * m) {
     static char   buf[255];
     static char   flags[50];
     char        * s;
@@ -1848,7 +1848,7 @@ static char * method_definition(Method * m) {
     return buf;
 }
 
-void blank_and_print_obj(char * what, Float percent_done, Obj * obj) {
+static void blank_and_print_obj(const char * what, Float percent_done, Obj * obj) {
     int x;
     static Int len = 0;
     Number_buf nbuf;

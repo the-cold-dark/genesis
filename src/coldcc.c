@@ -39,7 +39,7 @@ bool   print_warn = true;
 
 /* function prototypes */
 static void   initialize(Int argc, char **argv);
-static void   usage(char * name);
+static void   usage(const char * name);
 static FILE * find_text_db(void);
 static void   compile_db(Int type);
 
@@ -345,7 +345,7 @@ static void initialize(Int argc, char **argv) {
 // --------------------------------------------------------------------
 // Simple usage message, rather explanatory
 */
-void usage (char * name) {
+void usage (const char * name) {
     fprintf (stderr,
              "\n-- ColdCC %d.%d-%d --\n\n"
              "Usage: %s [options]\n"

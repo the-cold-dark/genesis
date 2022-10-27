@@ -308,7 +308,7 @@ static void display_bitmap()
 {
     Int i=0, j=0;
     char line[80];
-    static char *hex="0123456789ABCDEF";
+    static const char *hex="0123456789ABCDEF";
 
     memset(line, 0, sizeof(line));
     while (i < (bitmap_blocks/8))

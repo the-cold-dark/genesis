@@ -76,7 +76,7 @@ void catch_SIGFPE(int sig) {
     signal(SIGFPE,  catch_SIGFPE);
 }
 
-static char *sig_name(int sig) {
+static const char *sig_name(int sig) {
     switch(sig) {
         case SIGILL:  return "ILL";
         case SIGSEGV: return "SEGV";
@@ -97,7 +97,7 @@ static char *sig_name(int sig) {
 
 /* void catch_signal(int sig, int code, struct sigcontext *scp) { */
 void catch_signal(int sig) {
-    char *sptr;
+    const char *sptr;
     cStr *sigstr;
     cData arg1;
     bool  do_shutdown = false;

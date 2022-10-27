@@ -44,7 +44,7 @@ uid_t uid;
 gid_t gid;
 #endif
 
-void usage (char * name);
+void usage (const char * name);
 
 /*
 // if we have a logs/genesis.run, unlink it when we exit,
@@ -636,7 +636,7 @@ static void main_loop(void) {
 // --------------------------------------------------------------------
 */
 
-void usage (char * name) {
+void usage (const char * name) {
     fprintf(stderr, "\n-- Genesis %d.%d-%d --\n\n\
 Usage: %s [base dir] [options]\n\n\
     Base directory will default to \".\" if unspecified.  Arguments which\n\

@@ -18,15 +18,15 @@
 #define FIELD_STARTING_SIZE        8
 
 typedef struct {
-    char *start;
-    char *end;
+    const char *start;
+    const char *end;
     bool strip;                        /* Strip backslashes? */
 } Field;
 
-static char *match_coupled_wildcard(char *ctemplate, char *s);
-static char *match_wildcard(char *ctemplate, char *s);
-static char *match_word_pattern(char *ctemplate, char *s);
-static void add_field(char *start, char *end, bool strip);
+static char *match_coupled_wildcard(const char *ctemplate, char *s);
+static char *match_wildcard(const char *ctemplate, char *s);
+static char *match_word_pattern(const char *ctemplate, char *s);
+static void add_field(const char *start, const char *end, bool strip);
 
 static Field * fields;
 static Int field_pos, field_size;
@@ -40,7 +40,7 @@ void uninit_match(void) {
     efree(fields);
 }
 
-cList * match_template(char *ctemplate, char *s) {
+cList * match_template(const char *ctemplate, char *s) {
     char *p;
     Int i, coupled;
     cList *l;
@@ -117,19 +117,19 @@ cList * match_template(char *ctemplate, char *s) {
     l = list_new(field_pos);
     d = list_empty_spaces(l, field_pos);
     for (i = 0; i < field_pos; i++) {
-        s = fields[i].start;
-        if (fields[i].strip && fields[i].end > s) {
-            str = string_new(fields[i].end - s);
-            p = (char *)memchr(s, '\\', fields[i].end - 1 - s);
+        const char *field_start = fields[i].start;
+        if (fields[i].strip && fields[i].end > field_start) {
+            str = string_new(fields[i].end - field_start);
+            p = (char *)memchr(s, '\\', fields[i].end - 1 - field_start);
             while (p) {
-                str = string_add_chars(str, s, p - s);
+                str = string_add_chars(str, field_start, p - field_start);
                 str = string_addc(str, p[1]);
-                s = p + 2;
-                p = (char *)memchr(s, '\\', fields[i].end - 1 - s);
+                field_start = p + 2;
+                p = (char *)memchr(field_start, '\\', fields[i].end - 1 - field_start);
             }
-            str = string_add_chars(str, s, fields[i].end - s);
+            str = string_add_chars(str, field_start, fields[i].end - field_start);
         } else {
-            str = string_from_chars(s, fields[i].end - s);
+            str = string_from_chars(field_start, fields[i].end - field_start);
         }
         d->type = STRING;
         d->u.str = str;
@@ -141,7 +141,7 @@ cList * match_template(char *ctemplate, char *s) {
 
 /* Match a coupled wildcard as well as the next token, if there is one.  This
  * adds the fields that it matches. */
-static char *match_coupled_wildcard(char *ctemplate, char *s) {
+static char *match_coupled_wildcard(const char *ctemplate, char *s) {
     char *p, *q;
 
     /* Check for quoted text. */
@@ -182,7 +182,7 @@ static char *match_coupled_wildcard(char *ctemplate, char *s) {
 
 /* Match a wildcard.  Also match the next token, if there is one.  This adds
  * the fields that it matches. */
-static char * match_wildcard(char *ctemplate, char *s) {
+static char * match_wildcard(const char *ctemplate, char *s) {
     char *p, *q, *r;
 
     /* If no token follows the wildcard, then the match succeeds. */
@@ -255,7 +255,7 @@ static char * match_wildcard(char *ctemplate, char *s) {
 }
 
 /* Match a word pattern.  Do not add any fields. */
-static char * match_word_pattern(char *ctemplate, char *s) {
+static char * match_word_pattern(const char *ctemplate, char *s) {
     char *p = s;
     Int abbrev = 0;
 
@@ -307,7 +307,7 @@ static char * match_word_pattern(char *ctemplate, char *s) {
 
 /* Add a field.  strip should be true if this is a field for a wildcard not at
  * the end of the template. */
-static void add_field(char *start, char *end, bool strip) {
+static void add_field(const char *start, const char *end, bool strip) {
     if (field_pos >= field_size) {
         field_size = field_size * 2 + MALLOC_DELTA;
         fields = EREALLOC(fields, Field, field_size);
@@ -462,7 +462,7 @@ cList * regexp_matches(cStr * reg, char * s, bool sensitive, bool * error) {
     return fields;
 }
 
-Int parse_regfunc_args(char * args, Int flags) {
+Int parse_regfunc_args(const char * args, Int flags) {
     while (*args != '\0') {
         switch (*args) {
             case 'b': /* keep blanks */

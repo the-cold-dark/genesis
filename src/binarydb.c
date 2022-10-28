@@ -411,8 +411,14 @@ static void dump_copy (off_t start, Int blocks)
                 }
                 dofseek=0;
             }
-            fread (buf, 1, BLOCK_SIZE, database_file);
-            fwrite (buf, 1, BLOCK_SIZE, dump_db_file);
+            if (fread(buf, 1, BLOCK_SIZE, database_file) != BLOCK_SIZE) {
+                UNLOCK_DB("dump_copy")
+                panic("fread(\"%s\"..): failed to read full block", database_file);
+            }
+            if (fwrite(buf, 1, BLOCK_SIZE, dump_db_file) != BLOCK_SIZE) {
+                UNLOCK_DB("dump_copy")
+                panic("fwrite(\"%s\"..): failed to write full block", dump_db_file);
+            }
             dump_bitmap[block >> 3] &= ~(1 << (block & 7));
         }
         else
@@ -474,8 +480,14 @@ Int simble_dump_some_blocks (Int maxblocks)
                 }
                 dofseek=0;
             }
-            fread (buf, 1, BLOCK_SIZE, database_file);
-            fwrite (buf, 1, BLOCK_SIZE, dump_db_file);
+            if (fread(buf, 1, BLOCK_SIZE, database_file) != BLOCK_SIZE) {
+                UNLOCK_DB("simble_dump_some_blocks")
+                panic("fread(\"%s\"..): failed to read full block", database_file);
+            }
+            if (fwrite(buf, 1, BLOCK_SIZE, dump_db_file) != BLOCK_SIZE) {
+                UNLOCK_DB("simble_dump_some_blocks")
+                panic("fwrite(\"%s\"..): failed to write full block", dump_db_file);
+            }
             dump_bitmap[last_dumped >> 3] &= ~(1 << (last_dumped & 7));
             maxblocks--;
         }

@@ -1229,20 +1229,19 @@ static void compile_expr(Expr *expr)
 
         break;
 
-      case FLOAT:
-
+      case FLOAT: {
         code(FLOAT);
 #ifdef USE_BIG_FLOATS
-        {
-            Long *flt = (Long *)(&expr->u.fnum);
-            code(flt[0]);
-            code(flt[1]);
-        }
+        Long *flt = (Long *)(&expr->u.fnum);
+        code(flt[0]);
+        code(flt[1]);
 #else
-          code(*((Long*)(&expr->u.fnum)));
+        Long float_bits;
+        memcpy(&float_bits, &expr->u.fnum, sizeof(float_bits));
+        code(float_bits);
 #endif
-
-          break;
+        break;
+      }
 
       case STRING:
 

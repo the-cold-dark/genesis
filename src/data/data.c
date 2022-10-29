@@ -162,8 +162,11 @@ uLong data_hash(cData *d)
       case INTEGER:
         return d->u.val;
 
-      case FLOAT:
-        return *((uLong*)(&d->u.fval));
+      case FLOAT: {
+        uLong float_bits;
+        memcpy(&float_bits, &d->u.fval, sizeof(float_bits));
+        return float_bits;
+      }
 
       case STRING:
         return hash_string_nocase(d->u.str);

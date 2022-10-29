@@ -602,17 +602,17 @@ COLDC_OP(integer) {
 }
 
 COLDC_OP(float) {
+    cFloat flt;
 #ifdef USE_BIG_FLOATS
-    cFloat fl;
     Int flong[2];
     flong[0] = cur_frame->opcodes[cur_frame->pc++];
     flong[1] = cur_frame->opcodes[cur_frame->pc++];
 
-    fl = *((Float *)flong);
-    push_float(fl);
+    flt = *((Float *)flong);
 #else
-    push_float(*((cFloat*)(&cur_frame->opcodes[cur_frame->pc++])));
+    memcpy(&flt, &cur_frame->opcodes[cur_frame->pc++], sizeof(flt));
 #endif
+    push_float(flt);
 }
 
 COLDC_OP(string) {

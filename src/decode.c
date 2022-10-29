@@ -815,24 +815,25 @@ static Expr_list *decompile_expressions_bounded(Int *pos_ptr, Int expr_end)
             pos += 2;
             break;
 
-          case FLOAT:
+          case FLOAT: {
 #ifdef USE_BIG_FLOATS
-          {
-              Long flong[2];
-              Float fnum;
+            Long flong[2];
+            Float fnum;
 
-              flong[0] = the_opcodes[pos + 1];
-              flong[1] = the_opcodes[pos + 2];
-              fnum = *((Float *)flong);
+            flong[0] = the_opcodes[pos + 1];
+            flong[1] = the_opcodes[pos + 2];
+            fnum = *((Float *)flong);
 
             stack = expr_list(float_expr(fnum), stack);
             pos += 3;
-          }
 #else
-            stack = expr_list(float_expr(*((Float*)(&the_opcodes[pos+1]))), stack);
+            Float flt;
+            memcpy(&flt, &the_opcodes[pos + 1], sizeof(flt));
+            stack = expr_list(float_expr(flt), stack);
             pos += 2;
 #endif
             break;
+          }
 
           case STRING:
             s = string_chars(the_object->methods->strings->tab[the_opcodes[pos + 1]].str);

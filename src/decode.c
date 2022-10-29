@@ -816,15 +816,13 @@ static Expr_list *decompile_expressions_bounded(Int *pos_ptr, Int expr_end)
             break;
 
           case FLOAT: {
-#ifdef USE_BIG_FLOATS
-            Long flong[2];
-            Float fnum;
-
-            flong[0] = the_opcodes[pos + 1];
-            flong[1] = the_opcodes[pos + 2];
-            fnum = *((Float *)flong);
-
-            stack = expr_list(float_expr(fnum), stack);
+#if defined(USE_BIG_FLOATS) && !defined(USE_BIG_NUMBERS)
+            Float flt;
+            Int float_bits[2];
+            float_bits[0] = the_opcodes[pos + 1];
+            float_bits[1] = the_opcodes[pos + 2];
+            memcpy(&flt, float_bits, sizeof(flt));
+            stack = expr_list(float_expr(flt), stack);
             pos += 3;
 #else
             Float flt;

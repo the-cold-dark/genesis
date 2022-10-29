@@ -45,7 +45,7 @@ static Op_info op_info[] = {
     { ONE,              "ONE",             op_one },
     { INTEGER,          "INTEGER",         op_integer, INTEGER },
 
-#ifdef USE_BIG_FLOATS
+#if defined(USE_BIG_FLOATS) && !defined(USE_BIG_NUMBERS)
     /* Big floats are the size of two ints */
     { FLOAT,            "FLOAT",           op_float, INTEGER, INTEGER },
 #else

@@ -603,12 +603,11 @@ COLDC_OP(integer) {
 
 COLDC_OP(float) {
     cFloat flt;
-#ifdef USE_BIG_FLOATS
+#if defined(USE_BIG_FLOATS) && !defined(USE_BIG_NUMBERS)
     Int flong[2];
     flong[0] = cur_frame->opcodes[cur_frame->pc++];
     flong[1] = cur_frame->opcodes[cur_frame->pc++];
-
-    flt = *((Float *)flong);
+    memcpy(&flt, flong, sizeof(flt));
 #else
     memcpy(&flt, &cur_frame->opcodes[cur_frame->pc++], sizeof(flt));
 #endif

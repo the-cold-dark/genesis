@@ -18,7 +18,6 @@ cStr * string_unpack(cBuf *buf, Long *buf_pos);
 Int    string_packed_size(cStr *str, int memory_size);
 
 Int    string_cmp(cStr * str1, cStr * str2);
-cStr * string_fread(cStr *str, Int len, FILE *fp);
 cStr * string_add(cStr * str1, cStr * str2);
 cStr * string_add_chars(cStr * str, const char * s, Int len);
 cStr * string_addc(cStr * str, Int c);

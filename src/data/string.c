@@ -119,12 +119,6 @@ Int string_cmp(cStr *str1, cStr *str2) {
     return strcmp(str1->s + str1->start, str2->s + str2->start);
 }
 
-cStr *string_fread(cStr *str, Int len, FILE *fp) {
-    str = string_prep(str, str->start, str->len + len);
-    fread(str->s + str->start + str->len - len, sizeof(char), len, fp);
-    return str;
-}
-
 cStr *string_add(cStr *str1, cStr *str2) {
     str1 = string_prep(str1, str1->start, str1->len + str2->len);
     MEMCPY(str1->s + str1->start + str1->len - str2->len,

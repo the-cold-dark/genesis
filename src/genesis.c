@@ -51,14 +51,7 @@ void usage (const char * name);
 // hooked into exiting with 'atexit()'
 */
 static void unlink_runningfile(void) {
-    if (unlink(c_runfile)) {
-        char buf[BUF];
-
-        /* grasp! */
-        strcpy(buf, "rm -f ");
-        strcat(buf, c_runfile);
-        system(buf);
-    }
+    unlink(c_runfile);
     free(c_runfile);
 }
 

@@ -202,3 +202,40 @@ ADD_EXECUTABLE(coldcc ${src_COMPILER})
 TARGET_COMPILE_DEFINITIONS(coldcc PRIVATE BUILDING_COLDCC)
 TARGET_LINK_LIBRARIES(genesis ${COLD_LIBRARIES})
 TARGET_LINK_LIBRARIES(coldcc ${COLD_LIBRARIES})
+
+INCLUDE(CTest)
+ADD_TEST(
+    NAME legacy
+    COMMAND ./runtest
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/legacy
+)
+ADD_TEST(
+    NAME dicts
+    COMMAND ./runtest cdc/dicts.cdc
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test
+)
+ADD_TEST(
+    NAME lists
+    COMMAND ./runtest cdc/lists.cdc
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test
+)
+ADD_TEST(
+    NAME math
+    COMMAND ./runtest cdc/math.cdc
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test
+)
+ADD_TEST(
+    NAME strings
+    COMMAND ./runtest cdc/strings.cdc
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test
+)
+ADD_TEST(
+    NAME symbols
+    COMMAND ./runtest cdc/symbols.cdc
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test
+)
+ADD_TEST(
+    NAME system
+    COMMAND ./runtest cdc/system.cdc
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test
+)

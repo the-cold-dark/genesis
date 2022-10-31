@@ -2,3 +2,4 @@ build
 src/modules/modbuild.last
 src/modules/moddef.h
 test/error.log
+test/legacy/error.log

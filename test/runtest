@@ -1,81 +1,9 @@
 #!/bin/sh
-
-if [ "$1" != "" ]; then
-    cd $1
-fi
-
-testin=test.in
-testdb=test.cdc
-expected=expected
-binary=binary
-output=output
-errorlog=error.log
-echo=/bin/echo
-prog="$$prog"
-
-trap "rm -rf $testdb $expected $binary $output $prog; exit" 0 1 2
-
-$echo -n "Testing..."
-
-perl -e 'while (<>) {
-             if (s/^\t//) {
-                 if (s/^Output: // || s/^\t//) {
-                     print STDOUT;
-                 }
-             } else {
-                 print STDERR;
-             }
-         }' < $testin 1> $expected 2> $testdb
-
-../src/coldcc -o -W -t $testdb 1> $output 2> $errorlog
-
-## temporary hack until I fix the problems with output files in
-## coldcc
-perl -e 'while (<>) { (!/^\r/) && print; }' < $output > ${output}.tmp
-mv ${output}.tmp $output
-
-if cmp -s $expected $output; then
-    $echo "All Tests pass."
-    exit 0
-fi
-
-$echo "FAILURE...The following test(s) failed:"
-
-$echo '
-open(EXP, "expected") || die("open(expected): $!\n");
-$eline = 0;
-$test = "";
-$nextpos = <STDIN>;
-while (!eof(STDIN)) {
-    $pos = $nextpos;
-    $exp = "";
-    $rec = "";
-    while (<STDIN>) {
-       if (s/^([<>-])//) {
-            if ($1 eq "<") {
-                $exp .= "     $_";
-            } elsif ($1 eq ">") {
-                $rec .= "     $_";
-            }
-        } else {
-             $nextpos = $_;
-            last;
-        }
-    }
-    $xpos = int($pos);
-    if ($eline < $xpos) {
-        while (<EXP>) {
-            $eline++;
-            if ($eline >= $pos) {
-                last;
-            }
-            if (!/^\s/) {
-                chop($test = $_);
-            }
-        }
-    }
-    print "-- ${test}\n   Expected:\n${exp}   Received:\n${rec}";
-}' > $prog
-
-diff $expected $output | perl $prog
-exit 1
+testdb=$1
+trap "rm -rf binary" 0 1 2
+tmp=`mktemp`
+cat lib.cdc $testdb driver.cdc > $tmp
+../build/coldcc -f -o -W -t $tmp # 2>/dev/null
+test_success=$?
+rm $tmp
+exit $test_success

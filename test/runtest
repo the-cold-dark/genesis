@@ -36,7 +36,7 @@ mv ${output}.tmp $output
 
 if cmp -s $expected $output; then
     $echo "All Tests pass."
-    exit
+    exit 0
 fi
 
 $echo "FAILURE...The following test(s) failed:"
@@ -78,3 +78,4 @@ while (!eof(STDIN)) {
 }' > $prog
 
 diff $expected $output | perl $prog
+exit 1

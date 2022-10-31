@@ -812,7 +812,7 @@ void cache_cleanup(void) {
 // -Brandon
 */
 
-cList * cache_info(int level) {
+cList * cache_info(void) {
     int     x;
     Obj   * obj;
     cList * out;

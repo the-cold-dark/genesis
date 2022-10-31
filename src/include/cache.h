@@ -31,7 +31,7 @@ void cache_sanity_check(void);
 #ifdef CLEAN_CACHE
 void cache_cleanup(void);
 #endif
-cList * cache_info(int level);
+cList * cache_info(void);
 
 #endif
 

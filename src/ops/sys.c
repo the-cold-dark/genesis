@@ -334,7 +334,7 @@ COLDC_FUNC(cache_info) {
     if (!func_init_0())
         return;
 
-    list = cache_info(0);
+    list = cache_info();
 
 /*    pop(1); */
     push_list(list);

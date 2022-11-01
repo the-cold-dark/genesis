@@ -4,7 +4,7 @@ Genesis is the compiler and run-time interpreter/daemon for ColdC, and
 is produced by the Cold Project.  You can learn more about helping to
 support the Cold Project at:
 
-    http://the-cold-dark.github.io/
+    https://the-cold-dark.github.io/
 
 Release information can be found in doc/CHANGES.
 
@@ -37,12 +37,12 @@ The following email lists are available:
     coldstuff           Generic cold-related list
 
 Further information, Archives and Subscription mechanisms for the lists are
-available at http://the-cold-dark.github.io/contact.html
+available at https://the-cold-dark.github.io/contact.html
 
 Documentation:
 
-* Genesis:     http://the-cold-dark.github.io/genesis/
-* ColdC:       http://ice.cold.org/bin/help?node=coldc
+* Genesis:     https://the-cold-dark.github.io/genesis/
+* ColdC:       https://ice.cold.org/bin/help?node=coldc
 
 ## NOTES
 

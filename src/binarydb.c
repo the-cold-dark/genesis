@@ -271,7 +271,7 @@ void init_binary_db(void) {
     init_bitmaps();
     sync_index();
     fprintf (errfile, "[%s] Binary database free space: %.2f%%\n",
-             timestamp(NULL), (100.0 * simble_fragmentation()));
+             timestamp(NULL), (100.0f * simble_fragmentation()));
 
     db_clean = 1;
 }
@@ -894,6 +894,6 @@ void init_core_objects(void) {
     list_discard(parents);
 }
 
-Float simble_fragmentation(void) {
-    return 1.0 - ((float)allocated_blocks/(float)bitmap_blocks);
+float simble_fragmentation(void) {
+    return 1.0f - ((float)allocated_blocks/(float)bitmap_blocks);
 }

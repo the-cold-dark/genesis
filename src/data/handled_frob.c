@@ -24,7 +24,7 @@ cBuf *pack_handled (cBuf *buf, cData *d)
     return buf;
 }
 
-void unpack_handled (cBuf *buf, Long *buf_pos, cData *d)
+void unpack_handled (const cBuf *buf, Long *buf_pos, cData *d)
 {
     HandledFrob *h=TMALLOC(HandledFrob, 1);
 

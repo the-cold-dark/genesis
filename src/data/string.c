@@ -64,7 +64,7 @@ cStr *string_dup(cStr *str) {
     return str;
 }
 
-cBuf *string_pack(cBuf *buf, cStr *str) {
+cBuf *string_pack(cBuf *buf, const cStr *str) {
     if (str) {
         buf = write_long(buf, str->len);
         buf = buffer_append_uchars_single_ref(buf, (unsigned char *)(str->s + str->start), str->len);
@@ -74,7 +74,7 @@ cBuf *string_pack(cBuf *buf, cStr *str) {
     return buf;
 }
 
-cStr *string_unpack(cBuf *buf, Long *buf_pos) {
+cStr *string_unpack(const cBuf *buf, Long *buf_pos) {
     cStr *str;
     Int len;
 
@@ -91,7 +91,7 @@ cStr *string_unpack(cBuf *buf, Long *buf_pos) {
     return str;
 }
 
-Int string_packed_size(cStr *str, int memory_size) {
+Int string_packed_size(const cStr *str, int memory_size) {
     int size = 0;
 
     if (memory_size)
@@ -115,11 +115,11 @@ Int string_packed_size(cStr *str, int memory_size) {
     return size;
 }
 
-Int string_cmp(cStr *str1, cStr *str2) {
+Int string_cmp(const cStr *str1, const cStr *str2) {
     return strcmp(str1->s + str1->start, str2->s + str2->start);
 }
 
-cStr *string_add(cStr *str1, cStr *str2) {
+cStr *string_add(cStr *str1, const cStr *str2) {
     str1 = string_prep(str1, str1->start, str1->len + str2->len);
     MEMCPY(str1->s + str1->start + str1->len - str2->len,
            str2->s + str2->start, str2->len);
@@ -345,7 +345,7 @@ static int str_rindexc(const char * str, int len, char sub, int origin) {
 // returns 1..$ if item is found, 0 if it is not or -1 if an error is thrown
 */
 
-int string_index(cStr * str, cStr * sub, int origin) {
+int string_index(const cStr * str, const cStr * sub, int origin) {
     int    len,
            slen;
     char * s,

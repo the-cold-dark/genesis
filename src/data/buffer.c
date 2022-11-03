@@ -34,7 +34,7 @@ void buffer_discard(cBuf *buf) {
         efree(buf);
 }
 
-cBuf *buffer_append(cBuf *buf1, cBuf *buf2) {
+cBuf *buffer_append(cBuf *buf1, const cBuf *buf2) {
     if (!buf2->len)
         return buf1;
     buf1 = buffer_prep(buf1, buf1->len + buf2->len);
@@ -67,7 +67,7 @@ cBuf * buffer_append_uchars(cBuf * buf1, const unsigned char * new, Int new_len)
     return buf1;
 }
 
-Int buffer_retrieve(cBuf *buf, Int pos) {
+Int buffer_retrieve(const cBuf *buf, Int pos) {
     return buf->s[pos];
 }
 
@@ -102,9 +102,9 @@ cBuf *buffer_resize(cBuf *buf, Int len) {
 
 
 /* REQUIRES char *s and unsigned char *q are defined */
-cStr * buf_to_string(cBuf * buf) {
+cStr * buf_to_string(const cBuf * buf) {
     cStr * str, * out;
-    unsigned char * string_start, *p, *q;
+    const unsigned char * string_start, *p, *q;
     char * s;
     size_t len;
     const char sepchar = '\n';
@@ -152,13 +152,13 @@ cStr * buf_to_string(cBuf * buf) {
 }
 
 /* If sep (separator buffer) is NULL, separate by newlines. */
-cList *buf_to_strings(cBuf *buf, cBuf *sep)
+cList *buf_to_strings(const cBuf *buf, const cBuf *sep)
 {
     cData d;
     cStr *str;
     cList *result;
-    unsigned char sepchar, *string_start;
-    unsigned char *p, *q;
+    unsigned char sepchar;
+    const unsigned char *string_start, *p, *q;
     char *s;
     Int seplen;
     cBuf *end;
@@ -213,7 +213,7 @@ cList *buf_to_strings(cBuf *buf, cBuf *sep)
     return result;
 }
 
-cBuf *buffer_from_string(cStr * string) {
+cBuf *buffer_from_string(const cStr * string) {
     cBuf * buf;
     Int    new, str_len;
 
@@ -230,7 +230,7 @@ cBuf *buffer_from_string(cStr * string) {
     return buf;
 }
 
-cBuf *buffer_from_strings(cList * string_list, cBuf * sep) {
+cBuf *buffer_from_strings(cList * string_list, const cBuf * sep) {
     cData * string_data;
     cBuf *buf;
     Int num_strings, i, len, pos;
@@ -375,7 +375,7 @@ static int buf_rindexc(const unsigned char * buf, int len, unsigned char sub, in
 // returns 1..$ if item is found, 0 if it is not or -1 if an error is thrown
 */
 
-int buffer_index(cBuf * buf, const unsigned char * ss, int slen, int origin) {
+int buffer_index(const cBuf * buf, const unsigned char * ss, int slen, int origin) {
     int     len;
     const unsigned char * s,
                 * p;

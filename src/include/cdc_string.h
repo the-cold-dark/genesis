@@ -13,12 +13,12 @@ cStr * string_from_chars(const char * s, Int len);
 cStr * string_of_char(Int c, Int len);
 cStr * string_dup(cStr * str);
 
-cBuf * string_pack(cBuf *buf, cStr *str);
-cStr * string_unpack(cBuf *buf, Long *buf_pos);
-Int    string_packed_size(cStr *str, int memory_size);
+cBuf * string_pack(cBuf *buf, const cStr *str);
+cStr * string_unpack(const cBuf *buf, Long *buf_pos);
+Int    string_packed_size(const cStr *str, int memory_size);
 
-Int    string_cmp(cStr * str1, cStr * str2);
-cStr * string_add(cStr * str1, cStr * str2);
+Int    string_cmp(const cStr * str1, const cStr * str2);
+cStr * string_add(cStr * str1, const cStr * str2);
 cStr * string_add_chars(cStr * str, const char * s, Int len);
 cStr * string_addc(cStr * str, Int c);
 cStr * string_add_padding(cStr * str,
@@ -34,7 +34,7 @@ void   string_discard(cStr * str);
 cStr * string_parse(char * *sptr);
 cStr * string_add_unparsed(cStr * str, const char * s, Int len);
 char * regerror(const char * msg);
-int    string_index(cStr * str, cStr * sub, int origin);
+int    string_index(const cStr * str, const cStr * sub, int origin);
 cStr * string_prep(cStr *str, Int start, Int len);
 
 #define string_length(__s) ((Int) __s->len)

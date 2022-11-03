@@ -18,7 +18,7 @@ cBuf * write_float(cBuf *buf, Float f)
 }
 
 /* Read a Float from the input buffer */
-Float read_float(cBuf *buf, Long *buf_pos)
+Float read_float(const cBuf *buf, Long *buf_pos)
 {
     Float f;
 
@@ -71,7 +71,7 @@ cBuf * write_long(cBuf *buf, Long n)
 }
 
 /* Read a four-byte number in a consistent byte-order. */
-Long read_long(cBuf *buf, Long *buf_pos)
+Long read_long(const cBuf *buf, Long *buf_pos)
 {
     Int bit_flip, num_bytes, bit_shift;
     uLong n;
@@ -135,7 +135,7 @@ cBuf * write_ident(cBuf *buf, Ident id)
     return buf;
 }
 
-Ident read_ident(cBuf *buf, Long *buf_pos)
+Ident read_ident(const cBuf *buf, Long *buf_pos)
 {
     Int   len;
     char *s;
@@ -192,7 +192,7 @@ static cBuf * pack_list(cBuf *buf, cList *list)
     return buf;
 }
 
-static cList *unpack_list(cBuf *buf, Long *buf_pos)
+static cList *unpack_list(const cBuf *buf, Long *buf_pos)
 {
     Int len, i;
     cList *list;
@@ -248,7 +248,7 @@ static cBuf * pack_dict(cBuf *buf, cDict *dict)
     return buf;
 }
 
-static cDict *unpack_dict(cBuf *buf, Long *buf_pos)
+static cDict *unpack_dict(const cBuf *buf, Long *buf_pos)
 {
     cDict *dict;
     cList *keys, *values;
@@ -320,7 +320,7 @@ static cBuf * pack_vars(cBuf *buf, Obj *obj)
     return buf;
 }
 
-static void unpack_vars(cBuf *buf, Long *buf_pos, Obj *obj)
+static void unpack_vars(const cBuf *buf, Long *buf_pos, Obj *obj)
 {
     Int i;
 
@@ -410,7 +410,7 @@ static cBuf * pack_strings(cBuf *buf, Obj *obj)
     return buf;
 }
 
-static void unpack_strings(cBuf *buf, Long *buf_pos, Obj *obj)
+static void unpack_strings(const cBuf *buf, Long *buf_pos, Obj *obj)
 {
     Int i;
     Long size;
@@ -524,7 +524,7 @@ static cBuf * pack_idents(cBuf *buf, Obj *obj)
     return buf;
 }
 
-static void unpack_idents(cBuf *buf, Long *buf_pos, Obj *obj)
+static void unpack_idents(const cBuf *buf, Long *buf_pos, Obj *obj)
 {
     Int i;
 
@@ -595,7 +595,7 @@ static cBuf * pack_method(cBuf *buf, Method *method)
     return buf;
 }
 
-static Method *unpack_method(cBuf *buf, Long *buf_pos)
+static Method *unpack_method(const cBuf *buf, Long *buf_pos)
 {
     Int     i, j, n;
     Method *method;
@@ -730,7 +730,7 @@ static cBuf * pack_methods(cBuf *buf, Obj *obj)
 
 #define METHOD_STARTING_SIZE 7
 
-static void unpack_methods(cBuf *buf, Long *buf_pos, Obj *obj)
+static void unpack_methods(const cBuf *buf, Long *buf_pos, Obj *obj)
 {
     Int i, size;
 
@@ -861,7 +861,7 @@ cBuf * pack_data(cBuf *buf, cData *data)
     return buf;
 }
 
-void unpack_data(cBuf *buf, Long *buf_pos, cData *data)
+void unpack_data(const cBuf *buf, Long *buf_pos, cData *data)
 {
     data->type = read_long(buf, buf_pos);
     switch (data->type) {
@@ -1045,7 +1045,7 @@ cBuf * pack_object(cBuf *buf, Obj *obj)
     return buf;
 }
 
-void unpack_object(cBuf *buf, Long *buf_pos, Obj *obj)
+void unpack_object(const cBuf *buf, Long *buf_pos, Obj *obj)
 {
     obj->parents = unpack_list(buf, buf_pos);
     obj->children = unpack_list(buf, buf_pos);

@@ -27,7 +27,6 @@ extern pthread_t cleaner;
 #define OPT_DECOMP 1
 #define OPT_PARTIAL 2
 
-Int    c_nowrite = 1;
 Int    c_opt = OPT_COMP;
 bool   print_objs = true;
 bool   print_names = false;
@@ -296,10 +295,6 @@ static void initialize(Int argc, char **argv) {
                 case 'W':
                     print_warn = false;
                     break;
-                case 'w':
-                    write_err("\n** Unsupported option: -w");
-                    c_nowrite = 0;
-                    break;
                 case 't':
                     argv += getarg(name,&buf, opt, argv,&argc,usage);
                     NEWFILE(c_dir_textdump, buf);
@@ -361,8 +356,7 @@ void usage (const char * name) {
              "                    If this is \"stdin\" it will read from stdin\n"
              "                    instead.  <target> may be a directory or file.\n"
              "    -p              Partial compile, compile object(s) and insert\n"
-             "                    into database accordingly.  Can be used with -w\n"
-             "                    for a ColdC code verification program.\n"
+             "                    into database accordingly.\n"
              "    +|-#            Print/Do not print object numbers by default.\n"
              "                    Default option is +#\n"
              "                    print object names by default, if they exist.\n"

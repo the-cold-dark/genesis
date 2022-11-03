@@ -1867,7 +1867,8 @@ static void start_error(Ident error, cStr *explanation, cData *arg,
 void propagate_error(Traceback_info * traceback, Ident error,
                      cStr * explanation, cData * arg)
 {
-    Int i, ind, propagate = 0;
+    Int i, ind;
+    bool propagate = false;
     Error_action_specifier *spec;
     Error_list *errors;
     Handler_info *hinfo;
@@ -1920,7 +1921,7 @@ void propagate_error(Traceback_info * traceback, Ident error,
 
             /* We're in a propagate expression.  Set the propagate flag and
              * keep going. */
-            propagate = 1;
+            propagate = true;
             break;
 
           case CATCH:

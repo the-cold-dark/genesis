@@ -27,7 +27,7 @@ static pending_t    * pendings;     /* List of pending connections. */
  * type of -1 can't exist so we won't accidentally find another extra's
  * pointer.
  */
-static int object_extra_initialized = 0;
+static bool object_extra_initialized = false;
 int object_extra_connection = -1;
 
 /*
@@ -374,7 +374,7 @@ static Conn * connection_add(Int fd, Long objnum) {
     Conn * conn;
 
     if (!object_extra_initialized) {
-        object_extra_initialized = 1;
+        object_extra_initialized = true;
         object_extra_connection = object_allocate_extra(flush_output, boot);
     }
 

@@ -1300,8 +1300,8 @@ static Method * get_method(FILE * fp, Obj * obj, const char * name) {
 */
 void compile_cdc_file(FILE * fp) {
     Int        new = 0,
-               access = A_NONE,
-               handled;
+               access = A_NONE;
+    bool       handled;
     cStr     * line,
              * str = NULL;
     char     * s;
@@ -1434,7 +1434,7 @@ void compile_cdc_file(FILE * fp) {
                 break;
         }
 
-        handled = 0;
+        handled = false;
         switch (*s)
         {
             case 'a':
@@ -1455,7 +1455,7 @@ void compile_cdc_file(FILE * fp) {
                             blank_and_print_obj("Compiling ", (100.0 * ftello(fp)) / filesize, obj);
                         cur_obj = obj;
                     }
-                    handled = 1;
+                    handled = true;
                 }
                 break;
             case 'p':
@@ -1465,7 +1465,7 @@ void compile_cdc_file(FILE * fp) {
                     NEXT_WORD(s);
                     handle_parcmd(s, new);
                 }
-                handled = 1;
+                handled = true;
                 break;
             case 'v':
             case 'V':
@@ -1474,7 +1474,7 @@ void compile_cdc_file(FILE * fp) {
                     NEXT_WORD(s);
                     handle_varcmd(str->s, s, new, access);
                 }
-                handled = 1;
+                handled = true;
                 break;
             case 'm':
             case 'M':
@@ -1483,7 +1483,7 @@ void compile_cdc_file(FILE * fp) {
                     NEXT_WORD(s);
                     handle_methcmd(fp, s, new, access);
                 }
-                handled = 1;
+                handled = true;
                 break;
             case 'e':
             case 'E':
@@ -1492,7 +1492,7 @@ void compile_cdc_file(FILE * fp) {
                     NEXT_WORD(s);
                     handle_evalcmd(fp, s, new, access);
                 }
-                handled = 1;
+                handled = true;
                 break;
             case 'b':
             case 'B':
@@ -1501,7 +1501,7 @@ void compile_cdc_file(FILE * fp) {
                     NEXT_WORD(s);
                     handle_bind_nativecmd(fp, s);
                 }
-                handled = 1;
+                handled = true;
                 break;
             case 'n':
             case 'N':
@@ -1510,11 +1510,11 @@ void compile_cdc_file(FILE * fp) {
                     NEXT_WORD(s);
                     handle_namecmd(str->s, s, new);
                 }
-                handled = 1;
+                handled = true;
                 break;
             default:
                 if (*(s+1) == '/') {
-                    handled = 1;
+                    handled = true;
                 }
         }
 
@@ -1700,7 +1700,7 @@ void dump_object(Long objnum, FILE *fp, bool objnames) {
     cList  * objs;
     cData  * d,
              dobj;
-    Int      first;
+    bool     first;
     static Long objects_decompiled = 0;
 
     dobj.type = OBJNUM;
@@ -1754,11 +1754,11 @@ void dump_object(Long objnum, FILE *fp, bool objnames) {
     if (objs->len != 0) {
         fputc(':', fp);
         fputc(' ', fp);
-        first = 1;
+        first = true;
         for (d = list_first(objs); d; d = list_next(objs, d)) {
             if (!first)
                 fputs(", ", fp);
-            first = 0;
+            first = false;
             print_dbref(NULL, d->u.objnum, fp, objnames);
         }
     }

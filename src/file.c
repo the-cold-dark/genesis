@@ -26,7 +26,7 @@
  * of -1 can't exist so we won't accidentally find another extra's
  * pointer.
  */
-static int object_extra_initialized = 0;
+static bool object_extra_initialized = false;
 static int object_extra_file = -1;
 
 /*
@@ -109,7 +109,7 @@ filec_t * file_new(void) {
     filec_t * fnew = EMALLOC(filec_t, 1);
 
     if (!object_extra_initialized) {
-        object_extra_initialized = 1;
+        object_extra_initialized = true;
         object_extra_file = object_allocate_extra(close_files, abort_file);
     }
 

@@ -399,7 +399,8 @@ int string_index(const cStr * str, const cStr * sub, int origin) {
 */
 cStr * string_prep(cStr *str, Int start, Int len) {
     cStr *cnew;
-    Int need_to_move, need_to_resize, size;
+    bool need_to_move, need_to_resize;
+    Int size;
 
     /* Figure out if we need to resize the string or move its contents.  Moving
      * contents takes precedence. */

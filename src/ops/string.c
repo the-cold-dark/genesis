@@ -368,7 +368,7 @@ COLDC_FUNC(crypt) {
     if (!func_init_1_or_2(&args, &argc, STRING, STRING))
         return;
 
-    str = strcrypt(STR1, ((argc == 2) ? (STR2) : ((cStr *) NULL)));
+    str = strcrypt(STR1, (argc == 2) ? (STR2) : NULL);
 
     pop(argc);
     push_string(str);
@@ -492,7 +492,7 @@ COLDC_FUNC(strfmt) {
     fmt = stack[arg_start].u.str;
     args = &stack[arg_start + 1];
 
-    if ((out = strfmt(fmt, args, argc - 1)) == (cStr *) NULL)
+    if ((out = strfmt(fmt, args, argc - 1)) == NULL)
         return;
 
     pop(argc);

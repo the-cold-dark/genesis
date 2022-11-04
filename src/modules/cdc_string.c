@@ -297,7 +297,7 @@ NATIVE_METHOD(crypt) {
 
     INIT_1_OR_2_ARGS(STRING, STRING);
 
-    str = strcrypt(STR1, ((argc == 2) ? (STR2) : ((cStr *) NULL)));
+    str = strcrypt(STR1, (argc == 2) ? (STR2) : NULL);
 
     CLEAN_RETURN_STRING(str);
 }
@@ -372,7 +372,7 @@ NATIVE_METHOD(strfmt) {
     args = &stack[arg_start + 1];
 
     /* if out is NULL, strfmt() threw an error */
-    if ((out = strfmt(fmt, args, argc - 1)) == (cStr *) NULL)
+    if ((out = strfmt(fmt, args, argc - 1)) == NULL)
         RETURN_FALSE;
 
     CLEAN_RETURN_STRING(out);

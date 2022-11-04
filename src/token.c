@@ -162,7 +162,7 @@ bool is_reserved_word(const char *s) {
 
 Int yylex(void)
 {
-    cData *d = (cData *)0;
+    cData *d = NULL;
     cStr *line, *float_buf;
     char *s = NULL;
     const char *word;
@@ -188,7 +188,7 @@ Int yylex(void)
         /* Go on to the next line. */
         cur_line++;
         cur_pos = 0;
-        d = (cData *)0;
+        d = NULL;
     }
     if (!d) {
         return 0;

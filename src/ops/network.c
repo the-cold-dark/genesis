@@ -64,7 +64,7 @@ COLDC_FUNC(bind_port) {
     if (!func_init_1_or_2(&args, &argc, INTEGER, STRING))
         return;
 
-    addr = (argc==2 ? string_chars(STR2) : (char *) NULL);
+    addr = (argc==2 ? string_chars(STR2) : NULL);
     port=INT1;
 
     if ((port > USHRT_MAX) || (-port > USHRT_MAX)) {

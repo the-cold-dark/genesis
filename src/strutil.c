@@ -377,7 +377,7 @@ cList * match_pattern(char *pattern, char *s) {
 }
 
 cList * match_regexp(cStr * reg, char * s, bool sensitive, bool *error) {
-    cList  * fields = (cList *) NULL,
+    cList  * fields = NULL,
            * elemlist;
     regexp * rx;
     cData    d;
@@ -430,7 +430,7 @@ cList * regexp_matches(cStr * reg, char * s, bool sensitive, bool * error) {
     Int      i,
              size;
 
-    if ((rx = string_regexp(reg)) == (regexp *) NULL) {
+    if ((rx = string_regexp(reg)) == NULL) {
         cthrow(regexp_id, "%s", gen_regerror(NULL));
         *error = true;
         return NULL;

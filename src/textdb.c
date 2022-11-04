@@ -243,21 +243,21 @@ static void cleanup_holders(void) {
 static nh_t * find_defined_native_method(cObjnum objnum, Ident name) {
     nh_t * nhp;
 
-    for (nhp = nhs; nhp != (nh_t *) NULL; nhp = nhp->next) {
+    for (nhp = nhs; nhp != NULL; nhp = nhp->next) {
         if (nhp->native == name) {
             if (nhp->objnum == objnum)
                 return nhp;
         }
     }
 
-    return (nh_t *) NULL;
+    return NULL;
 }
 
 static void remember_native(Method * method) {
     nh_t  * nh;
 
     nh = find_defined_native_method(method->object->objnum, method->name);
-    if (nh != (nh_t *) NULL) {
+    if (nh != NULL) {
         fformat(stdout,
             "\rLine %l: ERROR: %O.%s() overrides existing native definition.\n",
             line_count, nh->objnum, ident_name(nh->native));
@@ -328,7 +328,7 @@ static void verify_native_methods(void) {
     cList    * code = list_new(0);
     native_t * native;
     Int        x;
-    nh_t     * nh = (nh_t *) NULL;
+    nh_t     * nh = NULL;
 
     /* check the methods we know about */
     for (x=0; x < NATIVE_LAST; x++) {
@@ -383,7 +383,7 @@ static void verify_native_methods(void) {
         nh = find_defined_native_method(objnum, name);
 
         /* If so, see if we need to change the method name appropriately */
-        if (nh != (nh_t *) NULL) {
+        if (nh != NULL) {
             if (nh->method != NOT_AN_IDENT) {
                 ident_discard(mname);
                 mname = ident_dup(nh->method);
@@ -401,7 +401,7 @@ static void verify_native_methods(void) {
 
             object_add_method(obj, mname, method);
 
-            if (nh != (nh_t *) NULL)
+            if (nh != NULL)
                 nh->valid = 1;
             if (errors != NULL)
                 list_discard(errors);
@@ -422,7 +422,7 @@ static void verify_native_methods(void) {
                 method->native = x;
                 method->m_flags |= MF_NATIVE;
 
-                if (nh != (nh_t *) NULL)
+                if (nh != NULL)
                     nh->valid = 1;
             }
             cache_discard(method->object);
@@ -436,7 +436,7 @@ static void verify_native_methods(void) {
     list_discard(code);
 
     /* now cleanup method holders */
-    while (nhs != (nh_t *) NULL) {
+    while (nhs != NULL) {
         nh = nhs;
         nhs = nh->next;
 

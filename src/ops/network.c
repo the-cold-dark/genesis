@@ -17,7 +17,7 @@
 // -----------------------------------------------------------------
 //
 // If the current object has a connection, it will reassign that
-// connection too the specified object.
+// connection to the specified object.
 //
 */
 

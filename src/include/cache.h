@@ -13,7 +13,7 @@
 #define CACHE_LOG_LOOKUP        0x0020
 
 void init_cache(bool spawn_cleaner);
-void uninit_cache();
+void uninit_cache(void);
 
 #ifdef USE_DIRTY_LIST
 void cache_dirty_object(Obj *obj);

@@ -1667,7 +1667,7 @@ void cthrow(Ident error, const char *fmt, ...)
         string_discard(str);
 }
 
-static Traceback_info *traceback_info_new() {
+static Traceback_info *traceback_info_new(void) {
     Traceback_info *new;
 
     new = (Traceback_info *) emalloc(sizeof(Traceback_info));

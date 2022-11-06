@@ -163,7 +163,7 @@ cList * ancestor_cache_info(void)
     return entry;
 }
 
-static inline void ancestor_cache_invalidate()
+static inline void ancestor_cache_invalidate(void)
 {
 #ifdef USE_CACHE_HISTORY
     cList * entry;

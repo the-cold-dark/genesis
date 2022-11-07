@@ -109,7 +109,7 @@ Int data_cmp(cData *d1, cData *d2) {
 
 /* Effects: Returns 1 if data is true according to ColdC conventions, or 0 if
  *            data is false. */
-Int data_true(cData *d)
+Int data_true(const cData *d)
 {
     switch (d->type) {
 
@@ -153,7 +153,7 @@ Int data_true(cData *d)
     }
 }
 
-uLong data_hash(cData *d)
+uLong data_hash(const cData *d)
 {
     cList *values;
 
@@ -216,7 +216,7 @@ uLong data_hash(cData *d)
 
 /* Modifies: dest.
  * Effects: Copies src into dest, updating reference counts as necessary. */
-void data_dup(cData *dest, cData *src)
+void data_dup(cData *dest, const cData *src)
 {
     dest->type = src->type;
     switch (src->type) {
@@ -329,7 +329,7 @@ void data_discard(cData *data)
     }
 }
 
-cStr *data_tostr(cData *data) {
+cStr *data_tostr(const cData *data) {
     char *s;
     Number_buf nbuf;
 
@@ -581,7 +581,7 @@ char * data_from_literal(cData *d, char *s) {
     d->type = -1;
 
     if (isdigit(*s) || ((*s == '-' || *s == '+') && isdigit(s[1]))) {
-        char *t = s;
+        const char *t = s;
 
         d->type = INTEGER;
         d->u.val = (Long) atol(s);

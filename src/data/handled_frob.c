@@ -14,7 +14,7 @@
 
 INSTANCE_PROTOTYPES(handled);
 
-cBuf *pack_handled (cBuf *buf, cData *d)
+cBuf *pack_handled (cBuf *buf, const cData *d)
 {
     HandledFrob *h = HANDLED_FROB(d);
 
@@ -34,7 +34,7 @@ void unpack_handled (const cBuf *buf, Long *buf_pos, cData *d)
     d->u.instance = (void*) h;
 }
 
-int size_handled (cData *d, int memory_size)
+int size_handled (const cData *d, int memory_size)
 {
     HandledFrob *h = HANDLED_FROB(d);
     Int size = 0;
@@ -57,14 +57,14 @@ int compare_handled (cData *d1, cData *d2)
     return data_cmp(&h1->rep, &h2->rep);
 }
 
-int hash_handled (cData *d)
+int hash_handled (const cData *d)
 {
     HandledFrob *h = HANDLED_FROB(d);
 
     return h->cclass + h->handler + data_hash(&h->rep);
 }
 
-void dup_handled (cData *dest, cData *source)
+void dup_handled (cData *dest, const cData *source)
 {
     HandledFrob *s = HANDLED_FROB(source),
                 *d = TMALLOC(HandledFrob, 1);
@@ -83,7 +83,7 @@ void discard_handled (cData *d)
     ident_discard(h->handler);
 }
 
-cStr *string_handled (cStr *str, cData *data, int flags)
+cStr *string_handled (cStr *str, const cData *data, int flags)
 {
     HandledFrob *h = HANDLED_FROB(data);
     cData d;

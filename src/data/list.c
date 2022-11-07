@@ -114,7 +114,7 @@ cList *list_dup(cList *list) {
     return list;
 }
 
-Int list_length(cList *list) {
+Int list_length(const cList *list) {
     return list->len;
 }
 
@@ -407,11 +407,11 @@ void list_discard(cList *list) {
             break; \
     }
 
-cStr * list_join(cList * list, cStr * sep) {
+cStr * list_join(cList * list, const cStr * sep) {
     Int size;
     cData * d;
     cStr * s;
-    char * sp;
+    const char * sp;
 
     /* figure up the size of the resulting string */
     size = sep->len * (list->len - 1);

@@ -23,7 +23,7 @@ void   init_binary_db(void);
 void   init_new_db(void);
 void   init_core_objects(void);
 Int    simble_get(Obj * object, cObjnum objnum, Long *obj_size);
-Int    simble_put(Obj * object, cObjnum objnum, Long *obj_size);
+Int    simble_put(const Obj * object, cObjnum objnum, Long *obj_size);
 Int    simble_check(cObjnum objnum);
 Int    simble_del(cObjnum objnum);
 void   simble_close(void);

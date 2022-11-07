@@ -7,7 +7,7 @@
 
 cList * list_new(Int len);
 cList * list_dup(cList * list);
-Int     list_length(cList * list);
+Int     list_length(const cList * list);
 cData * list_first(cList * list);
 cData * list_next(cList * list, cData * d);
 cData * list_last(cList * list);
@@ -32,7 +32,7 @@ cList * list_union(cList * list1, cList * list2);
 cList * list_sublist(cList * list, Int start, Int len);
 void    list_discard(cList * list);
 cList * list_prep(cList * list, Int start, Int len);
-cStr  * list_join(cList * list, cStr * sep);
+cStr  * list_join(cList * list, const cStr * sep);
 int     list_index(cList * list, cData * search, int origin);
 
 #endif

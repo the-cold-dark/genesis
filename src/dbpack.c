@@ -299,7 +299,7 @@ static Int size_dict(cDict *dict, int memory_size)
     return size;
 }
 
-static cBuf * pack_vars(cBuf *buf, Obj *obj)
+static cBuf * pack_vars(cBuf *buf, const Obj *obj)
 {
     Int i;
 
@@ -375,7 +375,7 @@ static Int size_vars(Obj *obj, int memory_size)
     return size;
 }
 
-static cBuf * pack_strings(cBuf *buf, Obj *obj)
+static cBuf * pack_strings(cBuf *buf, const Obj *obj)
 {
     Int i;
 
@@ -507,7 +507,7 @@ static Int size_strings(Obj *obj, int memory_size)
     return size;
 }
 
-static cBuf * pack_idents(cBuf *buf, Obj *obj)
+static cBuf * pack_idents(cBuf *buf, const Obj *obj)
 {
     Int i;
 
@@ -699,7 +699,7 @@ static Int size_method(Method *method, int memory_size)
     return size;
 }
 
-static cBuf * pack_methods(cBuf *buf, Obj *obj)
+static cBuf * pack_methods(cBuf *buf, const Obj *obj)
 {
     Int i;
 
@@ -801,7 +801,7 @@ static Int size_methods(Obj *obj, int memory_size)
     return size;
 }
 
-cBuf * pack_data(cBuf *buf, cData *data)
+cBuf * pack_data(cBuf *buf, const cData *data)
 {
     buf = write_long(buf, data->type);
     switch (data->type) {
@@ -1035,7 +1035,7 @@ Int size_data(cData *data, int memory_size)
     return size;
 }
 
-cBuf * pack_object(cBuf *buf, Obj *obj)
+cBuf * pack_object(cBuf *buf, const Obj *obj)
 {
     buf = pack_list(buf, obj->parents);
     buf = pack_list(buf, obj->children);

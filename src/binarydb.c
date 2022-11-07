@@ -648,7 +648,7 @@ static Int check_free_blocks(Int blocks_needed, Int b)
     return count == blocks_needed;
 }
 
-Int simble_put(Obj *obj, cObjnum objnum, Long *sizewritten)
+Int simble_put(const Obj *obj, cObjnum objnum, Long *sizewritten)
 {
     cBuf *buf;
     off_t old_offset, new_offset;

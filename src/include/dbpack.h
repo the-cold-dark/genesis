@@ -5,8 +5,8 @@
 #ifndef cdc_dbpack_h
 #define cdc_dbpack_h
 
-cBuf * pack_object (cBuf * buf, Obj * obj);
-cBuf * pack_data   (cBuf * buf, cData * data);
+cBuf * pack_object (cBuf * buf, const Obj * obj);
+cBuf * pack_data   (cBuf * buf, const cData * data);
 cBuf * write_ident (cBuf * buf, Ident id);
 cBuf * write_long  (cBuf * buf, Long n);
 cBuf * write_float (cBuf * buf, Float f);

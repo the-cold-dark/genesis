@@ -822,7 +822,7 @@ void object_discard_string(Obj *object, Int ind)
     string_tab_discard(object->methods->strings, ind);
 }
 
-cStr *object_get_string(Obj *object, Int ind)
+cStr *object_get_string(const Obj *object, Int ind)
 {
     return string_tab_name_str(object->methods->strings, ind);
 }
@@ -891,7 +891,7 @@ void object_discard_ident(Obj *object, Int ind)
     }
 }
 
-Ident object_get_ident(Obj *object, Int ind) {
+Ident object_get_ident(const Obj *object, Int ind) {
     return object->methods->idents[ind].id;
 }
 
@@ -1138,7 +1138,7 @@ static Var *object_create_var(Obj *object, cObjnum cclass, Ident name)
     return cnew;
 }
 
-bool object_has_methods(Obj *object)
+bool object_has_methods(const Obj *object)
 {
     Int i = 0;
 
@@ -1343,7 +1343,7 @@ static void search_object(cObjnum objnum, Search_params *params)
 }
 
 /* Look for a method on an object. */
-Method *object_find_method_local(Obj *object, Ident name, IsFrob is_frob)
+Method *object_find_method_local(const Obj *object, Ident name, IsFrob is_frob)
 {
     Int ind, method;
     Method *meth;
@@ -1677,7 +1677,7 @@ cList *object_list_method(Obj *object, Ident name, Int indent, int fflags)
     return (method) ? decompile(method, object, indent, fflags) : NULL;
 }
 
-Int object_get_method_flags(Obj * object, Ident name) {
+Int object_get_method_flags(const Obj * object, Ident name) {
     Method * method;
 
     method = object_find_method_local(object, name, FROB_ANY);
@@ -1702,7 +1702,7 @@ Int object_set_method_flags(Obj * object, Ident name, Int flags) {
     return flags;
 }
 
-Int object_get_method_access(Obj * object, Ident name) {
+Int object_get_method_access(const Obj * object, Ident name) {
     Method * method;
 
     method = object_find_method_local(object, name, FROB_ANY);

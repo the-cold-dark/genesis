@@ -31,10 +31,10 @@ Ident       string_tab_get_length(StringTab *tab, const char *s, Int len);
 Ident       string_tab_get_string(StringTab *tab, cStr * str);
 void        string_tab_discard(StringTab *tab, Ident id);
 Ident       string_tab_dup(StringTab *tab, Ident id);
-char      * string_tab_name(StringTab *tab, Ident id);
-cStr      * string_tab_name_str(StringTab *tab, Ident id);
-char      * string_tab_name_size(StringTab *tab, Ident id, Int *sz);
-uLong       string_tab_hash(StringTab *tab, Ident id);
+char      * string_tab_name(const StringTab *tab, Ident id);
+cStr      * string_tab_name_str(const StringTab *tab, Ident id);
+char      * string_tab_name_size(const StringTab *tab, Ident id, Int *sz);
+uLong       string_tab_hash(const StringTab *tab, Ident id);
 
 #endif
 

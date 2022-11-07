@@ -118,9 +118,9 @@ bool is_valid_ident(const char *s) {
     return 1;
 }
 
-bool string_is_valid_ident(cStr * str) {
-    char * s =   string_chars(str);
-    int    len = string_length(str);
+bool string_is_valid_ident(const cStr * str) {
+    const char * s = string_chars(str);
+    int len = string_length(str);
 
     for (; len; len--, s++) {
         if (!isalnum(*s) && *s != '_')

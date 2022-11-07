@@ -50,7 +50,7 @@ void handle_io_event_wait(Int seconds);
 void handle_connection_input(void);
 void handle_connection_output(void);
 Conn * find_connection(Obj * obj);
-Conn * ctell(Obj * obj, cBuf *buf);
+Conn * ctell(Obj * obj, const cBuf *buf);
 Int  boot(Obj * obj, void * ptr);
 Int  tcp_server(unsigned short port, const char * addr, Long objnum);
 Int  udp_server(unsigned short port, const char * addr, Long objnum);

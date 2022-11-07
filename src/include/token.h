@@ -11,7 +11,7 @@ void init_token(void);
 void lex_start(cList * code_lines);
 Int  yylex(void);
 bool is_valid_ident(const char * s);
-bool string_is_valid_ident(cStr * str);
+bool string_is_valid_ident(const cStr * str);
 Int  cur_lineno(void);
 bool is_reserved_word(const char *s);
 

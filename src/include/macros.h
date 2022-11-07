@@ -350,14 +350,14 @@
 */
 
 #define INSTANCE_PROTOTYPES(_class_) \
-    cBuf * CAT(pack_,_class_) (cBuf*, cData*); \
+    cBuf * CAT(pack_,_class_) (cBuf*, const cData*); \
     void CAT(unpack_,_class_) (const cBuf*, Long*, cData*); \
-    int CAT(size_,_class_) (cData*, int); \
+    int CAT(size_,_class_) (const cData*, int); \
     int CAT(compare_,_class_) (cData*, cData*); \
-    int CAT(hash_,_class_) (cData*); \
-    void CAT(dup_,_class_) (cData*, cData*); \
+    int CAT(hash_,_class_) (const cData*); \
+    void CAT(dup_,_class_) (cData*, const cData*); \
     void CAT(discard_,_class_) (cData*); \
-    cStr* CAT(string_,_class_) (cStr*, cData*, int)
+    cStr* CAT(string_,_class_) (cStr*, const cData*, int)
 
 #define INSTANCE_INIT(_class_,_name_) \
     { \

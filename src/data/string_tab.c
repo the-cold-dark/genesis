@@ -182,16 +182,16 @@ Ident string_tab_dup(StringTab *tab, Ident id) {
     return id;
 }
 
-char *string_tab_name(StringTab *tab, Ident id) {
+char *string_tab_name(const StringTab *tab, Ident id) {
     return string_chars(tab->tab[id].str);
 }
 
-cStr *string_tab_name_str(StringTab *tab, Ident id)
+cStr *string_tab_name_str(const StringTab *tab, Ident id)
 {
     return tab->tab[id].str;
 }
 
-char *string_tab_name_size(StringTab *tab, Ident id, Int *sz)
+char *string_tab_name_size(const StringTab *tab, Ident id, Int *sz)
 {
     cStr *str = tab->tab[id].str;
 
@@ -199,6 +199,6 @@ char *string_tab_name_size(StringTab *tab, Ident id, Int *sz)
     return string_chars(str);
 }
 
-uLong string_tab_hash(StringTab *tab, Ident id) {
+uLong string_tab_hash(const StringTab *tab, Ident id) {
     return tab->tab[id].hash;
 }

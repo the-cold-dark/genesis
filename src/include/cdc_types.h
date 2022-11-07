@@ -90,14 +90,14 @@ struct cFrob {
 };
 
 
-typedef cBuf * (*ciWrData)  (cBuf*, cData*);
+typedef cBuf * (*ciWrData)  (cBuf*, const cData*);
 typedef void   (*ciRdData)  (const cBuf*, Long*, cData*);
-typedef int    (*ciSzData)  (cData*, int);
-typedef int    (*ciHashData)(cData*);
+typedef int    (*ciSzData)  (const cData*, int);
+typedef int    (*ciHashData)(const cData*);
 typedef int    (*ciCmpData) (cData*, cData*);
-typedef void   (*ciDupData) (cData*, cData*);
+typedef void   (*ciDupData) (cData*, const cData*);
 typedef void   (*ciDisData) (cData*);
-typedef cStr * (*ciStrData) (cStr*, cData*, int);
+typedef cStr * (*ciStrData) (cStr*, const cData*, int);
 
 typedef struct cInstance {
     char      *name;

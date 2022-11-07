@@ -14,11 +14,11 @@
 #define OCTET_VALUE(n) (((uLong) (n)) & ((1 << 8) - 1))
 
 Int     data_cmp(cData * d1, cData * d2);
-Int     data_true(cData * data);
-uLong   data_hash(cData * d);
-void    data_dup(cData * dest, cData * src);
+Int     data_true(const cData * data);
+uLong   data_hash(const cData * d);
+void    data_dup(cData * dest, const cData * src);
 void    data_discard(cData * data);
-cStr  * data_tostr(cData * data);
+cStr  * data_tostr(const cData * data);
 cStr  * data_to_literal(cData * data, int flags);
 cStr  * data_add_list_literal_to_str(cStr * str, cList * list, int flags);
 cStr  * data_add_literal_to_str(cStr * str, cData * data, int flags);

@@ -195,10 +195,10 @@ extern cList  *object_descendants(cObjnum objnum);
 extern Int     object_has_ancestor(cObjnum objnum, cObjnum ancestor);
 extern Int     object_add_string(Obj *object, cStr *string);
 extern void    object_discard_string(Obj *object, Int ind);
-extern cStr   *object_get_string(Obj *object, Int ind);
+extern cStr   *object_get_string(const Obj *object, Int ind);
 extern Int     object_add_ident(Obj *object, const char *ident);
 extern void    object_discard_ident(Obj *object, Int ind);
-extern Ident   object_get_ident(Obj *object, Int ind);
+extern Ident   object_get_ident(const Obj *object, Int ind);
 extern bool    object_defines_var(cObjnum object, Ident name);
 extern Ident   object_add_var(Obj *object, Ident name);
 extern Ident   object_del_var(Obj *object, Ident name);
@@ -214,7 +214,7 @@ extern Ident   object_inherited_var(Obj *object, Obj *cclass, Ident name,
 extern bool    object_put_var(Obj *object, cObjnum cclass, Ident name,
                               cData *val);
 extern Method *object_find_method(cObjnum objnum, Ident name, IsFrob is_frob);
-extern Method *object_find_method_local(Obj * obj, Ident name, IsFrob is_frob);
+extern Method *object_find_method_local(const Obj * obj, Ident name, IsFrob is_frob);
 extern Method *object_find_next_method(cObjnum objnum, Ident name,
                                        cObjnum after, IsFrob is_frob);
 extern Int     object_rename_method(Obj * object, Ident oname, Ident nname);
@@ -228,11 +228,11 @@ extern Method *method_dup(Method *method);
 extern void    method_discard(Method *method);
 extern Int     object_set_objname(Obj * object, Ident name);
 extern Int     object_del_objname(Obj * object);
-extern Int     object_get_method_flags(Obj * object, Ident name);
-extern Int     object_get_method_access(Obj * object, Ident name);
+extern Int     object_get_method_flags(const Obj * object, Ident name);
+extern Int     object_get_method_access(const Obj * object, Ident name);
 extern Int     object_set_method_flags(Obj * object, Ident name, Int flags);
 extern Int     object_set_method_access(Obj * object, Ident name, Int access);
-extern bool    object_has_methods(Obj *object);
+extern bool    object_has_methods(const Obj *object);
 #ifdef USE_PARENT_OBJS
 extern void    object_load_parent_objs(Obj * obj);
 #endif

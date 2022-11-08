@@ -869,7 +869,8 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
         }
 
         if (!rc_check) {
-            WARN(("Ignoring object variable with invalid parent:"));
+            const char *curobj_name = (cur_obj->objname != -1) ? ident_name(cur_obj->objname) : "(not named)";
+            WARN(("$%s(#%d): Ignoring object variable: invalid ancestor object: #%d", curobj_name, cur_obj->objnum, definer));
             if (strlen(line) > 55) {
                 line[50] = line[51] = line[52] = '.';
                 line[53] = '\0';
@@ -879,7 +880,8 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
         }
 
         if (!object_has_ancestor(cur_obj->objnum, definer)) {
-            WARN(("Ignoring object variable with no ancestor:"));
+            const char *curobj_name = (cur_obj->objname != -1) ? ident_name(cur_obj->objname) : "(not named)";
+            WARN(("$%s(#%d): Ignoring object variable: #%d is not an ancestor.", curobj_name, cur_obj->objnum, definer));
             if (strlen(line) > 55) {
                 line[50] = line[51] = line[52] = '.';
                 line[53] = '\0';

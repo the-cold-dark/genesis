@@ -295,7 +295,7 @@ Expr *string_expr(char *s)
     return cnew;
 }
 
-Expr *objnum_expr(Long objnum)
+Expr *objnum_expr(cObjnum objnum)
 {
     Expr *cnew = PMALLOC(compiler_pile, Expr, 1);
 

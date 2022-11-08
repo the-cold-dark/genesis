@@ -921,7 +921,7 @@ COLDC_FUNC(objname) {
 
 COLDC_FUNC(lookup) {
     cData *args;
-    Long objnum;
+    cObjnum objnum;
 
     if (!func_init_1(&args, SYMBOL))
         return;

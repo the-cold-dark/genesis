@@ -44,7 +44,7 @@ Stmt * catch_stmt(Id_list * errors, Stmt * body, Stmt * handler);
 Expr * integer_expr(Long num);
 Expr * float_expr(Float fnum);
 Expr * string_expr(char * str);
-Expr * objnum_expr(Long objnum);
+Expr * objnum_expr(cObjnum objnum);
 Expr * objname_expr(char * name);
 Expr * symbol_expr(char * symbol);
 Expr * error_expr(char * error);

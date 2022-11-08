@@ -13,7 +13,7 @@
 
 static void connection_read(Conn *conn);
 static void connection_write(Conn *conn);
-static Conn *connection_add(Int fd, Long objnum);
+static Conn *connection_add(Int fd, cObjnum objnum);
 static void connection_discard(Conn *conn);
 static void pend_discard(pending_t *pend);
 static void server_discard(server_t *serv);
@@ -236,7 +236,7 @@ Int boot(Obj * obj, void * ptr) {
 // --------------------------------------------------------------------
 */
 
-Int tcp_server(unsigned short port, const char * ipaddr, Long objnum) {
+Int tcp_server(unsigned short port, const char * ipaddr, cObjnum objnum) {
     server_t * cnew;
     SOCKET server_socket;
 
@@ -272,7 +272,7 @@ Int tcp_server(unsigned short port, const char * ipaddr, Long objnum) {
     return true;
 }
 
-Int udp_server(unsigned short port, const char * ipaddr, Long objnum) {
+Int udp_server(unsigned short port, const char * ipaddr, cObjnum objnum) {
     SOCKET server_socket;
 
     /* Get a server socket for the port. */
@@ -370,7 +370,7 @@ static void connection_write(Conn *conn) {
 /*
 // --------------------------------------------------------------------
 */
-static Conn * connection_add(Int fd, Long objnum) {
+static Conn * connection_add(Int fd, cObjnum objnum) {
     Conn * conn;
 
     if (!object_extra_initialized) {

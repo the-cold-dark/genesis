@@ -399,7 +399,7 @@ void dump_stack (void) {
 }
 
 /* This call counts the references from the stack frames to the given object */
-int count_stack_refs (int objnum) {
+int count_stack_refs (cObjnum objnum) {
     Frame *f = cur_frame;
     int s;
 
@@ -713,7 +713,7 @@ void uninit_execute(void) {
 //
 // No we don't, lets just rewrite the interpreter, this sucks.
 */
-void vm_task(cObjnum objnum, Long name, Int num_args, ...) {
+void vm_task(cObjnum objnum, Ident name, Int num_args, ...) {
     va_list arg;
 
     /* Don't execute if a shutdown() has occurred. */

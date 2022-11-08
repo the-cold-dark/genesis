@@ -162,7 +162,7 @@ extern VMState * suspended;
 
 void init_execute(void);
 void uninit_execute(void);
-void vm_task(cObjnum objnum, Long message, Int num_args, ...);
+void vm_task(cObjnum objnum, Ident name, Int num_args, ...);
 void vm_method(Obj *obj, Method *method);
 Int  frame_start(Obj *obj,
                  Method *method,
@@ -224,7 +224,7 @@ Int func_init_1_to_3(cData **args, Int *num_args, Int type1, Int type2,
                      Int type3);
 void func_num_error(Int num_args, const char *required);
 void func_type_error(const char *which, cData *wrong, const char *required);
-void cthrow(Long id, const char *fmt, ...);
+void cthrow(Ident id, const char *fmt, ...);
 void unignorable_error(Ident id, cStr *str);
 void interp_error(Ident error, cStr *str);
 void user_error(Ident error, cStr *str, cData *arg);

@@ -538,7 +538,7 @@ COLDC_OP(continue) {
 }
 
 COLDC_OP(return) {
-    Long objnum;
+    cObjnum objnum;
 
     objnum = cur_frame->object->objnum;
     frame_return();
@@ -647,7 +647,7 @@ COLDC_OP(error) {
 
 COLDC_OP(objname) {
     Int ind, id;
-    Long objnum;
+    cObjnum objnum;
 
     ind = cur_frame->opcodes[cur_frame->pc++];
     id = object_get_ident(cur_frame->method->object, ind);
@@ -744,7 +744,8 @@ COLDC_OP(message) {
     Int arg_start, ind;
     IsFrob is_frob=FROB_NO;
     cData *target;
-    Long message, objnum;
+    cObjnum objnum;
+    Ident message;
     cFrob *frob;
 
     ind = cur_frame->opcodes[cur_frame->pc++];
@@ -815,7 +816,8 @@ COLDC_OP(expr_message) {
     Int arg_start;
     IsFrob is_frob=FROB_NO;
     cData *target, *message_data;
-    Long objnum, message;
+    cObjnum objnum;
+    Ident message;
 
     arg_start = arg_starts[--arg_pos];
     target = &stack[arg_start - 2];

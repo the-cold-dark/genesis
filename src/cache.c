@@ -295,7 +295,7 @@ void uninit_cache()
 //
 */
 
-Obj * cache_get_holder(Long objnum) {
+Obj * cache_get_holder(cObjnum objnum) {
     Int ind = objnum % cache_width;
     Obj *obj;
     Long obj_size;
@@ -367,7 +367,7 @@ Obj * cache_get_holder(Long objnum) {
 //            object exists with the given objnum.
 //
 */
-Obj *cache_retrieve(Long objnum) {
+Obj *cache_retrieve(cObjnum objnum) {
     Int ind = objnum % cache_width;
     Obj *obj;
     Long obj_size;
@@ -509,7 +509,7 @@ void cache_discard(Obj *obj) {
 //
 */
 
-bool cache_check(Long objnum) {
+bool cache_check(cObjnum objnum) {
     Int ind = objnum % cache_width;
     Obj *obj;
 

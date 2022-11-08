@@ -30,7 +30,7 @@
 */
 
 typedef struct idref_s {
-    Long objnum;            /* objnum if its an objnum */
+    cObjnum objnum;         /* objnum if its an objnum */
     const char *str;        /* string name */
     Int  len;
     Int  err;
@@ -125,7 +125,7 @@ typedef struct holder_s holder_t;
 typedef struct nh_s nh_t;
 
 struct nh_s {
-    Long    objnum;
+    cObjnum objnum;
     Ident   native;     /* the native name */
     Ident   method;     /* if it has been renamed, this is the method name */
     Int     valid;
@@ -133,7 +133,7 @@ struct nh_s {
 };
 
 struct holder_s {
-    Long       objnum;
+    cObjnum objnum;
     cStr * str;
     holder_t * next;
 };
@@ -142,7 +142,7 @@ static holder_t * holders = NULL;
 
 nh_t * nhs = NULL;
 
-static Int add_objname(Ident id, Long objnum, Int skip_lookup) {
+static Int add_objname(Ident id, cObjnum objnum, Int skip_lookup) {
     Obj   * obj = NULL;
     Long    num = INV_OBJNUM;
 
@@ -193,7 +193,7 @@ cObjnum get_object_name(Ident id) {
 static void cleanup_holders(void) {
     holder_t * holder = holders,
              * old = NULL;
-    Long       objnum;
+    cObjnum    objnum;
     Obj      * obj;
     Ident      id;
     cData      key;
@@ -276,7 +276,7 @@ static void remember_native(Method * method) {
 
 static void frob_n_print_errstr(const char * err, const char * name, cObjnum objnum);
 
-static Int find_native_method(Long object, Long method_name) {
+static Int find_native_method(cObjnum object, Ident method_name) {
     Ident      oname;
     Ident      mname;
     native_t * native;
@@ -311,7 +311,7 @@ static Int find_native_method(Long object, Long method_name) {
         if (oname != object)
             continue;
 
-        if (mname ==  method_name)
+        if (mname == method_name)
             return x;
     }
 
@@ -529,9 +529,9 @@ static Int get_idref(const char * sp, idref_t * id, Int isobj) {
 /*
 // ------------------------------------------------------------------------
 */
-static Long parse_to_objnum(idref_t *ref) {
-    Long id,
-         objnum = 0;
+static cObjnum parse_to_objnum(idref_t *ref) {
+    Ident id;
+    cObjnum objnum = 0;
     Int  result;
 
     if (ref->str != NULL) {
@@ -562,7 +562,7 @@ static Obj * handle_objcmd(const char * line, char * s, Int new) {
 #ifndef ONLY_PARSE_TEXTDB
     Obj     * target = NULL;
     cList   * parents = list_new(1); /* will always have a least one parent */
-    Long      objnum;
+    cObjnum   objnum;
     cData     d;
 #endif
 
@@ -1551,7 +1551,7 @@ void compile_cdc_file(FILE * fp) {
 // decompile the binary db to a text file
 */
 Int last_length; /* used in doing fancy formatting */
-void dump_object(Long objnum, FILE *fp, bool objnames);
+void dump_object(cObjnum objnum, FILE *fp, bool objnames);
 static const char * method_definition(Method * m);
 
 #define PRINT_OBJNAME(__obj, __fp) { \
@@ -1697,7 +1697,7 @@ static inline void dump_object_methods(Obj *obj, FILE *fp) {
 }
 
 #define is_system(__n) (__n == ROOT_OBJNUM || __n == SYSTEM_OBJNUM)
-void dump_object(Long objnum, FILE *fp, bool objnames) {
+void dump_object(cObjnum objnum, FILE *fp, bool objnames) {
     Obj    * obj;
     cList  * objs;
     cData  * d,

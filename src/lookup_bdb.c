@@ -73,7 +73,7 @@ struct name_cache_entry {
     char    on_disk;
 } name_cache[NAME_CACHE_SIZE + 1];
 
-void lookup_open(const char *name, Int cnew) {
+void lookup_open(const char *name, bool cnew) {
     Int i;
     int ret;
     char * objnum_name,

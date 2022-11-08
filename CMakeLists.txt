@@ -19,6 +19,7 @@ SET(DEBUG_LOOKUP_LOCK OFF CACHE BOOL "Debug option for USE_CLEANER_THREAD")
 SET(DEBUG_BUCKET_LOCK OFF CACHE BOOL "Debug option for USE_CLEANER_THREAD")
 SET(DEBUG_CLEANER_LOCK OFF CACHE BOOL "Debug option for USE_CLEANER_THREAD")
 SET(USE_PARENT_OBJS OFF CACHE BOOL "EXPERIMENTAL: still in development.")
+SET(COLD_LOOKUP_BACKEND "ndbm" CACHE STRING "Backend to use for lookup: ndbm, bdb.")
 
 INCLUDE(${CMAKE_SOURCE_DIR}/Modules/GetTriple.cmake)
 GET_TARGET_TRIPLE(SYSTEM_TYPE TARGET_ARCH TARGET_VENDOR TARGET_OS)
@@ -50,25 +51,42 @@ IF(LINK_LIBM)
       -lm)
 ENDIF()
 
-# Look for ndbm.h. This will either come from ndbm or gdbm-compat.
-# Then, figure out which library, if any, needs to be linked.
-CHECK_INCLUDE_FILE(ndbm.h HAVE_NDBM_H)
-IF(HAVE_NDBM_H)
-  # On macOS, we don't have to link against anything else.
-  CHECK_FUNCTION_EXISTS(dbm_open HAVE_DBM_OPEN)
-  IF(NOT HAVE_DBM_OPEN)
-    CHECK_LIBRARY_EXISTS(ndbm dbm_open "" LINK_NDBM)
-    IF(LINK_NDBM)
-      SET(COLD_LIBRARIES ${COLD_LIBRARIES} -lndbm)
-    ELSE()
-      CHECK_LIBRARY_EXISTS(gdbm_compat dbm_open "" LINK_GDBM_COMPAT)
-      IF(LINK_GDBM_COMPAT)
-        SET(COLD_LIBRARIES ${COLD_LIBRARIES} -lgdbm_compat)
+IF(COLD_LOOKUP_BACKEND STREQUAL "ndbm")
+  # Look for ndbm.h. This will either come from ndbm or gdbm-compat.
+  # Then, figure out which library, if any, needs to be linked.
+  CHECK_INCLUDE_FILE(ndbm.h HAVE_NDBM_H)
+  IF(HAVE_NDBM_H)
+    # On macOS, we don't have to link against anything else.
+    CHECK_FUNCTION_EXISTS(dbm_open HAVE_DBM_OPEN)
+    IF(NOT HAVE_DBM_OPEN)
+      CHECK_LIBRARY_EXISTS(ndbm dbm_open "" LINK_NDBM)
+      IF(LINK_NDBM)
+        SET(COLD_LIBRARIES ${COLD_LIBRARIES} -lndbm)
+      ELSE()
+        CHECK_LIBRARY_EXISTS(gdbm_compat dbm_open "" LINK_GDBM_COMPAT)
+        IF(LINK_GDBM_COMPAT)
+          SET(COLD_LIBRARIES ${COLD_LIBRARIES} -lgdbm_compat)
+        ENDIF()
       ENDIF()
     ENDIF()
+    SET(src_LOOKUP src/lookup.c)
+  ELSE()
+    MESSAGE(FATAL_ERROR "You must have ndbm or gdbm's ndbm emulation (gdbm-compat) installed.")
   ENDIF()
-ELSE()
-  MESSAGE(FATAL_ERROR "You must have ndbm or gdbm's ndbm emulation (gdbm-compat) installed.")
+ENDIF()
+
+IF(COLD_LOOKUP_BACKEND STREQUAL "bdb")
+  CHECK_INCLUDE_FILE(db.h HAVE_DB_H)
+  IF(HAVE_DB_H)
+    CHECK_LIBRARY_EXISTS(db db_create "" LINK_DB)
+    IF(LINK_DB)
+      SET(COLD_LIBRARIES ${COLD_LIBRARIES} -ldb)
+      SET(src_LOOKUP src/lookup_bdb.c)
+    ENDIF()
+  ENDIF()
+  IF(NOT HAVE_DB_H OR NOT LINK_DB)
+    MESSAGE(FATAL_ERROR "You must have berkeley db (libdb and libdb-dev) installed.")
+  ENDIF()
 ENDIF()
 
 IF(UNIX)
@@ -127,8 +145,7 @@ SET(src_DB
     src/cache.c
     src/binarydb.c
     src/dbpack.c
-    src/decode.c
-    src/lookup.c)
+    src/decode.c)
 SET(src_GRAMMAR
     ${BISON_ColdParser_OUTPUTS})
 SET(src_IO
@@ -181,6 +198,7 @@ SET(src_COMMON
     ${src_CRYPT}
     ${src_DATA}
     ${src_DB}
+    ${src_LOOKUP}
     ${src_GRAMMAR}
     ${src_IO}
     ${src_MISC}

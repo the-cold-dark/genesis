@@ -39,8 +39,8 @@ struct pending_s {
     SOCKET fd;
     Long task_id;
     cObjnum objnum;
-    Long error;
-    Int finished;
+    Ident error;
+    bool finished;
     pending_t *next;
 };
 
@@ -52,13 +52,13 @@ void handle_connection_output(void);
 Conn * find_connection(Obj * obj);
 Conn * ctell(Obj * obj, const cBuf *buf);
 Int  boot(Obj * obj, void * ptr);
-Int  tcp_server(unsigned short port, const char * addr, cObjnum objnum);
-Int  udp_server(unsigned short port, const char * addr, cObjnum objnum);
-Int  remove_server(unsigned short port);
-Long make_connection(const char *addr, unsigned short port, cObjnum receiver);
-Long make_udp_connection(const char *addr, unsigned short port, cObjnum receiver);
+bool tcp_server(unsigned short port, const char * addr, cObjnum objnum);
+bool udp_server(unsigned short port, const char * addr, cObjnum objnum);
+bool remove_server(unsigned short port);
+Ident make_connection(const char *addr, unsigned short port, cObjnum receiver);
+Ident make_udp_connection(const char *addr, unsigned short port, cObjnum receiver);
 void flush_output(void);
-Long udp_connect(const char *addr, unsigned short port, Int *socket_return);
+Ident udp_connect(const char *addr, unsigned short port, Int *socket_return);
 
 extern int object_extra_connection;
 

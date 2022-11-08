@@ -226,17 +226,17 @@ Int boot(Obj * obj, void * ptr) {
 
     if (conn != NULL) {
         conn->flags.dead = 1;
-        return 1;
+        return true;
     }
 
-    return 0;
+    return false;
 }
 
 /*
 // --------------------------------------------------------------------
 */
 
-Int tcp_server(unsigned short port, const char * ipaddr, cObjnum objnum) {
+bool tcp_server(unsigned short port, const char * ipaddr, cObjnum objnum) {
     server_t * cnew;
     SOCKET server_socket;
 
@@ -272,7 +272,7 @@ Int tcp_server(unsigned short port, const char * ipaddr, cObjnum objnum) {
     return true;
 }
 
-Int udp_server(unsigned short port, const char * ipaddr, cObjnum objnum) {
+bool udp_server(unsigned short port, const char * ipaddr, cObjnum objnum) {
     SOCKET server_socket;
 
     /* Get a server socket for the port. */
@@ -287,17 +287,17 @@ Int udp_server(unsigned short port, const char * ipaddr, cObjnum objnum) {
 /*
 // --------------------------------------------------------------------
 */
-Int remove_server(unsigned short port) {
+bool remove_server(unsigned short port) {
     server_t **servp;
 
     for (servp = &servers; *servp; servp = &((*servp)->next)) {
         if ((*servp)->port == port) {
             (*servp)->dead = 1;
-            return 1;
+            return true;
         }
     }
 
-    return 0;
+    return false;
 }
 
 /*
@@ -442,10 +442,10 @@ static void server_discard(server_t *serv) {
 /*
 // --------------------------------------------------------------------
 */
-Long make_connection(const char *addr, unsigned short port, cObjnum receiver) {
+Ident make_connection(const char *addr, unsigned short port, cObjnum receiver) {
     pending_t *cnew;
     SOCKET socket;
-    Long result;
+    Ident result;
 
     result = non_blocking_connect(addr, port, &socket);
     if (result == address_id || result == socket_id)
@@ -454,17 +454,17 @@ Long make_connection(const char *addr, unsigned short port, cObjnum receiver) {
     cnew->fd = socket;
     cnew->task_id = task_id;
     cnew->objnum = receiver;
-    cnew->finished = 0;
+    cnew->finished = false;
     cnew->error = result;
     cnew->next = pendings;
     pendings = cnew;
     return NOT_AN_IDENT;
 }
 
-Long make_udp_connection(const char *addr, unsigned short port, cObjnum receiver) {
+Ident make_udp_connection(const char *addr, unsigned short port, cObjnum receiver) {
     pending_t *cnew;
     SOCKET socket;
-    Long result;
+    Ident result;
 
     result = udp_connect(addr, port, &socket);
     if (result == address_id || result == socket_id)
@@ -473,7 +473,7 @@ Long make_udp_connection(const char *addr, unsigned short port, cObjnum receiver
     cnew->fd = socket;
     cnew->task_id = task_id;
     cnew->objnum = receiver;
-    cnew->finished = 0;
+    cnew->finished = false;
     cnew->error = result;
     cnew->next = pendings;
     pendings = cnew;

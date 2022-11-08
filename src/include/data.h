@@ -22,7 +22,7 @@ cStr  * data_tostr(const cData * data);
 cStr  * data_to_literal(cData * data, int flags);
 cStr  * data_add_list_literal_to_str(cStr * str, cList * list, int flags);
 cStr  * data_add_literal_to_str(cStr * str, cData * data, int flags);
-Long    data_type_id(Int type);
+Ident   data_type_id(Int type);
 void    init_instances(void);
 
 #define DF_NO_OPTS              0

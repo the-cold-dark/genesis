@@ -592,12 +592,12 @@ Int getarg(char * n,
     return 1;
 }
 
-Int is_valid_id(const char * str, Int len) {
+bool is_valid_id(const char * str, Int len) {
     while (len--) {
         if (!isalnum(*str) && *str != '_')
-            return 0;
+            return false;
         str++;
      }
-     return 1;
+     return true;
 }
 

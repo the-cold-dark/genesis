@@ -553,7 +553,7 @@ cStr *data_add_literal_to_str(cStr *str, cData *data, int flags) {
 
 /* Effects: Returns an id (without updating reference count) for the name of
  *            the type given by type. */
-Long data_type_id(Int type)
+Ident data_type_id(Int type)
 {
     switch (type) {
       case INTEGER:     return integer_id;

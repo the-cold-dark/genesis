@@ -23,7 +23,7 @@ typedef Int SOCKET;
 
 Int io_event_wait(Int sec, Conn *connections, server_t *servers,
                   pending_t *pendings);
-Long non_blocking_connect(const char *addr, unsigned short port, Int *socket_return);
+Ident non_blocking_connect(const char *addr, unsigned short port, Int *socket_return);
 void init_net(void);
 void uninit_net(void);
 
@@ -33,7 +33,7 @@ SOCKET get_udp_socket(unsigned short port, const char * addr);
 bool prebind_port(unsigned short port, const char * addr, int tcp);
 
 extern cBuf * socket_buffer;
-extern Long server_failure_reason;
+extern Ident server_failure_reason;
 
 #endif
 

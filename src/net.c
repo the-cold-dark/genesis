@@ -24,12 +24,12 @@
 cBuf * socket_buffer;
 
 static SOCKET grab_port(unsigned short port, const char * addr, int socktype);
-static Long translate_connect_error(Int error);
+static Ident translate_connect_error(Int error);
 
 static struct sockaddr_in sockin;        /* An internet address. */
 static socklen_t addr_size = sizeof(sockin);        /* Size of sockin. */
 
-Long server_failure_reason;
+Ident server_failure_reason;
 
 void init_net(void) {
 #ifdef __Win32__
@@ -266,7 +266,7 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
     for (pend = pendings; pend; pend = pend->next) {
         if (pend->error != NOT_AN_IDENT) {
             /* The connect has already failed; just set the finished bit. */
-            pend->finished = 1;
+            pend->finished = true;
         } else {
             FD_SET(pend->fd, &write_fds);
             if (pend->fd >= nfds)
@@ -354,7 +354,7 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
             } else {
                 pend->error = NOT_AN_IDENT;
             }
-            pend->finished = 1;
+            pend->finished = true;
         }
     }
 
@@ -362,7 +362,7 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
     return 1;
 }
 
-Long non_blocking_connect(const char *addr, unsigned short port, Int *socket_return)
+Ident non_blocking_connect(const char *addr, unsigned short port, Int *socket_return)
 {
     SOCKET fd;
     Int    result, flags;
@@ -411,7 +411,7 @@ Long non_blocking_connect(const char *addr, unsigned short port, Int *socket_ret
         return translate_connect_error(GETERR());
 }
 
-Long udp_connect(const char *addr, unsigned short port, Int *socket_return)
+Ident udp_connect(const char *addr, unsigned short port, Int *socket_return)
 {
     SOCKET fd;
     Int    result, flags;
@@ -460,7 +460,7 @@ Long udp_connect(const char *addr, unsigned short port, Int *socket_return)
         return translate_connect_error(GETERR());
 }
 
-static Long translate_connect_error(Int error)
+static Ident translate_connect_error(Int error)
 {
     switch (error) {
 

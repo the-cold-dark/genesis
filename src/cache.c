@@ -509,23 +509,23 @@ void cache_discard(Obj *obj) {
 //
 */
 
-Int cache_check(Long objnum) {
+bool cache_check(Long objnum) {
     Int ind = objnum % cache_width;
     Obj *obj;
 
     if (objnum < 0)
-        return 0;
+        return false;
 
     /* Search active chain. */
     for (obj = active[ind].first; obj; obj = obj->next_obj) {
         if (obj->objnum == objnum)
-            return 1;
+            return true;
     }
 
     /* Search inactive chain. */
     for (obj = inactive[ind].first; obj; obj = obj->next_obj) {
         if (obj->objnum == objnum)
-            return 1;
+            return true;
     }
 
     /* Check database on disk. */

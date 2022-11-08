@@ -59,8 +59,8 @@ static void offset_size_value(off_t offset, Int size,
                                 _offset_size *os, DBT *value);
 static void parse_offset_size_value(DBT *value, off_t *offset, Int *size);
 static void sync_name_cache(void);
-static Int store_name(Ident name, cObjnum objnum);
-static Int get_name(Ident name, cObjnum *objnum);
+static bool store_name(Ident name, cObjnum objnum);
+static bool get_name(Ident name, cObjnum *objnum);
 
 static DB *objnum_dbp;
 static DB *name_dbp;
@@ -208,7 +208,7 @@ void lookup_sync(void) {
         panic("Cannot sync index database file.");
 }
 
-Int lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size)
+bool lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size)
 {
     DBT key, value;
     int ret;
@@ -221,15 +221,15 @@ Int lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size)
     if ((ret = objnum_dbp->get(objnum_dbp, NULL, &key, &value, 0)) != 0)
     {
         UNLOCK_LOOKUP("lookup_retrieve_objnum");
-        return 0;
+        return false;
     }
 
     parse_offset_size_value(&value, offset, size);
     UNLOCK_LOOKUP("lookup_retrieve_objnum");
-    return 1;
+    return true;
 }
 
-Int lookup_store_objnum(cObjnum objnum, off_t offset, Int size)
+bool lookup_store_objnum(cObjnum objnum, off_t offset, Int size)
 {
     DBT key, value;
     _offset_size os;
@@ -242,14 +242,14 @@ Int lookup_store_objnum(cObjnum objnum, off_t offset, Int size)
         write_err("ERROR: Failed to store key %l.", objnum);
         objnum_dbp->err(objnum_dbp, ret, "lookup_store_objnum");
         UNLOCK_LOOKUP("lookup_store_objnum");
-        return 0;
+        return false;
     }
 
     UNLOCK_LOOKUP("lookup_store_objnum");
-    return 1;
+    return true;
 }
 
-Int lookup_remove_objnum(cObjnum objnum)
+bool lookup_remove_objnum(cObjnum objnum)
 {
     DBT key;
     int ret;
@@ -260,10 +260,10 @@ Int lookup_remove_objnum(cObjnum objnum)
     if ((ret = objnum_dbp->del(objnum_dbp, NULL, &key, 0)) != 0) {
         write_err("ERROR: Failed to delete key %l.", objnum);
         UNLOCK_LOOKUP("lookup_remove_objnum");
-        return 0;
+        return false;
     }
     UNLOCK_LOOKUP("lookup_remove_objnum");
-    return 1;
+    return true;
 }
 
 /* only called during startup, nothing can be dirty so no chance the cleaner can call it */
@@ -300,7 +300,7 @@ cObjnum lookup_next_objnum(void)
     return (*(cObjnum*)key.data);
 }
 
-Int lookup_retrieve_name(Ident name, cObjnum *objnum)
+bool lookup_retrieve_name(Ident name, cObjnum *objnum)
 {
     Int i = name % NAME_CACHE_SIZE;
 
@@ -310,7 +310,7 @@ Int lookup_retrieve_name(Ident name, cObjnum *objnum)
         name_cache_hits++;
         *objnum = name_cache[i].objnum;
         UNLOCK_LOOKUP("lookup_retrieve_name");
-        return 1;
+        return true;
     }
 
     name_cache_misses++;
@@ -318,7 +318,7 @@ Int lookup_retrieve_name(Ident name, cObjnum *objnum)
     /* Get it from the database. */
     if (!get_name(name, objnum)) {
         UNLOCK_LOOKUP("lookup_retrieve_name");
-        return 0;
+        return false;
     }
 
     /* Discard the old cache entry if it exists. */
@@ -335,10 +335,10 @@ Int lookup_retrieve_name(Ident name, cObjnum *objnum)
     name_cache[i].on_disk = 1;
 
     UNLOCK_LOOKUP("lookup_retrieve_name");
-    return 1;
+    return true;
 }
 
-Int lookup_store_name(Ident name, cObjnum objnum)
+bool lookup_store_name(Ident name, cObjnum objnum)
 {
     Int i = name % NAME_CACHE_SIZE;
 
@@ -351,7 +351,7 @@ Int lookup_store_name(Ident name, cObjnum objnum)
             name_cache[i].dirty = 1;
         }
         UNLOCK_LOOKUP("lookup_store_name");
-        return 1;
+        return true;
     }
 
     /* Discard the old cache entry if it exists. */
@@ -368,10 +368,10 @@ Int lookup_store_name(Ident name, cObjnum objnum)
     name_cache[i].on_disk = 0;
 
     UNLOCK_LOOKUP("lookup_store_name");
-    return 1;
+    return true;
 }
 
-Int lookup_remove_name(Ident name)
+bool lookup_remove_name(Ident name)
 {
     DBT key;
     Int i = name % NAME_CACHE_SIZE;
@@ -386,7 +386,7 @@ Int lookup_remove_name(Ident name)
         name_cache[i].name = NOT_AN_IDENT;
         if (!name_cache[i].on_disk) {
             UNLOCK_LOOKUP("lookup_remove_name");
-            return 1;
+            return true;
         }
     }
 
@@ -394,11 +394,11 @@ Int lookup_remove_name(Ident name)
     name_key(name, &key);
     if ((ret = name_dbp->del(name_dbp, NULL, &key, 0)) != 0) {
         UNLOCK_LOOKUP("lookup_remove_name");
-        return 0;
+        return false;
     }
 
     UNLOCK_LOOKUP("lookup_remove_name");
-    return 1;
+    return true;
 }
 
 static void objnum_keyvalue(cObjnum *objnum, DBT *key)
@@ -454,7 +454,7 @@ static void sync_name_cache(void)
     }
 }
 
-static Int store_name(Ident name, cObjnum objnum)
+static bool store_name(Ident name, cObjnum objnum)
 {
     DBT key, value;
     int ret;
@@ -466,13 +466,13 @@ static Int store_name(Ident name, cObjnum objnum)
     if ((ret = name_dbp->put(name_dbp, NULL, &key, &value, 0)) != 0) {
         write_err("ERROR: Failed to store key %s.", name);
         name_dbp->err(name_dbp, ret, "store_name: %s", "");
-        return 0;
+        return false;
     }
 
-    return 1;
+    return true;
 }
 
-static Int get_name(Ident name, cObjnum *objnum)
+static bool get_name(Ident name, cObjnum *objnum)
 {
     DBT key, value;
     int ret;
@@ -481,11 +481,11 @@ static Int get_name(Ident name, cObjnum *objnum)
     name_key(name, &key);
     memset(&value, 0, sizeof(value));
     if ((ret = name_dbp->get(name_dbp, NULL, &key, &value, 0)) != 0) {
-        return 0;
+        return false;
     }
 
     memcpy((unsigned char*)(objnum), (unsigned char*)value.data, sizeof(cObjnum));
 
-    return 1;
+    return true;
 }
 

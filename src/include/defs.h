@@ -43,19 +43,6 @@
 
 /*
 // ---------------------------------------------------------------------
-// This will reduce how much your database bloats, however it will
-// be slower as it searches the whole database for free blocks.
-// For now this is an option to reduce the amount of bloat occurring,
-// until an alternate allocator is created.  If you are having a problem
-// with your database quickly bloating in size, it is suggested to
-// enable this option, unless you have a slow disk or slow disk device.
-*/
-#if DISABLED
-#  define LOWBLOAT_DB
-#endif
-
-/*
-// ---------------------------------------------------------------------
 // Use larger storage for floats and integers.  This gives greater
 // precision, but is not necessarily recommended unless you know your
 // system can handle 64bit + words.  You do not need to specify both

@@ -85,12 +85,6 @@ void uninit_emalloc(void) {
     }
 }
 
-#ifdef DOFUNC_FREE
-void efree(void *block) {
-    free(block);
-}
-#endif
-
 void * emalloc(size_t size) {
     void *ptr;
 

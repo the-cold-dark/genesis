@@ -24,11 +24,8 @@ Pile * new_pile(void);
 void   free_pile(Pile *tmp);
 void * pmalloc(Pile *pile, size_t size);
 void  pfree(Pile *pile);
-void efree(void * block);
 
-#ifndef DOFUNC_FREE
 #define efree(what) free(what)
-#endif
 
 #define EMALLOC(type, num)         ((type *) emalloc((num) * sizeof(type)))
 #define EREALLOC(ptr, type, num) ((type *) erealloc(ptr, (num) * sizeof(type)))

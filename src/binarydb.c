@@ -52,8 +52,6 @@ pthread_mutex_t db_mutex;
 #include <direct.h>
 #endif
 
-FILE *dump_db_file = NULL;
-
 /* suggested by xmath as possibly faster
 #define NEEDED(n, b)    (((n) + ((b) - 1)) / (b))
 #define ROUND_UP(n, b)  (((n) + ((b) - 1)) % (b))
@@ -77,7 +75,8 @@ static void simble_verify_clean(void);
 
 static Int last_free = 0;        /* Last known or suspected free block */
 
-static FILE *database_file = NULL;
+static int database_fd = 0;
+static int dump_db_fd = 0;
 
 static char *dump_bitmap  = NULL;
 static Int   dump_blocks;
@@ -153,12 +152,6 @@ extern Long num_objects;
             simble_mark(LOGICAL_BLOCK(offset), size); \
             objnum = lookup_next_objnum(); \
         } \
-    }
-
-#define open_db_objects(__p) { \
-        database_file = fopen(fdb_objects, __p); \
-        if (!database_file) \
-            FAIL("Cannot open object database file \"%s/objects\".\n"); \
     }
 
 #ifndef __Win32__
@@ -266,7 +259,10 @@ void init_binary_db(void) {
     /* check the clean file */
     simble_verify_clean();
 
-    open_db_objects("rb+");
+    database_fd = open(fdb_objects, O_RDWR);
+    if (database_fd == -1) {
+        FAIL("Cannot open object database file \"%s/objects\".\n");
+    }
     lookup_open(fdb_index, 0);
     init_bitmaps();
     sync_index();
@@ -295,7 +291,10 @@ void init_new_db(void) {
     DBFILE(fdb_index,   "index");
 
     open_db_directory();
-    open_db_objects("wb+");
+    database_fd = open(fdb_objects, O_RDWR | O_CREAT | O_TRUNC, READ_WRITE);
+    if (database_fd == -1) {
+        FAIL("Cannot open object database file \"%s/objects\".\n");
+    }
     lookup_open(fdb_index, 1);
     init_bitmaps();
     sync_index();
@@ -371,26 +370,26 @@ static void dump_copy (off_t start, Int blocks)
 
     if (i == start+blocks) return;
 
-    if (fseeko(database_file, BLOCK_OFFSET (start), SEEK_SET)) {
+    if (lseek(database_fd, BLOCK_OFFSET (start), SEEK_SET) == -1) {
         UNLOCK_DB("dump_copy")
-        panic("fseeko(\"%s\") in copy: %s", database_file, strerror(errno));
+        panic("lseek(%d, %ld) in copy: %s", database_fd, BLOCK_OFFSET (block), strerror(errno));
     }
 
     /* PORTABILITY WARNING : THIS FSEEK MAKES THE FILE LONGER IN SOME CASES.
        Checked on Solaris, should work on others. */
 
-    if (fseeko(dump_db_file,  BLOCK_OFFSET (start), SEEK_SET)) {
+    if (lseek(dump_db_fd,  BLOCK_OFFSET (start), SEEK_SET) == -1) {
         UNLOCK_DB("dump_copy")
-        panic("fseeko(\"%s\") in copy: %s", dump_db_file, strerror(errno));
+        panic("lseek(%d, %ld) in copy: %s", dump_db_fd, BLOCK_OFFSET (start), strerror(errno));
     }
     for (i=0; i<blocks; i++) {
-        fread (buf, 1, BLOCK_SIZE, database_file);
-        fwrite (buf, 1, BLOCK_SIZE, dump_db_file);
+        read (database_fd, buf, BLOCK_SIZE);
+        write (dump_db_fd, buf, BLOCK_SIZE);
         dump_bitmap[(start+i) >> 3] &= ~(1 << ((start+i)&7));
     }
 #else
     off_t block = 0;
-    bool  dofseek = true;
+    bool  do_seek = true;
     char  buf[BLOCK_SIZE];
 
     block = start;
@@ -400,29 +399,29 @@ static void dump_copy (off_t start, Int blocks)
 
     while (block < blocks) {
         if ( (dump_bitmap[block >> 3] & (1 << (block & 7))) ) {
-            if (dofseek) {
-                if (fseeko(database_file, BLOCK_OFFSET (block), SEEK_SET)) {
+            if (do_seek) {
+                if (lseek(database_fd, BLOCK_OFFSET (block), SEEK_SET) == -1) {
                     UNLOCK_DB("dump_copy")
-                    panic("fseeko(\"%s\"..): %s", database_file, strerror(errno));
+                    panic("lseek(%d, %ld): %s", database_fd, BLOCK_OFFSET (block), strerror(errno));
                 }
-                if (fseeko(dump_db_file,  BLOCK_OFFSET (block), SEEK_SET)) {
+                if (lseek(dump_db_fd,  BLOCK_OFFSET (block), SEEK_SET) == -1) {
                     UNLOCK_DB("dump_copy")
-                    panic("fseeko(\"%s\"..): %s", dump_db_file, strerror(errno));
+                    panic("lseek(%d, %ld): %s", dump_db_fd, BLOCK_OFFSET (block), strerror(errno));
                 }
-                dofseek = false;
+                do_seek = false;
             }
-            if (fread(buf, 1, BLOCK_SIZE, database_file) != BLOCK_SIZE) {
+            if (read(database_fd, buf, BLOCK_SIZE) != BLOCK_SIZE) {
                 UNLOCK_DB("dump_copy")
-                panic("fread(\"%s\"..): failed to read full block", database_file);
+                panic("read(%d, ...): failed to read full block", database_fd);
             }
-            if (fwrite(buf, 1, BLOCK_SIZE, dump_db_file) != BLOCK_SIZE) {
+            if (write(dump_db_fd, buf, BLOCK_SIZE) != BLOCK_SIZE) {
                 UNLOCK_DB("dump_copy")
-                panic("fwrite(\"%s\"..): failed to write full block", dump_db_file);
+                panic("write(%d, ...): failed to write full block", dump_db_fd);
             }
             dump_bitmap[block >> 3] &= ~(1 << (block & 7));
         }
         else
-            dofseek = true;
+            do_seek = true;
 
         ++block;
     }
@@ -430,17 +429,17 @@ static void dump_copy (off_t start, Int blocks)
 }
 
 bool simble_dump_in_progress(void) {
-    return dump_db_file != NULL;
+    return dump_db_fd != 0;
 }
 
 /* open the dump database. return -1 on failure (can't open the file),
    -2 -> we are already dumping */
 
 Int simble_dump_start(const char *dump_objects_filename) {
-    if (dump_db_file)
+    if (dump_db_fd)
         return -2;
-    dump_db_file = fopen(dump_objects_filename, "wb+");
-    if (!dump_db_file)
+    dump_db_fd = open(dump_objects_filename, O_WRONLY | O_CREAT | O_TRUNC, READ_WRITE);
+    if (!dump_db_fd)
         return -1;
     last_dumped = 0;
 
@@ -463,49 +462,49 @@ Int simble_dump_start(const char *dump_objects_filename) {
 
 Int simble_dump_some_blocks (Int maxblocks)
 {
-    bool dofseek = true;
+    bool do_seek = true;
     char buf[BLOCK_SIZE];
 
-    if (!dump_db_file)
+    if (!dump_db_fd)
         return DUMP_NOT_IN_PROGRESS;
 
     LOCK_DB("simble_dump_some_blocks")
 
     while (maxblocks) {
         if ( (dump_bitmap[last_dumped >> 3] & (1 << (last_dumped & 7))) ) {
-            if (dofseek) {
-                if (fseeko(database_file, BLOCK_OFFSET (last_dumped), SEEK_SET)) {
+            if (do_seek) {
+                if (lseek(database_fd, BLOCK_OFFSET (last_dumped), SEEK_SET) == -1) {
                     UNLOCK_DB("simble_dump_some_blocks")
-                    panic("fseeko(\"%s\"..): %s", database_file, strerror(errno));
+                    panic("lseek(%d, %ld): %s", database_fd, BLOCK_OFFSET (last_dumped), strerror(errno));
                 }
-                if (fseeko(dump_db_file,  BLOCK_OFFSET (last_dumped), SEEK_SET)) {
+                if (lseek(dump_db_fd,  BLOCK_OFFSET (last_dumped), SEEK_SET)) {
                     UNLOCK_DB("simble_dump_some_blocks")
-                    panic("fseeko(\"%s\"..): %s", dump_db_file, strerror(errno));
+                    panic("lseek(%d, %ld): %s", dump_db_fd, BLOCK_OFFSET (last_dumped), strerror(errno));
                 }
-                dofseek = false;
+                do_seek = false;
             }
-            if (fread(buf, 1, BLOCK_SIZE, database_file) != BLOCK_SIZE) {
+            if (read(database_fd, buf, BLOCK_SIZE) != BLOCK_SIZE) {
                 UNLOCK_DB("simble_dump_some_blocks")
-                panic("fread(\"%s\"..): failed to read full block", database_file);
+                panic("read(%d, ...): failed to read full block", database_fd);
             }
-            if (fwrite(buf, 1, BLOCK_SIZE, dump_db_file) != BLOCK_SIZE) {
+            if (write(dump_db_fd, buf, BLOCK_SIZE) != BLOCK_SIZE) {
                 UNLOCK_DB("simble_dump_some_blocks")
-                panic("fwrite(\"%s\"..): failed to write full block", dump_db_file);
+                panic("write(%d, ...): failed to write full block", dump_db_fd);
             }
             dump_bitmap[last_dumped >> 3] &= ~(1 << (last_dumped & 7));
             maxblocks--;
         }
         else
-            dofseek = true;
+            do_seek = true;
 
         if (last_dumped++ >= dump_blocks) {
-            if (fclose (dump_db_file)) {
+            if (close (dump_db_fd)) {
                 UNLOCK_DB("simble_dump_some_blocks")
-                panic("Unable to close dump file '%s'", dump_db_file);
+                panic("Unable to close dump file '%d'", dump_db_fd);
             }
-            dump_db_file = NULL;
+            dump_db_fd = 0;
             free (dump_bitmap);
-            dump_bitmap=NULL;
+            dump_bitmap = NULL;
 
             UNLOCK_DB("simble_dump_some_blocks")
 
@@ -525,7 +524,7 @@ static void simble_unmark(off_t start, Int size)
     blocks = NEEDED(size, BLOCK_SIZE);
     allocated_blocks-=blocks;
 
-    if (dump_db_file) dump_copy (start, blocks);
+    if (dump_db_fd) dump_copy (start, blocks);
 
     /* Remember a free block was here. */
     last_free = start;
@@ -616,7 +615,7 @@ bool simble_get(Obj *object, cObjnum objnum, Long *sizeread)
     LOCK_DB("simble_get")
 
     /* seek to location */
-    if (fseeko(database_file, offset, SEEK_SET)) {
+    if (lseek(database_fd, offset, SEEK_SET) == -1) {
         UNLOCK_DB("simble_get")
         return false;
     }
@@ -625,7 +624,7 @@ bool simble_get(Obj *object, cObjnum objnum, Long *sizeread)
         *sizeread = size;
     buf = buffer_new(size);
     buf->len = size;
-    buf_pos = fread(buf->s, sizeof(unsigned char), size, database_file);
+    buf_pos = read(database_fd, buf->s, size);
     UNLOCK_DB("simble_get")
     if (buf_pos != size)
         panic("simble_get: only read %d of %d bytes.", buf_pos, size);
@@ -674,7 +673,7 @@ bool simble_put(const Obj *obj, cObjnum objnum, Long *sizewritten)
             /* check for the possible realloc */
             if (check_free_blocks(tmp1 - tmp2, LOGICAL_BLOCK(old_offset)+tmp2)) {
                 /* no, we don't have to move, just overwrite */
-                if (dump_db_file)
+                if (dump_db_fd)
                     dump_copy (LOGICAL_BLOCK(old_offset), tmp1);
                 simble_mark(LOGICAL_BLOCK(old_offset) + tmp2,
                         BLOCK_SIZE * (tmp1 - tmp2));
@@ -684,7 +683,7 @@ bool simble_put(const Obj *obj, cObjnum objnum, Long *sizewritten)
                 new_offset = BLOCK_OFFSET((off_t)simble_alloc(new_size));
             }
         } else {
-            if (dump_db_file)
+            if (dump_db_fd)
                 dump_copy (LOGICAL_BLOCK(old_offset), tmp2);
             if (tmp1 < tmp2) {
                 simble_unmark(LOGICAL_BLOCK(old_offset) + tmp1,
@@ -717,17 +716,16 @@ bool simble_put(const Obj *obj, cObjnum objnum, Long *sizewritten)
         }
     }
 
-    if (fseeko(database_file, new_offset, SEEK_SET)) {
+    if (lseek(database_fd, new_offset, SEEK_SET) == -1) {
         UNLOCK_DB("simble_put")
         buffer_discard(buf);
-        write_err("ERROR: Seek failed for %l.", objnum);
+        write_err("ERROR: simble_put: seek failed: offset=%l obj=#%l %s", new_offset, objnum, strerror(errno));
         if (sizewritten) *sizewritten = 0;
         return false;
     }
 
-    old_size = fwrite(buf->s, sizeof(unsigned char), new_size, database_file);
+    old_size = write(database_fd, buf->s, new_size);
     buffer_discard(buf);
-    fflush(database_file);
     UNLOCK_DB("simble_put")
     if (old_size != new_size)
         panic("simble_put: only wrote %d of %d bytes.", old_size, new_size);
@@ -768,7 +766,7 @@ bool simble_del(cObjnum objnum)
     simble_unmark(LOGICAL_BLOCK(offset), size);
 
     /* Mark object dead in file */
-    if (fseeko(database_file, offset, SEEK_SET)) {
+    if (lseek(database_fd, offset, SEEK_SET)) {
         write_err("ERROR: Failed to seek to object %l.", objnum);
 
         UNLOCK_DB("simble_del")
@@ -779,9 +777,11 @@ bool simble_del(cObjnum objnum)
     buf = buffer_new(size);
     buf->len = size;
     memset(buf->s, 0, size);
-    fwrite(buf->s, sizeof(unsigned char), size, database_file);
+    if (write(database_fd, buf->s, size) != size) {
+        write_err("ERROR: Failed to zero out deleted object %l.", objnum);
+        // No need to early bail here, just keep going.
+    }
     buffer_discard(buf);
-    fflush(database_file);
 
     UNLOCK_DB("simble_del")
 
@@ -792,7 +792,7 @@ void simble_close(void)
 {
     LOCK_DB("simble_close")
     lookup_close();
-    fclose(database_file);
+    close(database_fd);
     efree(bitmap);
     simble_flag_as_clean();
     string_discard(pad_string);

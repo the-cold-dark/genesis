@@ -11,6 +11,13 @@
 #include "quickhash.h"
 #include "macros.h"
 
+extern Int list_length(const cList *list);
+extern cData *list_first(cList *list);
+extern cData *list_next(cList *list, cData *d);
+extern cData *list_last(cList *list);
+extern cData *list_prev(cList *list, cData *d);
+extern cData *list_elem(cList *list, Int i);
+
 static cList *generic_empty_list;
 
 /* Note that we number list elements [0..(len - 1)] internally, while the
@@ -112,30 +119,6 @@ cList *list_new(Int len) {
 cList *list_dup(cList *list) {
     list->refs++;
     return list;
-}
-
-Int list_length(const cList *list) {
-    return list->len;
-}
-
-cData *list_first(cList *list) {
-    return (list->len) ? list->el + list->start : NULL;
-}
-
-cData *list_next(cList *list, cData *d) {
-    return (d < list->el + list->start + list->len - 1) ? d + 1 : NULL;
-}
-
-cData *list_last(cList *list) {
-    return (list->len) ? list->el + list->start + list->len - 1 : NULL;
-}
-
-cData *list_prev(cList *list, cData *d) {
-    return (d > list->el + list->start) ? d - 1 : NULL;
-}
-
-cData *list_elem(cList *list, Int i) {
-    return list->el + list->start + i;
 }
 
 /* This is a horrible abstraction-breaking function.  Call it just after you

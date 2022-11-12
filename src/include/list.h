@@ -7,12 +7,6 @@
 
 cList * list_new(Int len);
 cList * list_dup(cList * list);
-Int     list_length(const cList * list);
-cData * list_first(cList * list);
-cData * list_next(cList * list, cData * d);
-cData * list_last(cList * list);
-cData * list_prev(cList * list, cData * d);
-cData * list_elem(cList * list, Int i);
 cData * list_empty_spaces(cList * list, Int spaces);
 Int     list_search(cList * list, cData * data);
 Int     list_binary_search(cList * list, cData * data, cData * key);
@@ -34,6 +28,30 @@ void    list_discard(cList * list);
 cList * list_prep(cList * list, Int start, Int len);
 cStr  * list_join(cList * list, const cStr * sep);
 int     list_index(cList * list, cData * search, int origin);
+
+inline Int list_length(const cList *list) {
+    return list->len;
+}
+
+inline cData *list_first(cList *list) {
+    return (list->len) ? list->el + list->start : NULL;
+}
+
+inline cData *list_next(cList *list, cData *d) {
+    return (d < list->el + list->start + list->len - 1) ? d + 1 : NULL;
+}
+
+inline cData *list_last(cList *list) {
+    return (list->len) ? list->el + list->start + list->len - 1 : NULL;
+}
+
+inline cData *list_prev(cList *list, cData *d) {
+    return (d > list->el + list->start) ? d - 1 : NULL;
+}
+
+inline cData *list_elem(cList *list, Int i) {
+    return list->el + list->start + i;
+}
 
 #endif
 

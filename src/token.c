@@ -312,7 +312,7 @@ Int yylex(void)
     if (len >= 2 && *s == '/' && s[1] == '/') {
         /* Copy in text after //, and move to next line. */
         yylval.s = PMALLOC(compiler_pile, char, len - 1);
-        MEMCPY(yylval.s, s + 2, len - 2);
+        memcpy(yylval.s, s + 2, len - 2);
         yylval.s[len - 2] = 0;
         cur_line++;
         cur_pos = 0;
@@ -398,7 +398,7 @@ static char *identifier_token(char *s, Int len, Int *token_len)
 
     /* Allocate space and copy. */
     p = PMALLOC(compiler_pile, char, count + 1);
-    MEMCPY(p, s, count);
+    memcpy(p, s, count);
     p[count] = 0;
 
     *token_len = count;

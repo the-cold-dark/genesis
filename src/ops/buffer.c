@@ -35,9 +35,9 @@ COLDC_FUNC(bufgraft) {
         push_buffer(b1);
     } else {
         new = buffer_new(b1->len + b2->len);
-        MEMCPY(new->s, b1->s, pos);
-        MEMCPY(new->s + pos, b2->s, b2->len);
-        MEMCPY(new->s + pos + b2->len, b1->s + pos, b1->len - pos + 1);
+        memcpy(new->s, b1->s, pos);
+        memcpy(new->s + pos, b2->s, b2->len);
+        memcpy(new->s + pos + b2->len, b1->s + pos, b1->len - pos + 1);
         new->len = b1->len + b2->len;
         push_buffer(new);
         buffer_discard(new);

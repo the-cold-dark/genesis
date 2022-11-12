@@ -151,7 +151,7 @@ Ident read_ident(const cBuf *buf, Long *buf_pos)
 
     /* Otherwise, it's an identifier.  Read it into temporary storage. */
     s = TMALLOC(char, len + 1);
-    MEMCPY(s, &(buf->s[*buf_pos]), len);
+    memcpy(s, &(buf->s[*buf_pos]), len);
     (*buf_pos) += len;
     s[len] = 0;
 
@@ -910,7 +910,7 @@ void unpack_data(const cBuf *buf, Long *buf_pos, cData *data)
             len = read_long(buf, buf_pos);
             data->u.buffer = buffer_new(len);
             data->u.buffer->len = len;
-            MEMCPY(data->u.buffer->s, &(buf->s[*buf_pos]), len);
+            memcpy(data->u.buffer->s, &(buf->s[*buf_pos]), len);
             (*buf_pos) += len;
             break;
         }

@@ -38,7 +38,7 @@ cBuf *buffer_append(cBuf *buf1, const cBuf *buf2) {
     if (!buf2->len)
         return buf1;
     buf1 = buffer_prep(buf1, buf1->len + buf2->len);
-    MEMCPY(buf1->s + buf1->len, buf2->s, buf2->len);
+    memcpy(buf1->s + buf1->len, buf2->s, buf2->len);
     buf1->len += buf2->len;
     return buf1;
 }
@@ -53,7 +53,7 @@ cBuf * buffer_append_uchars_single_ref(cBuf * buf, const unsigned char * new, In
         buf->size = new_size - BUFFER_OVERHEAD;
     }
 
-    MEMCPY(buf->s + buf->len, new, new_len);
+    memcpy(buf->s + buf->len, new, new_len);
     buf->len += new_len;
     return buf;
 }
@@ -62,7 +62,7 @@ cBuf * buffer_append_uchars(cBuf * buf1, const unsigned char * new, Int new_len)
     if (!new_len)
         return buf1;
     buf1 = buffer_prep(buf1, buf1->len + new_len);
-    MEMCPY(buf1->s + buf1->len, new, new_len);
+    memcpy(buf1->s + buf1->len, new, new_len);
     buf1->len += new_len;
     return buf1;
 }
@@ -203,7 +203,7 @@ cList *buf_to_strings(const cBuf *buf, const cBuf *sep)
 
     /* Add the remainder characters to the list as a buffer. */
     end = buffer_new(buf->s + buf->len - string_start);
-    MEMCPY(end->s, string_start, buf->s + buf->len - string_start);
+    memcpy(end->s, string_start, buf->s + buf->len - string_start);
     end->len = buf->s + buf->len - string_start;
     d.type = BUFFER;
     d.u.buffer = end;
@@ -251,10 +251,10 @@ cBuf *buffer_from_strings(cList * string_list, const cBuf * sep) {
     for (i = 0; i < num_strings; i++) {
         s = (unsigned char *) string_chars(string_data[i].u.str);
         len = string_length(string_data[i].u.str);
-        MEMCPY(buf->s + pos, s, len);
+        memcpy(buf->s + pos, s, len);
         pos += len;
         if (sep) {
-            MEMCPY(buf->s + pos, sep->s, sep->len);
+            memcpy(buf->s + pos, sep->s, sep->len);
             pos += sep->len;
         } else {
             buf->s[pos++] = '\r';
@@ -268,7 +268,7 @@ cBuf *buffer_from_strings(cList * string_list, const cBuf * sep) {
 cBuf * buffer_subrange(cBuf * buf, Int start, Int len) {
     cBuf * cnew = buffer_new(len);
 
-    MEMCPY(cnew->s, buf->s + start, (len > buf->len ? buf->len : len));
+    memcpy(cnew->s, buf->s + start, (len > buf->len ? buf->len : len));
     cnew->len = len;
     buffer_discard(buf);
 
@@ -313,7 +313,7 @@ cBuf *buffer_prep(cBuf *buf, Int new_size) {
         /* Make a new buffer with the same contents as the old one. */
         buf->refs--;
         cnew = buffer_new(new_size);
-        MEMCPY(cnew->s, buf->s, buf->len);
+        memcpy(cnew->s, buf->s, buf->len);
         cnew->len = buf->len;
         return cnew;
     } else if (buf->size < new_size) {

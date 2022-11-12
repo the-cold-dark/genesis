@@ -44,7 +44,7 @@ cStr *string_new(Int size_needed) {
 cStr *string_from_chars(const char *s, Int len) {
     cStr *cnew = string_new(len);
 
-    MEMCPY(cnew->s, s, len);
+    memcpy(cnew->s, s, len);
     cnew->s[len] = '\0';
     cnew->len = len;
     return cnew;
@@ -85,7 +85,7 @@ cStr *string_unpack(const cBuf *buf, Long *buf_pos) {
     }
     str = string_new(len);
     str->len = len;
-    MEMCPY(str->s, &(buf->s[*buf_pos]), len);
+    memcpy(str->s, &(buf->s[*buf_pos]), len);
     (*buf_pos) += len;
     str->s[len] = 0;
     return str;
@@ -121,7 +121,7 @@ Int string_cmp(const cStr *str1, const cStr *str2) {
 
 cStr *string_add(cStr *str1, const cStr *str2) {
     str1 = string_prep(str1, str1->start, str1->len + str2->len);
-    MEMCPY(str1->s + str1->start + str1->len - str2->len,
+    memcpy(str1->s + str1->start + str1->len - str2->len,
            str2->s + str2->start, str2->len);
     str1->s[str1->start + str1->len] = 0;
     return str1;
@@ -130,7 +130,7 @@ cStr *string_add(cStr *str1, const cStr *str2) {
 /* calling this with len == 0 can be a problem */
 cStr *string_add_chars(cStr *str, const char *s, Int len) {
     str = string_prep(str, str->start, str->len + len);
-    MEMCPY(str->s + str->start + str->len - len, s, len);
+    memcpy(str->s + str->start + str->len - len, s, len);
     str->s[str->start + str->len] = 0;
     return str;
 }
@@ -152,10 +152,10 @@ cStr *string_add_padding(cStr *str, const char *filler, Int len, Int padding) {
     }
 
     while (padding > len) {
-        MEMCPY(str->s + str->start + str->len - padding, filler, len);
+        memcpy(str->s + str->start + str->len - padding, filler, len);
         padding -= len;
     }
-    MEMCPY(str->s + str->start + str->len - padding, filler, padding);
+    memcpy(str->s + str->start + str->len - padding, filler, padding);
     return str;
 }
 
@@ -411,7 +411,7 @@ cStr * string_prep(cStr *str, Int start, Int len) {
     if (need_to_move) {
         /* Move the string's contents into a new string. */
         cnew = string_new(len);
-        MEMCPY(cnew->s, str->s + start, (len > str->len) ? str->len : len);
+        memcpy(cnew->s, str->s + start, (len > str->len) ? str->len : len);
         cnew->s[len] = '\0';
         cnew->len = len;
         string_discard(str);

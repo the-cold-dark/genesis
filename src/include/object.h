@@ -192,7 +192,7 @@ extern Int     object_change_parents(Obj *object, cList *parents);
 extern cList  *object_ancestors_breadth(cObjnum objnum);
 extern cList  *object_ancestors_depth(cObjnum objnum);
 extern cList  *object_descendants(cObjnum objnum);
-extern Int     object_has_ancestor(cObjnum objnum, cObjnum ancestor);
+extern bool    object_has_ancestor(cObjnum objnum, cObjnum ancestor);
 extern Int     object_add_string(Obj *object, cStr *string);
 extern void    object_discard_string(Obj *object, Int ind);
 extern cStr   *object_get_string(const Obj *object, Int ind);

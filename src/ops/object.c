@@ -691,7 +691,7 @@ COLDC_FUNC(ancestors) {
 
 COLDC_FUNC(has_ancestor) {
     cData * args;
-    Int result;
+    bool result;
 
     /* Accept a objnum to check as an ancestor. */
     if (!func_init_1(&args, OBJNUM))

@@ -99,7 +99,7 @@ static int object_extras_count       = 0;
 /* function prototypes */
 static void    object_update_parents(Obj *object,
                                      cList *(*list_op)(cList *, cData *));
-static Int     object_has_ancestor_aux(cObjnum objnum, cObjnum ancestor);
+static bool    object_has_ancestor_aux(cObjnum objnum, cObjnum ancestor);
 static Var    *object_create_var(Obj *object, cObjnum cclass, Ident name);
 static Var    *object_find_var(Obj *object, cObjnum cclass, Ident name);
 static bool    method_cache_check(cObjnum objnum, Ident name, cObjnum after,
@@ -676,13 +676,13 @@ static void ancestor_cache_set(cObjnum objnum, cObjnum ancestor,
     ancestor_cache_sets++;
 }
 
-Int object_has_ancestor(cObjnum objnum, cObjnum ancestor)
+bool object_has_ancestor(cObjnum objnum, cObjnum ancestor)
 {
-    Int retv;
+    bool retv;
     bool anc_cache_check;
 
     if (objnum == ancestor)
-        return 1;
+        return true;
 
     if (ancestor_cache_check(objnum, ancestor, &anc_cache_check))
         return anc_cache_check;
@@ -694,7 +694,7 @@ Int object_has_ancestor(cObjnum objnum, cObjnum ancestor)
     return retv;
 }
 
-static Int object_has_ancestor_aux(cObjnum objnum, cObjnum ancestor)
+static bool object_has_ancestor_aux(cObjnum objnum, cObjnum ancestor)
 {
     Obj *object;
     cList *parents;
@@ -705,7 +705,7 @@ static Int object_has_ancestor_aux(cObjnum objnum, cObjnum ancestor)
     object = cache_retrieve(objnum);
     if (SEARCHED(object)) {
         cache_discard(object);
-        return 0;
+        return false;
     }
     HAVE_SEARCHED(object);
 
@@ -718,7 +718,7 @@ static Int object_has_ancestor_aux(cObjnum objnum, cObjnum ancestor)
          * caller. */
         if (d->u.objnum == ancestor) {
             list_discard(parents);
-            return 1;
+            return true;
         }
         /* Only fall out if the test is true, since other parents may
            have a true result. */
@@ -733,13 +733,13 @@ static Int object_has_ancestor_aux(cObjnum objnum, cObjnum ancestor)
         if (object_has_ancestor_aux(d->u.objnum, ancestor)) {
             ancestor_cache_set(d->u.objnum, ancestor, true);
             list_discard(parents);
-            return 1;
+            return true;
         }
     }
 
     ancestor_cache_set(objnum, ancestor, false);
     list_discard(parents);
-    return 0;
+    return false;
 }
 
 Int object_change_parents(Obj *object, cList *parents)

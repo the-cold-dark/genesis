@@ -246,7 +246,7 @@ bool tcp_server(unsigned short port, const char * ipaddr, cObjnum objnum) {
             if (ipaddr && strcmp(string_chars(cnew->addr), ipaddr))
                 continue;
             cnew->objnum = objnum;
-            cnew->dead = 0;
+            cnew->dead = false;
             return true;
         }
     }
@@ -265,7 +265,7 @@ bool tcp_server(unsigned short port, const char * ipaddr, cObjnum objnum) {
     else
         cnew->addr = string_new(0);
     cnew->objnum = objnum;
-    cnew->dead = 0;
+    cnew->dead = false;
     cnew->next = servers;
     servers = cnew;
 
@@ -292,7 +292,7 @@ bool remove_server(unsigned short port) {
 
     for (servp = &servers; *servp; servp = &((*servp)->next)) {
         if ((*servp)->port == port) {
-            (*servp)->dead = 1;
+            (*servp)->dead = true;
             return true;
         }
     }

@@ -28,7 +28,7 @@ struct server_s {
     unsigned short port;
     cStr         * addr;
     cObjnum        objnum;
-    Int            dead;
+    bool           dead;
     SOCKET         client_socket;
     char           client_addr[20];
     unsigned short client_port;

@@ -594,7 +594,7 @@ static Int simble_alloc(Int size)
     }
 }
 
-Int simble_get(Obj *object, cObjnum objnum, Long *sizeread)
+bool simble_get(Obj *object, cObjnum objnum, Long *sizeread)
 {
     off_t offset;
     Int size;
@@ -606,14 +606,14 @@ Int simble_get(Obj *object, cObjnum objnum, Long *sizeread)
 
     /* Get the object location for the objnum. */
     if (!lookup_retrieve_objnum(objnum, &offset, &size))
-        return 0;
+        return false;
 
     LOCK_DB("simble_get")
 
     /* seek to location */
     if (fseeko(database_file, offset, SEEK_SET)) {
         UNLOCK_DB("simble_get")
-        return 0;
+        return false;
     }
 
     if (sizeread)
@@ -629,15 +629,15 @@ Int simble_get(Obj *object, cObjnum objnum, Long *sizeread)
     unpack_object(buf, &buf_pos, object);
     buffer_discard(buf);
 
-    return 1;
+    return true;
 }
 
-static Int check_free_blocks(Int blocks_needed, Int b)
+static bool check_free_blocks(Int blocks_needed, Int b)
 {
     Int count;
 
     if (b >= bitmap_blocks)
-        return 0;
+        return false;
     for (count = 0; count < blocks_needed; count++) {
         if (bitmap[b >> 3] & (1 << (b & 7)))
             break;
@@ -648,7 +648,7 @@ static Int check_free_blocks(Int blocks_needed, Int b)
     return count == blocks_needed;
 }
 
-Int simble_put(const Obj *obj, cObjnum objnum, Long *sizewritten)
+bool simble_put(const Obj *obj, cObjnum objnum, Long *sizewritten)
 {
     cBuf *buf;
     off_t old_offset, new_offset;
@@ -708,7 +708,7 @@ Int simble_put(const Obj *obj, cObjnum objnum, Long *sizewritten)
             UNLOCK_DB("simble_put")
             buffer_discard(buf);
             if (sizewritten) *sizewritten = 0;
-            return 0;
+            return false;
         }
     }
 
@@ -717,7 +717,7 @@ Int simble_put(const Obj *obj, cObjnum objnum, Long *sizewritten)
         buffer_discard(buf);
         write_err("ERROR: Seek failed for %l.", objnum);
         if (sizewritten) *sizewritten = 0;
-        return 0;
+        return false;
     }
 
     old_size = fwrite(buf->s, sizeof(unsigned char), new_size, database_file);
@@ -729,7 +729,7 @@ Int simble_put(const Obj *obj, cObjnum objnum, Long *sizewritten)
 
     if (sizewritten) *sizewritten = new_size;
 
-    return 1;
+    return true;
 }
 
 bool simble_is_valid_objnum(cObjnum objnum)
@@ -740,7 +740,7 @@ bool simble_is_valid_objnum(cObjnum objnum)
     return lookup_retrieve_objnum(objnum, &offset, &size);
 }
 
-Int simble_del(cObjnum objnum)
+bool simble_del(cObjnum objnum)
 {
     off_t offset;
     Int size;
@@ -748,11 +748,11 @@ Int simble_del(cObjnum objnum)
 
     /* Get offset and size of key. */
     if (!lookup_retrieve_objnum(objnum, &offset, &size))
-        return 0;
+        return false;
 
     /* Remove key from location db. */
     if (!lookup_remove_objnum(objnum))
-        return 0;
+        return false;
 
     LOCK_DB("simble_del")
 
@@ -768,7 +768,7 @@ Int simble_del(cObjnum objnum)
 
         UNLOCK_DB("simble_del")
 
-        return 0;
+        return false;
     }
 
     buf = buffer_new(size);
@@ -780,7 +780,7 @@ Int simble_del(cObjnum objnum)
 
     UNLOCK_DB("simble_del")
 
-    return 1;
+    return true;
 }
 
 void simble_close(void)

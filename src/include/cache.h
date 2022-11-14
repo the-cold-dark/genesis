@@ -25,7 +25,7 @@ Obj *cache_get_holder(cObjnum objnum);
 Obj *cache_retrieve(cObjnum objnum);
 Obj *cache_grab(Obj *object);
 void cache_discard(Obj *obj);
-bool cache_check(cObjnum objnum);
+bool cache_is_valid_objnum(cObjnum objnum);
 void cache_sync(void);
 void cache_sanity_check(void);
 #ifdef CLEAN_CACHE

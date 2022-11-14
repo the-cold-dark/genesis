@@ -761,7 +761,7 @@ Int object_change_parents(Obj *object, cList *parents)
         if (d->type != OBJNUM)
             return d - list_first(parents);
         parent = d->u.objnum;
-        if (!cache_check(parent) || object_has_ancestor(parent, object->objnum))
+        if (!cache_is_valid_objnum(parent) || object_has_ancestor(parent, object->objnum))
             return d - list_first(parents);
     }
 

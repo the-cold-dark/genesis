@@ -732,7 +732,7 @@ Int simble_put(const Obj *obj, cObjnum objnum, Long *sizewritten)
     return 1;
 }
 
-Int simble_check(cObjnum objnum)
+bool simble_is_valid_objnum(cObjnum objnum)
 {
     off_t offset;
     Int size;

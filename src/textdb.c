@@ -864,7 +864,7 @@ static void handle_varcmd(char * line, char * s, Int new, Int access) {
         definer = parse_to_objnum(&name);
 
         if (last_definer != definer) {
-            rc_check = cache_check(definer);
+            rc_check = cache_is_valid_objnum(definer);
             last_definer = definer;
         }
 
@@ -1106,7 +1106,7 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
         definer = parse_to_objnum(&id);
 
         /* make sure it exists, and not just as a name */
-        if (!cache_check(definer))
+        if (!cache_is_valid_objnum(definer))
             DIE("method defined with invalid parent...");
     } else {
         if (!cur_obj)
@@ -1634,7 +1634,7 @@ static inline void dump_object_variables (Obj *obj, FILE *fp, bool objnames) {
         var = &obj->vars.tab[i];
         if (var->name == -1)
             continue;
-        if (!cache_check(var->cclass))
+        if (!cache_is_valid_objnum(var->cclass))
             continue;
         str = data_to_literal(&var->val,
                           ((objnames ? DF_WITH_OBJNAMES : 0) | DF_INV_OBJNUMS));

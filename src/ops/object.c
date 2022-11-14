@@ -723,7 +723,7 @@ COLDC_FUNC(create) {
         if (d->type != OBJNUM) {
             cthrow(type_id, "Parent %D is not a objnum.", d);
             return;
-        } else if (!cache_check(d->u.objnum)) {
+        } else if (!cache_is_valid_objnum(d->u.objnum)) {
             cthrow(objnf_id, "Parent %D does not refer to an object.", d);
             return;
         }
@@ -766,7 +766,7 @@ COLDC_FUNC(chparents) {
             cthrow(type_id,   "New parent %D is not a objnum.", d);
         } else if (d->u.objnum == cur_frame->object->objnum) {
             cthrow(parent_id, "New parent %D is already a parent.", d);
-        } else if (!cache_check(d->u.objnum)) {
+        } else if (!cache_is_valid_objnum(d->u.objnum)) {
             cthrow(objnf_id,  "New parent %D does not exist.", d);
         } else {
             d2.type = OBJNUM;

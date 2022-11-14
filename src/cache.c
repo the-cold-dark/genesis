@@ -509,7 +509,7 @@ void cache_discard(Obj *obj) {
 //
 */
 
-bool cache_check(cObjnum objnum) {
+bool cache_is_valid_objnum(cObjnum objnum) {
     Int ind = objnum % cache_width;
     Obj *obj;
 
@@ -529,7 +529,7 @@ bool cache_check(cObjnum objnum) {
     }
 
     /* Check database on disk. */
-    return simble_check(objnum);
+    return simble_is_valid_objnum(objnum);
 }
 
 /*

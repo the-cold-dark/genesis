@@ -24,7 +24,7 @@ void   init_new_db(void);
 void   init_core_objects(void);
 Int    simble_get(Obj * object, cObjnum objnum, Long *obj_size);
 Int    simble_put(const Obj * object, cObjnum objnum, Long *obj_size);
-Int    simble_check(cObjnum objnum);
+bool   simble_is_valid_objnum(cObjnum objnum);
 Int    simble_del(cObjnum objnum);
 void   simble_close(void);
 void   simble_flush(void);

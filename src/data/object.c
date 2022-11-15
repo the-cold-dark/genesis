@@ -1537,19 +1537,19 @@ static void method_cache_invalidate_all(void) {
 /* this makes me rather wary, hope it works ... */
 /* we will know native methods have changed names because the name will
    be different from the one in the initialization table */
-Int object_rename_method(Obj * object, Ident oname, Ident nname) {
+bool object_rename_method(Obj * object, Ident oname, Ident nname) {
     Method * method;
 
     method = object_find_method_local(object, oname, FROB_ANY);
     if (!method)
-        return 0;
+        return false;
 
     method = method_dup(method);
     object_del_method(object, oname, false);
     object_add_method(object, nname, method);
     method_discard(method);
 
-    return 1;
+    return true;
 }
 
 void object_add_method(Obj *object, Ident name, Method *method) {
@@ -1824,8 +1824,8 @@ void method_discard(Method *method) {
     }
 }
 
-Int object_del_objname(Obj * object) {
-    Int result = 0;
+bool object_del_objname(Obj * object) {
+    bool result = false;
 
     cache_dirty_object(object);
 
@@ -1840,12 +1840,12 @@ Int object_del_objname(Obj * object) {
     return result;
 }
 
-Int object_set_objname(Obj * obj, Ident name) {
+bool object_set_objname(Obj * obj, Ident name) {
     cObjnum num;
 
     /* does it already exist? */
     if (lookup_retrieve_name(name, &num))
-        return 0;
+        return false;
 
     /* lucky for us, this call dirties the object appropriately and is first */
     /* do we have a name? Axe it... */
@@ -1857,7 +1857,7 @@ Int object_set_objname(Obj * obj, Ident name) {
     /* and for our own purposes, lets remember it */
     obj->objname = ident_dup(name);
 
-    return 1;
+    return true;
 }
 
 #ifdef USE_PARENT_OBJS

@@ -217,7 +217,7 @@ extern Method *object_find_method(cObjnum objnum, Ident name, IsFrob is_frob);
 extern Method *object_find_method_local(const Obj * obj, Ident name, IsFrob is_frob);
 extern Method *object_find_next_method(cObjnum objnum, Ident name,
                                        cObjnum after, IsFrob is_frob);
-extern Int     object_rename_method(Obj * object, Ident oname, Ident nname);
+extern bool    object_rename_method(Obj * object, Ident oname, Ident nname);
 extern void    object_add_method(Obj *object, Ident name, Method *method);
 extern Int     object_del_method(Obj *object, Ident name, bool replacing);
 extern cList  *object_list_method(Obj *object, Ident name, Int indent,
@@ -226,8 +226,8 @@ extern Method *method_new(void);
 extern void    method_free(Method *method);
 extern Method *method_dup(Method *method);
 extern void    method_discard(Method *method);
-extern Int     object_set_objname(Obj * object, Ident name);
-extern Int     object_del_objname(Obj * object);
+extern bool    object_set_objname(Obj * object, Ident name);
+extern bool    object_del_objname(Obj * object);
 extern Int     object_get_method_flags(const Obj * object, Ident name);
 extern Int     object_get_method_access(const Obj * object, Ident name);
 extern Int     object_set_method_flags(Obj * object, Ident name, Int flags);

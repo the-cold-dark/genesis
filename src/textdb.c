@@ -37,7 +37,7 @@ typedef struct idref_s {
 } idref_t;
 
 /* globals, because its easier this way */
-Int        use_natives;
+bool       force_native_overrides;
 Long       line_count;
 Long       method_start;
 Obj * cur_obj;
@@ -411,9 +411,7 @@ static void verify_native_methods(void) {
         /* it was prototyped, set the native structure pointer and
            mark the object as dirty */
         } else {
-            if (!(method->m_flags & MF_NATIVE) &&
-                 use_natives != FORCE_NATIVES)
-            {
+            if (!(method->m_flags & MF_NATIVE) && !force_native_overrides) {
                 if (print_warn)
                     fformat(stdout, "\rWARNING: method definition %O.%s() overrides native method.\n",
                             obj->objnum, ident_name(mname));

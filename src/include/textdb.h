@@ -5,10 +5,7 @@
 #ifndef cdc_textdb_h
 #define cdc_textdb_h
 
-#define FORCE_NATIVES  1
-#define IGNORE_NATIVES 2
-
-extern Int use_natives;
+extern bool force_native_overrides;
 
 void compile_cdc_file(FILE * fp);
 Int text_dump(bool objnames);

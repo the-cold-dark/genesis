@@ -226,7 +226,7 @@ static void initialize(Int argc, char **argv) {
 
     name = *argv;
 
-    use_natives = 0;
+    force_native_overrides = false;
 
     argv++;
     argc--;
@@ -248,7 +248,7 @@ static void initialize(Int argc, char **argv) {
                            VERSION_PATCH);
                     exit(0);
                 case 'f':
-                    use_natives = FORCE_NATIVES;
+                    force_native_overrides = true;
                     break;
                 case 'n':
                     print_natives();

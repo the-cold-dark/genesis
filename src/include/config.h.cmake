@@ -21,7 +21,6 @@
 #cmakedefine HAVE_UNISTD_H
 
 #cmakedefine SIZEOF_LONG @SIZEOF_LONG@
-#cmakedefine SIZEOF_FLOAT @SIZEOF_FLOAT@
 
 #cmakedefine HAVE_GETRUSAGE
 #cmakedefine HAVE_GETTIMEOFDAY

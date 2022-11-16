@@ -13,7 +13,7 @@
 /* Write a Float to the output buffer */
 cBuf * write_float(cBuf *buf, Float f)
 {
-    buf = buffer_append_uchars_single_ref(buf, (unsigned char*)(&f), SIZEOF_FLOAT);
+    buf = buffer_append_uchars_single_ref(buf, (unsigned char*)(&f), sizeof(Float));
     return buf;
 }
 
@@ -22,15 +22,15 @@ Float read_float(const cBuf *buf, Long *buf_pos)
 {
     Float f;
 
-    memcpy((unsigned char*)(&f), &(buf->s[*buf_pos]), SIZEOF_FLOAT);
-    (*buf_pos) += SIZEOF_FLOAT;
+    memcpy((unsigned char*)(&f), &(buf->s[*buf_pos]), sizeof(Float));
+    (*buf_pos) += sizeof(Float);
     return f;
 }
 
 /* Determine the size of a Float */
 Int size_float(Float f, int memory_size)
 {
-    return SIZEOF_FLOAT;
+    return sizeof(Float);
 }
 
 /* Write a four-byte number to fp in a consistent byte-order.

@@ -258,8 +258,8 @@ void uninit_cache()
             Obj *tmp = active[i].first;
             active[i].first = active[i].first->next_obj;
             if (tmp->objnum != INV_OBJNUM) {
-                fprintf(stderr, "object %s($%d) still active!\n",
-                        tmp->objname != -1 ? ident_name(tmp->objname) : "not named", tmp->objnum);
+                fprintf(stderr, "object %s($%ld) still active!\n",
+                        tmp->objname != -1 ? ident_name(tmp->objname) : "not named", (long)tmp->objnum);
                 if (tmp->dirty)
                     fprintf(stderr, "and its dirty still!!\n");
                 object_free(tmp);
@@ -272,8 +272,8 @@ void uninit_cache()
             inactive[i].first = inactive[i].first->next_obj;
             if (tmp->objnum != INV_OBJNUM) {
                 if (tmp->dirty)
-                    fprintf(stderr, "object %s($%d) is still dirty!\n",
-                            tmp->objname != -1 ? ident_name(tmp->objname) : "not named", tmp->objnum);
+                    fprintf(stderr, "object %s($%ld) is still dirty!\n",
+                            tmp->objname != -1 ? ident_name(tmp->objname) : "not named", (long)tmp->objnum);
                 object_free(tmp);
             }
             efree(tmp);

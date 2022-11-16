@@ -26,6 +26,11 @@
 #cmakedefine HAVE_GETRUSAGE
 #cmakedefine HAVE_GETTIMEOFDAY
 
+#cmakedefine HAVE_STRUCT_DIRENT_D_NAMLEN
+#cmakedefine HAVE_STRUCT_TM_TM_GMTOFF
+#cmakedefine HAVE_STRUCT_TM_TM_ZONE
+#cmakedefine HAVE_TZNAME
+
 #cmakedefine __UNIX__
 #cmakedefine __Win32__
 

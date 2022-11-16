@@ -64,7 +64,7 @@ Int cache_history_size;
     }
 
 void init_defs(void) {
-#ifdef HAVE_TM_ZONE
+#ifdef HAVE_STRUCT_TM_TM_ZONE
     struct tm * tms;
     time_t t;
 #endif
@@ -87,7 +87,7 @@ void init_defs(void) {
     cache_width = CACHE_WIDTH;
     cache_depth = CACHE_DEPTH;
 
-#ifdef HAVE_TM_ZONE
+#ifdef HAVE_STRUCT_TM_TM_ZONE
     time(&t);
     tms = localtime(&t);
     str_tzname = string_from_chars((char*)tms->tm_zone, strlen(tms->tm_zone));

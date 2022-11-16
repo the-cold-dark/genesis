@@ -19,7 +19,7 @@
 #include "util.h"
 #include "opcodes.h"
 
-#ifndef HAVE_TM_GMTOFF
+#ifndef HAVE_STRUCT_TM_TM_GMTOFF
 static int last_gmtoffcheck = -1;
 static int gmt_offset = -1;
 #endif
@@ -84,7 +84,7 @@ COLDC_FUNC(localtime) {
     time_t      t;
     cData     * args;
     Int         nargs;
-#ifndef HAVE_TM_GMTOFF
+#ifndef HAVE_STRUCT_TM_TM_GMTOFF
     struct tm * gtms;
 #endif
 
@@ -133,7 +133,7 @@ COLDC_FUNC(localtime) {
     d[10].type = STRING;
     d[10].u.str= string_dup(str_tzname);
     d[11].type=INTEGER;
-#ifdef HAVE_TM_GMTOFF
+#ifdef HAVE_STRUCT_TM_TM_GMTOFF
     d[11].u.val = tms->tm_gmtoff;
 #else
     if (last_gmtoffcheck != tms->tm_yday) {

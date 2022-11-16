@@ -154,7 +154,7 @@ COLDC_FUNC(files) {
             strncmp(dent->d_name, "..", 2) == F_SUCCESS)
             continue;
 
-#ifdef HAVE_D_NAMLEN
+#ifdef HAVE_STRUCT_DIRENT_D_NAMLEN
         name = string_from_chars(dent->d_name, dent->d_namlen);
 #else
         name = string_from_chars(dent->d_name, strlen(dent->d_name));

@@ -150,7 +150,7 @@ COLDC_FUNC(localtime) {
 }
 
 #ifdef __Win32__
-void func_mtime(void) {
+COLDC_FUNC(mtime) {
     LARGE_INTEGER freq, cnt;
 
     if (!func_init_0())
@@ -162,7 +162,7 @@ void func_mtime(void) {
 }
 #else
 #ifdef HAVE_GETTIMEOFDAY
-void func_mtime(void) {
+COLDC_FUNC(mtime) {
     struct timeval tp;
 
     if (!func_init_0())
@@ -174,7 +174,7 @@ void func_mtime(void) {
     push_int((cNum) tp.tv_usec);
 }
 #else
-void func_mtime(void) {
+COLDC_FUNC(mtime) {
     if (!func_init_0())
         return;
 

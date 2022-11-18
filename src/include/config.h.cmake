@@ -22,6 +22,7 @@
 
 #cmakedefine SIZEOF_LONG @SIZEOF_LONG@
 
+#cmakedefine HAVE_CLOCK_GETTIME
 #cmakedefine HAVE_GETRUSAGE
 #cmakedefine HAVE_GETTIMEOFDAY
 

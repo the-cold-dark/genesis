@@ -149,20 +149,16 @@ COLDC_FUNC(localtime) {
     list_discard(l);
 }
 
-#ifdef __Win32__
 COLDC_FUNC(mtime) {
-    LARGE_INTEGER freq, cnt;
-
+#if defined(HAVE_CLOCK_GETTIME)
     if (!func_init_0())
         return;
 
-    QueryPerformanceFrequency(&freq);
-    QueryPerformanceCounter(&cnt);
-    push_int((cNum) (((cnt.QuadPart * 1000000) / freq.QuadPart) % 1000000));
-}
-#else
-#ifdef HAVE_GETTIMEOFDAY
-COLDC_FUNC(mtime) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+
+    push_int((cNum)(ts.tv_nsec / 1000));
+#elif defined(HAVE_GETTIMEOFDAY)
     struct timeval tp;
 
     if (!func_init_0())
@@ -172,16 +168,22 @@ COLDC_FUNC(mtime) {
     gettimeofday(&tp, NULL);
 
     push_int((cNum) tp.tv_usec);
-}
+#elif defined(__Win32__)
+    LARGE_INTEGER freq, cnt;
+
+    if (!func_init_0())
+        return;
+
+    QueryPerformanceFrequency(&freq);
+    QueryPerformanceCounter(&cnt);
+    push_int((cNum) (((cnt.QuadPart * 1000000) / freq.QuadPart) % 1000000));
 #else
-COLDC_FUNC(mtime) {
     if (!func_init_0())
         return;
 
     push_int(-1);
+#endif
 }
-#endif
-#endif
 
 COLDC_FUNC(ctime) {
     cData *args;

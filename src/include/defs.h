@@ -230,7 +230,6 @@ typedef uint32_t          uInt;
 #define BUF    256
 #define BLOCK  512
 #define BIGBUF 1024
-#define IOBUF  8192
 
 /* used by some file operations */
 #define DEF_BLOCKSIZE BLOCK

@@ -243,8 +243,6 @@ typedef uint32_t          uInt;
 
 #define ANY_TYPE 0
 
-#define SERVER_NAME "Genesis (the Cold driver)"
-
 #ifdef __MSVC__
 #define S_ISDIR(mode) (mode & _S_IFDIR)
 #endif

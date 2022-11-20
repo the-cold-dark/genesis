@@ -2,9 +2,7 @@
 
 Genesis is the compiler and run-time interpreter/daemon for ColdC, and
 is produced by the Cold Project.  You can learn more about helping to
-support the Cold Project at:
-
-    https://the-cold-dark.github.io/
+support the Cold Project at https://the-cold-dark.github.io/
 
 Release information can be found in doc/CHANGES.
 
@@ -21,7 +19,13 @@ To build:
     make
 
 CMake contains generators for other build systems as well and they
-can be used instead of make.
+can be used instead of `make`. In particular, `ninja` works well on
+Unix systems and is faster than using `make`:
+
+    mkdir build
+    cd build
+    cmake .. -GNinja
+    ninja
 
 ## INSTALL/COMPILATION IN WIN32
 

@@ -23,7 +23,7 @@ int lookup_name_by_ip(const char * ip, char * out)
    struct hostent * hp;
 
    addr = inet_addr(ip);
-   if (addr == (unsigned long)INVALID_INADDR)
+   if (addr == INADDR_NONE)
        return DNS_INVADDR;
 
    if (!(hp = gethostbyaddr((char *) &addr, 4, AF_INET)))

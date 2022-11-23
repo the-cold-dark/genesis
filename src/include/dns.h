@@ -7,12 +7,6 @@
 #ifndef _dns_h_
 #define _dns_h_
 
-#ifdef __UNIX__
-#define INVALID_INADDR F_FAILURE
-#else
-#define INVALID_INADDR INADDR_NONE
-#endif
-
 #define DNS_NOERROR                0
 #define DNS_INVADDR                1
 #define DNS_NORESOLV                2

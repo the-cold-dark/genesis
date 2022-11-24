@@ -19,42 +19,66 @@
 /* out must be a DNS_MAXLEN character buffer */
 int lookup_name_by_ip(const char * ip, char * out)
 {
-   unsigned long addr;
-   struct hostent * hp;
+    struct sockaddr_storage addr;
+    socklen_t addrlen;
+    int errcode;
 
-   addr = inet_addr(ip);
-   if (addr == INADDR_NONE)
-       return DNS_INVADDR;
+    memset(&addr, 0, sizeof(addr));
 
-   if (!(hp = gethostbyaddr((char *) &addr, 4, AF_INET)))
-       return DNS_NORESOLV;
+    // For now, we only do IPv4.
+    addr.ss_family = AF_INET;
+    struct sockaddr_in *addr4 = (struct sockaddr_in*)&addr;
+    addrlen = sizeof(*addr4);
+    errcode = inet_pton(AF_INET, ip, &addr4->sin_addr);
 
-   /* we have a problem houston */
-   strncpy(out, hp->h_name, DNS_MAXLEN);
-   if (strlen(hp->h_name) > DNS_MAXLEN) {
-       write_err("Hostname longer than DNS_MAXLEN?!?: '%s'\n", hp->h_name);
-       out[DNS_MAXLEN] = '\0';
-       return DNS_OVERFLOW;
-   }
-   return DNS_NOERROR;
+    if (errcode == 0) {
+        return DNS_INVADDR;
+    }
+
+    errcode = getnameinfo((struct sockaddr *)&addr, addrlen, out, DNS_MAXLEN, NULL, 0, 0);
+    if (errcode == EAI_OVERFLOW) {
+        return DNS_OVERFLOW;
+    } else if (errcode != 0) {
+        return DNS_NORESOLV;
+    }
+
+    return DNS_NOERROR;
 }
 
 /* out must be a DNS_MAXLEN character buffer */
 int lookup_ip_by_name(const char * name, char * out)
 {
-   struct hostent *hp;
-   char * p;
+    struct addrinfo hints, *result;
+    int errcode;
 
-   if (!(hp = gethostbyname(name)))
-       return DNS_NORESOLV;
+    memset(&hints, 0, sizeof(hints));
+    // Only do IPv4 for now.
+    hints.ai_family = AF_INET;
 
-   p = inet_ntoa(*(struct in_addr *)hp->h_addr_list[0]);
-   strncpy(out, p, DNS_MAXLEN);
-   if (strlen(p) > DNS_MAXLEN) {
-       write_err("Hostname longer than DNS_MAXLEN?!?: '%s'\n", hp->h_name);
-       out[DNS_MAXLEN] = '\0';
-       return DNS_OVERFLOW;
-   }
-   return DNS_NOERROR;
+    errcode = getaddrinfo(name, NULL, &hints, &result);
+    if (errcode != 0) {
+        return DNS_NORESOLV;
+    }
+
+    // While we only support IPv4 for now, this area is ready for
+    // the future. Maybe.
+    switch (result->ai_family) {
+        case AF_INET: {
+            struct sockaddr_in *addr_in = (struct sockaddr_in *)result->ai_addr;
+            inet_ntop(AF_INET, &(addr_in->sin_addr), out, DNS_MAXLEN);
+            break;
+        }
+        case AF_INET6: {
+            struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *)result->ai_addr;
+            inet_ntop(AF_INET6, &(addr_in6->sin6_addr), out, DNS_MAXLEN);
+            break;
+        }
+        default:
+            freeaddrinfo(result);
+            return DNS_NORESOLV;
+    }
+
+    freeaddrinfo(result);
+    return DNS_NOERROR;
 }
 

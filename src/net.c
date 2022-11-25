@@ -47,6 +47,17 @@ void uninit_net(void) {
     buffer_discard(socket_buffer);
 }
 
+void mark_socket_non_blocking(int sock) {
+#ifdef __Win32__
+    int one = 1;
+    ioctlsocket(sock, FIONBIO, &one);
+#else
+    int flags = fcntl(sock, F_GETFL);
+    flags |= O_NONBLOCK;
+    fcntl(sock, F_SETFL, flags);
+#endif
+}
+
 /*
 // -----------------------------------------------------------------------
 // prebind things--basically call socket() and bind() but nothing else,
@@ -137,8 +148,7 @@ static int use_prebound(SOCKET * sock, unsigned short port, const char * addr, i
 }
 
 static SOCKET grab_port(unsigned short port, const char * addr, int socktype) {
-    int    one = 1;
-    Int flags;
+    int one;
     SOCKET sock;
 
     /* see if its pre-bound? */
@@ -167,7 +177,7 @@ static SOCKET grab_port(unsigned short port, const char * addr, int socktype) {
     }
 
     /* Set SO_REUSEADDR option to avoid restart problems. */
-    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(Int));
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int));
 
     /* Bind the socket to port. */
     if (bind(sock, (struct sockaddr *) &sockin, sizeof(sockin)) == F_FAILURE) {
@@ -175,14 +185,7 @@ static SOCKET grab_port(unsigned short port, const char * addr, int socktype) {
         return SOCKET_ERROR;
     }
 
-#ifdef __Win32__
-    one = 1;
-    ioctlsocket(sock, FIONBIO, &one);
-#else
-    flags = fcntl(sock, F_GETFL);
-    flags |= O_NONBLOCK;
-    fcntl(sock, F_SETFL, flags);
-#endif
+    mark_socket_non_blocking(sock);
 
     return sock;
 }
@@ -319,14 +322,8 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
                                  (struct sockaddr *) &sockin, &addr_size);
             if (serv->client_socket == SOCKET_ERROR)
                 continue;
-#ifdef __Win32__
-            result = 1;
-            ioctlsocket(serv->client_socket, FIONBIO, &result);
-#else
-            flags = fcntl(serv->client_socket, F_GETFL);
-            flags |= O_NONBLOCK;
-            fcntl(serv->client_socket, F_SETFL, flags);
-#endif
+
+            mark_socket_non_blocking(serv->client_socket);
 
             /* Get address and local port of client. */
             strcpy(serv->client_addr, inet_ntoa(sockin.sin_addr));
@@ -365,7 +362,7 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
 Ident non_blocking_connect(const char *addr, unsigned short port, Int *socket_return)
 {
     SOCKET fd;
-    Int    result, flags;
+    Int    result;
     struct in_addr inaddr;
     struct sockaddr_in saddr;
 
@@ -379,21 +376,7 @@ Ident non_blocking_connect(const char *addr, unsigned short port, Int *socket_re
     if (fd == SOCKET_ERROR)
         return socket_id;
 
-    /* Set the socket non-blocking. */
-#ifdef __Win32__
-    result = 1;
-    ioctlsocket(fd, FIONBIO, &result);
-#else
-    flags = fcntl(fd, F_GETFL);
-#ifdef FNDELAY
-    flags |= FNDELAY;
-#else
-#ifdef O_NDELAY
-    flags |= O_NDELAY;
-#endif
-#endif
-    fcntl(fd, F_SETFL, flags);
-#endif
+    mark_socket_non_blocking(fd);
 
     /* Make the connection. */
     memset(&saddr, 0, sizeof(saddr));
@@ -414,7 +397,7 @@ Ident non_blocking_connect(const char *addr, unsigned short port, Int *socket_re
 Ident udp_connect(const char *addr, unsigned short port, Int *socket_return)
 {
     SOCKET fd;
-    Int    result, flags;
+    Int    result;
     struct in_addr inaddr;
     struct sockaddr_in saddr;
 
@@ -428,21 +411,7 @@ Ident udp_connect(const char *addr, unsigned short port, Int *socket_return)
     if (fd == SOCKET_ERROR)
         return socket_id;
 
-    /* Set the socket non-blocking. */
-#ifdef __Win32__
-    result = 1;
-    ioctlsocket(fd, FIONBIO, &result);
-#else
-    flags = fcntl(fd, F_GETFL);
-#ifdef FNDELAY
-    flags |= FNDELAY;
-#else
-#ifdef O_NDELAY
-    flags |= O_NDELAY;
-#endif
-#endif
-    fcntl(fd, F_SETFL, flags);
-#endif
+    mark_socket_non_blocking(fd);
 
     /* Make the connection. */
     memset(&saddr, 0, sizeof(saddr));

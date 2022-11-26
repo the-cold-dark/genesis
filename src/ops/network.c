@@ -60,7 +60,7 @@ COLDC_FUNC(bind_port) {
     Int     port;
     char  * addr;
 
-    /* Accept a port to bind to, and a objnum to handle connections. */
+    /* Accept a port to bind to, and an optional string IP address */
     if (!func_init_1_or_2(&args, &argc, INTEGER, STRING))
         return;
 

@@ -626,8 +626,8 @@ void cache_sync(void) {
 void *cache_cleaner_worker(void *dummy)
 {
     Int     cache_bucket = 0,
-            start_bucket,
-            wrote_something;
+            start_bucket;
+    bool    wrote_something;
     Obj   * tobj,
           * tobj2;
     Long    obj_size;
@@ -658,7 +658,7 @@ void *cache_cleaner_worker(void *dummy)
 #endif
 
         start_bucket = cache_bucket;
-        wrote_something = 0;
+        wrote_something = false;
         cthis.type = OBJNUM;
         do {
             LOCK_BUCKET("cache_cleaner_worker", cache_bucket)
@@ -671,7 +671,7 @@ void *cache_cleaner_worker(void *dummy)
                         if (cache_log_flag & CACHE_LOG_DEAD_WRITE)
                             write_err("cache_cleaner_worker: skipping dead object");
                     } else {
-                        wrote_something = 1;
+                        wrote_something = true;
                         if (!simble_put(tobj, tobj->objnum, &obj_size)) {
                             UNLOCK_BUCKET("cache_cleaner_worker", cache_bucket)
                             panic("Could not store an object.");

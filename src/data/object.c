@@ -70,7 +70,7 @@ typedef struct search_params Search_params;
 struct search_params {
     uLong name;
     Long stop_at;
-    Int done;
+    bool done;
     IsFrob is_frob;
     Method * last_method_found;
 };
@@ -1210,7 +1210,7 @@ Method *object_find_method(cObjnum objnum, Ident name, IsFrob is_frob) {
             START_SEARCH();
             params.name = name;
             params.stop_at = -1;
-            params.done = 0;
+            params.done = false;
             params.last_method_found = NULL;
             params.is_frob = is_frob;
             for (d = list_last(parents); d; d = list_prev(parents, d))
@@ -1274,7 +1274,7 @@ Method *object_find_next_method(cObjnum objnum, Ident name,
         START_SEARCH();
         params.name = name;
         params.stop_at = (objnum == after) ? -1 : after;
-        params.done = 0;
+        params.done = false;
         params.last_method_found = NULL;
         params.is_frob = is_frob;
         for (d = list_last(parents); d; d = list_prev(parents, d))
@@ -1318,7 +1318,7 @@ static void search_object(cObjnum objnum, Search_params *params)
     /* If we were searching for a next method after a given object, then this
      * might be the given object, in which case we should stop. */
     if (objnum == params->stop_at) {
-        params->done = 1;
+        params->done = true;
         return;
     }
 
@@ -1336,7 +1336,7 @@ static void search_object(cObjnum objnum, Search_params *params)
 
         /* If this method is non-overridable, the search is done. */
         if (method->m_flags & MF_NOOVER)
-            params->done = 1;
+            params->done = true;
     } else {
         cache_discard(object);
     }

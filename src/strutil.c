@@ -42,7 +42,8 @@ void uninit_match(void) {
 
 cList * match_template(const char *ctemplate, char *s) {
     char *p;
-    Int i, coupled;
+    Int i;
+    bool coupled;
     cList *l;
     cData *d;
     cStr *str;
@@ -64,9 +65,9 @@ cList * match_template(const char *ctemplate, char *s) {
             /* Check for coupled wildcard ("*=*"). */
             if (ctemplate[1] == '=' && ctemplate[2] == '*') {
                 ctemplate += 2;
-                coupled = 1;
+                coupled = true;
             } else {
-                coupled = 0;
+                coupled = false;
             }
 
             /* Template is invalid if wildcard is not alone. */
@@ -257,7 +258,7 @@ static char * match_wildcard(const char *ctemplate, char *s) {
 /* Match a word pattern.  Do not add any fields. */
 static char * match_word_pattern(const char *ctemplate, char *s) {
     char *p = s;
-    Int abbrev = 0;
+    bool abbrev = false;
 
     while (*ctemplate && *ctemplate != ' ' && *ctemplate != '|') {
 
@@ -268,7 +269,7 @@ static char * match_word_pattern(const char *ctemplate, char *s) {
         } else if (*ctemplate == '?') {
             /* A question mark tells us that the matching string can be
              * abbreviated down to this point. */
-            abbrev = 1;
+            abbrev = true;
 
         } else if (LCASE(*p) != LCASE(*ctemplate)) {
             /* The match succeeds if we're at the end of the word in p and

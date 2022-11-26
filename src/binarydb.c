@@ -89,7 +89,7 @@ static Int allocated_blocks = 0;
 
 static char c_clean_file[255];
 
-static Int db_clean;
+static bool db_clean;
 static cStr *pad_string;
 
 extern Long db_top;
@@ -273,7 +273,7 @@ void init_binary_db(void) {
     fprintf (errfile, "[%s] Binary database free space: %.2f%%\n",
              timestamp(NULL), (100.0f * simble_fragmentation()));
 
-    db_clean = 1;
+    db_clean = true;
 }
 
 void init_new_db(void) {
@@ -390,7 +390,7 @@ static void dump_copy (off_t start, Int blocks)
     }
 #else
     off_t block = 0;
-    Int   dofseek = 1;
+    bool  dofseek = true;
     char  buf[BLOCK_SIZE];
 
     block = start;
@@ -409,7 +409,7 @@ static void dump_copy (off_t start, Int blocks)
                     UNLOCK_DB("dump_copy")
                     panic("fseeko(\"%s\"..): %s", dump_db_file, strerror(errno));
                 }
-                dofseek=0;
+                dofseek = false;
             }
             if (fread(buf, 1, BLOCK_SIZE, database_file) != BLOCK_SIZE) {
                 UNLOCK_DB("dump_copy")
@@ -422,7 +422,7 @@ static void dump_copy (off_t start, Int blocks)
             dump_bitmap[block >> 3] &= ~(1 << (block & 7));
         }
         else
-            dofseek=1;
+            dofseek = true;
 
         ++block;
     }
@@ -459,7 +459,7 @@ Int simble_dump_start(const char *dump_objects_filename) {
 
 Int simble_dump_some_blocks (Int maxblocks)
 {
-    Int dofseek = 1;
+    bool dofseek = true;
     char buf[BLOCK_SIZE];
 
     if (!dump_db_file)
@@ -478,7 +478,7 @@ Int simble_dump_some_blocks (Int maxblocks)
                     UNLOCK_DB("simble_dump_some_blocks")
                     panic("fseeko(\"%s\"..): %s", dump_db_file, strerror(errno));
                 }
-                dofseek=0;
+                dofseek = false;
             }
             if (fread(buf, 1, BLOCK_SIZE, database_file) != BLOCK_SIZE) {
                 UNLOCK_DB("simble_dump_some_blocks")
@@ -492,7 +492,7 @@ Int simble_dump_some_blocks (Int maxblocks)
             maxblocks--;
         }
         else
-            dofseek=1;
+            dofseek = true;
 
         if (last_dumped++ >= dump_blocks) {
             if (fclose (dump_db_file)) {
@@ -532,14 +532,15 @@ static void simble_unmark(off_t start, Int size)
 
 static Int simble_alloc(Int size)
 {
-    Int blocks_needed, b, count, starting_block, over_the_top;
+    Int blocks_needed, b, count, starting_block;
+    bool over_the_top;
 
     b = last_free;
     blocks_needed = NEEDED(size, BLOCK_SIZE);
 #ifdef BUILDING_COLDCC
-    over_the_top = 1;
+    over_the_top = true;
 #else
-    over_the_top = 0;
+    over_the_top = false;
 #endif
 
     for (;;) {
@@ -556,7 +557,7 @@ static Int simble_alloc(Int size)
             /* Only wrap around once. */
             if (!over_the_top) {
                 b = 0;
-                over_the_top = 1;
+                over_the_top = true;
                 continue;
             } else {
                 simble_grow_bitmap(b + DB_BITBLOCK);
@@ -573,7 +574,7 @@ static Int simble_alloc(Int size)
                 /* time to wrap around if we still haven't */
                 if (!over_the_top) {
                     b = 0;
-                    over_the_top = 1;
+                    over_the_top = true;
                     break;
                 } else {
                     simble_grow_bitmap(b + ROUND_UP(blocks_needed-count, DB_BITBLOCK));
@@ -837,7 +838,7 @@ static void simble_flag_as_clean(void) {
     }
     write_clean_file(fp);
     close_scratch_file(fp);
-    db_clean = 1;
+    db_clean = true;
 }
 
 static void simble_flag_as_dirty(void) {
@@ -847,7 +848,7 @@ static void simble_flag_as_dirty(void) {
             UNLOCK_DB("simble_flag_as_clean")
             panic("Cannot remove file 'clean'.");
         }
-        db_clean = 0;
+        db_clean = false;
     }
 }
 

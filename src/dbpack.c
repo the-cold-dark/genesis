@@ -51,19 +51,31 @@ cBuf * write_long(cBuf *buf, Long n)
 
     long_buf = &buf->s[buf->len];
 
+    // Negative values have most bits set, so we look at this and decide
+    // if we want to store the value as is (i) or xor'd with -1 to flip
+    // more bits and get back a low number to compress better.
     if (i2 < i) {
         i = i2;
         bit_flip = 1;
     }
 
+    // We'll store the first 4 bits of the value and later, encode
+    // additional data into this index in the buffer.
+    // The top 4 bits of this value will contain the number of
+    // bytes that the rest of the value takes up (3 bits) as well
+    // as 1 bit for whether or not it has been bit flipped.
     long_buf[0] = i & 15;
     i >>= 4;
 
+    // Store the rest of the value, 8 bytes at a time. This avoids the
+    // masking and continuation bits typical of VLQ or ULEB128 encoding.
     num_bytes++;
     while (i && (num_bytes <= sizeof(Long))) {
         long_buf[num_bytes++] = i & 255;
         i >>= 8;
     }
+    // And now, store the number of bytes and whether or not we've flipped
+    // the bits.
     long_buf[0] |= ((num_bytes-1) << 5) + (bit_flip << 4);
     buf->len += num_bytes;
 

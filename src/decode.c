@@ -42,13 +42,13 @@ static Expr_list *decompile_expressions(Int *pos_ptr);
 static Expr_list *decompile_expressions_bounded(Int *pos_ptr, Int end);
 static cList *unparse_stmt_list(cList *output, Stmt_list *stmts, Int indent);
 static cList *unparse_stmt(cList *output, Stmt *stmt, Int indent, Stmt *last);
-static Int is_complex_if_else_stmt(Stmt *stmt);
-static Int is_complex_type(Int type);
+static bool is_complex_if_else_stmt(Stmt *stmt);
+static bool is_complex_type(Int type);
 static cList *unparse_body(cList *output, Stmt *body, cStr *str, Int indent);
 static cList *unparse_cases(cList *output, Case_list *cases, Int indent);
 static cList *unparse_case(cList *output, Case_entry *case_entry, Int indent);
 static cStr *unparse_expr(cStr *str, Expr *expr, Int paren);
-static Int is_this(Expr *expr);
+static bool is_this(Expr *expr);
 static cStr *unparse_args(cStr *str, Expr_list *args);
 static cStr *unparse_expr_prec(cStr *str, Expr *expr, Int caller_type,
                                  Int assoc);
@@ -740,7 +740,7 @@ static Expr *decompile_scatter (Int *pos_ptr)
     Int pos=*pos_ptr, end;
     Expr_list *args = NULL;
     char *s;
-    Int is_splice=false;
+    bool is_splice=false;
 
     while (1) {
         switch (the_opcodes[pos]) {
@@ -1422,10 +1422,10 @@ static cList *unparse_stmt(cList *output, Stmt *stmt, Int indent, Stmt *last)
  * clause's if statement on the same line as our own else statement, so we must
  * check to see if the false_branch clause itself is complex.  Apart from that, it's
  * just a matter of testing if either the true_branch or false_branch clause is complex. */
-static Int is_complex_if_else_stmt(Stmt *stmt)
+static bool is_complex_if_else_stmt(Stmt *stmt)
 {
     if (is_complex_type(stmt->u.if_.true_branch->type))
-        return 1;
+        return true;
     else if (stmt->u.if_.false_branch->type == IF_ELSE)
         return is_complex_if_else_stmt(stmt->u.if_.false_branch);
     else if (stmt->u.if_.false_branch->type == IF)
@@ -1434,7 +1434,7 @@ static Int is_complex_if_else_stmt(Stmt *stmt)
         return is_complex_type(stmt->u.if_.false_branch->type);
 }
 
-static Int is_complex_type(Int type)
+static bool is_complex_type(Int type)
 {
     return FULL_BRACES() ||
            (type != NOOP && type != EXPR && type != ASSIGN && type != BREAK &&
@@ -1827,7 +1827,7 @@ static cStr *unparse_expr(cStr *str, Expr *expr, Int paren) {
     }
 }
 
-static Int is_this(Expr *expr)
+static bool is_this(Expr *expr)
 {
     return (expr->type == FUNCTION_CALL && !expr->u.function.args &&
             strcmp(expr->u.function.name, "this") == 0);

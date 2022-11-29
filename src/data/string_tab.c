@@ -75,7 +75,7 @@ static Ident string_tab_from_hash(StringTab *tab, uLong hval, cStr * str) {
     while (ind != -1) {
         if (tab->tab[ind].hash == hval &&
             tab->tab[ind].str->len == str->len &&
-            strcmp(string_chars(tab->tab[ind].str), string_chars(str)) == 0) {
+            memcmp(string_chars(tab->tab[ind].str), string_chars(str), str->len) == 0) {
             tab->tab[ind].refs++;
             return ind;
         }

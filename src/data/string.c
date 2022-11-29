@@ -14,17 +14,6 @@
 /* Note that we number string elements [0..(len - 1)] internally, while the
  * user sees string elements as numbered [1..len]. */
 
-/* Many implementations of malloc() deal best with blocks eight or sixteen
- * bytes less than a power of two.  MALLOC_DELTA and STRING_STARTING_SIZE take
- * this into account.  We start with a string MALLOC_DELTA bytes less than
- * a power of two.  When we enlarge a string, we double it and add MALLOC_DELTA
- * so that we're still MALLOC_DELTA less than a power of two.  When we
- * allocate, we add in sizeof(cStr), leaving us 32 bytes short of a power of
- * two, as desired. */
-
-#define MALLOC_DELTA        (sizeof(cStr) + 32)
-#define STARTING_SIZE        (128 - MALLOC_DELTA)
-
 cStr *string_new(Int size_needed) {
     cStr *cnew;
     Int size;

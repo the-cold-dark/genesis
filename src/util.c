@@ -108,11 +108,6 @@ Long atoln(const char *s, Int n) {
     return val;
 }
 
-char *long_long_to_ascii(long long num, Number_buf nbuf) {
-    sprintf(nbuf, "%lld", num);
-    return nbuf;
-}
-
 char *long_to_ascii(Long num, Number_buf nbuf) {
     char *p = nbuf + NUMBER_BUF_SIZE - 1; // point to end of buffer
     Int sign = 0;

@@ -57,10 +57,14 @@ pthread_mutex_t lookup_mutex;
 Int name_cache_hits = 0;
 Int name_cache_misses = 0;
 
+typedef struct _offset_size _offset_size;
+struct _offset_size {
+    off_t offset;
+    Int   size;
+};
+
 static datum objnum_key(cObjnum objnum, Number_buf nbuf);
 static datum name_key(Ident name);
-static datum offset_size_value(off_t offset, Int size, Number_buf nbuf);
-static void parse_offset_size_value(datum value, off_t *offset, Int *size);
 static datum objnum_value(cObjnum objnum, Number_buf nbuf);
 static void sync_name_cache(void);
 static bool store_name(Ident name, cObjnum objnum);
@@ -132,7 +136,10 @@ bool lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size)
         return false;
     }
 
-    parse_offset_size_value(value, offset, size);
+    _offset_size *os = (_offset_size*)value.dptr;
+    *offset = os->offset;
+    *size = os->size;
+
     UNLOCK_LOOKUP("lookup_retrieve_objnum");
     return true;
 }
@@ -140,11 +147,18 @@ bool lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size)
 bool lookup_store_objnum(cObjnum objnum, off_t offset, Int size)
 {
     datum key, value;
-    Number_buf nbuf1, nbuf2;
+    Number_buf nbuf1;
 
     LOCK_LOOKUP("lookup_store_objnum");
     key = objnum_key(objnum, nbuf1);
-    value = offset_size_value(offset, size, nbuf2);
+
+    _offset_size os;
+    os.offset = offset;
+    os.size = size;
+
+    value.dptr = (char *)&os;
+    value.dsize = sizeof(os);
+
     if (dbm_store(dbp, key, value, DBM_REPLACE)) {
         write_err("ERROR: Failed to store key %l.", objnum);
         UNLOCK_LOOKUP("lookup_store_objnum");
@@ -310,40 +324,6 @@ static datum objnum_key(cObjnum objnum, Number_buf nbuf)
     key.dptr = s;
     key.dsize = strlen(s + 1) + 2;
     return key;
-}
-
-static datum offset_size_value(off_t offset, Int size, Number_buf nbuf)
-{
-    char *s;
-    Number_buf tmp_buf;
-    datum value;
-
-    /* Set up a value for the offset and size. */
-#if _FILE_OFFSET_BITS == 32
-    s = long_to_ascii(offset, tmp_buf);
-#else
-    s = long_long_to_ascii(offset, tmp_buf);
-#endif
-    strcpy(nbuf, s);
-    strcat(nbuf, ";");
-    s = long_to_ascii(size, tmp_buf);
-    strcat(nbuf, s);
-    value.dptr = nbuf;
-    value.dsize = strlen(nbuf) + 1;
-    return value;
-}
-
-static void parse_offset_size_value(datum value, off_t *offset, Int *size)
-{
-    char *p;
-
-#if _FILE_OFFSET_BITS == 32
-    *offset = atol(value.dptr);
-#else
-    *offset = atoll(value.dptr);
-#endif
-    p = strchr(value.dptr, ';');
-    *size = atol(p + 1);
 }
 
 static datum name_key(Ident name)

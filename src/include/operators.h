@@ -34,6 +34,8 @@ void op_handler_end(void);
 void op_zero(void);
 void op_one(void);
 void op_integer(void);
+void op_float_zero(void);
+void op_float_one(void);
 void op_float(void);
 void op_string(void);
 void op_objnum(void);

@@ -815,6 +815,16 @@ static Expr_list *decompile_expressions_bounded(Int *pos_ptr, Int expr_end)
             pos += 2;
             break;
 
+          case FLOAT_ZERO:
+            stack = expr_list(float_expr(0.0), stack);
+            pos++;
+            break;
+
+          case FLOAT_ONE:
+            stack = expr_list(float_expr(1.0), stack);
+            pos++;
+            break;
+
           case FLOAT: {
 #if defined(USE_BIG_FLOATS) && !defined(USE_BIG_NUMBERS)
             Float flt;

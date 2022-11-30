@@ -1230,16 +1230,24 @@ static void compile_expr(Expr *expr)
         break;
 
       case FLOAT: {
-        code(FLOAT);
+        /* Special-case zero and one to save space. */
+        if (expr->u.fnum == 0.0) {
+            code(FLOAT_ZERO);
+        } else if (expr->u.fnum == 1.0) {
+            code(FLOAT_ONE);
+        } else {
+            code(FLOAT);
 #if defined(USE_BIG_FLOATS) && !defined(USE_BIG_NUMBERS)
-        Long *flt = (Long *)(&expr->u.fnum);
-        code(flt[0]);
-        code(flt[1]);
+            Long *flt = (Long *)(&expr->u.fnum);
+            code(flt[0]);
+            code(flt[1]);
 #else
-        Long float_bits;
-        memcpy(&float_bits, &expr->u.fnum, sizeof(float_bits));
-        code(float_bits);
+            Long float_bits;
+            memcpy(&float_bits, &expr->u.fnum, sizeof(float_bits));
+            code(float_bits);
 #endif
+        }
+
         break;
       }
 

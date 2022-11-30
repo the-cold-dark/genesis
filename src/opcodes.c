@@ -45,6 +45,9 @@ static Op_info op_info[] = {
     { ONE,              "ONE",             op_one },
     { INTEGER,          "INTEGER",         op_integer, INTEGER },
 
+    { FLOAT_ZERO,       "FLOAT_ZERO",      op_float_zero },
+    { FLOAT_ONE,        "FLOAT_ONE",       op_float_one },
+
 #if defined(USE_BIG_FLOATS) && !defined(USE_BIG_NUMBERS)
     /* Big floats are the size of two ints */
     { FLOAT,            "FLOAT",           op_float, INTEGER, INTEGER },

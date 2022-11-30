@@ -601,6 +601,16 @@ COLDC_OP(integer) {
     push_int(cur_frame->opcodes[cur_frame->pc++]);
 }
 
+COLDC_OP(float_zero) {
+    /* Push a zero. */
+    push_float(0.0);
+}
+
+COLDC_OP(float_one) {
+    /* Push a one. */
+    push_float(1.0);
+}
+
 COLDC_OP(float) {
     cFloat flt;
 #if defined(USE_BIG_FLOATS) && !defined(USE_BIG_NUMBERS)

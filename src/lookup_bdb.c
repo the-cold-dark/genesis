@@ -55,9 +55,6 @@ struct _offset_size {
 
 static void objnum_keyvalue(cObjnum *objnum, DBT *key);
 static void name_key(Ident name, DBT *key);
-static void offset_size_value(off_t offset, Int size,
-                                _offset_size *os, DBT *value);
-static void parse_offset_size_value(DBT *value, off_t *offset, Int *size);
 static void sync_name_cache(void);
 static bool store_name(Ident name, cObjnum objnum);
 static bool get_name(Ident name, cObjnum *objnum);
@@ -224,7 +221,10 @@ bool lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size)
         return false;
     }
 
-    parse_offset_size_value(&value, offset, size);
+    _offset_size *os = (_offset_size*)value.data;
+    *offset = os->offset;
+    *size = os->size;
+
     UNLOCK_LOOKUP("lookup_retrieve_objnum");
     return true;
 }
@@ -237,7 +237,15 @@ bool lookup_store_objnum(cObjnum objnum, off_t offset, Int size)
 
     LOCK_LOOKUP("lookup_store_objnum");
     objnum_keyvalue(&objnum, &key);
-    offset_size_value(offset, size, &os, &value);
+
+    memset(&value, 0, sizeof(value));
+
+    os.offset = offset;
+    os.size = size;
+
+    value->data = &os;
+    value->size = sizeof(os);
+
     if ((ret =  objnum_dbp->put(objnum_dbp, NULL, &key, &value, 0)) != 0) {
         write_err("ERROR: Failed to store key %l.", objnum);
         objnum_dbp->err(objnum_dbp, ret, "lookup_store_objnum");
@@ -406,26 +414,6 @@ static void objnum_keyvalue(cObjnum *objnum, DBT *key)
     memset(key, 0, sizeof(*key));
     key->data = objnum;
     key->size = sizeof(cObjnum);
-}
-
-static void offset_size_value(off_t offset, Int size,
-                                _offset_size *os, DBT *value)
-{
-    memset(os, 0, sizeof(*os));
-    memset(value, 0, sizeof(*value));
-    /* Set up a value for the offset and size. */
-    os->offset = offset;
-    os->size = size;
-    value->data = os;
-    value->size = sizeof(*os);
-}
-
-static void parse_offset_size_value(DBT *value, off_t *offset, Int *size)
-{
-    _offset_size *os = (_offset_size*)value->data;
-
-    *offset = os->offset;
-    *size = os->size;
 }
 
 static void name_key(Ident name, DBT *key)

@@ -393,7 +393,7 @@ static bool get_name(Ident name, cObjnum *objnum)
     if (!value.dptr)
         return false;
 
-    *objnum = atol(value.dptr);
+    *objnum = atoln(value.dptr, value.dsize);
     return true;
 }
 

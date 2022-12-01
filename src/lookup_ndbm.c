@@ -147,10 +147,10 @@ bool lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size)
 bool lookup_store_objnum(cObjnum objnum, off_t offset, Int size)
 {
     datum key, value;
-    Number_buf nbuf1;
+    Number_buf nbuf;
 
     LOCK_LOOKUP("lookup_store_objnum");
-    key = objnum_key(objnum, nbuf1);
+    key = objnum_key(objnum, nbuf);
 
     _offset_size os;
     os.offset = offset;

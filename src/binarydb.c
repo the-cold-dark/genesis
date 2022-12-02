@@ -429,6 +429,10 @@ static void dump_copy (off_t start, Int blocks)
 #endif
 }
 
+bool simble_dump_in_progress(void) {
+    return dump_db_file != NULL;
+}
+
 /* open the dump database. return -1 on failure (can't open the file),
    -2 -> we are already dumping */
 

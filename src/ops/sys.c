@@ -125,7 +125,7 @@ COLDC_FUNC(backup) {
     if (!func_init_0())
         return;
 
-    if (dump_db_file)
+    if (simble_dump_in_progress())
         THROW((perm_id, "A dump is already in progress!"));
 
     /* get binary.bak, make sure its ours */

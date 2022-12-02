@@ -29,12 +29,10 @@ bool   simble_del(cObjnum objnum);
 void   simble_close(void);
 void   simble_flush(void);
 float  simble_fragmentation(void);
+bool   simble_dump_in_progress(void);
 Int    simble_dump_start(const char *dump_objects_filename);
 Int    simble_dump_some_blocks (Int maxblocks);
 void   simble_dump_finish(void);
-
-/* global primarily so we can know if we are dumping */
-extern FILE *dump_db_file;
 
 #endif
 

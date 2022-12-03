@@ -1055,7 +1055,7 @@ COLDC_OP(index) {
             return;
         case DICT:
             /* Get the value corresponding to a key. */
-            if (dict_find(d->u.dict, ind, &element) == keynf_id) {
+            if (!dict_find(d->u.dict, ind, &element)) {
                 cthrow(keynf_id, "Key (%D) is not in the dictionary.", ind);
             } else {
                 pop(1);

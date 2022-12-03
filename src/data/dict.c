@@ -211,16 +211,16 @@ cDict *dict_del(cDict *dict, cData *key)
     return dict;
 }
 
-Long dict_find(cDict *dict, cData *key, cData *ret)
+bool dict_find(cDict *dict, cData *key, cData *ret)
 {
     Int pos;
 
     pos = search(dict, key);
     if (pos == F_FAILURE)
-        return keynf_id;
+        return false;
 
     data_dup(ret, &dict->values->el[pos]);
-    return NOT_AN_IDENT;
+    return true;
 }
 
 bool dict_contains(cDict *dict, cData *key)

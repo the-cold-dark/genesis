@@ -92,7 +92,7 @@ NATIVE_METHOD(dict_add_elem) {
     INIT_ARGC(ARG_COUNT, 3, "three");
     INIT_ARG1(DICT);
 
-    if (dict_find(DICT1, &args[1], &listd) == keynf_id) {
+    if (!dict_find(DICT1, &args[1], &listd)) {
         listd.type = LIST;
         listd.u.list = list_new(0);
     } else if (listd.type != LIST) {
@@ -142,7 +142,7 @@ NATIVE_METHOD(dict_del_elem) {
     INIT_ARGC(ARG_COUNT, 3, "three");
     INIT_ARG1(DICT);
 
-    if (dict_find(DICT1, &args[1], &dlist) == keynf_id)
+    if (!dict_find(DICT1, &args[1], &dlist))
         THROW((keynf_id, "Key (%D) is not in the dictionary.", &args[1]));
     else if (dlist.type != LIST) {
         cthrow(type_id, "Value for %D (%D) is not a list.", &args[0], &dlist);

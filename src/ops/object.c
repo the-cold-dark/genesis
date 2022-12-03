@@ -844,7 +844,7 @@ COLDC_FUNC(data) {
                 continue;
             key.type = OBJNUM;
             key.u.objnum = obj->vars.tab[i].cclass;
-            if (dict_find(dict, &key, &value) == keynf_id) {
+            if (!dict_find(dict, &key, &value)) {
                 value.type = DICT;
                 value.u.dict = dict_new_empty();
                 dict = dict_add(dict, &key, &value);

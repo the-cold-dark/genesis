@@ -16,7 +16,7 @@ Int dict_cmp(cDict * dict1, cDict * dict2);
 cDict * dict_add(cDict * dict, cData * key, cData * value);
 cDict * dict_del(cDict * dict, cData * key);
 cDict * dict_prep(cDict *);
-Long dict_find(cDict * dict, cData * key, cData * ret);
+bool dict_find(cDict * dict, cData * key, cData * ret);
 bool dict_contains(cDict * dict, cData * key);
 cList * dict_keys(cDict * dict);
 cList * dict_values(cDict * dict);

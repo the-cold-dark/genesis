@@ -200,7 +200,7 @@ Int list_cmp(cList *l1, cList *l2) {
 }
 
 /* Error-checking on pos is the job of the calling function. */
-cList *list_insert(cList *list, Int pos, cData *elem) {
+cList *list_insert(cList *list, Int pos, const cData *elem) {
     list = list_prep(list, list->start, list->len + 1);
     pos += list->start;
     MEMMOVE(list->el + pos + 1, list->el + pos, list->len - 1 - pos);
@@ -249,7 +249,7 @@ cList *list_add_sorted(cList *list, cData *elem, cData *key) {
 }
 
 /* Error-checking on pos is the job of the calling function. */
-cList *list_replace(cList *list, Int pos, cData *elem) {
+cList *list_replace(cList *list, Int pos, const cData *elem) {
     /* list_prep needed here only for multiply referenced lists */
     if (list->refs > 1)
       list = list_prep(list, list->start, list->len);
@@ -294,9 +294,10 @@ cList *list_delete_sorted_element(cList *list, cData *elem, cData *key) {
     return NULL;
 }
 
-cList *list_append(cList *list1, cList *list2) {
+cList *list_append(cList *list1, const cList *list2) {
     Int i;
-    cData *p, *q;
+    cData *p;
+    const cData *q;
 
     list1 = list_prep(list1, list1->start, list1->len + list2->len);
     p = list1->el + list1->start + list1->len - list2->len;

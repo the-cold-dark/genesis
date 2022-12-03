@@ -312,7 +312,7 @@ static Int search(cDict *dict, cData *key) {
     return F_FAILURE;
 }
 
-Int dict_size(cDict *dict)
+Int dict_size(const cDict *dict)
 {
     return list_length(dict->keys);
 }

@@ -17,7 +17,7 @@ cDict * dict_add(cDict * dict, cData * key, cData * value);
 cDict * dict_del(cDict * dict, cData * key);
 cDict * dict_prep(cDict *);
 Long dict_find(cDict * dict, cData * key, cData * ret);
-Int dict_contains(cDict * dict, cData * key);
+bool dict_contains(cDict * dict, cData * key);
 cList * dict_keys(cDict * dict);
 cList * dict_values(cDict * dict);
 cList * dict_key_value_pair(cDict * mapping, Int i);

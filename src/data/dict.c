@@ -223,7 +223,7 @@ Long dict_find(cDict *dict, cData *key, cData *ret)
     return NOT_AN_IDENT;
 }
 
-Int dict_contains(cDict *dict, cData *key)
+bool dict_contains(cDict *dict, cData *key)
 {
     Int pos;
 

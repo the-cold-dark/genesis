@@ -10,7 +10,7 @@
 #define HASHTAB_STARTING_SIZE                 8
 
 static void insert_key(cDict *dict, Int i);
-static Int search(cDict *dict, cData *key);
+static Int search(const cDict *dict, cData *key);
 static void increase_hashtab_size(cDict *dict);
 
 static cDict *generic_empty_dict;
@@ -211,7 +211,7 @@ cDict *dict_del(cDict *dict, cData *key)
     return dict;
 }
 
-bool dict_find(cDict *dict, cData *key, cData *ret)
+bool dict_find(const cDict *dict, cData *key, cData *ret)
 {
     Int pos;
 
@@ -223,7 +223,7 @@ bool dict_find(cDict *dict, cData *key, cData *ret)
     return true;
 }
 
-bool dict_contains(cDict *dict, cData *key)
+bool dict_contains(const cDict *dict, cData *key)
 {
     Int pos;
 
@@ -300,7 +300,7 @@ static void insert_key(cDict *dict, Int i)
     dict->hashtab[ind] = i;
 }
 
-static Int search(cDict *dict, cData *key) {
+static Int search(const cDict *dict, cData *key) {
     Int ind, i;
 
     ind = data_hash(key) % dict->hashtab_size;

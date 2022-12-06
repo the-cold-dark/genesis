@@ -4,6 +4,8 @@
 // Write and retrieve objects to disk.
 */
 
+#define USE_NEW_VARINT_ENCODING
+
 #include "defs.h"
 
 #include <string.h>
@@ -40,6 +42,21 @@ Int size_float(Float f, int memory_size)
  * building a buffer and calling buffer_append_uchars_single_ref(). */
 cBuf * write_long(cBuf *buf, Long n)
 {
+#ifdef USE_NEW_VARINT_ENCODING
+    if (buf->size < buf->len + sizeof(Long) + 1)
+        buf = buffer_prep(buf, buf->len + sizeof(Long) + 1);
+
+    // Zigzag encode to handle negative values better.
+    uLong v = (n << 1) ^ (n >> (sizeof(Long) + 1));
+
+    // ULEB128 encode.
+    while (v >= 0x80) {
+        buf->s[buf->len++] = (char)(v | 0x80);
+        v >>= 7;
+    }
+
+    return buf;
+#else
     uLong i = (uLong)n;
     uLong i2 = i ^ (uLong)(-1);
     unsigned char *long_buf;
@@ -80,11 +97,27 @@ cBuf * write_long(cBuf *buf, Long n)
     buf->len += num_bytes;
 
     return buf;
+#endif
 }
 
 /* Read a four-byte number in a consistent byte-order. */
 Long read_long(const cBuf *buf, Long *buf_pos)
 {
+#ifdef USE_NEW_VARINT_ENCODING
+    uLong v = 0;
+
+    int shift = 0;
+    while (true) {
+        char byte = buf->s[(*buf_pos)++];
+        v |= (uLong)(byte & 0x7f) << shift;
+        if ((byte & 0x80) == 0)
+            break;
+        shift += 7;
+    }
+
+    // Decode zigzag encoding to return negative values.
+    return (v >> 1) ^ -((Long)(v & 1));
+#else
     Int bit_flip, num_bytes, bit_shift;
     uLong n;
 
@@ -101,8 +134,10 @@ Long read_long(const cBuf *buf, Long *buf_pos)
     if (bit_flip)
         n ^= (uLong)(-1);
     return (Long)n;
+#endif
 }
 
+#ifndef USE_NEW_VARINT_ENCODING
 static Int size_long_internal(Long n)
 {
     uLong i = (uLong)n;
@@ -116,9 +151,16 @@ static Int size_long_internal(Long n)
     }
     return num_bytes;
 }
+#endif
 
 Int size_long(Long n, int memory_size)
 {
+#ifdef USE_NEW_VARINT_ENCODING
+    if (memory_size)
+        return sizeof(Long);
+
+    return -1;
+#else
     uLong i = (uLong)n;
     uLong i2 = i ^ (uLong)(-1);
 
@@ -129,6 +171,7 @@ Int size_long(Long n, int memory_size)
         return size_long_internal(i);
     else
         return size_long_internal(i2);
+#endif
 }
 
 cBuf * write_ident(cBuf *buf, Ident id)

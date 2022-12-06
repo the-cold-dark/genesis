@@ -26,8 +26,6 @@ cBuf * socket_buffer;
 static SOCKET grab_port(unsigned short port, const char * addr, int socktype);
 static Ident translate_connect_error(Int error);
 
-static struct sockaddr_in sockin;        /* An internet address. */
-
 Ident server_failure_reason;
 
 void init_net(void) {
@@ -149,6 +147,7 @@ static int use_prebound(SOCKET * sock, unsigned short port, const char * addr, i
 static SOCKET grab_port(unsigned short port, const char * addr, int socktype) {
     int one;
     SOCKET sock;
+    struct sockaddr_storage bind_addr;
 
     /* see if its pre-bound? */
     switch (use_prebound(&sock, port, addr, socktype)) {
@@ -159,11 +158,12 @@ static SOCKET grab_port(unsigned short port, const char * addr, int socktype) {
     }
 
     /* verify the address first */
-    memset(&sockin, 0, sizeof(sockin)); /* zero it */
-    sockin.sin_family = AF_INET;        /* set inet */
-    sockin.sin_port = htons(port);      /* set port */
+    memset(&bind_addr, 0, sizeof(bind_addr));     /* zero it */
+    struct sockaddr_in *addr4 = (struct sockaddr_in*)&bind_addr;
+    addr4->sin_family = AF_INET;        /* set inet */
+    addr4->sin_port = htons(port);      /* set port */
 
-    if (addr && !inet_aton(addr, &sockin.sin_addr)) {
+    if (addr && !inet_pton(AF_INET, addr, &(addr4->sin_addr))) {
         server_failure_reason = address_id;
         return SOCKET_ERROR;
     }
@@ -179,7 +179,7 @@ static SOCKET grab_port(unsigned short port, const char * addr, int socktype) {
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int));
 
     /* Bind the socket to port. */
-    if (bind(sock, (struct sockaddr *) &sockin, sizeof(sockin)) == F_FAILURE) {
+    if (bind(sock, (struct sockaddr *) &bind_addr, sizeof(bind_addr)) == -1) {
         server_failure_reason = bind_id;
         return SOCKET_ERROR;
     }

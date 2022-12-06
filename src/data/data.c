@@ -583,20 +583,24 @@ char * data_from_literal(cData *d, char *s) {
     if (isdigit(*s) || ((*s == '-' || *s == '+') && isdigit(s[1]))) {
         const char *t = s;
 
-        d->type = INTEGER;
-        d->u.val = (Long) atol(s);
+        /* Chomp all digits */
         while (isdigit(*++s)) {};
+        /* See if this is a float or an integer */
         if (*s=='.' || *s=='e') {
-             d->type = FLOAT;
-             d->u.fval = (Float) atof(t);
-             s++;
+            d->type = FLOAT;
+            d->u.fval = (Float) atof(t);
+            s++;
+            /* Chomp remaining bits of the float */
             while (isdigit(*s) ||
                    *s == '.' ||
                    *s == 'e' ||
                    *s == '-' ||
                    *s == '+')
                 s++;
-         }
+        } else {
+            d->type = INTEGER;
+            d->u.val = (Long) atol(t);
+        }
         return s;
     } else if (*s == '"') {
         s++;

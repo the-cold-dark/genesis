@@ -21,6 +21,7 @@
 #include "cdc_types.h"
 #include "cdc_string.h"
 #include "buffer.h"
+#include "quickhash.h"
 
 #ifdef USE_CLEANER_THREAD
 pthread_mutex_t db_mutex;
@@ -93,6 +94,10 @@ static cStr *pad_string;
 
 extern Long db_top;
 extern Long num_objects;
+
+#ifdef BUILDING_COLDCC
+static Hash * is_valid_cache;
+#endif
 
 /* this isn't the most graceful way, but *shrug* */
 #define WARN(_s_) { \
@@ -269,6 +274,9 @@ void init_binary_db(void) {
     fprintf (errfile, "[%s] Binary database free space: %.2f%%\n",
              timestamp(NULL), (100.0f * simble_fragmentation()));
 
+#ifdef BUILDING_COLDCC
+    is_valid_cache = hash_new(0);
+#endif
     db_clean = true;
 }
 
@@ -299,6 +307,9 @@ void init_new_db(void) {
     init_bitmaps();
     sync_index();
     simble_flag_as_clean();
+#ifdef BUILDING_COLDCC
+    is_valid_cache = hash_new(0);
+#endif
     UNLOCK_DB("init_new_db")
 }
 
@@ -737,10 +748,27 @@ bool simble_put(const Obj *obj, cObjnum objnum, Long *sizewritten)
 
 bool simble_is_valid_objnum(cObjnum objnum)
 {
+#ifdef BUILDING_COLDCC
+    cData      key;
+    key.type = OBJNUM;
+    key.u.objnum = objnum;
+    if (hash_find(is_valid_cache, &key) != F_FAILURE) {
+        return true;
+    } else {
+        off_t offset;
+        Int size;
+        bool valid = lookup_retrieve_objnum(objnum, &offset, &size);
+        if (valid) {
+            is_valid_cache = hash_add(is_valid_cache, &key);
+        }
+        return valid;
+    }
+#else
     off_t offset;
     Int size;
 
     return lookup_retrieve_objnum(objnum, &offset, &size);
+#endif
 }
 
 bool simble_del(cObjnum objnum)
@@ -796,6 +824,9 @@ void simble_close(void)
     efree(bitmap);
     simble_flag_as_clean();
     string_discard(pad_string);
+#ifdef BUILDING_COLDCC
+    hash_discard(is_valid_cache);
+#endif
     UNLOCK_DB("simble_close")
 }
 

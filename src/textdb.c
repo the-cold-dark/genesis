@@ -1194,7 +1194,7 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
 
 #ifndef ONLY_PARSE_TEXTDB
     if (!method)
-        DIE("Method definition failed");
+        DIEf("Method definition failed: %s", ident_name(name));
 
     method->m_access = access;
     method->m_flags = flags;

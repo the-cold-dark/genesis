@@ -303,7 +303,7 @@ void init_new_db(void) {
 }
 
 #ifdef DEBUG
-static void display_bitmap()
+static void display_bitmap(void)
 {
     Int i=0, j=0;
     char line[80];

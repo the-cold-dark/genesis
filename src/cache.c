@@ -243,7 +243,7 @@ void init_cache(bool spawn_cleaner)
     }
 }
 
-void uninit_cache()
+void uninit_cache(void)
 {
     Int i;
 

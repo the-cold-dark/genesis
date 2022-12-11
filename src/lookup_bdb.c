@@ -243,8 +243,8 @@ bool lookup_store_objnum(cObjnum objnum, off_t offset, Int size)
     os.offset = offset;
     os.size = size;
 
-    value->data = &os;
-    value->size = sizeof(os);
+    value.data = &os;
+    value.size = sizeof(os);
 
     if ((ret =  objnum_dbp->put(objnum_dbp, NULL, &key, &value, 0)) != 0) {
         write_err("ERROR: Failed to store key %l.", objnum);

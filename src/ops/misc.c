@@ -207,6 +207,9 @@ COLDC_FUNC(ctime) {
 #endif
 
     timestr = ctime(&tval);
+    /* The 24 is because of the format. 26 is the required space,
+       but 1 is for the null terminator, and 1 for the trailing
+       newline, so we only need 24 of the 26 bytes. */
     str = string_from_chars(timestr, 24);
 
     pop(num_args);

@@ -39,4 +39,4 @@ jobs:
     - name: Test
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ctest --verbose
+      run: ctest --verbose -C $BUILD_TYPE

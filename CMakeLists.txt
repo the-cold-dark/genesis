@@ -40,7 +40,9 @@ INCLUDE(CheckSymbolExists)
 INCLUDE(CheckTypeSize)
 
 INCLUDE(${CMAKE_SOURCE_DIR}/Modules/AddCCompilerFlag.cmake)
-ADD_C_COMPILER_FLAG(-Wall)
+IF(NOT MSVC)
+  ADD_C_COMPILER_FLAG(-Wall)
+ENDIF()
 
 # clang doesn't print colored diagnostics when invoked from Ninja
 IF (UNIX AND

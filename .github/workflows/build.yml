@@ -23,6 +23,11 @@ jobs:
          fi
       shell: bash
 
+    - name: Install Windows Dependencies
+      if: runner.os == 'Windows'
+      shell: bash
+      run: choco install winflexbison3
+
     - name: Create Build Environment
       run: cmake -E make_directory ${{github.workspace}}/build
 

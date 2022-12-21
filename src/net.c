@@ -363,12 +363,13 @@ Ident non_blocking_connect(const char *addr, unsigned short port, Int *socket_re
 {
     SOCKET fd;
     Int    result;
-    struct in_addr inaddr;
     struct sockaddr_in saddr;
 
-    /* Convert address to struct in_addr. */
-    inaddr.s_addr = inet_addr(addr);
-    if (inaddr.s_addr == -1)
+    /* Convert address to sockaddr. */
+    memset(&saddr, 0, sizeof(saddr));
+    saddr.sin_family = AF_INET;
+    saddr.sin_port = htons(port);
+    if (inet_pton(AF_INET, addr, &saddr.sin_addr) == 0)
         return address_id;
 
     /* Get a socket for the connection. */
@@ -379,10 +380,6 @@ Ident non_blocking_connect(const char *addr, unsigned short port, Int *socket_re
     mark_socket_non_blocking(fd);
 
     /* Make the connection. */
-    memset(&saddr, 0, sizeof(saddr));
-    saddr.sin_family = AF_INET;
-    saddr.sin_port = htons(port);
-    saddr.sin_addr = inaddr;
     do {
         result = connect(fd, (struct sockaddr *) &saddr, sizeof(saddr));
     } while (result == SOCKET_ERROR && GETERR() == ERR_INTR);
@@ -398,12 +395,13 @@ Ident udp_connect(const char *addr, unsigned short port, Int *socket_return)
 {
     SOCKET fd;
     Int    result;
-    struct in_addr inaddr;
     struct sockaddr_in saddr;
 
-    /* Convert address to struct in_addr. */
-    inaddr.s_addr = inet_addr(addr);
-    if (inaddr.s_addr == -1)
+    /* Convert address to sockaddr. */
+    memset(&saddr, 0, sizeof(saddr));
+    saddr.sin_family = AF_INET;
+    saddr.sin_port = htons(port);
+    if (inet_pton(AF_INET, addr, &saddr.sin_addr) == 0)
         return address_id;
 
     /* Get a socket for the connection. */
@@ -414,10 +412,6 @@ Ident udp_connect(const char *addr, unsigned short port, Int *socket_return)
     mark_socket_non_blocking(fd);
 
     /* Make the connection. */
-    memset(&saddr, 0, sizeof(saddr));
-    saddr.sin_family = AF_INET;
-    saddr.sin_port = htons(port);
-    saddr.sin_addr = inaddr;
     do {
         result = connect(fd, (struct sockaddr *) &saddr, sizeof(saddr));
     } while (result == SOCKET_ERROR && GETERR() == ERR_INTR);

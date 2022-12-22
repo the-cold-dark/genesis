@@ -329,16 +329,18 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
 
             /* Get address and local port of client. */
             switch (accepted_addr.ss_family) {
-                case AF_INET:
+                case AF_INET: {
                     struct sockaddr_in *saddr4 = (struct sockaddr_in*)&accepted_addr;
                     inet_ntop(AF_INET, &saddr4->sin_addr, serv->client_addr, INET6_ADDRSTRLEN);
                     serv->client_port = ntohs(saddr4->sin_port);
                     break;
-                case AF_INET6:
+                }
+                case AF_INET6: {
                     struct sockaddr_in6 *saddr6 = (struct sockaddr_in6*)&accepted_addr;
                     inet_ntop(AF_INET6, &saddr6->sin6_addr, serv->client_addr, INET6_ADDRSTRLEN);
                     serv->client_port = ntohs(saddr6->sin6_port);
                     break;
+                }
             }
 
             /* Set the CLOEXEC flag on socket so that it will be closed for a

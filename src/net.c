@@ -27,7 +27,6 @@ static SOCKET grab_port(unsigned short port, const char * addr, int socktype);
 static Ident translate_connect_error(Int error);
 
 static struct sockaddr_in sockin;        /* An internet address. */
-static socklen_t addr_size = sizeof(sockin);        /* Size of sockin. */
 
 Ident server_failure_reason;
 
@@ -318,16 +317,29 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
     /* Check if any server sockets have new connections. */
     for (serv = servers; serv; serv = serv->next) {
         if (FD_ISSET(serv->server_socket, &read_fds)) {
+            struct sockaddr_storage accepted_addr;
+            socklen_t addr_size = sizeof(accepted_addr);
             serv->client_socket = accept(serv->server_socket,
-                                 (struct sockaddr *) &sockin, &addr_size);
+                                         (struct sockaddr *)&accepted_addr,
+                                         &addr_size);
             if (serv->client_socket == SOCKET_ERROR)
                 continue;
 
             mark_socket_non_blocking(serv->client_socket);
 
             /* Get address and local port of client. */
-            strcpy(serv->client_addr, inet_ntoa(sockin.sin_addr));
-            serv->client_port = ntohs(sockin.sin_port);
+            switch (accepted_addr.ss_family) {
+                case AF_INET:
+                    struct sockaddr_in *saddr4 = (struct sockaddr_in*)&accepted_addr;
+                    inet_ntop(AF_INET, &saddr4->sin_addr, serv->client_addr, INET6_ADDRSTRLEN);
+                    serv->client_port = ntohs(saddr4->sin_port);
+                    break;
+                case AF_INET6:
+                    struct sockaddr_in6 *saddr6 = (struct sockaddr_in6*)&accepted_addr;
+                    inet_ntop(AF_INET6, &saddr6->sin6_addr, serv->client_addr, INET6_ADDRSTRLEN);
+                    serv->client_port = ntohs(saddr6->sin6_port);
+                    break;
+            }
 
             /* Set the CLOEXEC flag on socket so that it will be closed for a
              * execute() operation. */

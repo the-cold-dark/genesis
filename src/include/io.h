@@ -9,6 +9,7 @@ typedef struct Conn Conn;
 typedef struct server_s     server_t;
 typedef struct pending_s    pending_t;
 
+#include <arpa/inet.h>
 #include "net.h"
 
 struct Conn {
@@ -30,7 +31,7 @@ struct server_s {
     cObjnum        objnum;
     bool           dead;
     SOCKET         client_socket;
-    char           client_addr[20];
+    char           client_addr[INET6_ADDRSTRLEN];
     unsigned short client_port;
     server_t     * next;
 };

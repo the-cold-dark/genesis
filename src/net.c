@@ -342,8 +342,14 @@ Int io_event_wait(Int sec, Conn *connections, server_t *servers,
     /* Check if any pending connections have succeeded or failed. */
     for (pend = pendings; pend; pend = pend->next) {
         if (FD_ISSET(pend->fd, &write_fds)) {
-            result = getpeername(pend->fd, (struct sockaddr *) &sockin,
-                                 &addr_size);
+            /* If the socket is writable, then the connection has either
+             * succeeded or failed, but is no longer pending. Here, we
+             * use `getpeername` to detect whether or not we're connected,
+             * and then if not, look at `SO_ERROR` to see why. */
+            struct sockaddr_storage pending_address;
+            socklen_t pending_address_size = sizeof(pending_address);
+            result = getpeername(pend->fd, (struct sockaddr *) &pending_address,
+                                 &pending_address_size);
             if (result == SOCKET_ERROR) {
                 getsockopt(pend->fd, SOL_SOCKET, SO_ERROR, (char *) &error,
                            &dummy);

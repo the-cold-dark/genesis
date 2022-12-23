@@ -167,7 +167,7 @@ NATIVE_METHOD(hostname) {
 */
 NATIVE_METHOD(ip) {
     cStr * sip;
-    char   buf[DNS_MAXLEN+1];
+    char   buf[INET6_ADDRSTRLEN + 1];
     char * p;
 
     INIT_0_OR_1_ARGS(STRING);
@@ -181,7 +181,7 @@ NATIVE_METHOD(ip) {
         case DNS_NORESOLV:
             THROW((failed_id, "Address %s does not resolv", p));
         case DNS_OVERFLOW:
-            THROW((range_id, "DNS Response overflows DNS_MAXLEN!"));
+            THROW((range_id, "DNS Response overflows INET6_ADDRSTRLEN!"));
     }
     sip = string_from_chars(buf, strlen(buf));
 

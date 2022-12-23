@@ -45,7 +45,7 @@ int lookup_name_by_ip(const char * ip, char * out)
     return DNS_NOERROR;
 }
 
-/* out must be a DNS_MAXLEN character buffer */
+/* out must be a INET6_ADDRSTRLEN character buffer */
 int lookup_ip_by_name(const char * name, char * out)
 {
     struct addrinfo hints, *result;
@@ -65,12 +65,12 @@ int lookup_ip_by_name(const char * name, char * out)
     switch (result->ai_family) {
         case AF_INET: {
             struct sockaddr_in *addr_in = (struct sockaddr_in *)result->ai_addr;
-            inet_ntop(AF_INET, &(addr_in->sin_addr), out, DNS_MAXLEN);
+            inet_ntop(AF_INET, &(addr_in->sin_addr), out, INET6_ADDRSTRLEN);
             break;
         }
         case AF_INET6: {
             struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *)result->ai_addr;
-            inet_ntop(AF_INET6, &(addr_in6->sin6_addr), out, DNS_MAXLEN);
+            inet_ntop(AF_INET6, &(addr_in6->sin6_addr), out, INET6_ADDRSTRLEN);
             break;
         }
         default:

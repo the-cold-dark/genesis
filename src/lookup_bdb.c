@@ -95,13 +95,13 @@ void lookup_open(const char *name, bool cnew) {
         exit(1);
     }
 
-    if ((ret = objnum_dbp->set_cachesize(objnum_dbp, 0,
-                                         75*1024*1024, 1)) != 0) {
+    if (objnum_dbp->set_cachesize(objnum_dbp, 0,
+                                  75*1024*1024, 1) != 0) {
         objnum_dbp->err(objnum_dbp, ret, "DB->set_cachesize: %s", name);
         exit(1);
     }
 
-    if ((ret = objnum_dbp->set_pagesize(objnum_dbp, 4096)) != 0) {
+    if (objnum_dbp->set_pagesize(objnum_dbp, 4096) != 0) {
         objnum_dbp->err(objnum_dbp, ret, "DB->set_pagesize: %s", name);
         exit(1);
     }
@@ -132,13 +132,13 @@ void lookup_open(const char *name, bool cnew) {
         exit(1);
     }
 
-    if ((ret = name_dbp->set_cachesize(name_dbp, 0,
-                                         75*1024*1024, 1)) != 0) {
+    if (name_dbp->set_cachesize(name_dbp, 0,
+                                75*1024*1024, 1) != 0) {
         name_dbp->err(name_dbp, ret, "DB->set_cachesize: %s", name);
         exit(1);
     }
 
-    if ((ret = name_dbp->set_pagesize(name_dbp, 4096)) != 0) {
+    if (name_dbp->set_pagesize(name_dbp, 4096) != 0) {
         name_dbp->err(name_dbp, ret, "DB->set_pagesize: %s", name);
         exit(1);
     }
@@ -208,15 +208,13 @@ void lookup_sync(void) {
 bool lookup_retrieve_objnum(cObjnum objnum, off_t *offset, Int *size)
 {
     DBT key, value;
-    int ret;
 
     LOCK_LOOKUP("lookup_retrieve_objnum");
 
     /* Get the value for objnum from the database. */
     objnum_keyvalue(&objnum, &key);
     memset(&value, 0, sizeof(value));
-    if ((ret = objnum_dbp->get(objnum_dbp, NULL, &key, &value, 0)) != 0)
-    {
+    if (objnum_dbp->get(objnum_dbp, NULL, &key, &value, 0) != 0) {
         UNLOCK_LOOKUP("lookup_retrieve_objnum");
         return false;
     }
@@ -260,12 +258,11 @@ bool lookup_store_objnum(cObjnum objnum, off_t offset, Int size)
 bool lookup_remove_objnum(cObjnum objnum)
 {
     DBT key;
-    int ret;
 
     LOCK_LOOKUP("lookup_remove_objnum");
     /* Remove the key from the database. */
     objnum_keyvalue(&objnum, &key);
-    if ((ret = objnum_dbp->del(objnum_dbp, NULL, &key, 0)) != 0) {
+    if (objnum_dbp->del(objnum_dbp, NULL, &key, 0) != 0) {
         write_err("ERROR: Failed to delete key %l.", objnum);
         UNLOCK_LOOKUP("lookup_remove_objnum");
         return false;
@@ -281,6 +278,12 @@ cObjnum lookup_first_objnum(void)
     int ret;
 
     ret = objnum_dbp->cursor(objnum_dbp, NULL, &dbc, 0);
+    if (ret != 0) {
+        /* This should never happen, and if it does, this probably
+         * shouldn't try and live on, but die. */
+        write_err("ERROR: Failed to create objnum cursor.");
+        return INV_OBJNUM;
+    }
 
     memset(&key, 0, sizeof(key));
     memset(&value, 0, sizeof(value));
@@ -383,7 +386,6 @@ bool lookup_remove_name(Ident name)
 {
     DBT key;
     Int i = name % NAME_CACHE_SIZE;
-    int ret;
 
     LOCK_LOOKUP("lookup_remove_name");
     /* See if it's in the cache. */
@@ -400,7 +402,7 @@ bool lookup_remove_name(Ident name)
 
     /* Remove the key from the database. */
     name_key(name, &key);
-    if ((ret = name_dbp->del(name_dbp, NULL, &key, 0)) != 0) {
+    if (name_dbp->del(name_dbp, NULL, &key, 0) != 0) {
         UNLOCK_LOOKUP("lookup_remove_name");
         return false;
     }
@@ -463,12 +465,11 @@ static bool store_name(Ident name, cObjnum objnum)
 static bool get_name(Ident name, cObjnum *objnum)
 {
     DBT key, value;
-    int ret;
 
     /* Get the key from the database. */
     name_key(name, &key);
     memset(&value, 0, sizeof(value));
-    if ((ret = name_dbp->get(name_dbp, NULL, &key, &value, 0)) != 0) {
+    if (name_dbp->get(name_dbp, NULL, &key, &value, 0) != 0) {
         return false;
     }
 

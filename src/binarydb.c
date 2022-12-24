@@ -143,7 +143,7 @@ extern Long num_objects;
 
 #define sync_index() { \
         objnum = lookup_first_objnum(); \
-        while (objnum != NOT_AN_IDENT) { \
+        while (objnum != INV_OBJNUM) { \
             ++num_objects; \
             if (!lookup_retrieve_objnum(objnum, &offset, &size)) \
                 FAIL("Database index (\"%s/index\") is inconsistent.\n"); \

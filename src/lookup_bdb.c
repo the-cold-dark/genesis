@@ -305,7 +305,7 @@ cObjnum lookup_next_objnum(void)
     ret = dbc->c_get(dbc, &key, &value, DB_NEXT);
     if (ret != 0) {
         dbc->c_close(dbc);
-        return NOT_AN_IDENT;
+        return INV_OBJNUM;
     }
 
     return (*(cObjnum*)key.data);

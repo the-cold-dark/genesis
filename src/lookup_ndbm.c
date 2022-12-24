@@ -206,7 +206,7 @@ cObjnum lookup_next_objnum(void)
 
     key = dbm_nextkey(dbp);
     if (key.dptr == NULL)
-        return NOT_AN_IDENT;
+        return INV_OBJNUM;
     if (key.dsize > 1 && *(char*)key.dptr == 0)
         return atoln(key.dptr + 1, key.dsize - 1);
     return lookup_next_objnum();

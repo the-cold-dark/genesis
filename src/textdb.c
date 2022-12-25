@@ -144,7 +144,7 @@ nh_t * nhs = NULL;
 
 static Int add_objname(Ident id, cObjnum objnum, Int skip_lookup) {
     Obj   * obj = NULL;
-    Long    num = INV_OBJNUM;
+    cObjnum num = INV_OBJNUM;
 
     if (!skip_lookup && lookup_retrieve_name(id, &num) && num != objnum) {
         WARN(("Attempt to rebind existing objname $%s (#%li)",
@@ -787,7 +787,7 @@ static void handle_namecmd(char * line, char * s, Int new) {
     char     * p;
 #ifndef ONLY_PARSE_TEXTDB
     char       name[BUF];
-    Long       num, other;
+    cObjnum    num, other;
     Ident      id;
 #endif
 

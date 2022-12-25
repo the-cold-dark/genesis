@@ -1164,7 +1164,7 @@ static void handle_methcmd(FILE * fp, char * s, Int new, Int access) {
     } else {
         if ((p = strchr(s, ';')) == NULL &&
             (p = strchr(s, '{')) == NULL)
-            DIE("Un-terminted method definition.");
+            DIE("Unterminated method definition.");
     }
 
 #ifndef ONLY_PARSE_TEXTDB

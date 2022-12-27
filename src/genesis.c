@@ -446,11 +446,8 @@ static void initialize(Int argc, char **argv) {
     // Clean up our execution privs
     */
 #ifdef __UNIX__
-
-#define ROOT_UID 0
-
     if (gid != getgid()) {
-        if (geteuid() != ROOT_UID) {
+        if (geteuid() != 0) {
             fprintf(errfile, "** setgid attempted when not running as root, exiting..\n");
             exit(1);
         }
@@ -461,7 +458,7 @@ static void initialize(Int argc, char **argv) {
     }
 
     if (uid != getuid()) {
-        if (geteuid() != ROOT_UID) {
+        if (geteuid() != 0) {
             fprintf(errfile, "** setuid attempted when not running as root, exiting..\n");
             exit(1);
         }
@@ -470,9 +467,6 @@ static void initialize(Int argc, char **argv) {
             exit(1);
         }
     }
-
-#undef ROOT_UID
-
 #endif
 
     /*

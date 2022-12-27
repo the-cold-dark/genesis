@@ -71,11 +71,6 @@ struct Prebind {
 };
 Prebind * prebound = NULL;
 
-#define DIE(_reason_) { \
-        fputs(_reason_, stderr); \
-        exit(1); \
-    }
-
 bool prebind_port(unsigned short port, const char * addr, int tcp) {
     SOCKET    sock;
     Prebind * pb;

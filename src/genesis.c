@@ -448,24 +448,30 @@ static void initialize(Int argc, char **argv) {
 #ifdef __UNIX__
 
 #define ROOT_UID 0
-#define DIE(_msg_) { fprintf(errfile, _msg_); fputc('\n', errfile); exit(1); }
 
     if (gid != getgid()) {
-        if (geteuid() != ROOT_UID)
-            DIE("** setgid attempted when not running as root, exiting..")
-        if (setgid(gid) == F_FAILURE)
-            DIE("** setgid(): unable to change group, exiting..")
+        if (geteuid() != ROOT_UID) {
+            fprintf(errfile, "** setgid attempted when not running as root, exiting..\n");
+            exit(1);
+        }
+        if (setgid(gid) == F_FAILURE) {
+            fprintf(errfile, "** setgid(): unable to change group, exiting..\n");
+            exit(1);
+        }
     }
 
     if (uid != getuid()) {
-        if (geteuid() != ROOT_UID)
-            DIE("** setuid attempted when not running as root, exiting..")
-        if (setuid(uid) == F_FAILURE)
-            DIE("** setuid(): unable to change user, exiting..")
+        if (geteuid() != ROOT_UID) {
+            fprintf(errfile, "** setuid attempted when not running as root, exiting..\n");
+            exit(1);
+        }
+        if (setuid(uid) == F_FAILURE) {
+            fprintf(errfile, "** setuid(): unable to change user, exiting..\n");
+            exit(1);
+        }
     }
 
 #undef ROOT_UID
-#undef DIE
 
 #endif
 

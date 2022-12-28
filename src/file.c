@@ -167,7 +167,6 @@ Int flush_file(filec_t * file) {
 cBuf * read_binary_file(filec_t * file, Int block) {
     cBuf * buf = buffer_new(block);
 
-    /* Patch #6 -- Bruce Mitchener */
     if (feof(file->fp)) {
         cthrow(eof_id, "End of file.");
         buffer_discard(buf);
@@ -380,7 +379,6 @@ cList * open_file(cStr * name, cStr * smode, Obj * obj) {
        have a special case which we need to handle differently */
 
     if (stat(fnew->path->s, &sbuf) == F_SUCCESS) {
-        /* Patch #6 -- Bruce Mitchener */
         if (S_ISDIR(sbuf.st_mode)) {
             cthrow(directory_id, "\"%s\" is a directory.", fnew->path->s);
             file_discard(fnew, NULL);

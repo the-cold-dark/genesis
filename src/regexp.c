@@ -236,7 +236,7 @@ regexp * gen_regcomp(char * exp) {
     regcode = r->program;
     regc((char)MAGIC);
     if (reg(0, &flags) == NULL) {
-        efree(r); /* Patch #7 -- Bruce Mitchener */
+        efree(r);
         return(NULL);
     }
 

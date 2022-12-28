@@ -179,7 +179,7 @@ static cStr * html_escape(cStr * in) {
             case '&':
                 out = string_add_chars(out, "&amp;", 5);
                 break;
-            case '\"': /* Added double-quote, Patch #1, Bruce Mitchener */
+            case '\"':
                 out = string_add_chars(out, "&quot;", 6);
                 break;
             default:

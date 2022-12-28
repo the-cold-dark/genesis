@@ -46,11 +46,6 @@ COLDC_FUNC(dblog) {
 #define MAXBSIZE 16384
 #endif
 
-#define x_THROW(_file_) do { \
-        cthrow(file_id, "%s: %s", _file_, strerror(GETERR())); \
-        return 0; \
-    } while(0)
-
 static bool backup_file(char * file) {
     static char buf[MAXBSIZE];
     bool rval = true;
@@ -65,16 +60,20 @@ static bool backup_file(char * file) {
     strcat(dest, file);
 
     from_fd = open(source, O_RDONLY | O_BINARY, 0);
-    if (from_fd == F_FAILURE)
-        x_THROW(source);
+    if (from_fd == F_FAILURE) {
+        cthrow(file_id, "%s: %s", source, strerror(GETERR()));
+        return 0;
+    }
 
 #ifdef __MSVC__
     to_fd = open(dest, (O_WRONLY|O_TRUNC|O_CREAT|O_BINARY), (_S_IREAD|_S_IWRITE));
 #else
     to_fd = open(dest, (O_WRONLY|O_TRUNC|O_CREAT|O_BINARY), (S_IRUSR|S_IWUSR));
 #endif
-    if (to_fd == F_FAILURE)
-        x_THROW(dest);
+    if (to_fd == F_FAILURE) {
+        cthrow(file_id, "%s: %s", dest, strerror(GETERR()));
+        return 0;
+    }
 
     while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
         wcount = write(to_fd, buf, rcount);

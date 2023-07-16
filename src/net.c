@@ -174,7 +174,7 @@ static SOCKET grab_port(unsigned short port, const char * addr, int socktype) {
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int));
 
     /* Bind the socket to port. */
-    if (bind(sock, (struct sockaddr *) &bind_addr, sizeof(bind_addr)) == -1) {
+    if (bind(sock, (struct sockaddr *) &bind_addr, sizeof(struct sockaddr_in)) == -1) {
         server_failure_reason = bind_id;
         return SOCKET_ERROR;
     }

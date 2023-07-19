@@ -477,7 +477,7 @@ Int simble_dump_some_blocks (Int maxblocks)
                     UNLOCK_DB("simble_dump_some_blocks")
                     panic("lseek(%d, %ld): %s", database_fd, BLOCK_OFFSET (last_dumped), strerror(errno));
                 }
-                if (lseek(dump_db_fd,  BLOCK_OFFSET (last_dumped), SEEK_SET)) {
+                if (lseek(dump_db_fd,  BLOCK_OFFSET (last_dumped), SEEK_SET) == -1) {
                     UNLOCK_DB("simble_dump_some_blocks")
                     panic("lseek(%d, %ld): %s", dump_db_fd, BLOCK_OFFSET (last_dumped), strerror(errno));
                 }
@@ -766,7 +766,7 @@ bool simble_del(cObjnum objnum)
     simble_unmark(LOGICAL_BLOCK(offset), size);
 
     /* Mark object dead in file */
-    if (lseek(database_fd, offset, SEEK_SET)) {
+    if (lseek(database_fd, offset, SEEK_SET) == -1) {
         write_err("ERROR: Failed to seek to object %l.", objnum);
 
         UNLOCK_DB("simble_del")

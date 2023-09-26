@@ -34,7 +34,7 @@ void unpack_handled (const cBuf *buf, Long *buf_pos, cData *d)
     d->u.instance = (void*) h;
 }
 
-int size_handled (const cData *d, int memory_size)
+int size_handled (const cData *d, bool memory_size)
 {
     HandledFrob *h = HANDLED_FROB(d);
     Int size = 0;

@@ -352,7 +352,7 @@
 #define INSTANCE_PROTOTYPES(_class_) \
     cBuf * CAT(pack_,_class_) (cBuf*, const cData*); \
     void CAT(unpack_,_class_) (const cBuf*, Long*, cData*); \
-    int CAT(size_,_class_) (const cData*, int); \
+    int CAT(size_,_class_) (const cData*, bool); \
     int CAT(compare_,_class_) (cData*, cData*); \
     int CAT(hash_,_class_) (const cData*); \
     void CAT(dup_,_class_) (cData*, const cData*); \

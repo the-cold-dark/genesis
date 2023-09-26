@@ -15,7 +15,7 @@ cStr * string_dup(cStr * str);
 
 cBuf * string_pack(cBuf *buf, const cStr *str);
 cStr * string_unpack(const cBuf *buf, Long *buf_pos);
-Int    string_packed_size(const cStr *str, int memory_size);
+Int    string_packed_size(const cStr *str, bool memory_size);
 
 Int    string_cmp(const cStr * str1, const cStr * str2);
 cStr * string_add(cStr * str1, const cStr * str2);

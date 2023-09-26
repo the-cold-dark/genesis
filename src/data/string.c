@@ -80,7 +80,7 @@ cStr *string_unpack(const cBuf *buf, Long *buf_pos) {
     return str;
 }
 
-Int string_packed_size(const cStr *str, int memory_size) {
+Int string_packed_size(const cStr *str, bool memory_size) {
     int size = 0;
 
     if (memory_size)
@@ -94,9 +94,9 @@ Int string_packed_size(const cStr *str, int memory_size) {
     else
     {
         if (!str)
-            return size_long(-1, 0);
+            return size_long(-1, false);
 
-        size += size_long(str->len, 0);
+        size += size_long(str->len, false);
     }
 
     size += str->len * sizeof(char);

@@ -28,7 +28,7 @@ Float read_float(const cBuf *buf, Long *buf_pos)
 }
 
 /* Determine the size of a Float */
-Int size_float(Float f, int memory_size)
+Int size_float(Float f, bool memory_size)
 {
     return sizeof(Float);
 }
@@ -117,7 +117,7 @@ static Int size_long_internal(Long n)
     return num_bytes;
 }
 
-Int size_long(Long n, int memory_size)
+Int size_long(Long n, bool memory_size)
 {
     uLong i = (uLong)n;
     uLong i2 = i ^ (uLong)(-1);
@@ -174,7 +174,7 @@ Ident read_ident(const cBuf *buf, Long *buf_pos)
     return id;
 }
 
-Int size_ident(Ident id, int memory_size)
+Int size_ident(Ident id, bool memory_size)
 {
     Int len;
 
@@ -182,11 +182,11 @@ Int size_ident(Ident id, int memory_size)
         return sizeof(Ident);
 
     if (id == NOT_AN_IDENT)
-        return size_long(NOT_AN_IDENT, 0);
+        return size_long(NOT_AN_IDENT, false);
 
     ident_name_size(id, &len);
 
-    return size_long(len, 0) + (len * sizeof(char));
+    return size_long(len, false) + (len * sizeof(char));
 }
 
 static cBuf * pack_list(cBuf *buf, cList *list)
@@ -222,7 +222,7 @@ static cList *unpack_list(const cBuf *buf, Long *buf_pos)
     return list;
 }
 
-static Int size_list(cList *list, int memory_size)
+static Int size_list(cList *list, bool memory_size)
 {
     cData *d;
     Int size = 0;
@@ -231,12 +231,12 @@ static Int size_list(cList *list, int memory_size)
         if (memory_size)
             return 0;
         else
-            size += size_long(-1, 0);
+            size += size_long(-1, false);
     } else {
         if (memory_size)
             size += (sizeof(Int) * 4) + (sizeof(cData) * list->size);
         else
-            size += size_long(list_length(list), 0);
+            size += size_long(list_length(list), false);
 
         for (d = list_first(list); d; d = list_next(list, d))
             size += size_data(d, memory_size);
@@ -289,7 +289,7 @@ static cDict *unpack_dict(const cBuf *buf, Long *buf_pos)
     }
 }
 
-static Int size_dict(cDict *dict, int memory_size)
+static Int size_dict(cDict *dict, bool memory_size)
 {
     Int size = 0, i;
 
@@ -302,10 +302,10 @@ static Int size_dict(cDict *dict, int memory_size)
     size += size_list(dict->values, memory_size);
 
     if (dict->keys->len > 64 && !memory_size) {
-        size += size_long(dict->hashtab_size, 0);
+        size += size_long(dict->hashtab_size, false);
         for (i = 0; i < dict->hashtab_size; i++) {
-            size += size_long(dict->links[i], 0);
-            size += size_long(dict->hashtab[i], 0);
+            size += size_long(dict->links[i], false);
+            size += size_long(dict->hashtab[i], false);
         }
     }
     return size;
@@ -354,7 +354,7 @@ static void unpack_vars(const cBuf *buf, Long *buf_pos, Obj *obj)
 
 }
 
-static Int size_vars(Obj *obj, int memory_size)
+static Int size_vars(Obj *obj, bool memory_size)
 {
     Int size = 0, i;
 
@@ -363,7 +363,7 @@ static Int size_vars(Obj *obj, int memory_size)
         for (i = 0; i < obj->vars.size; i++) {
             if (obj->vars.tab[i].name != NOT_AN_IDENT) {
                 /* Var includes a cData, but size_data() adds another cData worth */
-                size += size_data(&obj->vars.tab[i].val, 1) - sizeof(cData);
+                size += size_data(&obj->vars.tab[i].val, true) - sizeof(cData);
             }
         }
         return size;
@@ -373,15 +373,15 @@ static Int size_vars(Obj *obj, int memory_size)
     size += size_long(obj->vars.blanks, memory_size);
 
     for (i = 0; i < obj->vars.size; i++) {
-        size += size_long(obj->vars.hashtab[i], 0);
+        size += size_long(obj->vars.hashtab[i], false);
         if (obj->vars.tab[i].name != NOT_AN_IDENT) {
-            size += size_ident(obj->vars.tab[i].name, 0);
-            size += size_long(obj->vars.tab[i].cclass, 0);
-            size += size_data(&obj->vars.tab[i].val, 0);
+            size += size_ident(obj->vars.tab[i].name, false);
+            size += size_long(obj->vars.tab[i].cclass, false);
+            size += size_data(&obj->vars.tab[i].val, false);
         } else {
-            size += size_long(NOT_AN_IDENT, 0);
+            size += size_long(NOT_AN_IDENT, false);
         }
-        size += size_long(obj->vars.tab[i].next, 0);
+        size += size_long(obj->vars.tab[i].next, false);
     }
 
     return size;
@@ -472,7 +472,7 @@ static void unpack_strings(const cBuf *buf, Long *buf_pos, Obj *obj)
     }
 }
 
-static Int size_strings(Obj *obj, int memory_size)
+static Int size_strings(Obj *obj, bool memory_size)
 {
     Int size = 0, i;
 
@@ -481,39 +481,39 @@ static Int size_strings(Obj *obj, int memory_size)
         size += (sizeof(StringTabEntry) + sizeof(Long)) * obj->methods->strings->tab_size;
 
         for (i = 0; i < obj->methods->strings->tab_size; i++) {
-            size += string_packed_size(obj->methods->strings->tab[i].str, 1);
+            size += string_packed_size(obj->methods->strings->tab[i].str, true);
         }
         return size;
     }
 
     if (obj->methods->strings->tab_num > 0) {
 #if 1
-        size += size_long(obj->methods->strings->tab_size, 0);
-        size += size_long(obj->methods->strings->tab_num, 0);
-        size += size_long(obj->methods->strings->blanks, 0);
+        size += size_long(obj->methods->strings->tab_size, false);
+        size += size_long(obj->methods->strings->tab_num, false);
+        size += size_long(obj->methods->strings->blanks, false);
         for (i = 0; i < obj->methods->strings->tab_size; i++) {
-            size += size_long(obj->methods->strings->hashtab[i], 0);
-            size += size_long(obj->methods->strings->tab[i].next, 0);
-            size += size_long(obj->methods->strings->tab[i].hash, 0);
-            size += size_long(obj->methods->strings->tab[i].refs, 0);
+            size += size_long(obj->methods->strings->hashtab[i], false);
+            size += size_long(obj->methods->strings->tab[i].next, false);
+            size += size_long(obj->methods->strings->tab[i].hash, false);
+            size += size_long(obj->methods->strings->tab[i].refs, false);
         }
         for (i = 0; i < obj->methods->strings->tab_size; i++) {
-            size += string_packed_size(obj->methods->strings->tab[i].str, 0);
+            size += string_packed_size(obj->methods->strings->tab[i].str, false);
         }
 #else
         // caused 3 crashes on TEC, disabling code until problem can be determined
-        size += size_long(obj->methods->strings->tab_size, 0);
+        size += size_long(obj->methods->strings->tab_size, false);
         for (i = 0; i < obj->methods->strings->tab_size; i++) {
-            size += string_packed_size(obj->methods->strings->tab[i].str, 0);
+            size += string_packed_size(obj->methods->strings->tab[i].str, false);
             if (obj->methods->strings->tab[i].str)
             {
-                size += size_long(obj->methods->strings->tab[i].hash, 0);
-                size += size_long(obj->methods->strings->tab[i].refs, 0);
+                size += size_long(obj->methods->strings->tab[i].hash, false);
+                size += size_long(obj->methods->strings->tab[i].refs, false);
             }
         }
 #endif
     } else {
-        size += size_long(-1, 0);
+        size += size_long(-1, false);
     }
 
     return size;
@@ -550,7 +550,7 @@ static void unpack_idents(const cBuf *buf, Long *buf_pos, Obj *obj)
     }
 }
 
-static Int size_idents(Obj *obj, int memory_size)
+static Int size_idents(Obj *obj, bool memory_size)
 {
     Int size = 0, i;
 
@@ -559,14 +559,14 @@ static Int size_idents(Obj *obj, int memory_size)
         return size;
     }
 
-    size += size_long(obj->methods->idents_size, 0);
-    size += size_long(obj->methods->num_idents, 0);
+    size += size_long(obj->methods->idents_size, false);
+    size += size_long(obj->methods->num_idents, false);
     for (i = 0; i < obj->methods->num_idents; i++) {
         if (obj->methods->idents[i].id != NOT_AN_IDENT) {
-            size += size_ident(obj->methods->idents[i].id, 0);
-            size += size_long(obj->methods->idents[i].refs, 0);
+            size += size_ident(obj->methods->idents[i].id, false);
+            size += size_long(obj->methods->idents[i].refs, false);
         } else {
-            size += size_long(NOT_AN_IDENT, 0);
+            size += size_long(NOT_AN_IDENT, false);
         }
     }
 
@@ -663,7 +663,7 @@ static Method *unpack_method(const cBuf *buf, Long *buf_pos)
     return method;
 }
 
-static Int size_method(Method *method, int memory_size)
+static Int size_method(Method *method, bool memory_size)
 {
     Int size = 0, i, j;
 
@@ -681,31 +681,31 @@ static Int size_method(Method *method, int memory_size)
         return size;
     }
 
-    size += size_ident(method->name, 0);
-    size += size_long(method->native, 0);
-    size += size_long(method->m_access, 0);
-    size += size_long(method->m_flags, 0);
+    size += size_ident(method->name, false);
+    size += size_long(method->native, false);
+    size += size_long(method->m_access, false);
+    size += size_long(method->m_flags, false);
 
-    size += size_long(method->num_args, 0);
+    size += size_long(method->num_args, false);
     for (i = 0; i < method->num_args; i++) {
-        size += size_long(method->argnames[i], 0);
+        size += size_long(method->argnames[i], false);
     }
-    size += size_long(method->rest, 0);
+    size += size_long(method->rest, false);
 
-    size += size_long(method->num_vars, 0);
+    size += size_long(method->num_vars, false);
     for (i = 0; i < method->num_vars; i++) {
-        size += size_long(method->varnames[i], 0);
+        size += size_long(method->varnames[i], false);
     }
 
-    size += size_long(method->num_opcodes, 0);
+    size += size_long(method->num_opcodes, false);
     for (i = 0; i < method->num_opcodes; i++)
-        size += size_long(method->opcodes[i], 0);
+        size += size_long(method->opcodes[i], false);
 
-    size += size_long(method->num_error_lists, 0);
+    size += size_long(method->num_error_lists, false);
     for (i = 0; i < method->num_error_lists; i++) {
-        size += size_long(method->error_lists[i].num_errors, 0);
+        size += size_long(method->error_lists[i].num_errors, false);
         for (j = 0; j < method->error_lists[i].num_errors; j++)
-            size += size_ident(method->error_lists[i].error_ids[j], 0);
+            size += size_ident(method->error_lists[i].error_ids[j], false);
     }
 
     return size;
@@ -773,7 +773,7 @@ static void unpack_methods(const cBuf *buf, Long *buf_pos, Obj *obj)
     unpack_idents(buf, buf_pos, obj);
 }
 
-static Int size_methods(Obj *obj, int memory_size)
+static Int size_methods(Obj *obj, bool memory_size)
 {
     Int size = 0, i;
 
@@ -782,33 +782,33 @@ static Int size_methods(Obj *obj, int memory_size)
             return 0;
         size += sizeof(ObjMethods);
         size += (sizeof(struct mptr) + sizeof(Int)) * obj->methods->size;
-        size += size_strings(obj, 1);
-        size += size_idents(obj, 1);
+        size += size_strings(obj, true);
+        size += size_idents(obj, true);
         for (i = 0; i < obj->methods->size; i++) {
             if (obj->methods->tab[i].m)
-                size += size_method(obj->methods->tab[i].m, 1);
+                size += size_method(obj->methods->tab[i].m, true);
         }
         return size;
     }
 
     if (!object_has_methods(obj)) {
-        return size_long(-1, 0);
+        return size_long(-1, false);
     }
 
-    size += size_long(obj->methods->size, 0);
-    size += size_long(obj->methods->blanks, 0);
+    size += size_long(obj->methods->size, false);
+    size += size_long(obj->methods->blanks, false);
 
     for (i = 0; i < obj->methods->size; i++) {
-        size += size_long(obj->methods->hashtab[i], 0);
+        size += size_long(obj->methods->hashtab[i], false);
         if (obj->methods->tab[i].m)
-            size += size_method(obj->methods->tab[i].m, 0);
+            size += size_method(obj->methods->tab[i].m, false);
         else
-            size += size_long(NOT_AN_IDENT, 0);
-        size += size_long(obj->methods->tab[i].next, 0);
+            size += size_long(NOT_AN_IDENT, false);
+        size += size_long(obj->methods->tab[i].next, false);
     }
 
-    size += size_strings(obj, 0);
-    size += size_idents(obj, 0);
+    size += size_strings(obj, false);
+    size += size_idents(obj, false);
 
     return size;
 }
@@ -939,7 +939,7 @@ void unpack_data(const cBuf *buf, Long *buf_pos, cData *data)
     }
 }
 
-Int size_data(cData *data, int memory_size)
+Int size_data(cData *data, bool memory_size)
 {
     Int size = 0;
 
@@ -1066,7 +1066,7 @@ void unpack_object(const cBuf *buf, Long *buf_pos, Obj *obj)
     obj->objname = read_ident(buf, buf_pos);
 }
 
-Int size_object(Obj *obj, int memory_size)
+Int size_object(Obj *obj, bool memory_size)
 {
     Int size = 0;
 

@@ -92,7 +92,7 @@ struct cFrob {
 
 typedef cBuf * (*ciWrData)  (cBuf*, const cData*);
 typedef void   (*ciRdData)  (const cBuf*, Long*, cData*);
-typedef int    (*ciSzData)  (const cData*, int);
+typedef int    (*ciSzData)  (const cData*, bool);
 typedef int    (*ciHashData)(const cData*);
 typedef int    (*ciCmpData) (cData*, cData*);
 typedef void   (*ciDupData) (cData*, const cData*);

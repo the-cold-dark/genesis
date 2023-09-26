@@ -21,7 +21,6 @@ Int  size_object(Obj * obj, bool memory_size);
 Int  size_data(cData *data, bool memory_size);
 Int  size_ident(Ident id, bool memory_size);
 Int  size_long(Long n, bool memory_size);
-Int  size_float(Float f, bool memory_size);
 
 #endif
 

@@ -28,7 +28,7 @@ Float read_float(const cBuf *buf, Long *buf_pos)
 }
 
 /* Determine the size of a Float */
-Int size_float(Float f, bool memory_size)
+static Int size_float(Float f, bool memory_size)
 {
     return sizeof(Float);
 }

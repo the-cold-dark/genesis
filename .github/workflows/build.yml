@@ -26,7 +26,9 @@ jobs:
     - name: Install Windows Dependencies
       if: runner.os == 'Windows'
       shell: bash
-      run: choco install winflexbison3
+      run: |
+         choco install winflexbison3
+         vcpkg install berkeleydb
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{github.workspace}}/build

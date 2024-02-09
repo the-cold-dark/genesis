@@ -39,7 +39,7 @@ code. The cache algorithm also uses his ideas.
 The regular expression matcher used by Coldmud (regexp.c) was written by
 Henry Spencer.
 
-Numerous people have contributed valuble ideas and debugging effort. Among
+Numerous people have contributed valuable ideas and debugging effort. Among
 them are Jay Carlson, Erik Ostrom, Matthew Rhoten, Loyd Blankenship, Gregory
 Blake, Jeff Prothero, Nils McCarthy, Brandon Gillespie, Ron Strait, Alex
 Stewart, Jordan Baker, Ryan Daum, Doug Orleans, Matthew Gray, and Scott

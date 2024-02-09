@@ -237,7 +237,7 @@ static void cleanup_holders(void) {
     }
 }
 
-/* only call with a method which declars a MF_NATIVE flag */
+/* only call with a method which declares a MF_NATIVE flag */
 /* holders are redundant, but it lets us keep track of methods defined
    native, but which are not */
 static nh_t * find_defined_native_method(cObjnum objnum, Ident name) {
